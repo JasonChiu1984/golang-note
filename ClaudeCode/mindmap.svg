@@ -83,7 +83,7 @@
 
   <rect x="480" y="515" width="160" height="50" rx="10" fill="#FFFFFF" stroke="#00ADD8" stroke-width="1.8"/>
   <text x="500" y="542" class="title" fill="#0F172A">4  函式介面泛型</text>
-  <text x="500" y="558" class="sub" fill="#475569">Func / Error / Interface / Generics</text>
+  <text x="500" y="558" class="sub" fill="#475569">Functions &amp; Generics</text>
   <text x="660" y="530" class="leaf" fill="#334155">• 多回傳；最後一格是 error</text>
   <text x="660" y="548" class="leaf" fill="#334155">• 錯誤包裝 %w；errors.Is / As</text>
   <text x="660" y="566" class="leaf" fill="#334155">• 小 interface、在使用端定義</text>
