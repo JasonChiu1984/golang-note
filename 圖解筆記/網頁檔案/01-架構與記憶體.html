@@ -1,0 +1,81 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>01-架構與記憶體</title>
+  <style>
+    body { font-family: sans-serif; max-width: 900px; margin: 0 auto; padding: 2rem; }
+    pre { background: #f6f8fa; padding: 16px; border-radius: 6px; }
+    .mermaid { text-align: center; margin: 2rem 0; }
+  </style>
+</head>
+<body>
+  <h1>01. 架構與記憶體 (Memory &amp; Architecture)</h1>
+<h2>1. 值傳遞 (Pass by Value) vs 指標傳遞 (Pass by Pointer)</h2>
+<p>Go 語言中<strong>所有的參數傳遞都是值傳遞（複製）</strong>。即使是指標，傳遞的也是記憶體位址的副本。</p>
+<pre><code class="language-mermaid">flowchart LR
+    subgraph Caller
+        V1[&quot;user (Struct)&quot;]
+        P1[&quot;&amp;user (Pointer: 0xC0000)&quot;]
+    end
+    
+    subgraph &quot;Function A (Pass by Value)&quot;
+        V2[&quot;user_copy (Struct副本)&quot;]
+        V1 -- &quot;複製整個結構體資料&quot; --&gt; V2
+    end
+    
+    subgraph &quot;Function B (Pass by Pointer)&quot;
+        P2[&quot;ptr_copy (Pointer副本: 0xC0000)&quot;]
+        P1 -- &quot;複製記憶體位址&quot; --&gt; P2
+        P2 -. &quot;指向相同的實體&quot; .-&gt; V1
+    end
+</code></pre>
+<h2>2. 記憶體分配：Stack vs Heap</h2>
+<ul>
+<li><strong>Stack (堆疊)</strong>：函式內的區域變數，函式結束自動清除，極快。</li>
+<li><strong>Heap (堆積)</strong>：全域變數或逃逸變數，依賴 GC (Garbage Collection) 回收，成本高。</li>
+</ul>
+<pre><code class="language-mermaid">block-beta
+  columns 2
+  block:Stack[&quot;Stack (堆疊)&quot;]
+    S1[&quot;func main() 的變數&quot;]
+    S2[&quot;func add() 的變數&quot;]
+    S3[&quot;自動釋放，無 GC 壓力&quot;]
+  end
+  block:Heap[&quot;Heap (堆積)&quot;]
+    H1[&quot;被逃逸分析抓出的變數\n(例如回傳指標)&quot;]
+    H2[&quot;動態大小的 slice/map&quot;]
+    H3[&quot;依賴 GC 清理&quot;]
+  end
+</code></pre>
+<h2>3. 逃逸分析 (Escape Analysis)</h2>
+<p>編譯器決定變數該放 Stack 還是 Heap。當區域變數的生命週期超出了原本的函式（例如回傳了它的指標），它就會「逃逸」到 Heap。</p>
+<pre><code class="language-mermaid">stateDiagram-v2
+    [*] --&gt; CompilerCheck: 宣告區域變數 u := User{}
+    CompilerCheck --&gt; Stack: 是否只在函式內使用？(是)
+    CompilerCheck --&gt; Heap: 是否回傳指標 &amp;u？(是)
+    CompilerCheck --&gt; Heap: 是否傳入 fmt.Println()？(是)
+    
+    Stack --&gt; AutoFree: 函式 return 時自動清除
+    Heap --&gt; GC: 等待 Garbage Collector 回收
+</code></pre>
+<h2>4. 記憶體對齊 (Memory Alignment)</h2>
+<p>結構體 (Struct) 欄位的排列順序會影響最終佔用的記憶體大小，因為 CPU 讀取記憶體時會要求特定位元組對齊。</p>
+<pre><code class="language-mermaid">packet-beta
+0-7: &quot;bool (1 byte)&quot;
+8-15: &quot;padding (1 byte)&quot;
+16-31: &quot;int16 (2 bytes)&quot;
+32-63: &quot;int32 (4 bytes)&quot;
+</code></pre>
+<p><em>(最佳化原則：將型別大小由大到小排序，可大幅減少 padding 浪費的空間)</em></p>
+
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true });
+    mermaid.run().then(() => {
+      const div = document.createElement('div'); div.id = 'mermaid-rendered'; document.body.appendChild(div);
+    });
+  </script>
+</body>
+</html>

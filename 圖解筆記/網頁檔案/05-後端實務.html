@@ -1,0 +1,95 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>05-後端實務</title>
+  <style>
+    body { font-family: sans-serif; max-width: 900px; margin: 0 auto; padding: 2rem; }
+    pre { background: #f6f8fa; padding: 16px; border-radius: 6px; }
+    .mermaid { text-align: center; margin: 2rem 0; }
+  </style>
+</head>
+<body>
+  <h1>05. 後端實務 (Backend Patterns)</h1>
+<h2>1. Middleware 洋蔥模型</h2>
+<p>Go 的 HTTP Middleware 是透過 <code>func(http.Handler) http.Handler</code> 的函數包裝實現的。執行時會像剝洋蔥一樣，從外層往內層執行，拿到回應後再從內層往外層離開。</p>
+<pre><code class="language-mermaid">sequenceDiagram
+    participant C as Client
+    participant MW1 as RequestID Middleware
+    participant MW2 as Logger Middleware
+    participant MW3 as Recovery Middleware
+    participant H as 核心業務 Handler
+    
+    C-&gt;&gt;MW1: HTTP Request
+    MW1-&gt;&gt;MW2: 注入 Request ID 至 Context
+    MW2-&gt;&gt;MW3: 記錄開始時間
+    MW3-&gt;&gt;H: defer recover() 保護
+    Note over H: 執行商業邏輯 / DB 存取
+    H--&gt;&gt;MW3: 寫入 HTTP Response
+    MW3--&gt;&gt;MW2: 檢查有無 panic
+    MW2--&gt;&gt;MW1: 計算耗時並印出 Log
+    MW1--&gt;&gt;C: 回傳 Client (附帶 X-Request-ID)
+</code></pre>
+<h2>2. Graceful Shutdown (優雅關閉)</h2>
+<p>當伺服器需要重啟或部署新版本時，直接 kill 會導致處理到一半的請求失敗。標準做法是攔截系統信號（SIGTERM），拒絕新請求，並給予一定時間讓舊請求處理完畢。</p>
+<pre><code class="language-mermaid">stateDiagram-v2
+    [*] --&gt; Running: http.ListenAndServe() (背景執行)
+    Running --&gt; Intercept: 收到 SIGTERM (K8s) 或 Ctrl+C
+    Intercept --&gt; RejectNew: 關閉 Listener，不再接受新連線
+    RejectNew --&gt; WaitProcessing: 呼叫 srv.Shutdown(ctx 30s)
+    
+    WaitProcessing --&gt; Success: 所有進行中連線處理完畢
+    WaitProcessing --&gt; Timeout: 超過 30 秒強制切斷
+    
+    Success --&gt; [*]: 正常退出 (Exit 0)
+    Timeout --&gt; [*]: 強制退出 (Exit 1)
+</code></pre>
+<h2>3. database/sql 連線池生命週期</h2>
+<p>Go 的 <code>database/sql</code> 預設內建連線池 (Connection Pool)，它隱藏了底層 TCP 連線的細節，開發者不需手動管理物理連線，只需管理邏輯連線 (<code>rows.Close()</code>, <code>tx.Rollback()</code>)。</p>
+<pre><code class="language-mermaid">flowchart TD
+    App[&quot;Application Code\n(db.Query)&quot;]
+    Pool{&quot;Connection Pool&quot;}
+    Idle[&quot;閒置連線 (Idle)\n數量由 MaxIdleConns 控制&quot;]
+    DB[&quot;實體資料庫 (PostgreSQL/MySQL)&quot;]
+    
+    App --&gt;|1. 請求連線| Pool
+    Pool --&gt;|2a. 有閒置連線| Idle
+    Pool --&gt;|2b. 無閒置且未達 MaxOpenConns| DB: &quot;新建 TCP 連線&quot;
+    Idle -.-&gt;|3. 執行 SQL| DB
+    DB -.-&gt;|4. 回傳 Rows| App
+    
+    App -- &quot;5. 呼叫 rows.Close()&quot; --&gt; Pool
+    Pool --&gt;|6. 回收為閒置狀態| Idle
+    Idle -.-&gt;|背景機制| Drop[&quot;超過 ConnMaxLifetime\n或 ConnMaxIdleTime\n自動斷線&quot;]
+</code></pre>
+<h2>4. CI/CD Multi-stage Docker Build 流程</h2>
+<p>Go 語言「靜態編譯」的優勢在於：編譯完的 binary 不依賴系統環境。透過 Multi-stage build，可以丟棄幾百 MB 的編譯環境，產出極小的 Production Image。</p>
+<pre><code class="language-mermaid">flowchart LR
+    subgraph Stage 1: Builder (golang:1.22-alpine)
+        SRC[&quot;原始碼 (go.mod, *.go)&quot;]
+        Compile[&quot;go build -o app (CGO_ENABLED=0)&quot;]
+        SRC --&gt; Compile
+    end
+    
+    subgraph Stage 2: Production (scratch / alpine)
+        Bin[&quot;執行檔 /app&quot;]
+        Cert[&quot;CA 憑證 (TLS 需要)&quot;]
+        Bin -. &quot;完全獨立運行&quot; .-&gt; Cert
+    end
+    
+    Compile -- &quot;只將編譯好的 binary 複製過來\n(捨棄 SDK 與原始碼)&quot; --&gt; Bin
+    
+    style Stage 1 fill:#f0f0f0,stroke:#333,stroke-dasharray: 5 5
+    style Stage 2 fill:#cce5ff,stroke:#004085
+</code></pre>
+
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true });
+    mermaid.run().then(() => {
+      const div = document.createElement('div'); div.id = 'mermaid-rendered'; document.body.appendChild(div);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>03-物件導向抽象</title>
+  <style>
+    body { font-family: sans-serif; max-width: 900px; margin: 0 auto; padding: 2rem; }
+    pre { background: #f6f8fa; padding: 16px; border-radius: 6px; }
+    .mermaid { text-align: center; margin: 2rem 0; }
+  </style>
+</head>
+<body>
+  <h1>03. 物件導向抽象 (OOP in Go)</h1>
+<h2>1. Go 的「物件感」：Struct + Method</h2>
+<p>Go 沒有 <code>class</code> 關鍵字，資料（Struct）與行為（Method）是分離定義的。透過 Method Receiver 將函式綁定到 Struct 上。</p>
+<pre><code class="language-mermaid">classDiagram
+    class User {
+        +int ID
+        +string Name
+        +string Email
+    }
+    class UserMethods {
+        &lt;&lt;Methods&gt;&gt;
+        +ChangeEmail(newEmail) pointer receiver
+        +GetEmail() value receiver
+    }
+    User &lt;|-- UserMethods : 綁定 (Receiver)
+</code></pre>
+<h2>2. Value Receiver vs Pointer Receiver</h2>
+<p>決定 Method 接收者要用 <code>T</code> (Value) 還是 <code>*T</code> (Pointer) 是 Go 常見的設計抉擇。</p>
+<pre><code class="language-mermaid">flowchart TD
+    A[&quot;需要定義 Method&quot;] --&gt; B{&quot;是否需要修改物件欄位？&quot;}
+    B -- 是 --&gt; C[&quot;使用 Pointer Receiver (*T)&quot;]
+    B -- 否 --&gt; D{&quot;物件結構是否很大？&quot;}
+    D -- 是 (避免複製開銷) --&gt; C
+    D -- 否 (例如自訂的 string/int) --&gt; E[&quot;使用 Value Receiver (T)&quot;]
+    
+    style C fill:#cff9cf,stroke:#55ff55
+</code></pre>
+<h2>3. 繼承的替代方案：組合 (Embedding)</h2>
+<p>Go 語言主張「組合優於繼承」（Composition over Inheritance）。透過將一個 Struct 匿名嵌入另一個 Struct，外部 Struct 會自動「提升」(Promote) 內部 Struct 的欄位與方法。</p>
+<pre><code class="language-mermaid">flowchart BT
+    subgraph &quot;Go 的組合 (has-a)&quot;
+        BaseModel[&quot;BaseModel (ID, CreatedAt)&quot;]
+        User[&quot;User (Name)&quot;]
+        BaseModel -. &quot;匿名嵌入&quot; .-&gt; User
+        User -- &quot;自動擁有 ID, CreatedAt&quot; --&gt; Usage[&quot;user.ID&quot;]
+    end
+    
+    subgraph &quot;傳統物件導向 (is-a)&quot;
+        BaseClass[&quot;BaseClass&quot;]
+        ChildClass[&quot;ChildClass&quot;]
+        BaseClass &lt;|-- ChildClass : 繼承
+    end
+</code></pre>
+<h2>4. 介面與 Duck Typing (隱式實作)</h2>
+<p>在 Java/C# 中，類別必須顯式宣告 <code>implements SomeInterface</code>。但在 Go 語言中，只要一個型別實作了介面定義的所有 Method，它就自動滿足該介面。這稱為 <strong>Duck Typing</strong>（如果牠走起來像鴨子、叫起來像鴨子，牠就是鴨子）。</p>
+<pre><code class="language-mermaid">flowchart LR
+    subgraph &quot;介面定義 (消費者決定)&quot;
+        I[&quot;io.Writer Interface\n- Write(p []byte)&quot;]
+    end
+    
+    subgraph &quot;具體實作 (生產者)&quot;
+        S1[&quot;os.File\n實作了 Write()&quot;]
+        S2[&quot;bytes.Buffer\n實作了 Write()&quot;]
+        S3[&quot;net.Conn\n實作了 Write()&quot;]
+    end
+    
+    S1 -. &quot;隱式滿足&quot; .-&gt; I
+    S2 -. &quot;隱式滿足&quot; .-&gt; I
+    S3 -. &quot;隱式滿足&quot; .-&gt; I
+</code></pre>
+<h2>5. 錯誤處理鏈 (Error Wrapping)</h2>
+<p>Go 的錯誤也是介面。當錯誤從底層一路往上層傳遞時，我們通常會使用 <code>fmt.Errorf(&quot;... %w&quot;, err)</code> 將其包裝，形成錯誤鏈。</p>
+<pre><code class="language-mermaid">flowchart TD
+    DB[&quot;Database Layer\n(sql.ErrNoRows)&quot;]
+    Repo[&quot;Repository Layer&quot;]
+    Service[&quot;Service Layer&quot;]
+    Handler[&quot;HTTP Handler&quot;]
+    
+    DB -- &quot;回傳 err&quot; --&gt; Repo
+    Repo -- &quot;fmt.Errorf(\&quot;find user: %w\&quot;, err)&quot; --&gt; Service
+    Service -- &quot;fmt.Errorf(\&quot;login failed: %w\&quot;, err)&quot; --&gt; Handler
+    Handler -. &quot;使用 errors.Is(err, sql.ErrNoRows)\n解開錯誤鏈檢查&quot; .-&gt; DB
+</code></pre>
+
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true });
+    mermaid.run().then(() => {
+      const div = document.createElement('div'); div.id = 'mermaid-rendered'; document.body.appendChild(div);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>02-資料結構視覺化</title>
+  <style>
+    body { font-family: sans-serif; max-width: 900px; margin: 0 auto; padding: 2rem; }
+    pre { background: #f6f8fa; padding: 16px; border-radius: 6px; }
+    .mermaid { text-align: center; margin: 2rem 0; }
+  </style>
+</head>
+<body>
+  <h1>02. 資料結構視覺化 (Data Structures)</h1>
+<h2>1. Slice 的底層三欄位結構 (Slice Header)</h2>
+<p>Slice 不是陣列，而是一個包含了三個欄位的結構體（在 64-bit 機器上佔 24 bytes），作為底層陣列的「視窗」。</p>
+<pre><code class="language-mermaid">flowchart LR
+    subgraph &quot;Slice Header (24 bytes)&quot;
+        Ptr[&quot;Pointer (8 bytes)&quot;]
+        Len[&quot;Length (8 bytes)&quot;]
+        Cap[&quot;Capacity (8 bytes)&quot;]
+    end
+    
+    subgraph &quot;Underlying Array&quot;
+        A0[&quot;[0] 10&quot;]
+        A1[&quot;[1] 20&quot;]
+        A2[&quot;[2] 30&quot;]
+        A3[&quot;[3] 空&quot;]
+        A4[&quot;[4] 空&quot;]
+    end
+    
+    Ptr --&gt; A0
+    Len -. &quot;目前使用到 [2]&quot; .-&gt; A2
+    Cap -. &quot;總容量到 [4]&quot; .-&gt; A4
+</code></pre>
+<h2>2. Append 擴容機制</h2>
+<p>當 Slice 容量 (<code>cap</code>) 不足時，<code>append</code> 會建立一個新的底層陣列，並將舊資料複製過去，然後回傳新的 Slice Header。</p>
+<pre><code class="language-mermaid">sequenceDiagram
+    participant S as Slice
+    participant O as 舊 Array (Cap: 2)
+    participant N as 新 Array (Cap: 4)
+    
+    S-&gt;&gt;O: append(S, 3) 發現容量已滿
+    O--&gt;&gt;N: 1. 分配更大記憶體 (通常 2 倍)
+    O-&gt;&gt;N: 2. 複製舊資料 [1, 2]
+    S-&gt;&gt;N: 3. 寫入新資料 [3]
+    N--&gt;&gt;S: 4. 更新 Slice Header (新 Ptr, Len:3, Cap:4)
+    Note over O: 舊 Array 若無人引用將被 GC 回收
+</code></pre>
+<h2>3. String 的底層結構</h2>
+<p>字串 (<code>string</code>) 在 Go 語言中是唯讀的位元組切片 (<code>[]byte</code>)，底層是一個包含兩個欄位的結構體（16 bytes）。</p>
+<pre><code class="language-mermaid">flowchart LR
+    subgraph &quot;String Header (16 bytes)&quot;
+        Ptr[&quot;Pointer to bytes&quot;]
+        Len[&quot;Length&quot;]
+    end
+    
+    subgraph &quot;Read-Only Memory&quot;
+        B1[&quot;G&quot;]
+        B2[&quot;o&quot;]
+        B3[&quot;語&quot;]
+        B4[&quot;言&quot;]
+    end
+    
+    Ptr --&gt; B1
+    Len -. &quot;位元組數 (非字元數)&quot; .-&gt; B4
+</code></pre>
+<h2>4. <code>strings.Builder</code> 高效拼接</h2>
+<p>使用 <code>+</code> 號拼接字串會不斷產生新的字串物件並觸發 GC；<code>strings.Builder</code> 則是在一塊預先分配的緩衝區上直接寫入。</p>
+<pre><code class="language-mermaid">flowchart TD
+    A[&quot;s += &#39;a&#39;&quot;] --&gt; B[&quot;建立新字串記憶體&quot;]
+    B --&gt; C[&quot;複製舊字串與 &#39;a&#39;&quot;]
+    C --&gt; D[&quot;舊字串變垃圾 (O(N^2) 效能極差)&quot;]
+    
+    E[&quot;sb.WriteString(&#39;a&#39;)&quot;] --&gt; F[&quot;寫入已分配好的 Buffer&quot;]
+    F --&gt; G[&quot;若 Buffer 滿了才擴容 (O(N) 效能極高)&quot;]
+    
+    style D fill:#f9cfcf,stroke:#ff5555
+    style G fill:#cff9cf,stroke:#55ff55
+</code></pre>
+
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true });
+    mermaid.run().then(() => {
+      const div = document.createElement('div'); div.id = 'mermaid-rendered'; document.body.appendChild(div);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>04-併發模型GMP</title>
+  <style>
+    body { font-family: sans-serif; max-width: 900px; margin: 0 auto; padding: 2rem; }
+    pre { background: #f6f8fa; padding: 16px; border-radius: 6px; }
+    .mermaid { text-align: center; margin: 2rem 0; }
+  </style>
+</head>
+<body>
+  <h1>04. 併發模型 (Concurrency)</h1>
+<h2>1. GMP 排程模型</h2>
+<p>Go 的 Goroutine 如此輕量且高效，歸功於其 runtime 內部的 M:N 排程器（GMP 模型）。</p>
+<pre><code class="language-mermaid">flowchart TD
+    subgraph &quot;OS 層級 (Kernel Space)&quot;
+        M1[&quot;M1 (OS Thread)&quot;]
+        M2[&quot;M2 (OS Thread)&quot;]
+    end
+    
+    subgraph &quot;Go Runtime (User Space)&quot;
+        P1[&quot;P1 (Processor)\n擁有 Local Queue&quot;]
+        P2[&quot;P2 (Processor)\n擁有 Local Queue&quot;]
+        
+        G1((&quot;G&quot;))
+        G2((&quot;G&quot;))
+        G3((&quot;G&quot;))
+        G4((&quot;G&quot;))
+        
+        P1 --&gt; M1
+        P2 --&gt; M2
+        
+        G1 --&gt; P1
+        G2 --&gt; P1
+        G3 --&gt; P2
+    end
+    
+    GlobalQueue[&quot;Global Queue&quot;] -. &quot;P 的 Local Queue 空了\n會來這裡拿 (或去偷其他 P 的)&quot; .-&gt; P1
+    GlobalQueue -.-&gt; P2
+    G4 --&gt; GlobalQueue
+</code></pre>
+<p><em>名詞解釋：G (Goroutine), M (Machine/Thread), P (Processor/資源調度者)</em></p>
+<h2>2. Channel 通訊模式</h2>
+<p>Go 的併發名言：<strong>&quot;不要透過共享記憶體來通訊；要透過通訊來共享記憶體&quot;</strong>。</p>
+<pre><code class="language-mermaid">sequenceDiagram
+    participant S as Sender (Goroutine)
+    participant C as Channel (Unbuffered)
+    participant R as Receiver (Goroutine)
+    
+    S-&gt;&gt;C: ch &lt;- data (阻塞等待)
+    Note over S: Sender 卡住，直到有人接手
+    R-&gt;&gt;C: &lt;- ch (讀取資料)
+    C--&gt;&gt;R: data
+    C--&gt;&gt;S: 傳送成功 (解除阻塞)
+</code></pre>
+<h2>3. 多路複用：<code>select</code></h2>
+<p><code>select</code> 讓單一 Goroutine 可以同時等待多個 Channel 的讀寫事件。如果多個 case 同時就緒，它會<strong>隨機</strong>選擇一個執行（避免飢餓現象）。</p>
+<pre><code class="language-mermaid">flowchart LR
+    G[&quot;Goroutine\n(select)&quot;]
+    CH1[&quot;Channel 1\n(Ticker: 每秒觸發)&quot;]
+    CH2[&quot;Channel 2\n(Data: 收到新訊息)&quot;]
+    CH3[&quot;Channel 3\n(Quit: 關閉信號)&quot;]
+    
+    CH1 --&gt;|case &lt;-ticker.C| G
+    CH2 --&gt;|case msg &lt;-dataCh| G
+    CH3 --&gt;|case &lt;-quitCh| G
+    
+    G --&gt;|&quot;若全無資料&quot;| Default[&quot;執行 default (若有)\n否則 Block&quot;]
+</code></pre>
+<h2>4. Context 樹狀連鎖取消</h2>
+<p>Context 是 Go 用來控制跨 Goroutine 超時與取消的標準方式。當父節點被取消，所有的子孫節點都會收到取消信號。</p>
+<pre><code class="language-mermaid">graph TD
+    Root[&quot;context.Background()&quot;]
+    Req[&quot;Request Context (User ID: 123)&quot;]
+    DB[&quot;DB Query Context (Timeout: 5s)&quot;]
+    API1[&quot;API Call 1 (Timeout: 2s)&quot;]
+    API2[&quot;API Call 2 (Timeout: 2s)&quot;]
+    
+    Root --&gt; Req
+    Req --&gt; DB
+    Req --&gt; API1
+    Req --&gt; API2
+    
+    style API1 fill:#f9cfcf,stroke:#ff5555
+    Note right of API1: 若 API 1 提早發生 Timeout
+    Note left of Req: 呼叫 cancel()
+    Req -. &quot;連鎖發送 Done 信號&quot; .-&gt; DB
+    Req -. &quot;連鎖發送 Done 信號&quot; .-&gt; API2
+</code></pre>
+<h2>5. Fan-out / Fan-in 模式</h2>
+<p>經典的高效能併發處理模式：由一個來源分發給多個 Worker 處理 (Fan-out)，再由一個收集器將多個 Worker 的結果合併 (Fan-in)。</p>
+<pre><code class="language-mermaid">flowchart LR
+    Source[&quot;Task Source&quot;]
+    W1((&quot;Worker 1&quot;))
+    W2((&quot;Worker 2&quot;))
+    W3((&quot;Worker 3&quot;))
+    Merge[&quot;Merge (Fan-in)&quot;]
+    Result[&quot;Final Result&quot;]
+    
+    Source -- &quot;Fan-out (Task Channel)&quot; --&gt; W1
+    Source -- &quot;Fan-out&quot; --&gt; W2
+    Source -- &quot;Fan-out&quot; --&gt; W3
+    
+    W1 -- &quot;Result Channel 1&quot; --&gt; Merge
+    W2 -- &quot;Result Channel 2&quot; --&gt; Merge
+    W3 -- &quot;Result Channel 3&quot; --&gt; Merge
+    
+    Merge --&gt; Result
+</code></pre>
+
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true });
+    mermaid.run().then(() => {
+      const div = document.createElement('div'); div.id = 'mermaid-rendered'; document.body.appendChild(div);
+    });
+  </script>
+</body>
+</html>
