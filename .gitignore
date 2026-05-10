@@ -1,0 +1,8 @@
+.DS_Store
+.tmp/
+.gocache/
+
+# Go build/test artifacts
+*.test
+*.out
+coverage.out
