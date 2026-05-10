@@ -10,7 +10,12 @@ flowchart TD
   B --> C["函式、錯誤、介面、泛型"]
   C --> D["實務標準庫"]
   D --> E["併發模型"]
-  E --> F["大型專案：並發爬蟲 / 任務系統"]
+  E --> F["大型專案架構與實務"]
+  F --> G["版本管理"]
+  G --> H["執行檔打包與部署"]
+  H --> J["效能調優與記憶體"]
+  J --> K["進階測試實務"]
+  K -.- I["附錄：語言規範速覽"]
 ```
 
 ## 章節目錄
@@ -18,12 +23,32 @@ flowchart TD
 | 順序 | 章節 | 重點 |
 |---:|---|---|
 | 1 | [環境與專案結構](chapters/01-environment-and-project.md) | `go mod`、package、專案目錄 |
-| 2 | [基礎語法](chapters/02-basic-syntax.md) | 變數、常數、型別、流程控制、`defer` |
+| 2 | [基礎語法](chapters/02-basic-syntax.md) | 變數、常數、型別、流程控制、`defer`、`iota`、`init()` |
 | 3 | [資料結構與物件感](chapters/03-data-structures.md) | array、slice、map、string、struct、pointer |
 | 4 | [函式、錯誤、介面、泛型](chapters/04-functions-errors-interfaces-generics.md) | 多回傳值、error wrapping、interface、generics |
 | 5 | [實務標準庫](chapters/05-practical-go.md) | JSON、檔案、HTTP、testing、benchmark |
-| 6 | [併發程式設計](chapters/06-concurrency.md) | goroutine、channel、select、mutex、worker pool |
-| 7 | [大型專案：並發爬蟲 / 任務系統](chapters/07-large-project-concurrent-crawler.md) | 架構、rate limit、retry、context、測試 |
+| 6 | [併發程式設計](chapters/06-concurrency.md) | goroutine、channel、GMP 模型、fan-in/out、errgroup |
+| 7 | [大型專案架構與實務](chapters/07-large-project-concurrent-crawler.md) | 目錄佈局、DI、Config、Makefile、並發爬蟲 |
+| 8 | [版本管理](chapters/08-version-management.md) | go.mod 深入、SemVer、private module、proxy |
+| 9 | [執行檔打包與部署](chapters/09-build-and-deploy.md) | 交叉編譯、ldflags、embed、Docker、CI/CD |
+| 10 | [效能調優與記憶體管理](chapters/10-performance-and-memory.md) | Escape Analysis、pprof、GC、sync.Pool |
+| 11 | [進階測試實務](chapters/11-advanced-testing.md) | Mocking 策略、Fuzz Testing、Integration Test |
+
+### 附錄
+
+| 順序 | 章節 | 重點 |
+|---:|---|---|
+| A1 | [語言規範速覽](chapters/A1-language-spec-overview.md) | 標識符、關鍵字、運算子、字面量、作用域、panic/recover |
+
+## 筆記與速查
+
+| 類型 | 檔案/目錄 | 適合 |
+|---|---|---|
+| **全域知識圖** | **[Golang-Mindmap.md](Golang-Mindmap.md)** | **全局觀覽**、建立知識體系、面試前盤點 |
+| 視覺圖解 | [圖解筆記/](圖解筆記/README.md) | **圖像記憶**、理解 GMP/記憶體/底層原理 |
+| 康乃爾筆記 | [康乃爾筆記法/](康乃爾筆記法/README.md) | **最新推薦**。複習、準備面試、自我測驗 |
+| 基礎速查 | [cheatsheet-basic.md](Cheatsheet/cheatsheet-basic.md) | 剛學 Go、日常快速回憶 |
+| 進階速查 | [cheatsheet-advanced.md](Cheatsheet/cheatsheet-advanced.md) | 進階 pattern、效能工具、部署 |
 
 ## 可執行範例
 
@@ -45,16 +70,25 @@ go test ./project-concurrent-crawler/...
 | 第二次讀 | 邊讀邊跑 `examples`，改參數觀察輸出 |
 | 第三次讀 | 看大型專案，把語法對應到真實程式結構 |
 | 實務前 | 補上測試、錯誤處理、context，再寫功能 |
+| 速查 | 開發中隨時翻 Cheat Sheet |
 
 ## 專案結構
 
 ```text
 .
 ├── README.md
+├── Golang-Mindmap.md          ← 🗺️ 全域知識心智圖
+├── 圖解筆記/                    ← 🎨 視覺化流程圖與底層結構圖
+├── 康乃爾筆記法/                ← 【重點】章節複習與自我測驗用
+├── Cheatsheet/
+│   ├── cheatsheet-basic.md        ← 基礎速查
+│   └── cheatsheet-advanced.md     ← 進階速查
 ├── chapters/
 ├── examples/
 └── project-concurrent-crawler/
 ```
+
+
 
 ## 核心觀念
 

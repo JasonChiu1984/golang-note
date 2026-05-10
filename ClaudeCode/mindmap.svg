@@ -1,0 +1,127 @@
+<svg viewBox="0 0 1500 1180" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mmTitle mmDesc">
+  <title id="mmTitle">Go 1.22 學習心智圖</title>
+  <desc id="mmDesc">以 Go 1.22 為核心，分為基礎、型別、實務、上線四大群組，涵蓋 10 個主題章節與每章關鍵字。</desc>
+
+  <defs>
+    <style>
+      .label { font: 14px -apple-system, "Helvetica Neue", "PingFang TC", "Microsoft JhengHei", sans-serif; }
+      .title { font: 700 18px -apple-system, "Helvetica Neue", "PingFang TC", "Microsoft JhengHei", sans-serif; }
+      .ttl-lg { font: 700 22px -apple-system, "Helvetica Neue", "PingFang TC", "Microsoft JhengHei", sans-serif; }
+      .leaf  { font: 13px -apple-system, "Helvetica Neue", "PingFang TC", "Microsoft JhengHei", sans-serif; }
+      .sub   { font: 11px -apple-system, "Helvetica Neue", "PingFang TC", "Microsoft JhengHei", sans-serif; }
+    </style>
+  </defs>
+
+  <rect width="1500" height="1180" fill="#F8FAFC"/>
+
+  <!-- 中心節點 -->
+  <rect x="40" y="540" width="170" height="90" rx="16" fill="#00ADD8"/>
+  <text x="125" y="580" text-anchor="middle" class="ttl-lg" fill="#FFFFFF">Go 1.22</text>
+  <text x="125" y="606" text-anchor="middle" class="label" fill="#FFFFFF" opacity="0.9">心智圖</text>
+  <text x="125" y="622" text-anchor="middle" class="sub" fill="#FFFFFF" opacity="0.7">Mindmap</text>
+
+  <!-- 中心 → 群組 -->
+  <path d="M 210 585 C 245 585, 245 200, 280 200" fill="none" stroke="#00ADD8" stroke-width="1.8" opacity="0.6"/>
+  <path d="M 210 585 C 245 585, 245 480, 280 480" fill="none" stroke="#00ADD8" stroke-width="1.8" opacity="0.6"/>
+  <path d="M 210 585 C 245 585, 245 720, 280 720" fill="none" stroke="#00ADD8" stroke-width="1.8" opacity="0.6"/>
+  <path d="M 210 585 C 245 585, 245 1000, 280 1000" fill="none" stroke="#00ADD8" stroke-width="1.8" opacity="0.6"/>
+
+  <!-- 群組節點 -->
+  <rect x="280" y="170" width="130" height="60" rx="12" fill="#1F2937"/>
+  <text x="345" y="197" text-anchor="middle" class="title" fill="#FFFFFF">基礎</text>
+  <text x="345" y="217" text-anchor="middle" class="sub" fill="#FFFFFF" opacity="0.75">Foundation</text>
+  <rect x="280" y="450" width="130" height="60" rx="12" fill="#1F2937"/>
+  <text x="345" y="477" text-anchor="middle" class="title" fill="#FFFFFF">型別</text>
+  <text x="345" y="497" text-anchor="middle" class="sub" fill="#FFFFFF" opacity="0.75">Types</text>
+  <rect x="280" y="690" width="130" height="60" rx="12" fill="#1F2937"/>
+  <text x="345" y="717" text-anchor="middle" class="title" fill="#FFFFFF">實務</text>
+  <text x="345" y="737" text-anchor="middle" class="sub" fill="#FFFFFF" opacity="0.75">Practice</text>
+  <rect x="280" y="970" width="130" height="60" rx="12" fill="#1F2937"/>
+  <text x="345" y="997" text-anchor="middle" class="title" fill="#FFFFFF">上線</text>
+  <text x="345" y="1017" text-anchor="middle" class="sub" fill="#FFFFFF" opacity="0.75">Production</text>
+
+  <!-- 群組 → 章節 -->
+  <path d="M 410 200 C 445 200, 445 90, 480 90" fill="none" stroke="#94A3B8" stroke-width="1.4"/>
+  <path d="M 410 200 C 445 200, 445 190, 480 190" fill="none" stroke="#94A3B8" stroke-width="1.4"/>
+  <path d="M 410 200 C 445 200, 445 290, 480 290" fill="none" stroke="#94A3B8" stroke-width="1.4"/>
+  <path d="M 410 480 C 445 480, 445 420, 480 420" fill="none" stroke="#94A3B8" stroke-width="1.4"/>
+  <path d="M 410 480 C 445 480, 445 540, 480 540" fill="none" stroke="#94A3B8" stroke-width="1.4"/>
+  <path d="M 410 720 C 445 720, 445 660, 480 660" fill="none" stroke="#94A3B8" stroke-width="1.4"/>
+  <path d="M 410 720 C 445 720, 445 780, 480 780" fill="none" stroke="#94A3B8" stroke-width="1.4"/>
+  <path d="M 410 1000 C 445 1000, 445 900, 480 900" fill="none" stroke="#94A3B8" stroke-width="1.4"/>
+  <path d="M 410 1000 C 445 1000, 445 1000, 480 1000" fill="none" stroke="#94A3B8" stroke-width="1.4"/>
+  <path d="M 410 1000 C 445 1000, 445 1100, 480 1100" fill="none" stroke="#94A3B8" stroke-width="1.4"/>
+
+  <!-- 章節節點 + 葉子 -->
+  <rect x="480" y="65" width="160" height="50" rx="10" fill="#FFFFFF" stroke="#00ADD8" stroke-width="1.8"/>
+  <text x="500" y="92" class="title" fill="#0F172A">0  哲學</text>
+  <text x="500" y="108" class="sub" fill="#475569">Philosophy</text>
+  <text x="660" y="80" class="leaf" fill="#334155">• 少魔法、多可讀</text>
+  <text x="660" y="98" class="leaf" fill="#334155">• 組合勝繼承</text>
+  <text x="660" y="116" class="leaf" fill="#334155">• 錯誤是值；併發內建</text>
+
+  <rect x="480" y="165" width="160" height="50" rx="10" fill="#FFFFFF" stroke="#00ADD8" stroke-width="1.8"/>
+  <text x="500" y="192" class="title" fill="#0F172A">1  環境</text>
+  <text x="500" y="208" class="sub" fill="#475569">Environment</text>
+  <text x="660" y="180" class="leaf" fill="#334155">• 工具鏈內建：build / test / mod / fmt</text>
+  <text x="660" y="198" class="leaf" fill="#334155">• 目錄：cmd / internal / pkg</text>
+  <text x="660" y="216" class="leaf" fill="#334155">• Makefile + golangci-lint</text>
+
+  <rect x="480" y="265" width="160" height="50" rx="10" fill="#FFFFFF" stroke="#00ADD8" stroke-width="1.8"/>
+  <text x="500" y="292" class="title" fill="#0F172A">2  語法</text>
+  <text x="500" y="308" class="sub" fill="#475569">Syntax</text>
+  <text x="660" y="280" class="leaf" fill="#334155">• 25 關鍵字 / 零值有意義</text>
+  <text x="660" y="298" class="leaf" fill="#334155">• defer (LIFO)、iota 枚舉</text>
+  <text x="660" y="316" class="leaf" fill="#334155">• Go 1.22：range over int、loop var fix</text>
+
+  <rect x="480" y="395" width="160" height="50" rx="10" fill="#FFFFFF" stroke="#00ADD8" stroke-width="1.8"/>
+  <text x="500" y="422" class="title" fill="#0F172A">3  資料結構</text>
+  <text x="500" y="438" class="sub" fill="#475569">Data &amp; OOP-feel</text>
+  <text x="660" y="410" class="leaf" fill="#334155">• slice header：ptr + len + cap</text>
+  <text x="660" y="428" class="leaf" fill="#334155">• map 非執行緒安全（fatal）</text>
+  <text x="660" y="446" class="leaf" fill="#334155">• struct embedding ＝ has-a</text>
+
+  <rect x="480" y="515" width="160" height="50" rx="10" fill="#FFFFFF" stroke="#00ADD8" stroke-width="1.8"/>
+  <text x="500" y="542" class="title" fill="#0F172A">4  函式介面泛型</text>
+  <text x="500" y="558" class="sub" fill="#475569">Func / Error / Interface / Generics</text>
+  <text x="660" y="530" class="leaf" fill="#334155">• 多回傳；最後一格是 error</text>
+  <text x="660" y="548" class="leaf" fill="#334155">• 錯誤包裝 %w；errors.Is / As</text>
+  <text x="660" y="566" class="leaf" fill="#334155">• 小 interface、在使用端定義</text>
+
+  <rect x="480" y="635" width="160" height="50" rx="10" fill="#FFFFFF" stroke="#00ADD8" stroke-width="1.8"/>
+  <text x="500" y="662" class="title" fill="#0F172A">5  標準庫</text>
+  <text x="500" y="678" class="sub" fill="#475569">Practical Stdlib</text>
+  <text x="660" y="650" class="leaf" fill="#334155">• net/http 自訂 client / server timeout</text>
+  <text x="660" y="668" class="leaf" fill="#334155">• context 為第一參數</text>
+  <text x="660" y="686" class="leaf" fill="#334155">• testing 表格驅動 + log/slog</text>
+
+  <rect x="480" y="755" width="160" height="50" rx="10" fill="#FFFFFF" stroke="#00ADD8" stroke-width="1.8"/>
+  <text x="500" y="782" class="title" fill="#0F172A">6  併發</text>
+  <text x="500" y="798" class="sub" fill="#475569">Concurrency</text>
+  <text x="660" y="770" class="leaf" fill="#334155">• GMP 排程；每 G 都要有退出路徑</text>
+  <text x="660" y="788" class="leaf" fill="#334155">• channel 編排 / mutex 序列化</text>
+  <text x="660" y="806" class="leaf" fill="#334155">• 6 大 pattern（worker pool / errgroup …）</text>
+
+  <rect x="480" y="875" width="160" height="50" rx="10" fill="#FFFFFF" stroke="#00ADD8" stroke-width="1.8"/>
+  <text x="500" y="902" class="title" fill="#0F172A">7  架構</text>
+  <text x="500" y="918" class="sub" fill="#475569">Architecture</text>
+  <text x="660" y="890" class="leaf" fill="#334155">• transport → service → domain / repo</text>
+  <text x="660" y="908" class="leaf" fill="#334155">• DI 首選手動 wire</text>
+  <text x="660" y="926" class="leaf" fill="#334155">• graceful shutdown + observability</text>
+
+  <rect x="480" y="975" width="160" height="50" rx="10" fill="#FFFFFF" stroke="#00ADD8" stroke-width="1.8"/>
+  <text x="500" y="1002" class="title" fill="#0F172A">8  版本管理</text>
+  <text x="500" y="1018" class="sub" fill="#475569">Modules</text>
+  <text x="660" y="990" class="leaf" fill="#334155">• SemVer：MAJOR / MINOR / PATCH</text>
+  <text x="660" y="1008" class="leaf" fill="#334155">• go.mod / go.sum 必 commit</text>
+  <text x="660" y="1026" class="leaf" fill="#334155">• v2+ 路徑加 /v2；GOPRIVATE</text>
+
+  <rect x="480" y="1075" width="160" height="50" rx="10" fill="#FFFFFF" stroke="#00ADD8" stroke-width="1.8"/>
+  <text x="500" y="1102" class="title" fill="#0F172A">9  部署</text>
+  <text x="500" y="1118" class="sub" fill="#475569">Build &amp; Deploy</text>
+  <text x="660" y="1090" class="leaf" fill="#334155">• CGO_ENABLED=0 純靜態執行檔</text>
+  <text x="660" y="1108" class="leaf" fill="#334155">• Docker multi-stage（distroless）</text>
+  <text x="660" y="1126" class="leaf" fill="#334155">• ldflags 注入版本；//go:embed</text>
+
+  <text x="1480" y="1162" text-anchor="end" class="sub" fill="#94A3B8">由 PROMPT.md 衍生 · 與 README 章節對應</text>
+</svg>

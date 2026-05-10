@@ -1,6 +1,60 @@
 # 01. 環境與專案結構
 
+> **本教材撰寫基準版本：Go 1.22**
+> 內容涵蓋 Go 1.18（generics）、Go 1.21（`min`/`max`/`clear`）、Go 1.22（range-over-int、loop variable fix）等重要特性。如使用較舊版本，部分語法可能不支援。
+
 Go 專案的第一個重點不是語法，而是「程式如何被組織、編譯、測試」。Go 的工具鏈很完整，學會 `go` 指令等於學會一半日常工作流。
+
+## 支援的作業系統與平台
+
+Go 是跨平台語言，官方支援以下主要環境：
+
+| 作業系統 | 架構 | 常見用途 |
+|---|---|---|
+| **Linux** | amd64 | 伺服器、Docker 容器、雲端 |
+| **Linux** | arm64 | Raspberry Pi 4、AWS Graviton、ARM 伺服器 |
+| **Linux** | arm (v6/v7) | Raspberry Pi 3、嵌入式裝置 |
+| **macOS** | arm64 (Apple Silicon) | 開發機（M1/M2/M3/M4） |
+| **macOS** | amd64 (Intel) | 開發機（舊款 Mac） |
+| **Windows** | amd64 | 開發機、Windows Server |
+| **FreeBSD** | amd64, arm64 | 特殊伺服器環境 |
+
+> 完整列表可用 `go tool dist list` 查看，Go 支援超過 40 種 GOOS/GOARCH 組合。
+
+### 安裝方式
+
+| 作業系統 | 安裝方式 | 指令 |
+|---|---|---|
+| **macOS** | Homebrew | `brew install go` |
+| **macOS** | 官方安裝包 | [golang.org/dl](https://golang.org/dl/) 下載 `.pkg` |
+| **Linux (Ubuntu/Debian)** | apt | `sudo apt install golang-go` |
+| **Linux** | 官方 tarball | `sudo tar -C /usr/local -xzf go*.tar.gz` |
+| **Windows** | 官方安裝包 | [golang.org/dl](https://golang.org/dl/) 下載 `.msi` |
+| **Windows** | Scoop | `scoop install go` |
+| **任何平台** | 版本管理工具 | `go install golang.org/dl/go1.22@latest` |
+
+```bash
+# 確認安裝成功
+go version
+# go version go1.22.0 darwin/arm64
+
+# 查看環境設定
+go env GOROOT GOPATH GOOS GOARCH
+```
+
+### 重要環境變數
+
+| 環境變數 | 說明 | 預設值 |
+|---|---|---|
+| `GOROOT` | Go 安裝目錄 | 自動偵測 |
+| `GOPATH` | 工作目錄（放下載的 module cache） | `~/go` |
+| `GOBIN` | `go install` 產出的執行檔目錄 | `$GOPATH/bin` |
+| `GOOS` | 目標作業系統 | 當前系統 |
+| `GOARCH` | 目標 CPU 架構 | 當前架構 |
+| `GOPROXY` | Module proxy | `https://proxy.golang.org,direct` |
+| `GOPRIVATE` | 私有 module pattern | 空 |
+
+> **工程經驗**：安裝完後把 `$GOPATH/bin` 加入 `PATH`，這樣 `go install` 安裝的工具（如 `golangci-lint`、`gopls`）就能直接執行。
 
 ## Go 工具鏈
 
