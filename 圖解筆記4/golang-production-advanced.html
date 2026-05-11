@@ -1,0 +1,953 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>圖解筆記4：Go Production Advanced</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --ink: #17202a;
+      --muted: #5b6675;
+      --line: #d8e0eb;
+      --blue: #2563eb;
+      --teal: #0f766e;
+      --green: #15803d;
+      --amber: #b45309;
+      --rose: #be123c;
+      --violet: #7c3aed;
+      --slate: #334155;
+      --code: #111827;
+      --codeText: #d1fae5;
+      --shadow: 0 16px 36px rgba(15, 23, 42, .08);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+    }
+    a { color: inherit; }
+    .hero {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 36px 20px 30px;
+      border-bottom: 1px solid rgba(255, 255, 255, .12);
+    }
+    .hero-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(280px, .8fr);
+      gap: 24px;
+      align-items: center;
+    }
+    .eyebrow { margin: 0 0 10px; color: #93c5fd; font-size: .95rem; font-weight: 800; }
+    h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.45rem); line-height: 1.08; letter-spacing: 0; }
+    .hero p { margin: 18px 0 0; color: #cbd5e1; max-width: 780px; font-size: 1.05rem; }
+    .hero-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .stat {
+      border: 1px solid rgba(255, 255, 255, .14);
+      background: rgba(255, 255, 255, .06);
+      padding: 14px;
+      border-radius: 8px;
+    }
+    .stat strong { display: block; font-size: 1.8rem; line-height: 1; }
+    .stat span { color: #cbd5e1; font-size: .88rem; }
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(246, 248, 251, .95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+    }
+    .toolbar-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+    }
+    .btn {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      padding: 8px 11px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 800;
+      white-space: nowrap;
+      font: inherit;
+      text-decoration: none;
+    }
+    .btn:hover, .btn.active { border-color: var(--blue); color: var(--blue); background: #eff6ff; }
+    main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 64px; }
+    section { margin: 26px 0; }
+    .section-head { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 14px; }
+    h2 { margin: 0; font-size: clamp(1.45rem, 2.6vw, 2.25rem); letter-spacing: 0; }
+    h3 { margin: 10px 0 8px; font-size: 1.18rem; letter-spacing: 0; }
+    h4 { margin: 14px 0 8px; font-size: 1rem; }
+    .section-head p, .muted { color: var(--muted); }
+    .section-head p { margin: 6px 0 0; }
+    .panel, .topic-card, .flow-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    .panel { padding: 18px; overflow: hidden; }
+    .topic-card, .flow-card { padding: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; }
+    .span-4 { grid-column: span 4; }
+    .span-5 { grid-column: span 5; }
+    .span-6 { grid-column: span 6; }
+    .span-7 { grid-column: span 7; }
+    .span-12 { grid-column: span 12; }
+    svg { width: 100%; height: auto; display: block; }
+    .mindmap-wrap { overflow-x: auto; }
+    .mindmap { min-width: 880px; }
+    .mind-node { cursor: pointer; transition: transform .16s ease, filter .16s ease; }
+    .mind-node rect, .mind-node circle { transition: stroke-width .16s ease, filter .16s ease; }
+    .mind-node:hover rect, .mind-node:hover circle { stroke-width: 4; filter: drop-shadow(0 8px 12px rgba(15, 23, 42, .18)); }
+    .mind-node text { pointer-events: none; font-weight: 800; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #e0f2fe;
+      color: #075985;
+      font-weight: 800;
+      font-size: .78rem;
+    }
+    .badge.teal { background: #ccfbf1; color: #115e59; }
+    .badge.green { background: #dcfce7; color: #166534; }
+    .badge.amber { background: #fef3c7; color: #92400e; }
+    .badge.rose { background: #ffe4e6; color: #9f1239; }
+    .callout {
+      border-left: 5px solid var(--blue);
+      background: #eff6ff;
+      padding: 12px 14px;
+      border-radius: 8px;
+      margin: 12px 0;
+    }
+    .syntax-index-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .syntax-index-card {
+      display: block;
+      width: 100%;
+      min-height: 96px;
+      border: 1px solid var(--line);
+      background: #ffffff;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: left;
+      cursor: pointer;
+      font: inherit;
+      box-shadow: 0 10px 22px rgba(15, 23, 42, .05);
+    }
+    .syntax-index-card:hover,
+    .syntax-index-card:focus {
+      outline: 3px solid rgba(37, 99, 235, .16);
+      border-color: var(--blue);
+    }
+    .syntax-index-card strong {
+      display: block;
+      margin: 7px 0 4px;
+      font-size: 1rem;
+    }
+    .syntax-index-card span:last-child {
+      display: block;
+      color: var(--muted);
+      font-size: .88rem;
+    }
+    .topic-card.highlight { outline: 3px solid rgba(37, 99, 235, .25); border-color: var(--blue); }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: .95rem; }
+    th, td { border: 1px solid var(--line); padding: 9px; vertical-align: top; text-align: left; }
+    th { background: #f1f5f9; }
+    pre {
+      margin: 12px 0;
+      overflow-x: auto;
+      background: var(--code);
+      color: var(--codeText);
+      border-radius: 8px;
+      padding: 14px;
+      font-size: .88rem;
+      line-height: 1.55;
+    }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+    details { border: 1px solid var(--line); border-radius: 8px; background: #f8fafc; padding: 10px 12px; margin-top: 10px; }
+    summary { cursor: pointer; font-weight: 800; color: var(--slate); }
+    .steps { margin: 10px 0 0; padding-left: 20px; }
+    .steps li { margin: 6px 0; }
+    .checklist { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+    .check {
+      border: 1px solid var(--line);
+      background: #fbfdff;
+      border-radius: 8px;
+      padding: 10px;
+      font-weight: 700;
+    }
+    .anti {
+      border: 1px solid #fecdd3;
+      background: #fff1f2;
+      color: #881337;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-top: 10px;
+    }
+    .flow-label { font-size: 13px; font-weight: 800; fill: #17202a; }
+    .flow-small { font-size: 12px; fill: #475569; }
+    .top-link { position: fixed; right: 18px; bottom: 18px; z-index: 15; }
+    @media (max-width: 900px) {
+      .hero-inner, .checklist, .syntax-index-grid { grid-template-columns: 1fr; }
+      .span-4, .span-5, .span-6, .span-7, .span-12 { grid-column: span 12; }
+      .section-head { display: block; }
+    }
+    @media (max-width: 620px) {
+      .hero { padding: 24px 14px; }
+      main, .toolbar-inner { padding-left: 12px; padding-right: 12px; }
+      .hero-stats { grid-template-columns: 1fr; }
+      th, td { padding: 7px; font-size: .88rem; }
+    }
+  </style>
+</head>
+<body id="top">
+  <header class="hero">
+    <div class="hero-inner">
+      <div>
+        <p class="eyebrow">圖解筆記4 / Go Production Advanced</p>
+        <h1>把 Go 語法升級成可上線的工程決策</h1>
+        <p>這份補強篇聚焦資深後端開發最常碰到的三個缺口：Go 1.21/1.22 新標準庫、資料庫層、可觀察性。目標不是背 API，而是看懂一個 production request 從進入服務到落庫、觀測、除錯的完整路徑。</p>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><strong>3</strong><span>工程主軸</span></div>
+        <div class="stat"><strong>12</strong><span>可展開步驟卡</span></div>
+        <div class="stat"><strong>0</strong><span>外部 CDN</span></div>
+      </div>
+    </div>
+  </header>
+
+  <nav class="toolbar" aria-label="頁面導覽">
+    <div class="toolbar-inner">
+      <a class="btn" href="#mindmap">心智圖</a>
+      <a class="btn" href="#syntax-index">語法卡列表</a>
+      <a class="btn" href="#modern-stdlib">Modern Stdlib</a>
+      <a class="btn" href="#database-layer">Database Layer</a>
+      <a class="btn" href="#observability">Observability</a>
+      <a class="btn" href="#production-flow">Production API Flow</a>
+      <button class="btn" id="expandAll" type="button">展開全部</button>
+      <button class="btn" id="collapseAll" type="button">收合全部</button>
+    </div>
+  </nav>
+
+  <main>
+    <section id="mindmap">
+      <div class="section-head">
+        <div>
+          <h2>互動式心智圖</h2>
+          <p>點擊節點會跳到對應章節；三條主線分別處理標準庫演進、資料庫工程、可觀察性。</p>
+        </div>
+      </div>
+      <div class="panel mindmap-wrap">
+        <svg class="mindmap" viewBox="0 0 1080 520" role="img" aria-labelledby="mindmap-title">
+          <title id="mindmap-title">Go Production Advanced mind map</title>
+          <defs>
+            <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L0,6 L9,3 z" fill="#64748b"></path>
+            </marker>
+          </defs>
+          <rect x="0" y="0" width="1080" height="520" rx="16" fill="#f8fafc"></rect>
+          <g stroke="#94a3b8" stroke-width="2.4" fill="none" marker-end="url(#arrow)">
+            <path d="M540 248 C420 110 310 100 205 112"></path>
+            <path d="M540 260 C405 260 312 260 205 260"></path>
+            <path d="M540 272 C430 408 318 420 205 408"></path>
+            <path d="M585 248 C705 110 800 96 918 112"></path>
+            <path d="M585 260 C706 260 804 260 918 260"></path>
+            <path d="M585 272 C704 408 804 420 918 408"></path>
+          </g>
+
+          <g class="mind-node" data-target="production-flow" tabindex="0">
+            <circle cx="562" cy="260" r="78" fill="#dbeafe" stroke="#2563eb" stroke-width="3"></circle>
+            <text x="562" y="247" text-anchor="middle" fill="#1e3a8a">Production</text>
+            <text x="562" y="272" text-anchor="middle" fill="#1e3a8a">Go Service</text>
+          </g>
+
+          <g class="mind-node" data-target="modern-stdlib" tabindex="0">
+            <rect x="40" y="70" width="210" height="84" rx="12" fill="#ecfeff" stroke="#0f766e" stroke-width="3"></rect>
+            <text x="145" y="105" text-anchor="middle" fill="#115e59">Modern Stdlib</text>
+            <text x="145" y="130" text-anchor="middle" fill="#115e59">slices / maps / ServeMux</text>
+          </g>
+          <g class="mind-node" data-target="database-layer" tabindex="0">
+            <rect x="40" y="218" width="210" height="84" rx="12" fill="#f0fdf4" stroke="#15803d" stroke-width="3"></rect>
+            <text x="145" y="253" text-anchor="middle" fill="#166534">Database Layer</text>
+            <text x="145" y="278" text-anchor="middle" fill="#166534">sql / tx / pool</text>
+          </g>
+          <g class="mind-node" data-target="observability" tabindex="0">
+            <rect x="40" y="366" width="210" height="84" rx="12" fill="#fff7ed" stroke="#b45309" stroke-width="3"></rect>
+            <text x="145" y="401" text-anchor="middle" fill="#92400e">Observability</text>
+            <text x="145" y="426" text-anchor="middle" fill="#92400e">log / metric / trace</text>
+          </g>
+
+          <g class="mind-node" data-target="slices-maps-card" tabindex="0">
+            <rect x="832" y="70" width="206" height="84" rx="12" fill="#f5f3ff" stroke="#7c3aed" stroke-width="3"></rect>
+            <text x="935" y="104" text-anchor="middle" fill="#5b21b6">泛型集合工具</text>
+            <text x="935" y="130" text-anchor="middle" fill="#5b21b6">Clone / Equal / Sort</text>
+          </g>
+          <g class="mind-node" data-target="db-transaction-card" tabindex="0">
+            <rect x="832" y="218" width="206" height="84" rx="12" fill="#ffe4e6" stroke="#be123c" stroke-width="3"></rect>
+            <text x="935" y="253" text-anchor="middle" fill="#9f1239">交易一致性</text>
+            <text x="935" y="278" text-anchor="middle" fill="#9f1239">defer Rollback</text>
+          </g>
+          <g class="mind-node" data-target="otel-card" tabindex="0">
+            <rect x="832" y="366" width="206" height="84" rx="12" fill="#fffbeb" stroke="#b45309" stroke-width="3"></rect>
+            <text x="935" y="401" text-anchor="middle" fill="#92400e">觀測關聯</text>
+            <text x="935" y="426" text-anchor="middle" fill="#92400e">trace id / metrics</text>
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <section id="syntax-index">
+      <div class="section-head">
+        <div>
+          <h2>語法卡列表</h2>
+          <p>點選卡片會直接跳到對應語法與工程用法，並短暫高亮目標區塊。</p>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="syntax-index-grid" aria-label="語法卡快速索引">
+          <button class="syntax-index-card syntax-link" type="button" data-target="slices-maps-card">
+            <span class="badge teal">Go 1.21</span>
+            <strong>slices</strong>
+            <span>Clone / Sort / Delete / Compact / BinarySearch</span>
+          </button>
+          <button class="syntax-index-card syntax-link" type="button" data-target="maps-card">
+            <span class="badge teal">Go 1.21</span>
+            <strong>maps</strong>
+            <span>Clone / Equal / DeleteFunc / Keys / Values</span>
+          </button>
+          <button class="syntax-index-card syntax-link" type="button" data-target="servemux-card">
+            <span class="badge">Go 1.22</span>
+            <strong>http.ServeMux</strong>
+            <span>method route / path variable / routing</span>
+          </button>
+          <button class="syntax-index-card syntax-link" type="button" data-target="db-pool-card">
+            <span class="badge green">database/sql</span>
+            <strong>DB pool</strong>
+            <span>sql.Open / PingContext / connection pool</span>
+          </button>
+          <button class="syntax-index-card syntax-link" type="button" data-target="db-transaction-card">
+            <span class="badge rose">Transaction</span>
+            <strong>defer Rollback</strong>
+            <span>BeginTx / ExecContext / Commit</span>
+          </button>
+          <button class="syntax-index-card syntax-link" type="button" data-target="repository-card">
+            <span class="badge green">Architecture</span>
+            <strong>Repository pattern</strong>
+            <span>handler / service / repository / DB</span>
+          </button>
+          <button class="syntax-index-card syntax-link" type="button" data-target="slog-card">
+            <span class="badge amber">Observability</span>
+            <strong>log/slog</strong>
+            <span>JSON log / request id / trace id</span>
+          </button>
+          <button class="syntax-index-card syntax-link" type="button" data-target="otel-card">
+            <span class="badge amber">Metrics / Trace</span>
+            <strong>Prometheus / OpenTelemetry</strong>
+            <span>counter / gauge / histogram / span</span>
+          </button>
+          <button class="syntax-index-card syntax-link" type="button" data-target="health-card">
+            <span class="badge amber">Health</span>
+            <strong>health check / pprof</strong>
+            <span>livez / readyz / metrics / debug</span>
+          </button>
+          <button class="syntax-index-card syntax-link" type="button" data-target="production-flow">
+            <span class="badge">Flow</span>
+            <strong>Production API Flow</strong>
+            <span>data path / error flow / observability flow</span>
+          </button>
+          <button class="syntax-index-card syntax-link" type="button" data-target="production-error-card">
+            <span class="badge rose">Error Flow</span>
+            <strong>錯誤分類</strong>
+            <span>ErrorKind / AppError / Unwrap</span>
+          </button>
+          <button class="syntax-index-card syntax-link" type="button" data-target="production-checklist-card">
+            <span class="badge amber">Checklist</span>
+            <strong>上線檢查</strong>
+            <span>timeout / metrics / rollback / CI</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section id="modern-stdlib">
+      <div class="section-head">
+        <div>
+          <h2>Modern Stdlib：Go 1.21/1.22 標準庫</h2>
+          <p>新版標準庫把常見集合操作與 HTTP 路由收斂到官方 API，減少手寫迴圈與第三方 router 的基本依賴。</p>
+        </div>
+      </div>
+      <div class="grid">
+        <article class="topic-card span-6" id="slices-maps-card">
+          <span class="badge teal">Go 1.21</span>
+          <h3>slices：把 slice 操作從手寫迴圈拉回標準庫</h3>
+          <p class="muted">適用於排序、複製、刪除、去重、二分搜尋。production code 的重點是語意清楚、避免 aliasing、確認排序前置條件。</p>
+          <table>
+            <thead><tr><th>API</th><th>用途</th><th>工程注意</th></tr></thead>
+            <tbody>
+              <tr><td><code>slices.Clone</code></td><td>複製 slice</td><td>避免修改共用底層 array</td></tr>
+              <tr><td><code>slices.Sort</code></td><td>排序 ordered 型別</td><td>會原地修改</td></tr>
+              <tr><td><code>slices.Delete</code></td><td>刪除區間</td><td>回傳值要接回原變數</td></tr>
+              <tr><td><code>slices.Compact</code></td><td>移除連續重複值</td><td>通常要先排序</td></tr>
+              <tr><td><code>slices.BinarySearch</code></td><td>二分搜尋</td><td>slice 必須已排序</td></tr>
+            </tbody>
+          </table>
+          <pre><code class="language-go">package main
+
+import (
+	"fmt"
+	"slices"
+)
+
+func main() {
+	ids := []int{4, 2, 2, 8, 1}
+
+	sorted := slices.Clone(ids) // 不污染呼叫端傳入的 slice
+	slices.Sort(sorted)
+	sorted = slices.Compact(sorted)
+
+	pos, ok := slices.BinarySearch(sorted, 4)
+	fmt.Println(sorted, pos, ok) // [1 2 4 8] 2 true
+}</code></pre>
+          <details>
+            <summary>Step-by-step：如何用在服務層</summary>
+            <ol class="steps">
+              <li>接收外部輸入時先 <code>Clone</code>，避免下游排序改到上游資料。</li>
+              <li>需要 binary search 前，明確在同一段邏輯中排序。</li>
+              <li>刪除、去重後一定接回回傳值，因為長度可能改變。</li>
+            </ol>
+          </details>
+          <div class="anti">反例：直接對 request DTO 的 slice 排序，導致後續 middleware 或 log 看到的順序被改掉。</div>
+        </article>
+
+        <article class="topic-card span-6" id="maps-card">
+          <span class="badge teal">Go 1.21</span>
+          <h3>maps：設定比對、複製與清理</h3>
+          <p class="muted">適合處理 feature flags、label set、metadata、測試期望值。注意 map 本身仍不是 concurrency-safe。</p>
+          <table>
+            <thead><tr><th>API</th><th>用途</th><th>工程注意</th></tr></thead>
+            <tbody>
+              <tr><td><code>maps.Clone</code></td><td>複製 map</td><td>避免把內部狀態交給呼叫端修改</td></tr>
+              <tr><td><code>maps.Equal</code></td><td>比較 key/value</td><td>適合測試與設定 diff</td></tr>
+              <tr><td><code>maps.DeleteFunc</code></td><td>依條件刪除</td><td>清理空值、過期值</td></tr>
+              <tr><td><code>maps.Keys</code></td><td>取得 key iterator</td><td>Go 1.23 後常搭配 <code>slices.Collect</code></td></tr>
+              <tr><td><code>maps.Values</code></td><td>取得 value iterator</td><td>順序不可依賴</td></tr>
+            </tbody>
+          </table>
+          <pre><code class="language-go">package main
+
+import (
+	"fmt"
+	"maps"
+)
+
+func sanitizeLabels(in map[string]string) map[string]string {
+	out := maps.Clone(in)
+	maps.DeleteFunc(out, func(k, v string) bool {
+		return k == "" || v == ""
+	})
+	return out
+}
+
+func main() {
+	labels := map[string]string{"service": "api", "empty": ""}
+	fmt.Println(sanitizeLabels(labels))
+}</code></pre>
+          <details>
+            <summary>Step-by-step：metadata 的安全邊界</summary>
+            <ol class="steps">
+              <li>進入 domain 前先清理空 key、空 value。</li>
+              <li>對外回傳 map 時先 clone，避免呼叫端改壞內部 cache。</li>
+              <li>不要依賴 map iteration 順序；輸出前需要排序。</li>
+            </ol>
+          </details>
+          <div class="anti">反例：把內部 map 直接回傳給 handler，讓其他 goroutine 同時讀寫造成 data race。</div>
+        </article>
+
+        <article class="topic-card span-12" id="servemux-card">
+          <span class="badge">Go 1.22</span>
+          <h3>新版 http.ServeMux：Method + Path Variable</h3>
+          <p class="muted">基本 REST API 可以先用標準庫實作。當需要複雜 middleware chain、route group、schema binding 時，再評估第三方 router。</p>
+          <svg viewBox="0 0 980 180" role="img" aria-label="ServeMux routing flow">
+            <rect width="980" height="180" rx="14" fill="#f8fafc"></rect>
+            <g>
+              <rect x="40" y="58" width="150" height="64" rx="10" fill="#dbeafe" stroke="#2563eb"></rect>
+              <text class="flow-label" x="115" y="86" text-anchor="middle">GET /users/42</text>
+              <text class="flow-small" x="115" y="106" text-anchor="middle">request</text>
+              <path d="M200 90 H310" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"></path>
+              <rect x="320" y="58" width="190" height="64" rx="10" fill="#ecfeff" stroke="#0f766e"></rect>
+              <text class="flow-label" x="415" y="86" text-anchor="middle">GET /users/{id}</text>
+              <text class="flow-small" x="415" y="106" text-anchor="middle">ServeMux pattern</text>
+              <path d="M520 90 H630" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"></path>
+              <rect x="640" y="58" width="150" height="64" rx="10" fill="#f0fdf4" stroke="#15803d"></rect>
+              <text class="flow-label" x="715" y="86" text-anchor="middle">r.PathValue</text>
+              <text class="flow-small" x="715" y="106" text-anchor="middle">id = 42</text>
+              <path d="M800 90 H880" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"></path>
+              <rect x="890" y="58" width="60" height="64" rx="10" fill="#fff7ed" stroke="#b45309"></rect>
+              <text class="flow-label" x="920" y="96" text-anchor="middle">200</text>
+            </g>
+          </svg>
+          <pre><code class="language-go">package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+)
+
+func main() {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("GET /users/{id}", func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		fmt.Fprintf(w, "user id=%s", id)
+	})
+
+	mux.HandleFunc("POST /users", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusCreated)
+	})
+
+	log.Fatal(http.ListenAndServe(":8080", mux))
+}</code></pre>
+          <details>
+            <summary>Step-by-step：何時標準 mux 就夠</summary>
+            <ol class="steps">
+              <li>CRUD API、少量 middleware、路由規則清楚時，先用標準庫。</li>
+              <li>把認證、log、timeout 寫成 handler wrapper，不要塞進每個 handler。</li>
+              <li>若團隊需要 route group、OpenAPI binding、複雜 middleware graph，再導入 router。</li>
+            </ol>
+          </details>
+          <div class="anti">反例：只為了 path variable 就引入大型框架，增加升級與資安維護成本。</div>
+        </article>
+      </div>
+    </section>
+
+    <section id="database-layer">
+      <div class="section-head">
+        <div>
+          <h2>Database Layer：database/sql、交易與連線池</h2>
+          <p>資料庫層的核心不是會寫 SQL，而是能控制 timeout、交易邊界、連線池、錯誤分類與 service/repository 分層。</p>
+        </div>
+      </div>
+      <div class="grid">
+        <article class="topic-card span-7" id="db-pool-card">
+          <span class="badge green">Connection Pool</span>
+          <h3>sql.Open 不是連線：啟動時要 PingContext</h3>
+          <p class="muted"><code>sql.Open</code> 建立的是 handle，不代表 DB 可用。服務啟動階段要用 timeout 驗證連線，並設定 pool 邊界。</p>
+          <table>
+            <thead><tr><th>設定</th><th>用途</th><th>常見判斷</th></tr></thead>
+            <tbody>
+              <tr><td><code>SetMaxOpenConns</code></td><td>最大開啟連線</td><td>避免服務把 DB 打爆</td></tr>
+              <tr><td><code>SetMaxIdleConns</code></td><td>閒置連線數</td><td>降低熱路徑建立連線成本</td></tr>
+              <tr><td><code>SetConnMaxLifetime</code></td><td>連線生命週期</td><td>配合 DB / LB 斷線策略</td></tr>
+              <tr><td><code>PingContext</code></td><td>啟動健康檢查</td><td>不可無 timeout 地卡住部署</td></tr>
+            </tbody>
+          </table>
+          <pre><code class="language-go">package db
+
+import (
+	"context"
+	"database/sql"
+	"time"
+)
+
+func Open(ctx context.Context, driver, dsn string) (*sql.DB, error) {
+	db, err := sql.Open(driver, dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(10)
+	db.SetConnMaxLifetime(30 * time.Minute)
+
+	pingCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+	if err := db.PingContext(pingCtx); err != nil {
+		db.Close()
+		return nil, err
+	}
+	return db, nil
+}</code></pre>
+          <details>
+            <summary>Step-by-step：pool 參數怎麼談</summary>
+            <ol class="steps">
+              <li>先問 DB 最大連線數與同時服務數，避免每個服務各自開太大。</li>
+              <li>用 latency、wait count、DB CPU 觀察瓶頸，不靠感覺調。</li>
+              <li>部署前讓 readiness check 依賴 Ping，但 liveness 不要過度依賴 DB。</li>
+            </ol>
+          </details>
+        </article>
+
+        <article class="topic-card span-5" id="db-transaction-card">
+          <span class="badge rose">Transaction</span>
+          <h3>defer Rollback：交易保險絲</h3>
+          <p class="muted">交易函式只要中途 return error，就讓 rollback 保底；commit 成功後 rollback 會回傳 harmless error，可忽略。</p>
+          <pre><code class="language-go">func Transfer(ctx context.Context, db *sql.DB, from, to int64, amount int) error {
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.ExecContext(ctx,
+		"UPDATE accounts SET balance = balance - ? WHERE id = ?",
+		amount, from,
+	); err != nil {
+		return err
+	}
+
+	if _, err := tx.ExecContext(ctx,
+		"UPDATE accounts SET balance = balance + ? WHERE id = ?",
+		amount, to,
+	); err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}</code></pre>
+          <details>
+            <summary>Step-by-step：交易邊界放哪裡</summary>
+            <ol class="steps">
+              <li>由 service 決定 use case 的交易邊界。</li>
+              <li>repository 接收 <code>tx</code> 或抽象 executor，不自己偷偷開交易。</li>
+              <li>交易內不要呼叫慢速外部 API，避免長時間鎖住資料。</li>
+            </ol>
+          </details>
+          <div class="anti">反例：在 repository 每個方法各自開 transaction，導致一次業務操作無法保證原子性。</div>
+        </article>
+
+        <article class="topic-card span-12" id="repository-card">
+          <span class="badge green">Architecture</span>
+          <h3>Service / Repository 分層圖解</h3>
+          <svg viewBox="0 0 980 260" role="img" aria-label="Service repository database layer">
+            <rect width="980" height="260" rx="14" fill="#f8fafc"></rect>
+            <g>
+              <rect x="40" y="72" width="150" height="70" rx="10" fill="#dbeafe" stroke="#2563eb"></rect>
+              <text class="flow-label" x="115" y="102" text-anchor="middle">HTTP Handler</text>
+              <text class="flow-small" x="115" y="122" text-anchor="middle">parse / validate</text>
+              <path d="M200 107 H295" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"></path>
+              <rect x="305" y="72" width="170" height="70" rx="10" fill="#ecfeff" stroke="#0f766e"></rect>
+              <text class="flow-label" x="390" y="102" text-anchor="middle">Service</text>
+              <text class="flow-small" x="390" y="122" text-anchor="middle">business + tx boundary</text>
+              <path d="M485 107 H580" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"></path>
+              <rect x="590" y="72" width="170" height="70" rx="10" fill="#f0fdf4" stroke="#15803d"></rect>
+              <text class="flow-label" x="675" y="102" text-anchor="middle">Repository</text>
+              <text class="flow-small" x="675" y="122" text-anchor="middle">SQL + mapping</text>
+              <path d="M770 107 H850" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"></path>
+              <rect x="860" y="72" width="80" height="70" rx="10" fill="#fff7ed" stroke="#b45309"></rect>
+              <text class="flow-label" x="900" y="102" text-anchor="middle">DB</text>
+              <text class="flow-small" x="900" y="122" text-anchor="middle">pool</text>
+              <path d="M392 154 C392 205 652 205 675 154" stroke="#be123c" stroke-width="3" fill="none"></path>
+              <text class="flow-small" x="536" y="218" text-anchor="middle">transaction context crosses repository calls</text>
+            </g>
+          </svg>
+          <div class="checklist">
+            <div class="check">Handler：只處理 transport concern，不寫 SQL。</div>
+            <div class="check">Service：決定交易、權限、業務規則與錯誤分類。</div>
+            <div class="check">Repository：只封裝 SQL 與資料映射。</div>
+            <div class="check">DB Pool：有 timeout、有上限、有觀測指標。</div>
+          </div>
+          <details>
+            <summary>Step-by-step：避免 N+1 query</summary>
+            <ol class="steps">
+              <li>先從 API response shape 找出需要批次讀取的關聯資料。</li>
+              <li>repository 提供 <code>FindByIDs(ctx, ids)</code>，不要在 loop 裡逐筆查。</li>
+              <li>測試中加入 query count 或 fake repository，避免回歸。</li>
+            </ol>
+          </details>
+        </article>
+      </div>
+    </section>
+
+    <section id="observability">
+      <div class="section-head">
+        <div>
+          <h2>Observability：log、metrics、trace 與 debug 邊界</h2>
+          <p>可觀察性不是多印 log，而是讓一次 request 的錯誤、耗時、資源使用與使用者影響可以被串起來。</p>
+        </div>
+      </div>
+      <div class="grid">
+        <article class="topic-card span-6" id="slog-card">
+          <span class="badge amber">Structured Logging</span>
+          <h3>log/slog：固定欄位與 request correlation</h3>
+          <p class="muted">production log 必須是機器可查詢的欄位，不要只靠自然語言訊息。</p>
+          <pre><code class="language-go">package main
+
+import (
+	"context"
+	"log/slog"
+	"os"
+)
+
+func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	ctx := context.Background()
+
+	logger.InfoContext(ctx, "order created",
+		"service", "checkout",
+		"request_id", "req-123",
+		"order_id", 991,
+		"amount", 1200,
+	)
+}</code></pre>
+          <details>
+            <summary>Step-by-step：log 欄位設計</summary>
+            <ol class="steps">
+              <li>固定欄位：service、env、request_id、user_id、trace_id。</li>
+              <li>錯誤欄位：error、error_kind、retryable、status_code。</li>
+              <li>避免把密碼、token、完整個資寫進 log。</li>
+            </ol>
+          </details>
+          <div class="anti">反例：<code>log.Println("failed")</code> 沒有 request id、沒有錯誤分類，事故時無法查。</div>
+        </article>
+
+        <article class="topic-card span-6" id="otel-card">
+          <span class="badge amber">Metrics / Trace</span>
+          <h3>Prometheus 與 OpenTelemetry 的工程分工</h3>
+          <p class="muted">Metrics 回答「整體是否異常」，Trace 回答「這一次慢在哪裡」。兩者都要靠一致的 service name 與 request correlation。</p>
+          <table>
+            <thead><tr><th>觀測資料</th><th>回答問題</th><th>常用欄位</th></tr></thead>
+            <tbody>
+              <tr><td>Counter</td><td>總量是否上升</td><td>requests_total、errors_total</td></tr>
+              <tr><td>Gauge</td><td>目前狀態</td><td>inflight_requests、queue_depth</td></tr>
+              <tr><td>Histogram</td><td>延遲分佈</td><td>request_duration_seconds</td></tr>
+              <tr><td>Trace Span</td><td>單次請求耗時拆解</td><td>trace_id、span_id、db.statement</td></tr>
+            </tbody>
+          </table>
+          <pre><code class="language-go">func metricsHandler(w http.ResponseWriter, r *http.Request) {
+	// 教學用：Prometheus text format 的最小概念。
+	// 真實服務通常使用 prometheus client library。
+	w.Header().Set("Content-Type", "text/plain; version=0.0.4")
+	fmt.Fprintln(w, "# TYPE api_requests_total counter")
+	fmt.Fprintln(w, `api_requests_total{method="GET",route="/users/{id}",status="200"} 42`)
+}</code></pre>
+          <details>
+            <summary>Step-by-step：trace 怎麼接上 log</summary>
+            <ol class="steps">
+              <li>request 進來時建立或讀取 trace id。</li>
+              <li>每個 log 都帶 trace_id，讓 log search 能跳回 trace。</li>
+              <li>DB、HTTP client、queue worker 各自建立 span，讓慢點可定位。</li>
+            </ol>
+          </details>
+        </article>
+
+        <article class="topic-card span-12" id="health-card">
+          <span class="badge amber">Health / pprof</span>
+          <h3>Health Check 與 pprof：可用性和除錯邊界要分開</h3>
+          <table>
+            <thead><tr><th>Endpoint</th><th>用途</th><th>Production 邊界</th></tr></thead>
+            <tbody>
+              <tr><td><code>/livez</code></td><td>程序是否活著</td><td>不應依賴 DB，避免錯誤重啟風暴</td></tr>
+              <tr><td><code>/readyz</code></td><td>是否可接流量</td><td>可檢查 DB、cache、必要依賴</td></tr>
+              <tr><td><code>/metrics</code></td><td>供監控系統抓取</td><td>避免高 cardinality label</td></tr>
+              <tr><td><code>/debug/pprof</code></td><td>事故剖析 CPU、heap、goroutine</td><td>必須限制網段或權限</td></tr>
+            </tbody>
+          </table>
+          <pre><code class="language-go">mux.HandleFunc("GET /livez", func(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+})
+
+mux.HandleFunc("GET /readyz", func(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 500*time.Millisecond)
+	defer cancel()
+	if err := db.PingContext(ctx); err != nil {
+		http.Error(w, "db not ready", http.StatusServiceUnavailable)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+})</code></pre>
+          <details>
+            <summary>Step-by-step：事故時先看什麼</summary>
+            <ol class="steps">
+              <li>先看 SLI：錯誤率、p95/p99 latency、飽和度。</li>
+              <li>再用 trace 找慢 span，用 log 找錯誤分類。</li>
+              <li>CPU 或 memory 異常時才打開 pprof，並確認權限邊界。</li>
+            </ol>
+          </details>
+        </article>
+      </div>
+    </section>
+
+    <section id="production-flow">
+      <div class="section-head">
+        <div>
+          <h2>Production API Flow：資料流、錯誤流、觀測流</h2>
+          <p>同一個 API 需要同時設計三條路徑：正常資料流、錯誤分類與回應、觀測資料輸出。</p>
+        </div>
+      </div>
+      <div class="grid">
+        <article class="flow-card span-12">
+          <svg viewBox="0 0 1080 360" role="img" aria-label="Production API flow">
+            <rect width="1080" height="360" rx="14" fill="#f8fafc"></rect>
+            <g stroke="#64748b" stroke-width="3" fill="none">
+              <path d="M155 110 H198"></path>
+              <path d="M335 110 H438"></path>
+              <path d="M575 110 H678"></path>
+              <path d="M815 110 H938"></path>
+              <path d="M515 146 C515 190 392 205 392 246"></path>
+              <path d="M755 146 C755 190 880 205 880 246"></path>
+              <path d="M515 74 C515 48 755 48 755 60"></path>
+            </g>
+            <g fill="#64748b">
+              <polygon points="198,100 198,120 216,110"></polygon>
+              <polygon points="438,100 438,120 456,110"></polygon>
+              <polygon points="678,100 678,120 696,110"></polygon>
+              <polygon points="938,100 938,120 956,110"></polygon>
+              <polygon points="382,246 402,246 392,264"></polygon>
+              <polygon points="870,246 890,246 880,264"></polygon>
+              <polygon points="745,60 765,60 755,78"></polygon>
+            </g>
+            <g>
+              <rect x="35" y="74" width="120" height="72" rx="10" fill="#dbeafe" stroke="#2563eb"></rect>
+              <text class="flow-label" x="95" y="104" text-anchor="middle">HTTP</text>
+              <text class="flow-small" x="95" y="124" text-anchor="middle">request</text>
+              <rect x="215" y="74" width="120" height="72" rx="10" fill="#ecfeff" stroke="#0f766e"></rect>
+              <text class="flow-label" x="275" y="104" text-anchor="middle">Context</text>
+              <text class="flow-small" x="275" y="124" text-anchor="middle">timeout</text>
+              <rect x="455" y="74" width="120" height="72" rx="10" fill="#f0fdf4" stroke="#15803d"></rect>
+              <text class="flow-label" x="515" y="104" text-anchor="middle">Service</text>
+              <text class="flow-small" x="515" y="124" text-anchor="middle">tx boundary</text>
+              <rect x="695" y="74" width="120" height="72" rx="10" fill="#fff7ed" stroke="#b45309"></rect>
+              <text class="flow-label" x="755" y="104" text-anchor="middle">Repository</text>
+              <text class="flow-small" x="755" y="124" text-anchor="middle">SQL</text>
+              <rect x="955" y="74" width="90" height="72" rx="10" fill="#ffe4e6" stroke="#be123c"></rect>
+              <text class="flow-label" x="1000" y="104" text-anchor="middle">DB</text>
+              <text class="flow-small" x="1000" y="124" text-anchor="middle">pool</text>
+              <rect x="292" y="260" width="200" height="58" rx="10" fill="#fee2e2" stroke="#dc2626"></rect>
+              <text class="flow-label" x="392" y="284" text-anchor="middle">Error Flow</text>
+              <text class="flow-small" x="392" y="303" text-anchor="middle">wrap / classify / response</text>
+              <rect x="780" y="260" width="200" height="58" rx="10" fill="#fef3c7" stroke="#b45309"></rect>
+              <text class="flow-label" x="880" y="284" text-anchor="middle">Observability Flow</text>
+              <text class="flow-small" x="880" y="303" text-anchor="middle">log / metric / trace</text>
+              <text class="flow-small" x="640" y="34" text-anchor="middle">data path must carry context and correlation id</text>
+            </g>
+          </svg>
+        </article>
+
+        <article class="topic-card span-6" id="production-error-card">
+          <span class="badge rose">Error Flow</span>
+          <h3>錯誤要分類，不只回傳 err</h3>
+          <pre><code class="language-go">type ErrorKind string
+
+const (
+	KindInvalid   ErrorKind = "invalid"
+	KindNotFound  ErrorKind = "not_found"
+	KindTemporary ErrorKind = "temporary"
+)
+
+type AppError struct {
+	Kind ErrorKind
+	Err  error
+}
+
+func (e *AppError) Error() string { return string(e.Kind) + ": " + e.Err.Error() }
+func (e *AppError) Unwrap() error { return e.Err }</code></pre>
+          <details>
+            <summary>Step-by-step：HTTP 狀態碼映射</summary>
+            <ol class="steps">
+              <li>domain 回傳錯誤種類，不直接知道 HTTP。</li>
+              <li>handler 把 <code>invalid</code> 映射 400、<code>not_found</code> 映射 404。</li>
+              <li>暫時性錯誤回 503 並記錄 retryable=true。</li>
+            </ol>
+          </details>
+        </article>
+
+        <article class="topic-card span-6" id="production-checklist-card">
+          <span class="badge amber">Production Checklist</span>
+          <h3>上線前檢查表</h3>
+          <div class="checklist">
+            <div class="check">所有外部 I/O 都有 context timeout。</div>
+            <div class="check">DB pool 有上限，並有 readiness check。</div>
+            <div class="check">錯誤有分類，HTTP response 格式一致。</div>
+            <div class="check">log 帶 request_id / trace_id。</div>
+            <div class="check">metrics 有 request count、error count、latency。</div>
+            <div class="check">pprof 有網路或權限保護。</div>
+            <div class="check">CI 跑 unit test、race test、basic benchmark。</div>
+            <div class="check">release note 記錄 migration、rollback 與風險。</div>
+          </div>
+          <details>
+            <summary>Step-by-step：一個 API 的驗收口徑</summary>
+            <ol class="steps">
+              <li>功能正確：happy path、validation、not found、DB failure 都測。</li>
+              <li>韌性正確：timeout、cancel、retry 邊界清楚。</li>
+              <li>觀測正確：錯誤時能從 metric 找到 trace，再從 trace 找到 log。</li>
+            </ol>
+          </details>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <a class="btn top-link" href="#top">Top</a>
+
+  <script>
+    const highlightTarget = (target) => {
+      document.querySelectorAll(".topic-card.highlight").forEach((card) => {
+        card.classList.remove("highlight");
+      });
+      if (target) {
+        target.classList.add("highlight");
+        window.setTimeout(() => target.classList.remove("highlight"), 1800);
+      }
+    };
+
+    const jumpToTarget = (targetId) => {
+      const target = document.getElementById(targetId);
+      if (!target) return;
+      history.replaceState(null, "", `#${targetId}`);
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      const highlightable = target.classList.contains("topic-card") || target.classList.contains("flow-card")
+        ? target
+        : target.querySelector(".topic-card, .flow-card");
+      highlightTarget(highlightable);
+    };
+
+    document.querySelectorAll(".mind-node[data-target], .syntax-link[data-target]").forEach((node) => {
+      const run = () => jumpToTarget(node.dataset.target);
+      node.addEventListener("click", run);
+      node.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          run();
+        }
+      });
+    });
+
+    document.getElementById("expandAll").addEventListener("click", () => {
+      document.querySelectorAll("details").forEach((item) => {
+        item.open = true;
+      });
+    });
+
+    document.getElementById("collapseAll").addEventListener("click", () => {
+      document.querySelectorAll("details").forEach((item) => {
+        item.open = false;
+      });
+    });
+  </script>
+</body>
+</html>

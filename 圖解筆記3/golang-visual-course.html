@@ -1,0 +1,1864 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Golang 互動 HTML 圖解教學與 200 個常用案例</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --ink: #17202a;
+      --muted: #5b6675;
+      --line: #d8e0eb;
+      --blue: #2563eb;
+      --teal: #0f766e;
+      --green: #15803d;
+      --amber: #b45309;
+      --rose: #be123c;
+      --violet: #7c3aed;
+      --slate: #334155;
+      --code: #111827;
+      --codeText: #d1fae5;
+      --shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .page {
+      min-height: 100vh;
+    }
+
+    .hero {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 34px 20px 28px;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .hero-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+      gap: 24px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: #93c5fd;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 4rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .hero p {
+      margin: 18px 0 0;
+      color: #cbd5e1;
+      max-width: 740px;
+      font-size: 1.05rem;
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .stat {
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06);
+      padding: 14px;
+      border-radius: 8px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+
+    .stat span {
+      color: #cbd5e1;
+      font-size: 0.88rem;
+    }
+
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(246, 248, 251, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .toolbar-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      padding: 8px 11px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .btn:hover,
+    .btn.active {
+      border-color: var(--blue);
+      color: var(--blue);
+      background: #eff6ff;
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 22px 20px 64px;
+    }
+
+    section {
+      margin: 24px 0;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.6vw, 2.25rem);
+      letter-spacing: 0;
+    }
+
+    .section-head p {
+      margin: 6px 0 0;
+      color: var(--muted);
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+      overflow: hidden;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+    }
+
+    .span-7 { grid-column: span 7; }
+    .span-5 { grid-column: span 5; }
+    .span-6 { grid-column: span 6; }
+    .span-12 { grid-column: span 12; }
+
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .flow-diagram {
+      border-radius: 10px;
+      background: #f8fafc;
+    }
+
+    .flow-diagram .flow-bg {
+      fill: #f8fafc;
+    }
+
+    .flow-diagram .flow-line {
+      stroke: #52637a;
+      stroke-width: 3.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .flow-diagram .flow-arrow {
+      fill: #52637a;
+    }
+
+    .flow-diagram .flow-box {
+      stroke-width: 2;
+      filter: drop-shadow(0 8px 14px rgba(15, 23, 42, 0.06));
+    }
+
+    .flow-diagram .flow-title {
+      font-size: 19px;
+      font-weight: 800;
+    }
+
+    .flow-diagram .flow-caption {
+      font-size: 14px;
+    }
+
+    .flow-diagram .flow-small {
+      font-size: 12px;
+    }
+
+    .node {
+      cursor: pointer;
+    }
+
+    .node rect,
+    .node circle {
+      transition: transform 160ms ease, filter 160ms ease;
+    }
+
+    .node:hover rect,
+    .node:hover circle {
+      filter: drop-shadow(0 8px 12px rgba(37, 99, 235, 0.22));
+    }
+
+    .card-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .syntax-index-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .syntax-index-card {
+      display: block;
+      width: 100%;
+      min-height: 104px;
+      border: 1px solid var(--line);
+      border-top: 4px solid var(--blue);
+      background: #ffffff;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 11px;
+      text-align: left;
+      cursor: pointer;
+      font: inherit;
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.05);
+    }
+
+    .syntax-index-card:hover,
+    .syntax-index-card:focus {
+      outline: 3px solid rgba(37, 99, 235, 0.16);
+      border-color: var(--blue);
+    }
+
+    .syntax-index-card strong {
+      display: block;
+      margin: 7px 0 4px;
+      font-size: 1rem;
+      line-height: 1.25;
+    }
+
+    .syntax-index-card span:last-child {
+      display: block;
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.45;
+    }
+
+    .syntax-card,
+    .case-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .syntax-card.highlight {
+      outline: 3px solid rgba(37, 99, 235, 0.25);
+      border-color: var(--blue);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #e0f2fe;
+      color: #075985;
+      font-weight: 800;
+      font-size: 0.78rem;
+    }
+
+    h3 {
+      margin: 10px 0 8px;
+      font-size: 1.24rem;
+      letter-spacing: 0;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 0.95rem;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--line);
+      padding: 9px;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      background: #f1f5f9;
+    }
+
+    pre {
+      margin: 12px 0;
+      overflow-x: auto;
+      background: var(--code);
+      color: var(--codeText);
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 0.88rem;
+      line-height: 1.55;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    }
+
+    details {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fafc;
+      padding: 10px 12px;
+      margin-top: 10px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 800;
+      color: var(--slate);
+    }
+
+    .steps {
+      margin: 10px 0 0;
+      padding-left: 20px;
+    }
+
+    .steps li {
+      margin: 6px 0;
+    }
+
+    .case-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0 18px;
+    }
+
+    .search-input {
+      width: 100%;
+      margin-top: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--ink);
+      font: inherit;
+      padding: 11px 12px;
+    }
+
+    .search-input:focus {
+      outline: 3px solid rgba(37, 99, 235, 0.18);
+      border-color: var(--blue);
+    }
+
+    .case-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .case-card[hidden] {
+      display: none;
+    }
+
+    .case-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 8px 0;
+    }
+
+    .mini-flow {
+      margin: 10px 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      padding: 6px;
+    }
+
+    .project-flow-grid,
+    .decision-grid,
+    .checklist-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .flow-card,
+    .decision-card,
+    .check-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .flow-card svg,
+    .decision-card svg {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      margin: 10px 0;
+    }
+
+    .decision-options {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin: 10px 0;
+    }
+
+    .decision-option,
+    .acceptance,
+    .anti-pattern {
+      border-radius: 8px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      background: #f8fafc;
+    }
+
+    .decision-option strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--slate);
+    }
+
+    .anti-pattern {
+      border-color: #fecdd3;
+      background: #fff1f2;
+      color: #881337;
+    }
+
+    .acceptance {
+      border-color: #bbf7d0;
+      background: #f0fdf4;
+      color: #14532d;
+    }
+
+    .check-card strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--slate);
+    }
+
+    .top-link {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 15;
+    }
+
+    @media (max-width: 900px) {
+      .hero-inner,
+      .card-list,
+      .case-grid,
+      .syntax-index-grid,
+      .project-flow-grid,
+      .decision-grid,
+      .checklist-grid,
+      .decision-options {
+        grid-template-columns: 1fr;
+      }
+
+      .span-7,
+      .span-5,
+      .span-6,
+      .span-12 {
+        grid-column: span 12;
+      }
+
+      .section-head {
+        display: block;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .hero {
+        padding: 24px 14px;
+      }
+
+      main,
+      .toolbar-inner {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .hero-stats {
+        grid-template-columns: 1fr;
+      }
+
+      th,
+      td {
+        padding: 7px;
+        font-size: 0.88rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page" id="top">
+    <header class="hero">
+      <div class="hero-inner">
+        <div>
+          <p class="eyebrow">10 年 Go 專案工程師視角 / 畫給你看</p>
+          <h1>Golang 互動 HTML 圖解教學</h1>
+          <p>用 SVG 心智圖、流程圖、可展開步驟卡、200 個常用語法範例與 200 個常用案例說明，把 Go 從基礎語法一路接到大型並發任務系統。</p>
+        </div>
+        <div class="hero-stats" aria-label="課程摘要">
+          <div class="stat"><strong>40</strong><span>單一語法卡</span></div>
+          <div class="stat"><strong>200</strong><span>常用語法例</span></div>
+          <div class="stat"><strong>200</strong><span>常用案例</span></div>
+          <div class="stat"><strong>0</strong><span>外部 CDN</span></div>
+        </div>
+      </div>
+    </header>
+
+    <nav class="toolbar" aria-label="課程導覽">
+      <div class="toolbar-inner">
+        <a class="btn" href="#mindmap">心智圖</a>
+        <a class="btn" href="#syntax-index">語法卡列表</a>
+        <a class="btn" href="#syntax">語法卡</a>
+        <a class="btn" href="#syntax-examples-200">200 語法範例</a>
+        <a class="btn" href="#project">大型專案</a>
+        <a class="btn" href="#engineering-decisions">工程決策</a>
+        <a class="btn" href="#production-checklist">Production Checklist</a>
+        <a class="btn" href="#cases">200 常用案例</a>
+        <button class="btn" type="button" id="openAll">展開全部</button>
+        <button class="btn" type="button" id="closeAll">收合全部</button>
+      </div>
+    </nav>
+
+    <main>
+      <section id="mindmap">
+        <div class="section-head">
+          <div>
+            <h2>學習心智圖</h2>
+            <p>點擊節點會跳到對應語法卡。</p>
+          </div>
+        </div>
+        <div class="grid">
+          <div class="panel span-7">
+            <svg viewBox="0 0 960 540" role="img" aria-label="Go 學習心智圖">
+              <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"></path>
+                </marker>
+              </defs>
+              <rect x="0" y="0" width="960" height="540" rx="8" fill="#f8fafc"></rect>
+              <g fill="none" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)">
+                <path d="M 480 270 C 380 210 300 150 210 100"></path>
+                <path d="M 480 270 C 360 260 260 250 150 260"></path>
+                <path d="M 480 270 C 360 330 280 400 205 455"></path>
+                <path d="M 480 270 C 580 200 660 145 760 95"></path>
+                <path d="M 480 270 C 625 260 720 260 835 260"></path>
+                <path d="M 480 270 C 600 345 690 420 780 455"></path>
+              </g>
+              <g class="node" data-target="syntax-go-mod">
+                <rect x="375" y="220" width="210" height="100" rx="8" fill="#2563eb"></rect>
+                <text x="480" y="262" text-anchor="middle" fill="#fff" font-size="24" font-weight="800">Go 核心</text>
+                <text x="480" y="292" text-anchor="middle" fill="#dbeafe" font-size="16">語法到工程化</text>
+              </g>
+              <g class="node" data-target="syntax-go-mod">
+                <rect x="70" y="50" width="210" height="84" rx="8" fill="#e0f2fe" stroke="#0284c7"></rect>
+                <text x="175" y="86" text-anchor="middle" fill="#0f172a" font-size="20" font-weight="800">工具鏈</text>
+                <text x="175" y="112" text-anchor="middle" fill="#475569" font-size="14">go mod / test</text>
+              </g>
+              <g class="node" data-target="syntax-var">
+                <rect x="45" y="218" width="210" height="84" rx="8" fill="#dcfce7" stroke="#16a34a"></rect>
+                <text x="150" y="254" text-anchor="middle" fill="#0f172a" font-size="20" font-weight="800">基礎語法</text>
+                <text x="150" y="280" text-anchor="middle" fill="#475569" font-size="14">if / for / defer</text>
+              </g>
+              <g class="node" data-target="syntax-slice">
+                <rect x="70" y="408" width="230" height="84" rx="8" fill="#fef3c7" stroke="#d97706"></rect>
+                <text x="185" y="444" text-anchor="middle" fill="#0f172a" font-size="20" font-weight="800">資料結構</text>
+                <text x="185" y="470" text-anchor="middle" fill="#475569" font-size="14">slice / map / struct</text>
+              </g>
+              <g class="node" data-target="syntax-interface">
+                <rect x="665" y="50" width="220" height="84" rx="8" fill="#ede9fe" stroke="#7c3aed"></rect>
+                <text x="775" y="86" text-anchor="middle" fill="#0f172a" font-size="20" font-weight="800">抽象設計</text>
+                <text x="775" y="112" text-anchor="middle" fill="#475569" font-size="14">interface / generic</text>
+              </g>
+              <g class="node" data-target="syntax-goroutine">
+                <rect x="730" y="218" width="210" height="84" rx="8" fill="#ffe4e6" stroke="#e11d48"></rect>
+                <text x="835" y="254" text-anchor="middle" fill="#0f172a" font-size="20" font-weight="800">併發</text>
+                <text x="835" y="280" text-anchor="middle" fill="#475569" font-size="14">goroutine / channel</text>
+              </g>
+              <g class="node" data-target="syntax-worker-pool">
+                <rect x="665" y="408" width="235" height="84" rx="8" fill="#ccfbf1" stroke="#0f766e"></rect>
+                <text x="782" y="444" text-anchor="middle" fill="#0f172a" font-size="20" font-weight="800">大型專案</text>
+                <text x="782" y="470" text-anchor="middle" fill="#475569" font-size="14">crawler / worker pool</text>
+              </g>
+            </svg>
+          </div>
+          <div class="panel span-5">
+            <h3>一眼看懂學習順序</h3>
+            <table>
+              <thead><tr><th>先學</th><th>再接上</th></tr></thead>
+              <tbody>
+                <tr><td>工具鏈</td><td>知道程式如何建立與測試</td></tr>
+                <tr><td>語法</td><td>能寫小函式與錯誤處理</td></tr>
+                <tr><td>資料結構</td><td>能建立領域模型</td></tr>
+                <tr><td>抽象</td><td>能替換依賴並寫測試</td></tr>
+                <tr><td>併發</td><td>能控制任務、取消與資源上限</td></tr>
+                <tr><td>專案</td><td>能把語法組成可維護應用</td></tr>
+              </tbody>
+            </table>
+            <details open>
+              <summary>Step-by-step：如何讀這份 HTML</summary>
+              <ol class="steps">
+                <li>先看心智圖，建立全局地圖。</li>
+                <li>點節點跳到語法卡，看 SVG 與 Go 範例。</li>
+                <li>展開步驟卡，照順序理解使用情境。</li>
+                <li>最後用 200 個常用案例把語法套進實務問題。</li>
+              </ol>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section id="syntax-index">
+        <div class="section-head">
+          <div>
+            <h2>語法卡列表 / 快速索引</h2>
+            <p>點選任一語法卡索引，會直接跳到對應的單一語法卡並短暫高亮。</p>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="syntax-index-grid" id="syntaxIndexCards" aria-label="Go 語法卡快速索引"></div>
+        </div>
+      </section>
+
+      <section id="syntax">
+        <div class="section-head">
+          <div>
+            <h2>單一語法教學卡</h2>
+            <p>每張卡只講一個語法或一個標準用法，避免把多個概念混在同一張卡。</p>
+          </div>
+        </div>
+        <div class="card-list" id="syntaxCards"></div>
+      </section>
+
+      <section id="project">
+        <div class="section-head">
+          <div>
+            <h2>大型專案圖解：並發爬蟲 / 任務系統</h2>
+            <p>把 struct、interface、error、context、channel、worker pool 接成一個能測的應用。</p>
+          </div>
+        </div>
+        <div class="panel">
+          <svg class="flow-diagram" viewBox="0 0 1160 520" role="img" aria-label="並發爬蟲架構圖">
+            <rect class="flow-bg" width="1160" height="520" rx="10"></rect>
+            <g class="flow-line">
+              <path d="M185 125 H262"></path>
+              <path d="M425 125 H527"></path>
+              <path d="M705 125 H832"></path>
+              <path d="M925 170 V300 H823"></path>
+              <path d="M640 300 H503"></path>
+              <path d="M315 300 H233"></path>
+              <path d="M625 195 V230 H722 V237"></path>
+              <path d="M722 345 V435 H867"></path>
+            </g>
+            <g class="flow-arrow">
+              <polygon points="262,115 262,135 280,125"></polygon>
+              <polygon points="527,115 527,135 545,125"></polygon>
+              <polygon points="832,115 832,135 850,125"></polygon>
+              <polygon points="823,290 823,310 805,300"></polygon>
+              <polygon points="503,290 503,310 485,300"></polygon>
+              <polygon points="233,290 233,310 215,300"></polygon>
+              <polygon points="712,237 732,237 722,255"></polygon>
+              <polygon points="867,425 867,445 885,435"></polygon>
+            </g>
+            <g>
+              <rect class="flow-box" x="45" y="80" width="140" height="90" rx="10" fill="#dbeafe" stroke="#2563eb"></rect>
+              <text class="flow-title" x="115" y="116" text-anchor="middle">Seed Tasks</text>
+              <text class="flow-caption" x="115" y="143" text-anchor="middle">URL / Depth</text>
+            </g>
+            <g>
+              <rect class="flow-box" x="280" y="80" width="145" height="90" rx="10" fill="#dcfce7" stroke="#16a34a"></rect>
+              <text class="flow-title" x="352" y="116" text-anchor="middle">Queue</text>
+              <text class="flow-caption" x="352" y="143" text-anchor="middle">bounded jobs</text>
+            </g>
+            <g>
+              <rect class="flow-box" x="545" y="55" width="160" height="140" rx="10" fill="#fef3c7" stroke="#d97706"></rect>
+              <text class="flow-title" x="625" y="92" text-anchor="middle">Worker Pool</text>
+              <text class="flow-caption" x="625" y="121" text-anchor="middle">goroutine x N</text>
+              <text class="flow-caption" x="625" y="148" text-anchor="middle">ctx.Done()</text>
+            </g>
+            <g>
+              <rect class="flow-box" x="850" y="80" width="150" height="90" rx="10" fill="#ede9fe" stroke="#7c3aed"></rect>
+              <text class="flow-title" x="925" y="116" text-anchor="middle">Fetcher</text>
+              <text class="flow-caption" x="925" y="143" text-anchor="middle">HTTP / fake</text>
+            </g>
+            <g>
+              <rect class="flow-box" x="640" y="255" width="165" height="90" rx="10" fill="#ccfbf1" stroke="#0f766e"></rect>
+              <text class="flow-title" x="722" y="291" text-anchor="middle">Parser</text>
+              <text class="flow-caption" x="722" y="318" text-anchor="middle">Title / Links</text>
+            </g>
+            <g>
+              <rect class="flow-box" x="315" y="255" width="170" height="90" rx="10" fill="#ffe4e6" stroke="#e11d48"></rect>
+              <text class="flow-title" x="400" y="291" text-anchor="middle">Dedup + Depth</text>
+              <text class="flow-caption" x="400" y="318" text-anchor="middle">seen / max depth</text>
+            </g>
+            <g>
+              <rect class="flow-box" x="45" y="255" width="170" height="90" rx="10" fill="#e2e8f0" stroke="#475569"></rect>
+              <text class="flow-title" x="130" y="291" text-anchor="middle">Retry Policy</text>
+              <text class="flow-caption" x="130" y="318" text-anchor="middle">Attempts limit</text>
+            </g>
+            <g>
+              <rect class="flow-box" x="885" y="390" width="180" height="90" rx="10" fill="#ecfccb" stroke="#65a30d"></rect>
+              <text class="flow-title" x="975" y="426" text-anchor="middle">Store</text>
+              <text class="flow-caption" x="975" y="453" text-anchor="middle">Result + mutex</text>
+            </g>
+          </svg>
+          <table>
+            <thead><tr><th>專案元件</th><th>負責的事</th><th>對應 Go 能力</th></tr></thead>
+            <tbody>
+              <tr><td>Task / Result</td><td>描述輸入與輸出資料</td><td>struct、zero value、slice</td></tr>
+              <tr><td>Fetcher / Parser / Store</td><td>把外部依賴切開</td><td>interface、dependency injection</td></tr>
+              <tr><td>Crawler.Run</td><td>排程任務與統計狀態</td><td>function、error、context</td></tr>
+              <tr><td>Worker Pool</td><td>限制併發數與資源使用</td><td>goroutine、channel、sync</td></tr>
+              <tr><td>Tests</td><td>用 fake 驗證行為</td><td>testing、table-driven thinking</td></tr>
+            </tbody>
+          </table>
+          <div class="project-flow-grid" id="projectDeepDiveFlows"></div>
+        </div>
+      </section>
+
+      <section id="engineering-decisions">
+        <div class="section-head">
+          <div>
+            <h2>工程決策：從能跑到能扛流量</h2>
+            <p>資深工程師看的不是語法有沒有用上，而是滿載、失敗、取消、隔離與資料一致性是否先被設計好。</p>
+          </div>
+        </div>
+        <div class="decision-grid" id="engineeringDecisionCards"></div>
+      </section>
+
+      <section id="production-checklist">
+        <div class="section-head">
+          <div>
+            <h2>Production Checklist</h2>
+            <p>把大型專案交付前的檢查項目變成可驗收標準，而不是口頭上的「應該沒問題」。</p>
+          </div>
+        </div>
+        <div class="checklist-grid" id="productionChecklist"></div>
+      </section>
+
+      <section id="syntax-examples-200">
+        <div class="section-head">
+          <div>
+            <h2>200 個常用語法範例</h2>
+            <p>日常查用的 Go 語法例庫，可依分類與關鍵字快速篩選。</p>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="case-controls" id="syntaxExampleFilters"></div>
+          <label class="muted" for="syntaxExampleSearch">關鍵字搜尋</label>
+          <input id="syntaxExampleSearch" class="search-input" type="search" placeholder="搜尋語法、場景、程式碼，例如 slice、error、goroutine">
+        </div>
+        <div class="case-grid" id="syntaxExampleGrid"></div>
+      </section>
+
+      <section id="cases">
+        <div class="section-head">
+          <div>
+            <h2>200 個常用案例說明</h2>
+            <p>10 組分類，每組 20 個；可依分類篩選，每張卡可點開看步驟、設計取捨、驗收標準與陷阱。</p>
+          </div>
+        </div>
+        <div class="case-controls" id="caseFilters"></div>
+        <div class="case-grid" id="caseGrid"></div>
+      </section>
+    </main>
+
+    <a class="btn top-link" href="#top" aria-label="回到頂部">Top</a>
+  </div>
+
+  <script>
+    const syntaxTopics = [
+      syntaxCard("syntax-go-mod", "工具", "go mod", "用 module 定義專案與依賴邊界。", "#2563eb", [["go mod init", "建立 module"], ["go mod tidy", "同步依賴"]], `module example.com/app\n\ngo 1.22`, ["先決定 module path。", "每次增減 import 後執行 go mod tidy。"], "module path 改動會影響所有 import。"),
+      syntaxCard("syntax-package", "工具", "package", "用 package 分割程式責任。", "#2563eb", [["package main", "可編譯成執行檔"], ["package crawler", "可被 import 的套件"]], `package main\n\nfunc main() {}`, ["入口使用 package main。", "可重用邏輯放其他 package。"], "同一資料夾只能有一個 package 名稱。"),
+      syntaxCard("syntax-import", "工具", "import", "引入標準庫或其他 package。", "#2563eb", [["單一 import", "import \"fmt\""], ["群組 import", "import (...)"]], `import (\n\t\"fmt\"\n\t\"time\"\n)`, ["只 import 用得到的套件。", "讓 gofmt 排序 import。"], "未使用 import 會編譯失敗。"),
+      syntaxCard("syntax-var", "基礎", "var", "明確宣告變數，可在 package 或 function scope 使用。", "#16a34a", [["var name type", "指定型別"], ["var name = value", "推斷型別"]], `var retry int\nvar serviceName = \"crawler\"`, ["需要零值或明確型別時使用 var。", "package scope 只能用 var 或 const。"], "不要把 var 當成一定要初始化的語法，Go 有零值。"),
+      syntaxCard("syntax-short", "基礎", ":=", "函式內短變數宣告。", "#16a34a", [[":=", "宣告並賦值"], ["x, y :=", "接多回傳值"]], `name := \"Gopher\"\nvalue, ok := cache[\"id\"]`, ["只在函式內使用。", "適合短生命週期變數。"], "不能在 package scope 使用 :=。"),
+      syntaxCard("syntax-const", "基礎", "const", "宣告編譯期常數。", "#16a34a", [["const", "不可變值"], ["typed const", "指定常數型別"]], `const MaxRetry = 3\nconst ServiceName = \"crawler\"`, ["固定規則用 const。", "runtime 設定不要用 const。"], "需要從環境變數讀取的值不是 const。"),
+      syntaxCard("syntax-iota", "基礎", "iota", "在 const 區塊中產生遞增列舉值。", "#16a34a", [["iota", "從 0 開始"], ["每行 +1", "同一 const block 遞增"]], `const (\n\tStatusNew = iota\n\tStatusRunning\n\tStatusDone\n)`, ["用在狀態、模式、旗標。", "搭配 String method 讓輸出可讀。"], "插入新列舉會改變後續值，對外 API 要小心。"),
+      syntaxCard("syntax-conversion", "基礎", "type conversion", "Go 不做隱式數字轉換。", "#16a34a", [["T(v)", "顯式轉型"], ["strconv", "字串與數字轉換"]], `count := 10\nratio := float64(count) / 3.0`, ["不同數字型別運算前先轉型。", "字串轉數字使用 strconv。"], "不要期待 int 自動轉成 float64。"),
+      syntaxCard("syntax-if", "流程", "if", "條件判斷，也可在條件前宣告短變數。", "#d97706", [["if condition", "一般判斷"], ["if v := f(); v", "短宣告"]], `if value, ok := cache[\"user\"]; ok {\n\tfmt.Println(value)\n}`, ["先處理錯誤或特殊分支。", "短宣告變數只在 if/else 內有效。"], "不要在 if 外使用短宣告的變數。"),
+      syntaxCard("syntax-switch", "流程", "switch", "多分支判斷，預設不 fallthrough。", "#d97706", [["switch value", "比對值"], ["switch { }", "比對條件"]], `switch status {\ncase \"new\":\n\tcreate()\ncase \"done\":\n\tarchive()\ndefault:\n\tignore()\n}`, ["狀態分支用 switch 比連續 if 更清楚。", "需要 fallthrough 時要明寫。"], "Go 的 switch 不會自動落到下一個 case。"),
+      syntaxCard("syntax-for", "流程", "for", "Go 唯一迴圈語法。", "#d97706", [["for init; cond; post", "計數迴圈"], ["for condition", "while 風格"], ["for { }", "無限迴圈"]], `for i := 0; i < 3; i++ {\n\tfmt.Println(i)\n}`, ["已知次數用計數 for。", "事件迴圈用 for + select。"], "無限迴圈要有 break、return 或 context 退出條件。"),
+      syntaxCard("syntax-range", "流程", "range", "走訪 slice、map、string、channel。", "#d97706", [["range slice", "index/value"], ["range map", "key/value"], ["range channel", "直到 close"]], `for i, value := range items {\n\tfmt.Println(i, value)\n}`, ["不需要 index 時用 _。", "走訪 string 時取得的是 rune。"], "map range 順序不保證固定。"),
+      syntaxCard("syntax-defer", "流程", "defer", "函式結束前執行，常用於釋放資源。", "#d97706", [["defer f()", "延後執行"], ["LIFO", "後 defer 先執行"]], `file, err := os.Open(name)\nif err != nil { return err }\ndefer file.Close()`, ["資源取得成功後立刻 defer close。", "讓清理邏輯靠近取得資源的位置。"], "大量迴圈內 defer 會累積到函式結束才釋放。"),
+      syntaxCard("syntax-func", "函式", "func", "封裝可重用行為。", "#0f766e", [["func name", "具名函式"], ["func(...)", "匿名函式"]], `func Add(a, b int) int {\n\treturn a + b\n}`, ["函式做一件清楚的事。", "參數與回傳值用型別表達契約。"], "不要讓函式同時處理太多層責任。"),
+      syntaxCard("syntax-multireturn", "函式", "多回傳值", "Go 常用多回傳值表達結果與錯誤。", "#0f766e", [["value, error", "最常見"], ["value, ok", "查表或型別判斷"]], `value, err := load()\nif err != nil {\n\treturn err\n}`, ["先檢查 error。", "ok 模式用來區分零值與不存在。"], "不要忽略第二個回傳值。"),
+      syntaxCard("syntax-error", "錯誤", "error", "用顯式錯誤回傳失敗原因。", "#be123c", [["error", "介面型別"], ["nil", "代表成功"]], `if userID == \"\" {\n\treturn errors.New(\"user id is required\")\n}`, ["錯誤是正常控制流程的一部分。", "讓呼叫端決定如何處理。"], "不要 panic 處理一般可預期錯誤。"),
+      syntaxCard("syntax-wrap", "錯誤", "fmt.Errorf %w", "包裝錯誤並保留根因。", "#be123c", [["%w", "包裝 error"], ["errors.Is", "判斷錯誤鏈"], ["errors.As", "取出錯誤型別"]], `if err != nil {\n\treturn fmt.Errorf(\"load config: %w\", err)\n}`, ["跨層傳遞時補上情境。", "邊界層用 errors.Is/As 決策。"], "用 %v 會丟失可判斷的錯誤鏈。"),
+      syntaxCard("syntax-array", "資料", "array", "固定長度陣列，長度是型別的一部分。", "#0f766e", [["[3]int", "長度固定"], ["[...]int", "由值推斷長度"]], `nums := [3]int{1, 2, 3}\nfmt.Println(nums[0])`, ["只有固定大小資料才優先用 array。", "多數列表使用 slice。"], "[3]int 和 [4]int 是不同型別。"),
+      syntaxCard("syntax-slice", "資料", "slice", "最常用的動態列表。", "#0f766e", [["[]T", "slice 型別"], ["append", "追加元素"], ["len/cap", "長度與容量"]], `items := []int{1, 2}\nitems = append(items, 3)`, ["預估大小時用 make 預配置。", "傳遞 slice 會複製 header，不複製底層 array。"], "append 可能換底層 array，不要誤以為所有 slice 永遠共享。"),
+      syntaxCard("syntax-map", "資料", "map", "key-value 查表結構。", "#0f766e", [["map[K]V", "map 型別"], ["v, ok", "判斷 key 是否存在"], ["delete", "刪除 key"]], `scores := map[string]int{\"amy\": 90}\nscore, ok := scores[\"amy\"]`, ["查表、統計、去重都適合 map。", "寫入前確保 map 已初始化。"], "map 不是 goroutine-safe，多 goroutine 寫入要保護。"),
+      syntaxCard("syntax-rune", "資料", "rune", "Unicode code point，處理多語系文字時使用。", "#0f766e", [["byte", "uint8"], ["rune", "int32"], ["range string", "逐 rune"]], `for _, r := range \"台灣Go\" {\n\tfmt.Printf(\"%c\\n\", r)\n}`, ["中文、emoji 等多 byte 文字用 rune。", "len(string) 回傳 byte 數。"], "不要用 byte index 當成字元位置。"),
+      syntaxCard("syntax-struct", "建模", "struct", "Go 的主要資料建模工具。", "#7c3aed", [["field", "具名欄位"], ["tag", "序列化提示"]], `type User struct {\n\tID int\n\tName string\n}`, ["用 struct 表達領域資料。", "欄位大寫才可被外部 package 使用。"], "小寫欄位不會被 json.Marshal 輸出。"),
+      syntaxCard("syntax-pointer", "建模", "pointer", "指向某個值，可修改原物件或避免大複製。", "#7c3aed", [["*T", "指標型別"], ["&v", "取得位址"], ["*p", "解參考"]], `func Rename(user *User, name string) {\n\tuser.Name = name\n}`, ["需要修改原值時傳 pointer。", "讀取 pointer 前留意 nil。"], "nil pointer 解參考會 panic。"),
+      syntaxCard("syntax-method", "建模", "method", "把函式掛在型別上形成行為。", "#7c3aed", [["value receiver", "收到副本"], ["pointer receiver", "可改原值"]], `func (u *User) Rename(name string) {\n\tu.Name = name\n}`, ["不修改狀態可用 value receiver。", "需要修改或 struct 很大時用 pointer receiver。"], "同一型別的 receiver 風格盡量一致。"),
+      syntaxCard("syntax-interface", "抽象", "interface", "描述行為契約，不描述資料。", "#334155", [["method set", "方法集合"], ["implicit", "自動滿足 interface"]], `type Store interface {\n\tSave(ctx context.Context, value []byte) error\n}`, ["在使用端定義小 interface。", "讓測試能用 fake 替換。"], "不要建立什麼都包含的巨大 interface。"),
+      syntaxCard("syntax-generics", "泛型", "generics", "型別不同但演算法相同時使用。", "#0891b2", [["T any", "任意型別"], ["T comparable", "可比較型別"]], `func First[T any](items []T) (T, bool) {\n\tvar zero T\n\tif len(items) == 0 { return zero, false }\n\treturn items[0], true\n}`, ["先確認重複的是演算法。", "使用最小約束。"], "不要用 generics 取代 interface 的行為抽象。"),
+      syntaxCard("syntax-json", "標準庫", "json.Marshal", "把 struct 轉成 JSON。", "#65a30d", [["json tag", "欄位名稱"], ["omitempty", "零值省略"]], `body, err := json.Marshal(User{ID: 1, Name: \"Amy\"})\nif err != nil { return err }`, ["欄位必須 exported。", "用 tag 控制輸出名稱。"], "小寫欄位不會被 Marshal。"),
+      syntaxCard("syntax-file", "標準庫", "os.ReadFile", "讀取檔案內容。", "#65a30d", [["ReadFile", "一次讀完整檔"], ["Open", "串流讀取"]], `data, err := os.ReadFile(\"config.json\")\nif err != nil { return err }`, ["小檔案可用 ReadFile。", "大檔案使用 os.Open + bufio。"], "不要一次讀入不可控大小的檔案。"),
+      syntaxCard("syntax-http-client", "標準庫", "http.Client", "呼叫外部 HTTP API。", "#65a30d", [["Timeout", "避免永久卡住"], ["NewRequestWithContext", "支援取消"]], `client := &http.Client{Timeout: 3 * time.Second}\nreq, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)\nresp, err := client.Do(req)`, ["建立有 timeout 的 client。", "request 綁定 context。", "記得關閉 resp.Body。"], "不要用沒有 timeout 的 default client 做服務。"),
+      syntaxCard("syntax-http-handler", "標準庫", "http.HandlerFunc", "撰寫 HTTP handler。", "#65a30d", [["ResponseWriter", "寫回應"], ["Request", "讀請求"]], `mux := http.NewServeMux()\nmux.HandleFunc(\"/health\", func(w http.ResponseWriter, r *http.Request) {\n\tw.WriteHeader(http.StatusOK)\n})`, ["先檢查 method。", "錯誤回應格式要一致。"], "handler 不要把業務邏輯全部寫在匿名函式裡。"),
+      syntaxCard("syntax-test", "測試", "TestX", "單元測試固定行為契約。", "#0ea5e9", [["func TestX", "測試入口"], ["t.Run", "子案例"]], `func TestGrade(t *testing.T) {\n\tgot := Grade(80)\n\tif got != \"pass\" {\n\t\tt.Fatalf(\"got %q\", got)\n\t}\n}`, ["先測正常案例。", "補錯誤、邊界、空值。"], "測試不要依賴不穩定網路或時間。"),
+      syntaxCard("syntax-benchmark", "測試", "BenchmarkX", "量測效能與 allocation。", "#0ea5e9", [["b.N", "自動調整迴圈"], ["b.ReportAllocs", "顯示 allocation"]], `func BenchmarkSlug(b *testing.B) {\n\tb.ReportAllocs()\n\tfor i := 0; i < b.N; i++ {\n\t\t_ = Slug(\"Hello Go\")\n\t}\n}`, ["只把被測熱路徑放進迴圈。", "準備成本用 b.ResetTimer 排除。"], "benchmark 不是功能測試。"),
+      syntaxCard("syntax-fuzz", "測試", "FuzzX", "用大量輸入找邊界錯誤。", "#0ea5e9", [["f.Add", "加入 seed"], ["f.Fuzz", "模糊測試函式"]], `func FuzzSlug(f *testing.F) {\n\tf.Add(\"Hello Go\")\n\tf.Fuzz(func(t *testing.T, input string) {\n\t\t_ = Slug(input)\n\t})\n}`, ["先加入代表性 seed。", "檢查不變式，而不是固定輸出。"], "fuzz 不要依賴外部服務與全域狀態。"),
+      syntaxCard("syntax-goroutine", "併發", "goroutine", "用 go 啟動併發執行。", "#e11d48", [["go f()", "啟動背景執行"], ["退出條件", "必須設計"]], `go func() {\n\tdefer wg.Done()\n\tprocess(job)\n}()`, ["每個 goroutine 都要有退出路徑。", "需要等待完成時搭配 WaitGroup。"], "無限期阻塞會造成 goroutine leak。"),
+      syntaxCard("syntax-channel", "併發", "channel", "goroutine 之間傳遞資料。", "#e11d48", [["chan T", "雙向"], ["chan<- T", "只送"], ["<-chan T", "只收"]], `jobs := make(chan int, 2)\njobs <- 1\nvalue := <-jobs`, ["明確資料流方向。", "sender 完成後負責 close。"], "由 receiver close channel 常導致 send on closed channel。"),
+      syntaxCard("syntax-select", "併發", "select", "同時等待多個 channel 事件。", "#e11d48", [["case <-ch", "等待資料"], ["case <-ctx.Done()", "等待取消"], ["default", "非阻塞分支"]], `select {\ncase job := <-jobs:\n\thandle(job)\ncase <-ctx.Done():\n\treturn ctx.Err()\n}`, ["所有可能阻塞的 channel 操作都考慮 cancel。", "用 timeout 保護外部等待。"], "濫用 default 可能造成 busy loop。"),
+      syntaxCard("syntax-context", "併發", "context", "傳遞取消、逾時與 request scope。", "#7c3aed", [["WithTimeout", "逾時"], ["WithCancel", "手動取消"], ["Done", "取消訊號"]], `ctx, cancel := context.WithTimeout(context.Background(), time.Second)\ndefer cancel()`, ["入口建立 context。", "傳給下層阻塞操作。"], "不要把 context 存進長生命週期 struct。"),
+      syntaxCard("syntax-mutex", "併發", "sync.Mutex", "保護共享資料。", "#e11d48", [["Lock", "上鎖"], ["Unlock", "解鎖"]], `mu.Lock()\ncount++\nmu.Unlock()`, ["共享寫入必須保護。", "Unlock 通常搭配 defer。"], "不要在持鎖時做慢速 I/O。"),
+      syntaxCard("syntax-waitgroup", "併發", "sync.WaitGroup", "等待一組 goroutine 完成。", "#e11d48", [["Add", "增加等待數"], ["Done", "完成一個"], ["Wait", "等待全部"]], `var wg sync.WaitGroup\nwg.Add(1)\ngo func() { defer wg.Done(); work() }()\nwg.Wait()`, ["啟動 goroutine 前 Add。", "goroutine 內 defer Done。"], "Add 和 Wait 的時機錯亂容易造成 panic 或競態。"),
+      syntaxCard("syntax-worker-pool", "專案", "worker pool", "限制同時處理任務的 goroutine 數。", "#475569", [["jobs", "任務來源"], ["workers", "固定數量消費者"], ["results", "結果輸出"]], `for i := 0; i < workers; i++ {\n\tgo worker(ctx, jobs, results)\n}`, ["先設定 worker 數與 queue 大小。", "用 context 統一停止。"], "worker pool 不是越大越快，要依資源瓶頸調整。")
+    ];
+
+    const syntaxExampleGroups = [
+      {
+        category: "專案與工具鏈",
+        color: "#2563eb",
+        titles: ["初始化 module", "整理 go.mod", "檢查 Go 版本", "執行單一 package", "執行全部測試", "格式化程式碼", "查看 package 文件", "列出依賴", "建立執行檔", "用 cmd 目錄放入口"]
+      },
+      {
+        category: "宣告與型別",
+        color: "#16a34a",
+        titles: ["var 宣告零值", "短變數宣告", "const 常數", "iota 狀態列舉", "int 轉 float64", "字串轉整數", "整數轉字串", "bool 條件值", "byte 處理位元組", "rune 處理字元", "type alias", "自訂型別", "nil pointer 判斷", "零值 struct", "多變數宣告", "交換兩個變數", "typed constant", "複數 complex", "時間 duration 型別", "any 接任意值"]
+      },
+      {
+        category: "流程控制",
+        color: "#d97706",
+        titles: ["if 基本判斷", "if 短宣告", "if error 優先返回", "switch 字串狀態", "switch 無條件式", "type switch", "for 計數迴圈", "for while 風格", "for 無限迴圈", "range slice", "range map", "range string rune", "break 跳出迴圈", "continue 略過本輪", "defer 關閉資源", "多個 defer 順序", "label break", "select timeout", "default 非阻塞", "early return 減少巢狀"]
+      },
+      {
+        category: "函式與閉包",
+        color: "#0f766e",
+        titles: ["具名函式", "多參數同型別", "多回傳值", "回傳 error", "命名回傳值", "variadic 參數", "函式當參數", "函式當回傳值", "匿名函式立即執行", "閉包保存狀態", "defer 包裝耗時", "遞迴函式", "method value", "method expression", "helper 函式", "建構函式 New", "選項函式模式", "泛用 map 函式", "middleware 函式鏈", "用 context 當第一參數"]
+      },
+      {
+        category: "錯誤處理",
+        color: "#be123c",
+        titles: ["errors.New", "fmt.Errorf 包裝", "errors.Is 判斷", "errors.As 取型別", "自訂錯誤型別", "哨兵錯誤", "validation error", "多錯誤 join", "忽略錯誤的風險", "panic recover 邊界", "HTTP 錯誤映射", "重試暫時錯誤", "錯誤加操作情境", "避免重複 log", "EOF 正常結束", "context canceled 判斷", "deadline exceeded 判斷", "錯誤轉使用者訊息", "錯誤測試案例", "錯誤 wrapping 測試"]
+      },
+      {
+        category: "array / slice / map / string / rune",
+        color: "#0f766e",
+        titles: ["array 固定長度", "slice literal", "slice append", "slice copy", "slice 預配置", "slice 截取", "刪除 slice 元素", "反轉 slice", "去重 slice", "排序 slice", "map 建立", "map 讀取 ok", "map 刪除", "map 統計次數", "map 當 set", "map keys 轉 slice", "string len byte", "range string rune", "strings.Builder", "strings.Split", "strings.Join", "strings.Contains", "strconv.Atoi", "strconv.Itoa", "[]byte 與 string", "rune slice 反轉文字", "unicode 判斷字母", "map 巢狀結構", "slice of struct", "穩定輸出 map"]
+      },
+      {
+        category: "struct / method / interface / generics",
+        color: "#7c3aed",
+        titles: ["struct literal", "匿名 struct", "struct tag", "嵌入 struct", "pointer receiver", "value receiver", "method chaining", "interface 定義", "小 interface", "interface fake", "type assertion", "type switch", "empty interface any", "generic First", "generic Contains", "generic Set", "generic Queue", "comparable 約束", "自訂約束", "composition 取代繼承", "依賴注入", "Repository interface", "Reader interface", "Writer interface", "Stringer interface", "JSON DTO struct", "domain model struct", "不可變值物件", "建構函式驗證", "options pattern struct"]
+      },
+      {
+        category: "標準庫實務",
+        color: "#65a30d",
+        titles: ["json.Marshal", "json.Unmarshal", "json.Decoder", "os.ReadFile", "os.WriteFile", "bufio.Scanner", "filepath.Join", "time.Now", "time.Parse", "time.Ticker", "http.Client timeout", "http.NewRequestWithContext", "http.HandlerFunc", "httptest.ResponseRecorder", "url.Parse", "regexp.MatchString", "log/slog 基本用法", "flag 解析參數", "embed 檔案", "io.Copy"]
+      },
+      {
+        category: "併發與 context",
+        color: "#e11d48",
+        titles: ["go 啟動 goroutine", "WaitGroup 等待", "Mutex 保護計數", "RWMutex 多讀少寫", "channel 送收", "buffered channel", "channel close", "range channel", "select 等多事件", "context timeout", "context cancel", "worker pool", "fan-out", "fan-in", "rate limit ticker", "semaphore channel", "sync.Once", "atomic counter", "避免 goroutine leak", "pipeline 取消"]
+      },
+      {
+        category: "testing / benchmark / fuzz",
+        color: "#0ea5e9",
+        titles: ["TestX 基本測試", "table-driven test", "t.Run 子測試", "t.Helper", "測錯誤分支", "fake dependency", "BenchmarkX", "b.ReportAllocs", "FuzzX", "httptest handler"]
+      }
+    ];
+
+    function buildSyntaxExamples() {
+      const examples = [];
+      syntaxExampleGroups.forEach((group, groupIndex) => {
+        group.titles.forEach((title, titleIndex) => {
+          examples.push({
+            no: examples.length + 1,
+            category: group.category,
+            color: group.color,
+            title,
+            scene: syntaxExampleScene(group.category, title),
+            code: syntaxExampleCode(groupIndex, titleIndex, title),
+            point: syntaxExamplePoint(group.category, title),
+            pitfall: syntaxExamplePitfall(group.category),
+            projectUsage: syntaxExampleProjectUsage(group.category, title),
+            antiPattern: syntaxExampleAntiPattern(group.category, title)
+          });
+        });
+      });
+      return examples;
+    }
+
+    function syntaxExampleScene(category, title) {
+      return `${category} 常用情境：${title}。`;
+    }
+
+    function syntaxExamplePoint(category, title) {
+      return `先看 ${title} 的資料流與錯誤路徑，再放進 ${category} 的實務場景。`;
+    }
+
+    function syntaxExamplePitfall(category) {
+      const map = {
+        "專案與工具鏈": "工具指令要在正確 module 根目錄執行，避免 import path 混亂。",
+        "宣告與型別": "不要依賴隱式轉型；Go 需要明確型別與顯式轉換。",
+        "流程控制": "流程控制要讓錯誤與退出條件清楚，避免過深巢狀。",
+        "函式與閉包": "閉包會捕捉外部變數，迴圈中使用時要留意變數生命週期。",
+        "錯誤處理": "不要吞錯或只 log 不回傳，否則上層無法決策。",
+        "array / slice / map / string / rune": "slice 與 map 都有底層共享或非 thread-safe 的細節，要明確處理。",
+        "struct / method / interface / generics": "先用具體型別，有替換需求時再抽小 interface 或泛型。",
+        "標準庫實務": "外部 I/O 要處理錯誤、關閉資源，並設定 timeout 或大小限制。",
+        "併發與 context": "每個 goroutine 都要能因 channel close 或 context cancel 結束。",
+        "testing / benchmark / fuzz": "測試要可重現；benchmark 與 fuzz 不要依賴不穩定外部資源。"
+      };
+      return map[category];
+    }
+
+    function syntaxExampleProjectUsage(category, title) {
+      const map = {
+        "專案與工具鏈": "放進 CI、release script 或新人 onboarding 文件，讓專案操作可重現。",
+        "宣告與型別": "用明確型別表達 domain 語意，例如 UserID、TaskStatus、RetryCount。",
+        "流程控制": "用 early return、switch 與 context 分支讓錯誤路徑可讀。",
+        "函式與閉包": "把 handler、middleware、worker、service 拆成可測的小函式。",
+        "錯誤處理": "跨 package 回傳時補上操作情境，邊界層再決定 log 與 response。",
+        "array / slice / map / string / rune": "用在 DTO、快取、去重、批次查詢與輸出排序；注意共享底層資料。",
+        "struct / method / interface / generics": "用 struct 建 domain，用小 interface 隔離外部依賴，用泛型處理純資料結構。",
+        "標準庫實務": "標準庫是 production 基座；HTTP、JSON、檔案、時間與 log 都要有錯誤與資源邊界。",
+        "併發與 context": "把 worker pool、pipeline 與外部 I/O 全部接上取消訊號與資源上限。",
+        "testing / benchmark / fuzz": "把重要 use case 變成 table test，熱路徑用 benchmark，解析器用 fuzz 找邊界。"
+      };
+      return `${map[category]}本例「${title}」應搭配驗收測試或 code review checklist 使用。`;
+    }
+
+    function syntaxExampleAntiPattern(category, title) {
+      const map = {
+        "專案與工具鏈": "只在本機手動執行，沒有寫進 README、Makefile 或 CI，導致交接不可重現。",
+        "宣告與型別": "所有值都用 string/int 傳來傳去，讓狀態與 ID 語意消失。",
+        "流程控制": "把正常路徑與錯誤路徑塞在多層巢狀 if 裡，review 很難看出退出條件。",
+        "函式與閉包": "單一函式同時做解析、業務、I/O、log 與 response，最後無法單元測試。",
+        "錯誤處理": "只回傳 errors.New(\"failed\") 或只 log 不 return，讓上層無法決策。",
+        "array / slice / map / string / rune": "忽略 slice aliasing、map 非 thread-safe、string byte/rune 差異，留下隱性 bug。",
+        "struct / method / interface / generics": "提前抽巨大 interface 或過度泛型化，讓呼叫端負擔比收益更大。",
+        "標準庫實務": "I/O 沒 timeout、body 沒 close、讀檔無大小限制，壓力一來就出事。",
+        "併發與 context": "沒有退出條件的 goroutine、無界 queue、持鎖做慢 I/O。",
+        "testing / benchmark / fuzz": "測試依賴真網路與現在時間，benchmark 把 setup 成本算進熱路徑。"
+      };
+      return `${map[category]}檢查「${title}」時要特別避免這種寫法。`;
+    }
+
+    function syntaxExampleCode(groupIndex, titleIndex, title) {
+      const templates = [
+        [
+          `go mod init example.com/app`,
+          `go mod tidy`,
+          `go version`,
+          `go run ./cmd/app`,
+          `go test ./...`,
+          `gofmt -w .`,
+          `go doc net/http.Client`,
+          `go list -m all`,
+          `go build -o bin/app ./cmd/app`,
+          `// cmd/app/main.go\npackage main\n\nfunc main() {\n\trun()\n}`
+        ],
+        [
+          `var count int\nfmt.Println(count)`,
+          `name := "Gopher"\nfmt.Println(name)`,
+          `const MaxRetry = 3`,
+          `const (\n\tStatusNew = iota\n\tStatusDone\n)`,
+          `ratio := float64(10) / 3.0`,
+          `n, err := strconv.Atoi("42")\nif err != nil { return err }\nfmt.Println(n)`,
+          `s := strconv.Itoa(42)`,
+          `ok := len(items) > 0`,
+          `var b byte = 'A'`,
+          `var r rune = '台'`,
+          `type UserID = string`,
+          `type UserID string\nvar id UserID = "u1"`,
+          `if user == nil {\n\treturn errors.New("nil user")\n}`,
+          `var user User\nfmt.Println(user.ID)`,
+          `var x, y = 1, 2`,
+          `x, y = y, x`,
+          `const timeout time.Duration = 3 * time.Second`,
+          `z := complex(2, 3)`,
+          `d := 1500 * time.Millisecond`,
+          `var value any = "text"`
+        ],
+        [
+          `if score >= 60 {\n\treturn "pass"\n}`,
+          `if v, ok := cache[key]; ok {\n\treturn v\n}`,
+          `if err != nil {\n\treturn err\n}`,
+          `switch status {\ncase "new":\n\tcreate()\ndefault:\n\tignore()\n}`,
+          `switch {\ncase score >= 90:\n\treturn "A"\ndefault:\n\treturn "B"\n}`,
+          `switch v := value.(type) {\ncase string:\n\tfmt.Println(v)\n}`,
+          `for i := 0; i < 3; i++ {\n\tfmt.Println(i)\n}`,
+          `for running {\n\tpoll()\n}`,
+          `for {\n\tbreak\n}`,
+          `for i, v := range items {\n\tfmt.Println(i, v)\n}`,
+          `for key, value := range scores {\n\tfmt.Println(key, value)\n}`,
+          `for _, r := range "台灣Go" {\n\tfmt.Println(r)\n}`,
+          `for _, v := range items {\n\tif v == target { break }\n}`,
+          `for _, v := range items {\n\tif v == "" { continue }\n}`,
+          `file, err := os.Open(name)\nif err != nil { return err }\ndefer file.Close()`,
+          `defer fmt.Println("last")\ndefer fmt.Println("first")`,
+          `outer:\nfor _, row := range rows {\n\tfor _, v := range row {\n\t\tif v == target { break outer }\n\t}\n}`,
+          `select {\ncase <-time.After(time.Second):\n\treturn errors.New("timeout")\n}`,
+          `select {\ncase v := <-ch:\n\tfmt.Println(v)\ndefault:\n\tfmt.Println("not ready")\n}`,
+          `if err != nil { return err }\nreturn nil`
+        ],
+        [
+          `func Add(a, b int) int {\n\treturn a + b\n}`,
+          `func Move(x, y int) Point {\n\treturn Point{X: x, Y: y}\n}`,
+          `func Find(id string) (User, bool) {\n\treturn User{}, false\n}`,
+          `func Load() ([]byte, error) {\n\treturn os.ReadFile("data.txt")\n}`,
+          `func Parse() (value int, err error) {\n\treturn 1, nil\n}`,
+          `func Sum(nums ...int) int {\n\ttotal := 0\n\tfor _, n := range nums { total += n }\n\treturn total\n}`,
+          `func Apply(v int, fn func(int) int) int {\n\treturn fn(v)\n}`,
+          `func Multiplier(n int) func(int) int {\n\treturn func(v int) int { return n * v }\n}`,
+          `func() {\n\tfmt.Println("run now")\n}()`,
+          `next := func() int {\n\tcount := 0\n\treturn func() int { count++; return count }\n}()`,
+          `defer func(start time.Time) {\n\tfmt.Println(time.Since(start))\n}(time.Now())`,
+          `func Fact(n int) int {\n\tif n <= 1 { return 1 }\n\treturn n * Fact(n-1)\n}`,
+          `rename := user.Rename\nrename("Ada")`,
+          `fn := (*User).Rename\nfn(&user, "Ada")`,
+          `func must(t *testing.T, err error) {\n\tt.Helper()\n\tif err != nil { t.Fatal(err) }\n}`,
+          `func NewService(store Store) *Service {\n\treturn &Service{store: store}\n}`,
+          `type Option func(*Config)\nfunc WithTimeout(d time.Duration) Option {\n\treturn func(c *Config) { c.Timeout = d }\n}`,
+          `func Map[T any](items []T, fn func(T) T) []T {\n\tout := make([]T, len(items))\n\tfor i, item := range items { out[i] = fn(item) }\n\treturn out\n}`,
+          `func Chain(next http.Handler) http.Handler {\n\treturn http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { next.ServeHTTP(w, r) })\n}`,
+          `func Load(ctx context.Context, id string) error {\n\treturn ctx.Err()\n}`
+        ],
+        [
+          `return errors.New("not found")`,
+          `return fmt.Errorf("load user: %w", err)`,
+          `if errors.Is(err, ErrNotFound) {\n\treturn nil\n}`,
+          `var target *PathError\nif errors.As(err, &target) {\n\tfmt.Println(target.Path)\n}`,
+          `type ValidationError struct { Field string }\nfunc (e ValidationError) Error() string { return e.Field + " invalid" }`,
+          `var ErrNotFound = errors.New("not found")`,
+          `if name == "" {\n\treturn ValidationError{Field: "name"}\n}`,
+          `return errors.Join(errA, errB)`,
+          `_ = os.WriteFile(name, data, 0644) // bad: error ignored`,
+          `defer func() {\n\tif r := recover(); r != nil { log.Println(r) }\n}()`,
+          `if errors.Is(err, ErrNotFound) {\n\thttp.Error(w, "not found", http.StatusNotFound)\n}`,
+          `if temporary(err) {\n\treturn retry()\n}`,
+          `return fmt.Errorf("decode config file %s: %w", name, err)`,
+          `// log once at boundary\nreturn fmt.Errorf("service failed: %w", err)`,
+          `if errors.Is(err, io.EOF) {\n\treturn nil\n}`,
+          `if errors.Is(err, context.Canceled) {\n\treturn err\n}`,
+          `if errors.Is(err, context.DeadlineExceeded) {\n\treturn err\n}`,
+          `message := "資料讀取失敗，請稍後再試"`,
+          `if err == nil {\n\tt.Fatal("expected error")\n}`,
+          `if !errors.Is(err, ErrNotFound) {\n\tt.Fatalf("got %v", err)\n}`
+        ],
+        [
+          `nums := [3]int{1, 2, 3}`,
+          `items := []string{"a", "b"}`,
+          `items = append(items, "c")`,
+          `dst := append([]string(nil), src...)`,
+          `items := make([]int, 0, 100)`,
+          `head := items[:2]`,
+          `items = append(items[:i], items[i+1:]...)`,
+          `for i, j := 0, len(items)-1; i < j; i, j = i+1, j-1 {\n\titems[i], items[j] = items[j], items[i]\n}`,
+          `seen := map[string]struct{}{}\nfor _, v := range items { seen[v] = struct{}{} }`,
+          `sort.Strings(items)`,
+          `scores := map[string]int{}`,
+          `score, ok := scores["amy"]`,
+          `delete(scores, "amy")`,
+          `counts := map[string]int{}\ncounts[name]++`,
+          `set := map[string]struct{}{"go": {}}`,
+          `keys := make([]string, 0, len(m))\nfor k := range m { keys = append(keys, k) }`,
+          `fmt.Println(len("台灣"))`,
+          `for _, r := range "台灣" { fmt.Println(r) }`,
+          `var b strings.Builder\nb.WriteString("go")`,
+          `parts := strings.Split("a,b", ",")`,
+          `text := strings.Join(parts, ",")`,
+          `ok := strings.Contains(text, "go")`,
+          `n, err := strconv.Atoi("42")`,
+          `s := strconv.Itoa(42)`,
+          `b := []byte("go")\ns := string(b)`,
+          `runes := []rune("台灣")`,
+          `if unicode.IsLetter(r) { count++ }`,
+          `users := map[string]map[string]int{}`,
+          `users := []User{{ID: 1}}`,
+          `sort.Strings(keys)\nfor _, k := range keys { fmt.Println(k, m[k]) }`
+        ],
+        [
+          `user := User{ID: 1, Name: "Amy"}`,
+          `cfg := struct{ Port int }{Port: 8080}`,
+          `type User struct { Name string ` + "`json:\"name\"`" + ` }`,
+          `type Order struct {\n\tAudit\n\tID string\n}`,
+          `func (u *User) Rename(name string) { u.Name = name }`,
+          `func (u User) DisplayName() string { return u.Name }`,
+          `func (b *Builder) SetName(name string) *Builder { b.name = name; return b }`,
+          `type Store interface { Save(User) error }`,
+          `type Reader interface { Read([]byte) (int, error) }`,
+          `type FakeStore struct{}\nfunc (FakeStore) Save(User) error { return nil }`,
+          `value, ok := input.(string)`,
+          `switch v := input.(type) {\ncase string:\n\tfmt.Println(v)\n}`,
+          `var value any = User{}`,
+          `func First[T any](items []T) (T, bool) { var zero T; if len(items)==0 { return zero, false }; return items[0], true }`,
+          `func Contains[T comparable](items []T, target T) bool { for _, item := range items { if item == target { return true } }; return false }`,
+          `type Set[T comparable] map[T]struct{}`,
+          `type Queue[T any] struct { items []T }`,
+          `func Index[T comparable](items []T, target T) int { return -1 }`,
+          `type Number interface { ~int | ~float64 }`,
+          `type Admin struct { User }`,
+          `svc := NewService(store)`,
+          `type Repository interface { Find(id string) (User, error) }`,
+          `func CopyAll(r io.Reader) ([]byte, error) { return io.ReadAll(r) }`,
+          `func WriteAll(w io.Writer, data []byte) error { _, err := w.Write(data); return err }`,
+          `func (u User) String() string { return u.Name }`,
+          `type UserDTO struct { Name string ` + "`json:\"name\"`" + ` }`,
+          `type User struct { ID UserID }`,
+          `type Money struct { cents int }`,
+          `func NewUser(name string) (User, error) { if name=="" { return User{}, errors.New("name required") }; return User{Name:name}, nil }`,
+          `cfg := NewConfig(WithTimeout(time.Second))`
+        ],
+        [
+          `body, err := json.Marshal(user)`,
+          `err := json.Unmarshal(body, &user)`,
+          `dec := json.NewDecoder(r)\nerr := dec.Decode(&payload)`,
+          `data, err := os.ReadFile("config.json")`,
+          `err := os.WriteFile("out.txt", data, 0644)`,
+          `scanner := bufio.NewScanner(r)\nfor scanner.Scan() { fmt.Println(scanner.Text()) }`,
+          `path := filepath.Join(dir, "config.json")`,
+          `now := time.Now()`,
+          `t, err := time.Parse(time.RFC3339, raw)`,
+          `ticker := time.NewTicker(time.Second)\ndefer ticker.Stop()`,
+          `client := &http.Client{Timeout: 3 * time.Second}`,
+          `req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)`,
+          `http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) })`,
+          `rr := httptest.NewRecorder()\nhandler.ServeHTTP(rr, req)`,
+          `u, err := url.Parse(rawURL)`,
+          `ok, err := regexp.MatchString(` + "`^[a-z]+$`" + `, text)`,
+          `logger := slog.Default()\nlogger.Info("started")`,
+          `port := flag.Int("port", 8080, "listen port")\nflag.Parse()`,
+          `//go:embed static/index.html\nvar indexHTML string`,
+          `_, err := io.Copy(dst, src)`
+        ],
+        [
+          `go work()`,
+          `var wg sync.WaitGroup\nwg.Add(1)\ngo func(){ defer wg.Done(); work() }()\nwg.Wait()`,
+          `mu.Lock()\ncount++\nmu.Unlock()`,
+          `rw.RLock()\nvalue := cache[key]\nrw.RUnlock()`,
+          `ch := make(chan int)\ngo func(){ ch <- 1 }()\nfmt.Println(<-ch)`,
+          `jobs := make(chan Job, 10)`,
+          `close(ch)`,
+          `for v := range ch { fmt.Println(v) }`,
+          `select {\ncase v := <-ch:\n\tfmt.Println(v)\ncase <-ctx.Done():\n\treturn\n}`,
+          `ctx, cancel := context.WithTimeout(context.Background(), time.Second)\ndefer cancel()`,
+          `ctx, cancel := context.WithCancel(context.Background())\ncancel()`,
+          `for i := 0; i < workers; i++ { go worker(jobs) }`,
+          `for i := 0; i < n; i++ { go worker(i) }`,
+          `for v := range in { out <- v }`,
+          `ticker := time.NewTicker(100 * time.Millisecond)\ndefer ticker.Stop()`,
+          `sem := make(chan struct{}, 5)\nsem <- struct{}{}\ndefer func(){ <-sem }()`,
+          `once.Do(func(){ initConfig() })`,
+          `atomic.AddInt64(&count, 1)`,
+          `select { case <-done: return }`,
+          `select {\ncase out <- value:\ncase <-ctx.Done(): return\n}`
+        ],
+        [
+          `func TestAdd(t *testing.T) { if Add(1,2)!=3 { t.Fatal("bad") } }`,
+          `tests := []struct{ name string; in int; want int }{{"one",1,2}}`,
+          `t.Run("case", func(t *testing.T) { t.Parallel() })`,
+          `func must(t *testing.T, err error) { t.Helper(); if err != nil { t.Fatal(err) } }`,
+          `if err == nil { t.Fatal("expected error") }`,
+          `fake := FakeStore{}\nsvc := NewService(fake)`,
+          `func BenchmarkAdd(b *testing.B) { for i:=0; i<b.N; i++ { Add(1,2) } }`,
+          `b.ReportAllocs()`,
+          `func FuzzParse(f *testing.F) { f.Add("1"); f.Fuzz(func(t *testing.T, s string){ _, _ = Parse(s) }) }`,
+          `rr := httptest.NewRecorder()\nhandler.ServeHTTP(rr, req)`
+        ]
+      ];
+      return templates[groupIndex][titleIndex % templates[groupIndex].length];
+    }
+
+    const categoryNames = [
+      "錯誤處理與 API 邊界",
+      "interface 與依賴反轉",
+      "generics 實務",
+      "context 與取消控制",
+      "channel 與 select",
+      "worker pool 與 rate limit",
+      "HTTP client/server 實務",
+      "testing、mock、benchmark、fuzz",
+      "效能、記憶體、pprof",
+      "專案架構、部署、版本管理"
+    ];
+
+    const caseTitles = [
+      ["哨兵錯誤 sentinel error", "錯誤包裝保留根因", "API 邊界錯誤轉換", "validation error 聚合", "錯誤碼與 HTTP 狀態映射", "typed error 給上層判斷", "避免吞錯的 logging 策略", "重試只處理暫時性錯誤", "錯誤訊息不洩漏內部細節", "panic recover 邊界處理", "errors.Join 批次錯誤", "context canceled 不當成失敗", "deadline exceeded 回傳 504", "EOF 作為正常結束", "錯誤訊息本地化", "domain error 轉 API error", "錯誤碼對照表", "避免重複包裝錯誤", "背景任務錯誤回報", "錯誤測試表格"],
+      ["小 interface 設計", "使用端定義 interface", "Repository 依賴反轉", "HTTP client adapter", "Store fake 測試替身", "避免 interface 汙染 domain", "組合取代繼承", "功能旗標用 interface 隔離", "多實作切換策略", "plugin-like handler registry", "Clock interface 注入時間", "UUID generator interface", "Cache interface 邊界", "Message publisher interface", "FileSystem interface 測試", "Reader/Writer 抽象", "Notifier adapter", "Payment gateway adapter", "Interface 命名策略", "編譯期 interface 檢查"],
+      ["泛型 First/Last 工具", "泛型 Set 實作", "泛型 Queue 實作", "泛型 Result 型別", "comparable 約束查找", "排序 helper 約束", "Map/Filter/Reduce 取捨", "泛型 cache key/value", "型別參數與 method 限制", "避免過度泛型化", "泛型 Stack 實作", "泛型 Pair 型別", "泛型 Optional 型別", "泛型 pagination response", "泛型 validation helper", "泛型 retry wrapper 取捨", "泛型 repository base 風險", "constraints.Ordered 排序", "泛型 zero value 處理", "泛型 API 文件命名"],
+      ["HTTP request timeout", "worker context cancellation", "多階段 pipeline 取消", "context value 使用邊界", "deadline 傳遞策略", "graceful shutdown", "背景任務停止訊號", "外部 API 呼叫取消", "DB 查詢取消模型", "避免 context 存在 struct", "signal.NotifyContext", "context.WithCancelCause", "父子 context 傳遞", "request scope metadata", "context value key 型別", "取消後清理資源", "timeout 分層設定", "長任務 progress 回報", "批次任務局部取消", "避免忘記 defer cancel"],
+      ["fan-out 工作分派", "fan-in 結果合併", "select timeout", "channel close 所有權", "buffered channel 背壓", "nil channel 控制 select", "done channel 模式", "錯誤 channel 收斂", "避免 goroutine leak", "用 channel 串 pipeline", "單向 channel API", "channel 當 semaphore", "broadcast close 訊號", "多 producer 單 consumer", "單 producer 多 consumer", "select default 取捨", "ticker channel 停止", "結果排序收斂", "錯誤優先返回", "pipeline drain 策略"],
+      ["固定 worker pool", "rate limiter ticker", "retry with backoff", "bounded queue", "優先級任務設計", "批次處理 batch worker", "semaphore 限制併發", "worker panic 隔離", "metrics 統計 worker 狀態", "動態調整 worker 數", "queue 滿載 drop 策略", "queue 滿載 block 策略", "backpressure 回傳 429", "job timeout 包裝", "每任務 retry budget", "dead-letter queue", "worker warmup", "批次 flush 條件", "任務去重 key", "worker graceful drain"],
+      ["HTTP client timeout", "自訂 transport", "middleware 洋蔥模型", "JSON decode limit", "health check handler", "request id logging", "錯誤回應格式統一", "Graceful HTTP server", "避免 body 未關閉", "httptest handler 驗證", "ServeMux method route", "path variable 解析", "CORS middleware", "request body size limit", "response content type", "HTTP client retry 邊界", "TLS client 設定", "reverse proxy header", "streaming response", "API versioning route"],
+      ["table-driven test", "fake dependency", "golden file test", "benchmark allocs", "fuzz parser", "race detector 思維", "integration test 隔離", "測試 clock 注入", "mock 行為驗證界線", "測試資料 builder", "subtest 並行測試", "t.Cleanup 資源清理", "temp dir 測試檔案", "httptest server", "test main 初始化", "coverage 門檻", "snapshot 更新策略", "benchmark reset timer", "fuzz seed corpus", "flaky test 排查"],
+      ["escape analysis", "減少 allocation", "sync.Pool 使用邊界", "pprof CPU profile", "pprof heap profile", "字串組合策略", "slice 預配置", "map 容量預估", "避免過早優化", "GC 壓力觀察", "避免 interface boxing", "大 struct 傳值取捨", "bytes.Buffer 重用", "bufio 提升 IO", "hot path log 降載", "鎖競爭分析", "atomic 計數器", "cache line false sharing", "pprof goroutine profile", "效能回歸基準"],
+      ["cmd/internal/pkg 取捨", "config 載入順序", "SemVer 發版策略", "ldflags 注入版本", "embed 靜態資源", "Docker multi-stage", "CI 測試矩陣", "module replace 風險", "private module 設定", "release note 驗收表", "目錄邊界設計", "migration 發布流程", "feature flag 發布", "rollback checklist", "Makefile 任務入口", "環境變數命名", "secret 管理邊界", "blue-green 部署", "canary release", "operational runbook"]
+    ];
+
+    const categoryInfo = [
+      { color: "#be123c", scene: "服務邊界、handler、背景任務與外部 API 整合。", pitfall: "只 log 不 return，會讓上層以為成功。" },
+      { color: "#334155", scene: "需要替換外部依賴、建立 fake、降低 package 耦合。", pitfall: "在提供端宣告過大的 interface，會讓所有使用者被迫依賴不需要的方法。" },
+      { color: "#0891b2", scene: "多個型別共享同一演算法或容器邏輯。", pitfall: "把泛型當成炫技工具，會降低可讀性。" },
+      { color: "#7c3aed", scene: "HTTP、worker、pipeline、DB、外部 API 的生命週期控制。", pitfall: "忘記呼叫 cancel 或忽略 ctx.Done，容易造成資源泄漏。" },
+      { color: "#e11d48", scene: "goroutine 間資料流、超時、合併結果與停止訊號。", pitfall: "由接收方 close channel，常導致 send on closed channel。" },
+      { color: "#d97706", scene: "大量任務處理、爬蟲、批次同步、背景 job。", pitfall: "無限制開 goroutine，流量一高就耗盡資源。" },
+      { color: "#2563eb", scene: "後端 API、內部服務呼叫、handler 測試與 timeout 控制。", pitfall: "HTTP response body 沒關，長期會耗盡連線。" },
+      { color: "#0ea5e9", scene: "建立可維護測試、防止回歸、找出效能瓶頸。", pitfall: "測試只驗 happy path，錯誤分支沒保護。" },
+      { color: "#65a30d", scene: "高流量服務、CPU 熱點、記憶體壓力與延遲分析。", pitfall: "沒量測就優化，通常是在優化錯地方。" },
+      { color: "#475569", scene: "正式專案交付、版本、部署與團隊維護。", pitfall: "把架構當目標，而不是用它降低變更成本。" }
+    ];
+
+    const projectDeepDiveFlows = [
+      {
+        title: "錯誤流：分類、包裝、回應",
+        color: "#be123c",
+        summary: "worker、fetcher、parser、store 都可能失敗；專案層要保留根因，同時把錯誤轉成可決策的分類。",
+        stages: ["Worker", "Fetcher", "Parser", "Store", "Result"],
+        code: `type ErrorKind string\n\nconst (\n\tTemporary ErrorKind = "temporary"\n\tPermanent ErrorKind = "permanent"\n)\n\ntype CrawlError struct {\n\tKind ErrorKind\n\tURL  string\n\tErr  error\n}\n\nfunc (e *CrawlError) Error() string { return string(e.Kind) + ": " + e.URL }\nfunc (e *CrawlError) Unwrap() error { return e.Err }`,
+        steps: ["底層錯誤用 %w 包裝，保留根因。", "任務層標記 temporary / permanent，決定是否 retry。", "邊界層統一轉成結果狀態與統計。"],
+        acceptance: "測試需覆蓋 temporary retry、permanent drop、store failure 三種路徑。"
+      },
+      {
+        title: "觀測流：讓 worker pool 可被看見",
+        color: "#d97706",
+        summary: "併發系統最怕只知道壞了，不知道卡在哪；至少要追 queue depth、inflight、success、failure、retry。",
+        stages: ["Queue", "Worker", "Retry", "Store", "Metrics"],
+        code: `type Stats struct {\n\tQueued   int64\n\tInflight int64\n\tSuccess  int64\n\tFailed   int64\n\tRetried  int64\n}\n\nfunc (s *Stats) Done(ok bool) {\n\tatomic.AddInt64(&s.Inflight, -1)\n\tif ok { atomic.AddInt64(&s.Success, 1); return }\n\tatomic.AddInt64(&s.Failed, 1)\n}`,
+        steps: ["任務入列、開始處理、完成處理都更新統計。", "log 帶 task id / url / attempt。", "定期輸出 snapshot，方便壓測與事故判讀。"],
+        acceptance: "壓測時能回答 queue 是否滿、worker 是否飽和、錯誤是否集中在 fetcher 或 store。"
+      },
+      {
+        title: "測試流：fake dependency + cancellation",
+        color: "#0ea5e9",
+        summary: "大型專案測試不應依賴真網路；用 fake fetcher/parser/store 驗證行為、錯誤與取消。",
+        stages: ["Test", "Fake", "Crawler", "Assert", "Race"],
+        code: `type FakeFetcher struct { Err error }\n\nfunc (f FakeFetcher) Fetch(ctx context.Context, url string) ([]byte, error) {\n\tif f.Err != nil { return nil, f.Err }\n\treturn []byte("<title>ok</title>"), nil\n}\n\nfunc TestCrawlerCancel(t *testing.T) {\n\tctx, cancel := context.WithCancel(context.Background())\n\tcancel()\n\tif err := crawler.Run(ctx); !errors.Is(err, context.Canceled) {\n\t\tt.Fatalf("want canceled, got %v", err)\n\t}\n}`,
+        steps: ["用 fake 控制成功、暫時錯誤、永久錯誤。", "用 context cancellation 測 goroutine 是否能停。", "用 race test 檢查 shared state。"],
+        acceptance: "測試能在離線環境穩定執行，且取消後沒有 goroutine leak。"
+      }
+    ];
+
+    const engineeringDecisionCards = [
+      {
+        title: "bounded queue 滿載策略",
+        scene: "爬蟲、批次同步、背景任務入口流量大於 worker 消化速度時。",
+        color: "#d97706",
+        options: [
+          ["block", "保證不丟任務，但上游會被拖慢。"],
+          ["drop", "保護系統，但要記錄丟棄數與原因。"],
+          ["backpressure", "回傳 429/503 或降低拉取速度。"]
+        ],
+        code: `select {\ncase jobs <- task:\n\tstats.Queued.Add(1)\ncase <-ctx.Done():\n\treturn ctx.Err()\ndefault:\n\tstats.Dropped.Add(1)\n\treturn ErrQueueFull\n}`,
+        anti: "無限制建立 goroutine 讓每個任務自己跑，尖峰時會耗盡記憶體、連線與 CPU。",
+        acceptance: "壓測時 queue depth 有上限，滿載策略有統計，呼叫端能看到明確錯誤。"
+      },
+      {
+        title: "retry：temporary / permanent error",
+        scene: "HTTP 5xx、timeout、rate limit 可以 retry；validation、404、parse schema 錯通常不該 retry。",
+        color: "#be123c",
+        options: [
+          ["temporary", "可 retry，搭配 backoff 與上限。"],
+          ["permanent", "直接失敗並記錄原因。"],
+          ["unknown", "先保守分類，再用觀測資料調整。"]
+        ],
+        code: `func shouldRetry(err error) bool {\n\tvar crawlErr *CrawlError\n\tif errors.As(err, &crawlErr) {\n\t\treturn crawlErr.Kind == Temporary\n\t}\n\treturn false\n}`,
+        anti: "所有錯誤都 retry，會把永久失敗放大成重試風暴。",
+        acceptance: "測試需證明 temporary 最多 retry N 次，permanent 不進 retry queue。"
+      },
+      {
+        title: "worker panic 隔離",
+        scene: "parser 或第三方資料格式偶發 panic 時，不應讓整個 worker pool 失效。",
+        color: "#7c3aed",
+        options: [
+          ["recover", "隔離單一任務失敗。"],
+          ["log", "記錄 task id 與 stack 摘要。"],
+          ["restart", "worker loop 繼續處理下一筆。"]
+        ],
+        code: `func safeWorker(ctx context.Context, jobs <-chan Task) {\n\tfor job := range jobs {\n\t\tfunc() {\n\t\t\tdefer func() {\n\t\t\t\tif r := recover(); r != nil { log.Printf("panic task=%s: %v", job.URL, r) }\n\t\t\t}()\n\t\t\thandle(ctx, job)\n\t\t}()\n\t}\n}`,
+        anti: "在最外層只 recover 一次，panic 後 worker goroutine 直接退出，pool 容量慢慢歸零。",
+        acceptance: "注入 panic parser 後，失敗任務被記錄，其他任務仍能完成。"
+      },
+      {
+        title: "Store 失敗處理",
+        scene: "結果寫入記憶體、檔案、DB 或外部系統失敗時，需要決定任務是否重跑與資料是否可重建。",
+        color: "#65a30d",
+        options: [
+          ["fail-fast", "一致性優先，立即停止。"],
+          ["retry", "暫時性存儲錯誤可重試。"],
+          ["dead-letter", "保留失敗結果供補償。"]
+        ],
+        code: `if err := store.Save(ctx, result); err != nil {\n\tif isTemporary(err) { return retryLater(task, err) }\n\treturn fmt.Errorf("store result %s: %w", task.URL, err)\n}`,
+        anti: "store 失敗只 log 然後當成功，後續統計會顯示已完成但資料遺失。",
+        acceptance: "store temporary failure 有 retry，permanent failure 有 dead-letter 或明確失敗結果。"
+      },
+      {
+        title: "graceful shutdown",
+        scene: "部署、重啟或收到中斷訊號時，服務要停止收新任務、等待正在處理的任務、釋放資源。",
+        color: "#0f766e",
+        options: [
+          ["stop intake", "先關閉任務入口。"],
+          ["drain", "等待 inflight 完成或 timeout。"],
+          ["cancel", "逾時後取消剩餘工作。"]
+        ],
+        code: `ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)\ndefer stop()\n\nshutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)\ndefer cancel()\n\nif err := crawler.Shutdown(shutdownCtx); err != nil {\n\treturn fmt.Errorf("shutdown: %w", err)\n}`,
+        anti: "收到訊號立刻 os.Exit，導致任務做到一半、store 未 flush、統計未輸出。",
+        acceptance: "整合測試能模擬 cancel，確認 worker 在 timeout 內退出且資源被關閉。"
+      }
+    ];
+
+    const productionChecklist = [
+      ["Config", "設定來源、預設值、必要欄位驗證清楚，敏感值不寫入 log。", "缺必要設定時啟動失敗，錯誤訊息指出欄位。"],
+      ["Logging", "使用結構化欄位，至少包含 service、request/task id、error kind。", "任一失敗任務可用 task id 查到完整錯誤鏈。"],
+      ["Metrics", "統計 queued、inflight、success、failed、retried、dropped。", "壓測報告能用數字說明瓶頸在 queue、worker、fetcher 或 store。"],
+      ["Health Check", "區分 live 與 ready；ready 可檢查必要依賴。", "依賴故障時停止接流量，但不造成無限重啟。"],
+      ["Timeout", "所有外部 I/O、worker 等待、shutdown 都有 timeout。", "測試能證明 context deadline 會終止阻塞流程。"],
+      ["Rate Limit", "對外部 API 或昂貴資源設定速率與併發上限。", "超過上限時延遲或拒絕，而不是無限制擴張 goroutine。"],
+      ["CI Gate", "至少執行 go test、race test、重要 package benchmark smoke。", "main 分支不得在測試失敗時發布。"],
+      ["Release Note", "記錄功能、風險、設定變更、回滾方式。", "值班工程師能依 release note 完成回滾判斷。"],
+      ["Rollback", "部署前定義資料與設定是否可回復。", "新版本關閉後，舊版本能讀取既有資料格式。"],
+      ["pprof", "只在受控網段或授權環境暴露 debug endpoint。", "事故時可取得 CPU、heap、goroutine profile，平時不公開暴露。"],
+      ["Race Test", "共享 map、stats、store 有同步保護。", "go test -race 能覆蓋 worker pool 與 store 的主要路徑。"],
+      ["安全邊界", "輸入大小限制、錯誤訊息不洩漏內部資訊、secret 不落盤。", "惡意輸入不會造成 OOM，API 錯誤回應不包含內部 stack。"]
+    ];
+
+    function syntaxCard(id, badge, title, summary, color, table, code, steps, pitfall) {
+      return { id, badge, title, summary, color, table, code, steps, pitfall };
+    }
+
+    function syntaxSvg(topic) {
+      if (topic.id === "syntax-test") {
+        return `
+          <svg viewBox="0 0 680 230" role="img" aria-label="testing benchmark fuzz 圖解">
+            <rect width="680" height="230" rx="8" fill="#f0f9ff"></rect>
+            <rect x="26" y="44" width="150" height="72" rx="8" fill="#e0f2fe" stroke="#0284c7"></rect>
+            <text x="101" y="75" text-anchor="middle" fill="#0f172a" font-size="18" font-weight="800">Test</text>
+            <text x="101" y="100" text-anchor="middle" fill="#475569" font-size="13">行為正確</text>
+            <path d="M 176 80 H 246" stroke="#64748b" stroke-width="4"></path>
+            <polygon points="246,70 268,80 246,90" fill="#64748b"></polygon>
+            <rect x="276" y="44" width="150" height="72" rx="8" fill="#dcfce7" stroke="#16a34a"></rect>
+            <text x="351" y="75" text-anchor="middle" fill="#0f172a" font-size="18" font-weight="800">Benchmark</text>
+            <text x="351" y="100" text-anchor="middle" fill="#475569" font-size="13">速度 / allocation</text>
+            <path d="M 426 80 H 496" stroke="#64748b" stroke-width="4"></path>
+            <polygon points="496,70 518,80 496,90" fill="#64748b"></polygon>
+            <rect x="526" y="44" width="130" height="72" rx="8" fill="#fef3c7" stroke="#d97706"></rect>
+            <text x="591" y="75" text-anchor="middle" fill="#0f172a" font-size="18" font-weight="800">Fuzz</text>
+            <text x="591" y="100" text-anchor="middle" fill="#475569" font-size="13">找未知邊界</text>
+            <rect x="58" y="150" width="150" height="45" rx="8" fill="#ffffff" stroke="#cbd5e1"></rect>
+            <text x="133" y="178" text-anchor="middle" fill="#075985" font-size="14" font-weight="800">go test ./...</text>
+            <rect x="265" y="150" width="190" height="45" rx="8" fill="#ffffff" stroke="#cbd5e1"></rect>
+            <text x="360" y="178" text-anchor="middle" fill="#166534" font-size="14" font-weight="800">go test -bench .</text>
+            <rect x="505" y="150" width="135" height="45" rx="8" fill="#ffffff" stroke="#cbd5e1"></rect>
+            <text x="572" y="178" text-anchor="middle" fill="#92400e" font-size="14" font-weight="800">go test -fuzz</text>
+          </svg>
+        `;
+      }
+      if (topic.id === "syntax-goroutine") {
+        return `
+          <svg viewBox="0 0 680 230" role="img" aria-label="goroutine channel select 圖解">
+            <rect width="680" height="230" rx="8" fill="#fff7f7"></rect>
+            <rect x="24" y="34" width="150" height="70" rx="8" fill="#ffe4e6" stroke="#e11d48"></rect>
+            <text x="99" y="64" text-anchor="middle" fill="#0f172a" font-size="17" font-weight="800">goroutine</text>
+            <text x="99" y="88" text-anchor="middle" fill="#475569" font-size="13">generator()</text>
+            <path d="M 174 70 H 248" stroke="#64748b" stroke-width="4"></path>
+            <polygon points="248,60 270,70 248,80" fill="#64748b"></polygon>
+            <rect x="278" y="34" width="130" height="70" rx="8" fill="#ffffff" stroke="#e11d48"></rect>
+            <text x="343" y="63" text-anchor="middle" fill="#0f172a" font-size="17" font-weight="800">channel</text>
+            <text x="343" y="88" text-anchor="middle" fill="#475569" font-size="13">jobs chan int</text>
+            <path d="M 408 70 H 482" stroke="#64748b" stroke-width="4"></path>
+            <polygon points="482,60 504,70 482,80" fill="#64748b"></polygon>
+            <rect x="512" y="34" width="145" height="70" rx="8" fill="#fee2e2" stroke="#be123c"></rect>
+            <text x="584" y="63" text-anchor="middle" fill="#0f172a" font-size="17" font-weight="800">select</text>
+            <text x="584" y="88" text-anchor="middle" fill="#475569" font-size="13">job 或 cancel</text>
+            <path d="M 584 104 V 145" stroke="#64748b" stroke-width="4"></path>
+            <polygon points="574,145 584,167 594,145" fill="#64748b"></polygon>
+            <rect x="470" y="168" width="95" height="42" rx="8" fill="#dcfce7" stroke="#16a34a"></rect>
+            <text x="518" y="194" text-anchor="middle" fill="#166534" font-size="14" font-weight="800">handle</text>
+            <rect x="586" y="168" width="78" height="42" rx="8" fill="#e0f2fe" stroke="#0284c7"></rect>
+            <text x="625" y="194" text-anchor="middle" fill="#075985" font-size="14" font-weight="800">cancel</text>
+            <path d="M 240 142 H 425" stroke="#e11d48" stroke-width="3" stroke-dasharray="8 8"></path>
+            <text x="333" y="133" text-anchor="middle" fill="#be123c" font-size="13" font-weight="800">可能阻塞，所以要有 ctx.Done()</text>
+            <rect x="24" y="138" width="160" height="72" rx="8" fill="#ffffff" stroke="#cbd5e1"></rect>
+            <text x="104" y="165" text-anchor="middle" fill="#0f172a" font-size="14" font-weight="800">close 規則</text>
+            <text x="104" y="190" text-anchor="middle" fill="#475569" font-size="13">sender 關閉 channel</text>
+          </svg>
+        `;
+      }
+      return `
+        <svg class="flow-diagram" viewBox="0 0 520 150" role="img" aria-label="${topic.title} 圖解">
+          <rect class="flow-bg" width="520" height="150" rx="10"></rect>
+          <circle cx="72" cy="75" r="38" fill="${topic.color}" opacity="0.92"></circle>
+          <text x="72" y="81" text-anchor="middle" fill="#fff" font-size="20" font-weight="800">${topic.badge}</text>
+          <path class="flow-line" d="M 120 75 H 392"></path>
+          <polygon class="flow-arrow" points="392,65 412,75 392,85"></polygon>
+          <rect class="flow-box" x="155" y="43" width="115" height="64" rx="10" fill="#fff" stroke="#cbd5e1"></rect>
+          <text class="flow-title" x="212" y="80" text-anchor="middle" font-size="15">語法</text>
+          <rect class="flow-box" x="300" y="43" width="115" height="64" rx="10" fill="#fff" stroke="#cbd5e1"></rect>
+          <text class="flow-title" x="357" y="80" text-anchor="middle" font-size="15">案例</text>
+          <text class="flow-caption" x="260" y="130" text-anchor="middle">${topic.summary}</text>
+        </svg>
+      `;
+    }
+
+    function projectFlowSvg(item) {
+      const stageWidth = 132;
+      const gap = 34;
+      const nodes = item.stages.map((stage, index) => {
+        const x = 28 + index * (stageWidth + gap);
+        const line = index < item.stages.length - 1
+          ? `<path class="flow-line" d="M ${x + stageWidth} 78 H ${x + stageWidth + gap - 12}"></path><polygon class="flow-arrow" points="${x + stageWidth + gap - 12},70 ${x + stageWidth + gap},78 ${x + stageWidth + gap - 12},86"></polygon>`
+          : "";
+        return `
+          <rect class="flow-box" x="${x}" y="42" width="${stageWidth}" height="72" rx="10" fill="${index === 0 ? item.color : "#ffffff"}" stroke="${item.color}"></rect>
+          <text class="flow-title" x="${x + stageWidth / 2}" y="72" text-anchor="middle" fill="${index === 0 ? "#ffffff" : "#17202a"}" font-size="14">${stage}</text>
+          <text class="flow-small" x="${x + stageWidth / 2}" y="94" text-anchor="middle" fill="${index === 0 ? "#f8fafc" : "#64748b"}">step ${index + 1}</text>
+          ${line}
+        `;
+      }).join("");
+
+      return `
+        <svg class="flow-diagram" viewBox="0 0 840 160" role="img" aria-label="${item.title} 流程圖">
+          <rect class="flow-bg" width="840" height="160" rx="10"></rect>
+          ${nodes}
+        </svg>
+      `;
+    }
+
+    function renderProjectDeepDiveFlows() {
+      const root = document.getElementById("projectDeepDiveFlows");
+      root.innerHTML = projectDeepDiveFlows.map(item => `
+        <article class="flow-card">
+          <span class="badge">${item.title.split("：")[0]}</span>
+          <h3>${item.title}</h3>
+          <p class="muted">${item.summary}</p>
+          ${projectFlowSvg(item)}
+          <pre><code class="language-go">${escapeHtml(item.code)}</code></pre>
+          <details>
+            <summary>Step-by-step：專案落地方式</summary>
+            <ol class="steps">${item.steps.map(step => `<li>${step}</li>`).join("")}</ol>
+          </details>
+          <div class="acceptance"><strong>驗收標準：</strong>${item.acceptance}</div>
+        </article>
+      `).join("");
+    }
+
+    function decisionSvg(item) {
+      return `
+        <svg class="flow-diagram" viewBox="0 0 560 150" role="img" aria-label="${item.title} 決策圖">
+          <rect class="flow-bg" width="560" height="150" rx="10"></rect>
+          <rect class="flow-box" x="24" y="50" width="130" height="52" rx="10" fill="${item.color}" opacity="0.9" stroke="${item.color}"></rect>
+          <text class="flow-title" x="89" y="82" text-anchor="middle" fill="#fff" font-size="14">壓力 / 失敗</text>
+          <path class="flow-line" d="M 154 76 H 232"></path>
+          <polygon class="flow-arrow" points="232,68 248,76 232,84"></polygon>
+          <rect class="flow-box" x="256" y="50" width="126" height="52" rx="10" fill="#ffffff" stroke="#cbd5e1"></rect>
+          <text class="flow-title" x="319" y="82" text-anchor="middle" font-size="14">策略選擇</text>
+          <path class="flow-line" d="M 382 76 H 458"></path>
+          <polygon class="flow-arrow" points="458,68 474,76 458,84"></polygon>
+          <rect class="flow-box" x="482" y="50" width="54" height="52" rx="10" fill="#dcfce7" stroke="#16a34a"></rect>
+          <text class="flow-title" x="509" y="82" text-anchor="middle" fill="#166534" font-size="14">可控</text>
+        </svg>
+      `;
+    }
+
+    function renderEngineeringDecisions() {
+      const root = document.getElementById("engineeringDecisionCards");
+      root.innerHTML = engineeringDecisionCards.map(item => `
+        <article class="decision-card">
+          <span class="badge">工程決策</span>
+          <h3>${item.title}</h3>
+          <p class="muted"><strong>場景：</strong>${item.scene}</p>
+          ${decisionSvg(item)}
+          <div class="decision-options">
+            ${item.options.map(option => `<div class="decision-option"><strong>${option[0]}</strong>${option[1]}</div>`).join("")}
+          </div>
+          <pre><code class="language-go">${escapeHtml(item.code)}</code></pre>
+          <div class="anti-pattern"><strong>反例：</strong>${item.anti}</div>
+          <div class="acceptance"><strong>驗收標準：</strong>${item.acceptance}</div>
+        </article>
+      `).join("");
+    }
+
+    function renderProductionChecklist() {
+      const root = document.getElementById("productionChecklist");
+      root.innerHTML = productionChecklist.map((item, index) => `
+        <article class="check-card">
+          <span class="badge">#${String(index + 1).padStart(2, "0")}</span>
+          <h3>${item[0]}</h3>
+          <p>${item[1]}</p>
+          <div class="acceptance"><strong>驗收標準：</strong>${item[2]}</div>
+        </article>
+      `).join("");
+    }
+
+    function renderSyntaxCards() {
+      const root = document.getElementById("syntaxCards");
+      root.innerHTML = syntaxTopics.map(topic => `
+        <article class="syntax-card" id="${topic.id}">
+          <span class="badge">${topic.badge}</span>
+          <h3>${topic.title}</h3>
+          <p class="muted">${topic.summary}</p>
+          ${syntaxSvg(topic)}
+          <table>
+            <thead><tr><th>語法</th><th>用法</th></tr></thead>
+            <tbody>${topic.table.map(row => `<tr><td><code>${row[0]}</code></td><td>${row[1]}</td></tr>`).join("")}</tbody>
+          </table>
+          <pre><code class="language-go">${escapeHtml(topic.code)}</code></pre>
+          <details>
+            <summary>Step-by-step：怎麼用</summary>
+            <ol class="steps">${topic.steps.map(step => `<li>${step}</li>`).join("")}</ol>
+          </details>
+          <details>
+            <summary>常見錯誤</summary>
+            <p>${topic.pitfall}</p>
+          </details>
+        </article>
+      `).join("");
+    }
+
+    function renderSyntaxIndex() {
+      const root = document.getElementById("syntaxIndexCards");
+      root.innerHTML = syntaxTopics.map(topic => `
+        <button class="syntax-index-card syntax-link" type="button" data-target="${topic.id}" style="border-top-color:${topic.color}">
+          <span class="badge">${topic.badge}</span>
+          <strong>${topic.title}</strong>
+          <span>${topic.summary}</span>
+        </button>
+      `).join("");
+    }
+
+    function createCases() {
+      const cases = [];
+      categoryNames.forEach((category, categoryIndex) => {
+        caseTitles[categoryIndex].forEach((title, titleIndex) => {
+          const no = cases.length + 1;
+          cases.push({
+            no,
+            category,
+            title,
+            color: categoryInfo[categoryIndex].color,
+            scene: categoryInfo[categoryIndex].scene,
+            pitfall: categoryInfo[categoryIndex].pitfall,
+            code: codeForCase(categoryIndex, title),
+            steps: stepsForCase(categoryIndex, title),
+            tradeoff: tradeoffForCase(categoryIndex, title),
+            acceptance: acceptanceForCase(categoryIndex, title)
+          });
+        });
+      });
+      return cases;
+    }
+
+    function codeForCase(categoryIndex, title) {
+      const snippets = [
+`var ErrNotFound = errors.New("not found")\n\nfunc Load(id string) error {\n\tif id == "" {\n\t\treturn fmt.Errorf("load %q: %w", id, ErrNotFound)\n\t}\n\treturn nil\n}`,
+`type Clock interface { Now() time.Time }\n\ntype Service struct { clock Clock }\nfunc NewService(clock Clock) *Service { return &Service{clock: clock} }`,
+`func Contains[T comparable](items []T, target T) bool {\n\tfor _, item := range items {\n\t\tif item == target { return true }\n\t}\n\treturn false\n}`,
+`ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)\ndefer cancel()\n\nif err := worker.Run(ctx); err != nil {\n\treturn err\n}`,
+`select {\ncase value := <-input:\n\toutput <- transform(value)\ncase <-ctx.Done():\n\treturn ctx.Err()\n}`,
+`for i := 0; i < workers; i++ {\n\tgo func() {\n\t\tfor job := range jobs { handle(job) }\n\t}()\n}`,
+`client := &http.Client{Timeout: 3 * time.Second}\nreq, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)\nresp, err := client.Do(req)`,
+`func TestService(t *testing.T) {\n\ttests := []struct{ name string; input int; want int }{{"double", 2, 4}}\n\tfor _, tt := range tests { t.Run(tt.name, func(t *testing.T) {}) }\n}`,
+`items := make([]Result, 0, expected)\nfor _, raw := range raws {\n\titems = append(items, parse(raw))\n}`,
+`var version = "dev"\n\nfunc main() {\n\tfmt.Println("version:", version)\n}`
+      ];
+      return `// Case: ${title}\n` + snippets[categoryIndex];
+    }
+
+    function stepsForCase(categoryIndex, title) {
+      const shared = [
+        ["定義錯誤語意，而不是只回傳字串。", "在跨層時補上操作情境。", "在 API 邊界轉成可理解的狀態或訊息。"],
+        ["先從具體型別開始，確認需要替換。", "在使用端定義小 interface。", "用 fake 或 adapter 驗證替換是否自然。"],
+        ["確認演算法和型別無關。", "選擇最小型別約束。", "保留清楚命名，避免泛型遮蔽意圖。"],
+        ["從入口建立 context。", "把 context 傳入每個阻塞或外部呼叫。", "在 select 或 API 中尊重取消。"],
+        ["定義 channel 的資料所有權。", "讓 sender 負責 close。", "用 select 同時處理 timeout 與 cancel。"],
+        ["先設定 worker 數與 queue 大小。", "把 retry、rate limit 放在排程層。", "統計成功、失敗、重試與丟棄數。"],
+        ["為 client/server 設 timeout。", "handler 中驗證 method、body size 與錯誤格式。", "用 httptest 不開真實網路也能測。"],
+        ["先列出行為案例。", "用 table-driven test 覆蓋邊界。", "需要替換外部依賴時用 fake。"],
+        ["先 benchmark 或 pprof 找瓶頸。", "只針對熱點改 allocation 或資料結構。", "重跑測試與 benchmark 確認改善。"],
+        ["定義清楚目錄責任。", "用版本、設定與 CI 固定交付流程。", "把部署與驗收步驟文件化。"]
+      ];
+      return [`案例目標：${title}。`, ...shared[categoryIndex]];
+    }
+
+    function tradeoffForCase(categoryIndex, title) {
+      const tradeoffs = [
+        "錯誤資訊越完整越利於除錯，但 API 邊界要避免洩漏內部細節。",
+        "interface 越小越容易替換，但過早抽象會讓 domain 變得繞遠路。",
+        "泛型能移除重複演算法，但若只是兩個型別，具體函式通常更清楚。",
+        "deadline 越短越能保護資源，但太短會放大暫時性抖動。",
+        "channel 讓資料流清楚，但所有權與 close 規則必須一致。",
+        "worker 越多吞吐可能越高，但也會增加 DB、HTTP、CPU 壓力。",
+        "HTTP 標準庫足以處理多數場景，複雜 middleware 再引入 router。",
+        "mock 能隔離外部依賴，但過度驗證呼叫細節會讓測試脆弱。",
+        "效能優化能降低成本，但必須以 benchmark/pprof 證據為前提。",
+        "架構分層提升維護性，但小專案不需要為了形式拆太多 package。"
+      ];
+      return `${title} 的設計取捨：${tradeoffs[categoryIndex]}`;
+    }
+
+    function acceptanceForCase(categoryIndex, title) {
+      const acceptance = [
+        "錯誤鏈可用 errors.Is/As 判斷，邊界層有一致 response。",
+        "可用 fake dependency 測試核心 use case，且不需真外部服務。",
+        "泛型 helper 有空集合、零值與型別約束測試。",
+        "取消或逾時後 goroutine 會退出，阻塞 I/O 收到 context。",
+        "channel 測試覆蓋 close、timeout、cancel 與 leak 風險。",
+        "壓測時 worker 數、queue 深度、retry 次數有上限與統計。",
+        "HTTP handler 可用 httptest 驗證成功、錯誤與 timeout。",
+        "測試可重現，benchmark 報告 allocation，fuzz seed 有代表性。",
+        "優化前後有 benchmark 或 pprof 證據，功能測試仍通過。",
+        "README 或 release note 說明設定、部署、回滾與版本資訊。"
+      ];
+      return `${title} 的驗收標準：${acceptance[categoryIndex]}`;
+    }
+
+    function caseMiniSvg(item) {
+      return `
+        <svg class="flow-diagram" viewBox="0 0 520 120" role="img" aria-label="${item.title} 小流程圖">
+          <rect class="flow-bg" width="520" height="120" rx="10"></rect>
+          <rect class="flow-box" x="20" y="34" width="120" height="52" rx="10" fill="${item.color}" opacity="0.88" stroke="${item.color}"></rect>
+          <text class="flow-title" x="80" y="66" text-anchor="middle" fill="#fff" font-size="15">輸入</text>
+          <path class="flow-line" d="M 140 60 H 230"></path>
+          <polygon class="flow-arrow" points="230,52 246,60 230,68"></polygon>
+          <rect class="flow-box" x="255" y="34" width="120" height="52" rx="10" fill="#f8fafc" stroke="#cbd5e1"></rect>
+          <text class="flow-title" x="315" y="66" text-anchor="middle" font-size="15">處理</text>
+          <path class="flow-line" d="M 375 60 H 455"></path>
+          <polygon class="flow-arrow" points="455,52 471,60 455,68"></polygon>
+          <circle class="flow-box" cx="492" cy="60" r="20" fill="#dcfce7" stroke="#16a34a"></circle>
+          <text class="flow-title" x="492" y="66" text-anchor="middle" fill="#166534" font-size="14">OK</text>
+        </svg>
+      `;
+    }
+
+    function renderFilters(cases) {
+      const root = document.getElementById("caseFilters");
+      const buttons = [`<button class="btn active" type="button" data-category="all">全部 ${cases.length}</button>`]
+        .concat(categoryNames.map(name => `<button class="btn" type="button" data-category="${name}">${name}</button>`));
+      root.innerHTML = buttons.join("");
+
+      root.addEventListener("click", event => {
+        const button = event.target.closest("button[data-category]");
+        if (!button) return;
+        root.querySelectorAll("button").forEach(btn => btn.classList.remove("active"));
+        button.classList.add("active");
+        const category = button.dataset.category;
+        document.querySelectorAll("#caseGrid .case-card").forEach(card => {
+          card.hidden = category !== "all" && card.dataset.category !== category;
+        });
+      });
+    }
+
+    function renderCases(cases) {
+      const root = document.getElementById("caseGrid");
+      root.innerHTML = cases.map(item => `
+        <article class="case-card" data-category="${item.category}">
+          <span class="badge">#${String(item.no).padStart(3, "0")}</span>
+          <h3>${item.title}</h3>
+          <div class="case-meta">
+            <span class="badge">${item.category}</span>
+          </div>
+          <p class="muted"><strong>適用場景：</strong>${item.scene}</p>
+          <div class="mini-flow">${caseMiniSvg(item)}</div>
+          <pre><code class="language-go">${escapeHtml(item.code)}</code></pre>
+          <details>
+            <summary>設計取捨</summary>
+            <p>${item.tradeoff}</p>
+          </details>
+          <details>
+            <summary>Step-by-step 解法</summary>
+            <ol class="steps">${item.steps.map(step => `<li>${step}</li>`).join("")}</ol>
+          </details>
+          <div class="acceptance"><strong>驗收標準：</strong>${item.acceptance}</div>
+          <details>
+            <summary>常見陷阱</summary>
+            <p>${item.pitfall}</p>
+          </details>
+        </article>
+      `).join("");
+    }
+
+    function renderSyntaxExampleFilters(examples) {
+      const root = document.getElementById("syntaxExampleFilters");
+      const search = document.getElementById("syntaxExampleSearch");
+      const categories = [...new Set(examples.map(item => item.category))];
+      root.innerHTML = [`<button class="btn active" type="button" data-example-category="all">全部 200</button>`]
+        .concat(categories.map(category => `<button class="btn" type="button" data-example-category="${category}">${category}</button>`))
+        .join("");
+
+      const applyFilter = () => {
+        const active = root.querySelector(".active")?.dataset.exampleCategory || "all";
+        const keyword = search.value.trim().toLowerCase();
+        document.querySelectorAll("#syntaxExampleGrid .syntax-example-card").forEach(card => {
+          const categoryMatched = active === "all" || card.dataset.category === active;
+          const keywordMatched = keyword === "" || card.dataset.search.includes(keyword);
+          card.hidden = !(categoryMatched && keywordMatched);
+        });
+      };
+
+      root.addEventListener("click", event => {
+        const button = event.target.closest("button[data-example-category]");
+        if (!button) return;
+        root.querySelectorAll("button").forEach(btn => btn.classList.remove("active"));
+        button.classList.add("active");
+        applyFilter();
+      });
+      search.addEventListener("input", applyFilter);
+    }
+
+    function renderSyntaxExamples(examples) {
+      const root = document.getElementById("syntaxExampleGrid");
+      root.innerHTML = examples.map(item => {
+        const searchable = `${item.category} ${item.title} ${item.scene} ${item.code} ${item.point} ${item.projectUsage} ${item.antiPattern}`.toLowerCase();
+        return `
+          <article class="case-card syntax-example-card" data-category="${item.category}" data-search="${escapeAttr(searchable)}">
+            <span class="badge">#${String(item.no).padStart(3, "0")}</span>
+            <h3>${item.title}</h3>
+            <div class="case-meta">
+              <span class="badge">${item.category}</span>
+            </div>
+            <p class="muted"><strong>適用情境：</strong>${item.scene}</p>
+            <pre><code class="language-go">${escapeHtml(item.code)}</code></pre>
+            <details>
+              <summary>重點說明</summary>
+              <p>${item.point}</p>
+            </details>
+            <details>
+              <summary>專案級用法</summary>
+              <p>${item.projectUsage}</p>
+            </details>
+            <details>
+              <summary>反例</summary>
+              <p>${item.antiPattern}</p>
+            </details>
+            <details>
+              <summary>常見錯誤</summary>
+              <p>${item.pitfall}</p>
+            </details>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function escapeHtml(value) {
+      return value
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value).replaceAll('"', "&quot;");
+    }
+
+    function wireInteractions() {
+      const jumpToSyntaxCard = (targetId) => {
+        const target = document.getElementById(targetId);
+        if (!target) return;
+        history.replaceState(null, "", `#${targetId}`);
+        document.querySelectorAll(".syntax-card").forEach(card => card.classList.remove("highlight"));
+        target.classList.add("highlight");
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        window.setTimeout(() => target.classList.remove("highlight"), 1800);
+      };
+
+      document.querySelectorAll(".node[data-target], .syntax-link[data-target]").forEach(node => {
+        node.addEventListener("click", () => {
+          jumpToSyntaxCard(node.dataset.target);
+        });
+      });
+
+      document.getElementById("openAll").addEventListener("click", () => {
+        document.querySelectorAll("details").forEach(item => item.open = true);
+      });
+      document.getElementById("closeAll").addEventListener("click", () => {
+        document.querySelectorAll("details").forEach(item => item.open = false);
+      });
+    }
+
+    renderSyntaxCards();
+    renderSyntaxIndex();
+    renderProjectDeepDiveFlows();
+    renderEngineeringDecisions();
+    renderProductionChecklist();
+    const syntaxExamples = buildSyntaxExamples();
+    renderSyntaxExampleFilters(syntaxExamples);
+    renderSyntaxExamples(syntaxExamples);
+    const cases = createCases();
+    renderFilters(cases);
+    renderCases(cases);
+    wireInteractions();
+  </script>
+</body>
+</html>
