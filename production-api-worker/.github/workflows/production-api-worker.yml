@@ -1,0 +1,27 @@
+name: production-api-worker
+
+on:
+  push:
+    paths:
+      - "production-api-worker/**"
+  pull_request:
+    paths:
+      - "production-api-worker/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: production-api-worker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: production-api-worker/go.mod
+          cache-dependency-path: production-api-worker/go.sum
+      - run: go test ./...
+      - run: go test -race ./...
+      - run: go build ./cmd/api-worker
+      - run: go build ./cmd/migrate
+

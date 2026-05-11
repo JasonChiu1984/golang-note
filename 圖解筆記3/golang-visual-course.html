@@ -576,7 +576,7 @@
           <div class="stat"><strong>40</strong><span>單一語法卡</span></div>
           <div class="stat"><strong>200</strong><span>常用語法例</span></div>
           <div class="stat"><strong>200</strong><span>常用案例</span></div>
-          <div class="stat"><strong>0</strong><span>外部 CDN</span></div>
+          <div class="stat"><strong>10</strong><span>完整事故案例</span></div>
         </div>
       </div>
     </header>
@@ -590,6 +590,8 @@
         <a class="btn" href="#project">大型專案</a>
         <a class="btn" href="#engineering-decisions">工程決策</a>
         <a class="btn" href="#production-checklist">Production Checklist</a>
+        <a class="btn" href="#production-deep-dive">DB / Observability</a>
+        <a class="btn" href="#executable-walkthrough">可執行專案</a>
         <a class="btn" href="#cases">200 常用案例</a>
         <button class="btn" type="button" id="openAll">展開全部</button>
         <button class="btn" type="button" id="closeAll">收合全部</button>
@@ -810,6 +812,59 @@
           </div>
         </div>
         <div class="checklist-grid" id="productionChecklist"></div>
+      </section>
+
+      <section id="production-deep-dive">
+        <div class="section-head">
+          <div>
+            <h2>DB / Observability 深度補強</h2>
+            <p>圖解筆記3 單獨閱讀時，也能掌握 production 後半段：真實 Postgres driver、database/sql transaction、Prometheus 指標、OpenTelemetry OTLP trace、Docker 與 CI gate。</p>
+          </div>
+        </div>
+        <div class="project-flow-grid" id="productionDeepDiveCards"></div>
+      </section>
+
+      <section id="executable-walkthrough">
+        <div class="section-head">
+          <div>
+            <h2>可執行大型專案 Walkthrough</h2>
+            <p>把前面的語法、併發、DB transaction、Prometheus、OpenTelemetry 與測試，對應到實際存在的 production API + worker 專案。</p>
+          </div>
+        </div>
+        <div class="panel">
+          <table>
+            <thead><tr><th>路徑</th><th>用途</th><th>閱讀重點</th></tr></thead>
+            <tbody>
+              <tr><td><a href="../production-api-worker/cmd/api-worker/main.go"><code>production-api-worker/cmd/api-worker/main.go</code></a></td><td>執行檔入口</td><td>wire HTTP、service、repository、worker、observability。</td></tr>
+              <tr><td><a href="../production-api-worker/internal/app/service.go"><code>production-api-worker/internal/app/service.go</code></a></td><td>service / transaction</td><td>validation、deadlock retry、transaction boundary、queue enqueue。</td></tr>
+              <tr><td><a href="../production-api-worker/internal/repository/memory.go"><code>production-api-worker/internal/repository/memory.go</code></a></td><td>memory repository</td><td><code>database/sql</code> 風格的 <code>TxOptions</code>、rollback mental model。</td></tr>
+              <tr><td><a href="../production-api-worker/internal/repository/postgres.go"><code>production-api-worker/internal/repository/postgres.go</code></a></td><td>Postgres repository</td><td>使用 <code>github.com/jackc/pgx/v5/stdlib</code> 接到 <code>database/sql</code>，含 pool、PingContext、deadlock 分類。</td></tr>
+              <tr><td><a href="../production-api-worker/internal/worker/queue.go"><code>production-api-worker/internal/worker/queue.go</code></a></td><td>worker queue</td><td>bounded queue、worker pool、queue depth、graceful shutdown。</td></tr>
+              <tr><td><a href="../production-api-worker/internal/observability/observability.go"><code>production-api-worker/internal/observability/observability.go</code></a></td><td>observability</td><td>Prometheus client、OpenTelemetry SDK、slog、trace exporter。</td></tr>
+              <tr><td><a href="../production-api-worker/internal/api/handler_test.go"><code>production-api-worker/internal/api/handler_test.go</code></a></td><td>API 測試</td><td>httptest 驗證 API 與 metrics endpoint。</td></tr>
+              <tr><td><a href="../production-api-worker/migrations/001_init.sql"><code>production-api-worker/migrations/001_init.sql</code></a></td><td>migration</td><td>可由 <code>cmd/migrate</code> 套用的 schema 初始化腳本。</td></tr>
+              <tr><td><a href="../production-api-worker/docker-compose.yml"><code>production-api-worker/docker-compose.yml</code></a></td><td>Docker Compose</td><td>Postgres、OTel collector、migration、API 服務完整串接。</td></tr>
+              <tr><td><a href="../production-api-worker/.github/workflows/production-api-worker.yml"><code>production-api-worker/.github/workflows/production-api-worker.yml</code></a></td><td>CI/CD gate</td><td>go test、race test、build api、build migrate。</td></tr>
+            </tbody>
+          </table>
+          <pre><code class="language-bash">cd production-api-worker
+go test ./...
+go run ./cmd/api-worker
+
+# 若 macOS 本機測試遇到 test binary LC_UUID / linker 問題，可改用：
+go test -ldflags=-linkmode=external ./...</code></pre>
+          <details open>
+            <summary>Step-by-step：怎麼把這個專案當 walkthrough 讀</summary>
+            <ol class="steps">
+              <li>先從 <code>cmd/api-worker/main.go</code> 看入口如何組裝 API、worker、repository 與 observability。</li>
+              <li>再看 <code>internal/app/service.go</code>，理解 service 如何決定 transaction、deadlock retry 與 queue enqueue。</li>
+              <li>接著讀 <code>internal/repository/postgres.go</code> 與 <code>migrations/001_init.sql</code>，看真實 Postgres driver、schema 與 deadlock 分類。</li>
+              <li>再讀 <code>internal/observability/observability.go</code>，看 Prometheus client、stdout trace 與 OTLP exporter 如何切換。</li>
+              <li>最後看 <code>docker-compose.yml</code> 與 GitHub Actions，確認 migration、Postgres、OTel collector、race test 與 build gate 都能被驗收。</li>
+            </ol>
+          </details>
+          <div class="acceptance"><strong>驗收標準：</strong>讀者能從圖解回到實際 Go 檔案，並用 <code>cd production-api-worker && go test ./...</code> 驗證 API、worker、Postgres transaction、Prometheus、OpenTelemetry 與 CI pipeline 接線。</div>
+        </div>
       </section>
 
       <section id="syntax-examples-200">
@@ -1281,6 +1336,174 @@
       { color: "#475569", scene: "正式專案交付、版本、部署與團隊維護。", pitfall: "把架構當目標，而不是用它降低變更成本。" }
     ];
 
+    function buildRealEngineeringCases() {
+      const problemTemplates = [
+        "API 邊界收到下層錯誤時，需要保留根因、分類錯誤，並回傳不洩漏內部細節的 response。",
+        "Service 需要替換外部依賴做測試，但 domain 不應被龐大 interface 綁住。",
+        "多個型別共用同一個集合演算法時，需要保留型別安全並避免過度抽象。",
+        "HTTP、DB 或 worker 流程必須尊重取消與 deadline，否則流量尖峰會累積卡住的 goroutine。",
+        "多個 goroutine 之間傳資料時，需要明確 close 所有權與 timeout，避免 leak 或 send on closed channel。",
+        "背景任務量大於處理能力時，需要 bounded queue、retry budget 與可觀測的滿載策略。",
+        "API handler 需要 timeout、body limit、錯誤格式與可測試的 service 邊界。",
+        "測試要能隔離外部依賴、覆蓋失敗路徑，並避免只驗 happy path。",
+        "效能問題要用 benchmark 或 pprof 先定位，再針對 hot path 降低 allocation 或鎖競爭。",
+        "專案交付需要明確設定、版本、CI gate、rollback 與 operational runbook。"
+      ];
+      const wrongTemplates = [
+        ["func handler(w http.ResponseWriter, r *http.Request) {", "\tif err := svc.Do(r.Context()); err != nil {", "\t\tlog.Println(err)", "\t\thttp.Error(w, err.Error(), 500)", "\t}", "}"],
+        ["type Store interface {", "\tSave(context.Context, User) error", "\tFind(context.Context, string) (User, error)", "\tDelete(context.Context, string) error", "\tMigrate(context.Context) error", "}"],
+        ["func ContainsString(items []string, target string) bool { return false }", "func ContainsInt(items []int, target int) bool { return false }"],
+        ["func Load() error {", "\tresp, err := http.Get(url)", "\tif err != nil { return err }", "\tdefer resp.Body.Close()", "\treturn nil", "}"],
+        ["go func() {", "\tfor job := range jobs { results <- handle(job) }", "}()", "// 沒有 ctx.Done，也沒有人保證 close(results)"],
+        ["for _, job := range jobs {", "\tgo process(job)", "}", "// 任務越多 goroutine 越多，沒有上限"],
+        ["func create(w http.ResponseWriter, r *http.Request) {", "\tjson.NewDecoder(r.Body).Decode(&dto)", "\tsvc.Create(dto)", "\tw.WriteHeader(200)", "}"],
+        ["func TestService(t *testing.T) {", "\tgot := realService.CallRealAPI()", "\tif got == \"\" { t.Fatal(\"empty\") }", "}"],
+        ["func Build(items []Item) string {", "\tout := \"\"", "\tfor _, item := range items { out += item.Name }", "\treturn out", "}"],
+        ["func main() {", "\tconfig := Config{Port: 8080}", "\tlog.Fatal(http.ListenAndServe(\":8080\", nil))", "}"]
+      ];
+      const fixedTemplates = [
+        ["func handler(w http.ResponseWriter, r *http.Request) {", "\tif err := svc.Do(r.Context()); err != nil {", "\t\tstatus, body := mapAppError(err)", "\t\twriteJSON(w, status, body)", "\t\treturn", "\t}", "\tw.WriteHeader(http.StatusNoContent)", "}"],
+        ["type UserStore interface {", "\tSave(context.Context, User) error", "}", "", "type Service struct { store UserStore }"],
+        ["func Contains[T comparable](items []T, target T) bool {", "\tfor _, item := range items {", "\t\tif item == target { return true }", "\t}", "\treturn false", "}"],
+        ["func Load(ctx context.Context, client *http.Client, url string) error {", "\treq, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)", "\tresp, err := client.Do(req)", "\tif err != nil { return err }", "\tdefer resp.Body.Close()", "\treturn nil", "}"],
+        ["func worker(ctx context.Context, jobs <-chan Job, results chan<- Result) error {", "\tfor {", "\t\tselect {", "\t\tcase job, ok := <-jobs:", "\t\t\tif !ok { return nil }", "\t\t\tresults <- handle(job)", "\t\tcase <-ctx.Done(): return ctx.Err()", "\t\t}", "\t}", "}"],
+        ["select {", "case queue <- job:", "\tmetrics.Queued.Add(ctx, 1)", "case <-ctx.Done():", "\treturn ctx.Err()", "default:", "\tmetrics.Dropped.Add(ctx, 1)", "\treturn ErrQueueFull", "}"],
+        ["func create(w http.ResponseWriter, r *http.Request) {", "\tr.Body = http.MaxBytesReader(w, r.Body, 1<<20)", "\tctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)", "\tdefer cancel()", "\tid, err := svc.Create(ctx, decode(r.Body))", "\twriteResult(w, id, err)", "}"],
+        ["func TestService(t *testing.T) {", "\tfake := FakeClient{Result: \"ok\"}", "\tsvc := NewService(fake)", "\tif got := svc.Run(context.Background()); got != \"ok\" { t.Fatal(got) }", "}"],
+        ["func Build(items []Item) string {", "\tvar b strings.Builder", "\tfor _, item := range items { b.WriteString(item.Name) }", "\treturn b.String()", "}"],
+        ["func main() {", "\tcfg := MustLoadConfig()", "\tlogger := slog.New(slog.NewJSONHandler(os.Stdout, nil))", "\tserver := NewServer(cfg, logger)", "\tlog.Fatal(server.ListenAndServe())", "}"]
+      ];
+      const testTemplates = [
+        "table-driven test 覆蓋 invalid、not_found、temporary、internal，並驗證 response 不含 SQL 或 stack trace。",
+        "使用 fake store 驗證 service 行為，不需要真 DB 或真外部 API。",
+        "測試空集合、命中、未命中、不同型別，並確認型別約束足夠小。",
+        "用 context.WithCancel / WithTimeout 測試流程能在 deadline 後退出。",
+        "測試 close、timeout、cancel 與結果收斂，必要時搭配 race test。",
+        "壓測或單元測試注入滿 queue，驗證 ErrQueueFull、drop metric 與 retry 上限。",
+        "httptest 覆蓋成功、validation error、body too large、service timeout。",
+        "使用 fake dependency、t.Cleanup、table-driven test，並避免測試依賴不穩定網路。",
+        "先跑 benchmark 或 pprof，再比較改動前後 allocation、ns/op 與功能測試結果。",
+        "CI 驗證 config 缺值、版本資訊、release note、rollback checklist 與 migration 風險。"
+      ];
+      const metricTemplates = [
+        "api_errors_total{kind,status}、request_duration_seconds、error_kind log 欄位。",
+        "dependency_call_total{dependency,result}、fake coverage、service_error_total。",
+        "generic_helper_test_cases、allocs/op、call site readability review。",
+        "context_deadline_total、canceled_total、goroutine count、blocked duration。",
+        "goroutine_count、channel_wait_seconds、timeout_total、leak test 結果。",
+        "queue_depth、inflight_jobs、dropped_jobs_total、retry_total、dead_letter_total。",
+        "http_requests_total{route,status}、request_body_rejected_total、handler_latency_seconds。",
+        "test_coverage、flaky_test_count、benchmark_allocs、fuzz_crashers。",
+        "allocs/op、B/op、CPU profile top functions、heap live objects。",
+        "ci_duration、failed_gate_total、deploy_version、rollback_ready、config_validation_failures。"
+      ];
+      const incidentTemplates = [
+        ["API 500 暴增，log 裡只有底層 SQL 錯誤字串，客戶端看到內部欄位名稱。", "handler 直接輸出 err.Error，沒有錯誤分類與邊界轉換。", "建立 AppError 分類，在 handler 統一映射 status code 與安全訊息。", "事故後把錯誤分類表、HTTP response 契約與 log 欄位納入 code review checklist。"],
+        ["測試需要替換 store，卻被迫實作一個 10 個方法的大 interface。", "interface 放在提供端且過大，使用者被迫依賴不需要的方法。", "在 service 使用端定義最小 interface，只要求本 use case 需要的方法。", "每次新增 interface 方法前，先檢查是否應該拆成更小的 role interface。"],
+        ["泛型 helper 上線後可讀性下降，reviewer 無法判斷約束是否正確。", "為了消除少量重複，把業務語意藏進過度泛型化的工具函式。", "只保留集合演算法泛型，業務規則回到具名函式。", "泛型 PR 必須說明型別約束、零值行為與至少兩個使用場景。"],
+        ["部署後 goroutine 數持續上升，DB 查詢逾時後仍有背景流程卡住。", "下層 I/O 沒接收 request context，cancel 後仍繼續等待。", "所有外部 I/O 接收 ctx，select 監聽 ctx.Done，測試取消路徑。", "把 goroutine count 與 deadline exceeded 納入 release 後觀察。"],
+        ["批次任務偶發卡死，worker 等結果 channel 永遠沒有 close。", "channel close 所有權不清楚，producer 退出後沒有通知 consumer。", "由 sender close channel，fan-in 使用 WaitGroup 統一關閉 results。", "所有 pipeline 都要在設計文件寫明 close ownership。"],
+        ["流量尖峰時服務記憶體暴漲，goroutine 數量跟任務數一起成長。", "每個 job 直接 go process，沒有 worker 數、queue 深度與 drop 策略。", "改成 bounded queue + 固定 worker pool + ErrQueueFull/backpressure。", "壓測必須觀察 queue_depth、inflight、dropped 與 retry_total。"],
+        ["API latency p99 飆高，部分 request body 很大導致 handler 長時間 decode。", "handler 沒有限制 body size，也沒有 request timeout。", "使用 MaxBytesReader、context timeout 與統一錯誤回應。", "API checklist 加入 body limit、timeout、httptest slow path。"],
+        ["CI 偶發失敗，因為測試直接打真外部 API，網路慢就 flaky。", "測試耦合真依賴，沒有 fake client 與 deterministic fixture。", "改用 fake dependency、httptest server 或 temp dir，外部整合測試獨立標記。", "CI 報告要分開 unit、integration、flaky quarantine。"],
+        ["優化後 CPU 沒下降，反而新增複雜 cache 造成記憶體升高。", "沒有 benchmark/pprof 證據就先改資料結構。", "先用 benchmark 與 pprof 找 hot path，再只修最高成本位置。", "效能 PR 必須附 before/after ns/op、B/op 或 profile evidence。"],
+        ["版本發布後無法快速回滾，因為設定、migration、版本資訊沒有記錄。", "release note 沒有 migration/rollback/checklist，binary 也沒有版本注入。", "加入 ldflags version、release checklist、rollback runbook 與設定驗證。", "每次 release 都要能回答：怎麼驗收、怎麼回滾、資料是否相容。"]
+      ];
+
+      const cases = [];
+      categoryNames.forEach((category, categoryIndex) => {
+        caseTitles[categoryIndex].slice(0, 4).forEach((title, titleIndex) => {
+          const no = categoryIndex * 20 + titleIndex + 1;
+          cases.push({
+            no,
+            problem: `${title}：${problemTemplates[categoryIndex]}`,
+            wrongCode: `// 錯誤版本：${title}\n${wrongTemplates[categoryIndex].join("\n")}`,
+            fixedCode: `// 修正版：${title}\n${fixedTemplates[categoryIndex].join("\n")}`,
+            testPlan: testTemplates[categoryIndex],
+            productionMetric: metricTemplates[categoryIndex],
+            incident: titleIndex === 0 ? {
+              symptom: incidentTemplates[categoryIndex][0],
+              cause: incidentTemplates[categoryIndex][1],
+              fix: incidentTemplates[categoryIndex][2],
+              review: incidentTemplates[categoryIndex][3]
+            } : null
+          });
+        });
+      });
+      return new Map(cases.map(item => [item.no, item]));
+    }
+
+    const realEngineeringCases = buildRealEngineeringCases();
+
+    const productionDeepDiveCards = [
+      {
+        title: "database/sql：Open、PingContext、Pool 邊界",
+        badge: "DB",
+        color: "#15803d",
+        summary: "資深專案不是只會 Query，而是能控制 driver、連線池、啟動檢查、timeout 與 DB 飽和風險；範例專案提供 Postgres pgx database/sql 版本。",
+        table: [["pgx/stdlib", "用 Postgres driver 掛到 database/sql"], ["sql.Open", "建立 DB handle，不代表連線成功"], ["PingContext", "啟動或 readiness 時驗證 DB 可用"], ["SetMaxOpenConns", "限制最大連線，避免打爆 DB"], ["SetConnMaxLifetime", "配合 DB/LB 連線生命週期"]],
+        code: `import _ "github.com/jackc/pgx/v5/stdlib"\n\nfunc OpenPostgres(ctx context.Context, dsn string) (*sql.DB, error) {\n\tdb, err := sql.Open("pgx", dsn)\n\tif err != nil { return nil, err }\n\tdb.SetMaxOpenConns(25)\n\tdb.SetMaxIdleConns(10)\n\tdb.SetConnMaxLifetime(30 * time.Minute)\n\tpingCtx, cancel := context.WithTimeout(ctx, 3*time.Second)\n\tdefer cancel()\n\tif err := db.PingContext(pingCtx); err != nil {\n\t\tdb.Close()\n\t\treturn nil, err\n\t}\n\treturn db, nil\n}`,
+        steps: ["先確認 DB 最大連線數與服務副本數。", "啟動時用 PingContext 驗證，而不是讓第一個 request 才爆。", "觀察 pool wait count、query latency、DB CPU 後再調 pool。"],
+        anti: "直接 sql.Open 後就開始服務，沒有 PingContext、沒有 pool 上限、沒有 readiness 判斷。",
+        acceptance: "DB 不可用時服務啟動或 readiness 明確失敗；壓測時 pool 不會無上限擴張。"
+      },
+      {
+        title: "Transaction：defer Rollback 與 service 邊界",
+        badge: "Tx",
+        color: "#0f766e",
+        summary: "transaction 應該對齊一個 use case，由 service 決定 isolation level、deadlock retry 與 rollback 行為。",
+        table: [["BeginTx", "開始一個受 context 控制的交易"], ["Isolation", "依 use case 選 ReadCommitted / RepeatableRead / Serializable"], ["defer Rollback", "錯誤路徑的保險絲"], ["Deadlock retry", "只 retry 可判斷的暫時性交易錯誤"]],
+        code: `func withTxRetry(ctx context.Context, db *sql.DB, fn func(*sql.Tx) error) error {\n\tfor attempt := 0; attempt < 3; attempt++ {\n\t\ttx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted})\n\t\tif err != nil { return err }\n\t\tdefer tx.Rollback()\n\t\tif err := fn(tx); err != nil {\n\t\t\tif isDeadlock(err) { continue }\n\t\t\treturn err\n\t\t}\n\t\treturn tx.Commit()\n\t}\n\treturn ErrDeadlock\n}`,
+        steps: ["service 定義交易邊界與 isolation level。", "deadlock retry 要有次數上限與 metric。", "交易內避免呼叫慢速外部 API。"],
+        anti: "所有 DB error 都 retry，或每個 repository 方法自己開 transaction。",
+        acceptance: "測試能注入 deadlock，證明最多 retry N 次；中途錯誤不會留下半套資料。"
+      },
+      {
+        title: "Migration Strategy：版本、相容、回滾",
+        badge: "Migration",
+        color: "#475569",
+        summary: "production DB 變更要能漸進發布：先相容 schema，再發 app，最後清理舊欄位。",
+        table: [["Expand", "先新增 nullable 欄位、索引或新表"], ["Migrate", "背景補資料，避免長交易鎖表"], ["Contract", "確認新版本穩定後再移除舊欄位"], ["Rollback", "release note 寫明資料是否可回復"]],
+        code: `// 典型 expand / migrate / contract\n// 001_add_jobs_status.sql: ADD COLUMN status TEXT DEFAULT 'pending'\n// app v2: 同時讀舊欄位與新欄位\n// backfill: 批次補資料，每批有 timeout\n// 002_drop_old_column.sql: 等回滾窗口結束後才執行`,
+        steps: ["migration 必須和 app deploy 拆成可回滾步驟。", "長時間 backfill 用批次與 timeout。", "release note 寫明 rollback 是否需要資料修復。"],
+        anti: "一次 migration 同時改 schema、補大量資料、刪欄位，失敗時無法安全回滾。",
+        acceptance: "每個 migration 都有 forward、rollback 策略與 production 執行時間預估。"
+      },
+      {
+        title: "Prometheus Metrics：Counter、Gauge、Histogram",
+        badge: "Metrics",
+        color: "#b45309",
+        summary: "metrics 回答整體是否異常；範例專案使用 Prometheus client_golang 實作 registry、counter、gauge、histogram 與 /metrics。",
+        table: [["prometheus.NewRegistry", "為服務建立獨立 registry"], ["CounterVec", "requests_total、jobs_total"], ["Gauge", "queue_depth、inflight_jobs"], ["Histogram", "request_duration_seconds、job_duration_seconds"]],
+        code: `registry := prometheus.NewRegistry()\nrequests := prometheus.NewCounterVec(prometheus.CounterOpts{\n\tName: \"api_requests_total\",\n\tHelp: \"HTTP requests by route, method and status.\",\n}, []string{\"route\", \"method\", \"status\"})\nregistry.MustRegister(requests)\nmux.Handle(\"GET /metrics\", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))`,
+        steps: ["先定義服務 SLI：錯誤率、延遲、飽和度。", "worker pool 加 queue_depth、inflight、retry、drop。", "在範例專案查看 internal/observability/observability.go 的實際 client 接線。"],
+        anti: "把 user_id、完整 URL、錯誤訊息當 label，導致 metrics cardinality 爆炸。",
+        acceptance: "事故時能從 metrics 看出是錯誤率、延遲還是 queue 飽和。"
+      },
+      {
+        title: "OpenTelemetry Trace + pprof 邊界",
+        badge: "Trace",
+        color: "#7c3aed",
+        summary: "trace 回答單次請求慢在哪裡；範例專案可用 stdout 本機學習，也能用 OTLP gRPC exporter 接 OTel collector。",
+        table: [["stdouttrace", "本機學習與測試時輸出 trace"], ["otlptracegrpc", "production 接 collector / backend"], ["Tracer.Start", "HTTP、service、worker 建立 span"], ["attribute", "route、status、error_kind 等低敏欄位"], ["pprof", "CPU/heap/goroutine profile，僅受控環境開放"]],
+        code: `func newTraceExporter(ctx context.Context, endpoint string) (sdktrace.SpanExporter, error) {\n\tif endpoint != \"\" {\n\t\treturn otlptracegrpc.New(ctx,\n\t\t\totlptracegrpc.WithEndpoint(endpoint),\n\t\t\totlptracegrpc.WithInsecure(),\n\t\t)\n\t}\n\treturn stdouttrace.New(stdouttrace.WithWriter(os.Stdout))\n}\n\nctx, span := tracer.Start(ctx, \"Service.CreateJob\")\ndefer span.End()`,
+        steps: ["入口建立或讀取 trace id。", "HTTP、service、worker 都建立 span。", "本機先看 stdout trace，Docker Compose 用 OTEL_EXPORTER_OTLP_ENDPOINT 接 collector。", "延遲異常時先看 metrics，再用 trace 定位慢 span，最後才開 pprof。"],
+        anti: "只印自然語言 log，沒有 trace_id；pprof 對外公開，事故還沒解就先增加安全風險。",
+        acceptance: "任一慢請求可從 metrics 找 trace，再從 trace 找 log 與錯誤分類。"
+      },
+      {
+        title: "CI/CD + Docker：從教材到可交付管線",
+        badge: "Pipeline",
+        color: "#2563eb",
+        summary: "資深工程教材不能只停在程式碼；範例專案提供 Dockerfile、docker-compose、migration CLI 與 GitHub Actions gate。",
+        table: [["Dockerfile", "multi-stage build api-worker 與 migrate"], ["docker-compose", "Postgres、OTel collector、migrate、API 串接"], ["cmd/migrate", "套用 migrations/*.sql"], ["GitHub Actions", "go test、race test、build gate"]],
+        code: `# local integration\ncd production-api-worker\ndocker compose up --build\n\n# CI gate\ngo test ./...\ngo test -race ./...\ngo build ./cmd/api-worker\ngo build ./cmd/migrate`,
+        steps: ["先用 local memory mode 跑單元測試。", "再用 Docker Compose 啟動 Postgres 與 OTel collector。", "migration 容器成功後 API 才啟動。", "CI 至少跑 test、race test 與兩個 binary build。"],
+        anti: "只有 README 說要測，但沒有 Makefile、Docker Compose、CI gate；migration 需要人工憑記憶執行。",
+        acceptance: "新同事可用一個 docker compose 指令跑起整套服務；PR 必須通過 test/race/build gate 才能合併。"
+      }
+    ];
+
     const projectDeepDiveFlows = [
       {
         title: "錯誤流：分類、包裝、回應",
@@ -1562,6 +1785,28 @@
       `).join("");
     }
 
+    function renderProductionDeepDive() {
+      const root = document.getElementById("productionDeepDiveCards");
+      root.innerHTML = productionDeepDiveCards.map(item => `
+        <article class="flow-card">
+          <span class="badge">${item.badge}</span>
+          <h3>${item.title}</h3>
+          <p class="muted">${item.summary}</p>
+          <table>
+            <thead><tr><th>概念 / API</th><th>資深工程用法</th></tr></thead>
+            <tbody>${item.table.map(row => `<tr><td><code>${row[0]}</code></td><td>${row[1]}</td></tr>`).join("")}</tbody>
+          </table>
+          <pre><code class="language-go">${escapeHtml(item.code)}</code></pre>
+          <details>
+            <summary>Step-by-step：專案落地方式</summary>
+            <ol class="steps">${item.steps.map(step => `<li>${step}</li>`).join("")}</ol>
+          </details>
+          <div class="anti-pattern"><strong>反例：</strong>${item.anti}</div>
+          <div class="acceptance"><strong>驗收標準：</strong>${item.acceptance}</div>
+        </article>
+      `).join("");
+    }
+
     function renderSyntaxCards() {
       const root = document.getElementById("syntaxCards");
       root.innerHTML = syntaxTopics.map(topic => `
@@ -1603,6 +1848,7 @@
       categoryNames.forEach((category, categoryIndex) => {
         caseTitles[categoryIndex].forEach((title, titleIndex) => {
           const no = cases.length + 1;
+          const realCase = realEngineeringCases.get(no) || {};
           cases.push({
             no,
             category,
@@ -1613,7 +1859,8 @@
             code: codeForCase(categoryIndex, title),
             steps: stepsForCase(categoryIndex, title),
             tradeoff: tradeoffForCase(categoryIndex, title),
-            acceptance: acceptanceForCase(categoryIndex, title)
+            acceptance: acceptanceForCase(categoryIndex, title),
+            ...realCase
           });
         });
       });
@@ -1722,16 +1969,53 @@
 
     function renderCases(cases) {
       const root = document.getElementById("caseGrid");
-      root.innerHTML = cases.map(item => `
+      root.innerHTML = cases.map(item => {
+        const incidentBlock = item.incident ? `
+          <details open>
+            <summary>完整事故案例</summary>
+            <table>
+              <tbody>
+                <tr><th>現象</th><td>${item.incident.symptom}</td></tr>
+                <tr><th>原因</th><td>${item.incident.cause}</td></tr>
+                <tr><th>修正</th><td>${item.incident.fix}</td></tr>
+                <tr><th>復盤</th><td>${item.incident.review}</td></tr>
+              </tbody>
+            </table>
+          </details>
+        ` : "";
+        const engineeringBlock = item.problem ? `
+          ${incidentBlock}
+          <details open>
+            <summary>問題背景</summary>
+            <p>${item.problem}</p>
+          </details>
+          <details>
+            <summary>錯誤版本</summary>
+            <pre><code class="language-go">${escapeHtml(item.wrongCode)}</code></pre>
+          </details>
+          <details>
+            <summary>修正版</summary>
+            <pre><code class="language-go">${escapeHtml(item.fixedCode)}</code></pre>
+          </details>
+          <details>
+            <summary>驗收測試</summary>
+            <p>${item.testPlan}</p>
+          </details>
+          <div class="acceptance"><strong>Production 指標：</strong>${item.productionMetric}</div>
+        ` : "";
+        return `
         <article class="case-card" data-category="${item.category}">
           <span class="badge">#${String(item.no).padStart(3, "0")}</span>
           <h3>${item.title}</h3>
           <div class="case-meta">
             <span class="badge">${item.category}</span>
+            ${item.problem ? `<span class="badge">真實工程案例</span>` : ""}
+            ${item.incident ? `<span class="badge">完整事故案例</span>` : ""}
           </div>
           <p class="muted"><strong>適用場景：</strong>${item.scene}</p>
           <div class="mini-flow">${caseMiniSvg(item)}</div>
           <pre><code class="language-go">${escapeHtml(item.code)}</code></pre>
+          ${engineeringBlock}
           <details>
             <summary>設計取捨</summary>
             <p>${item.tradeoff}</p>
@@ -1746,7 +2030,8 @@
             <p>${item.pitfall}</p>
           </details>
         </article>
-      `).join("");
+      `;
+      }).join("");
     }
 
     function renderSyntaxExampleFilters(examples) {
@@ -1852,6 +2137,7 @@
     renderProjectDeepDiveFlows();
     renderEngineeringDecisions();
     renderProductionChecklist();
+    renderProductionDeepDive();
     const syntaxExamples = buildSyntaxExamples();
     renderSyntaxExampleFilters(syntaxExamples);
     renderSyntaxExamples(syntaxExamples);
