@@ -75,7 +75,7 @@ type Result[T any] struct {
 | `any` | 任意型別 |
 | `comparable` | 可用 `==` / `!=` |
 | `~int` | 底層型別是 int（含自訂型別） |
-| `constraints.Ordered` | 可比較大小（`<`, `>` 等） |
+| `cmp.Ordered` | Go 1.21+ 標準庫約束，可比較大小（`<`, `>` 等） |
 
 ---
 
@@ -213,6 +213,11 @@ if errors.Is(err, sql.ErrNoRows) { /* not found */ }
 // 取出特定錯誤型別
 var netErr *net.OpError
 if errors.As(err, &netErr) {
+    fmt.Println("network op:", netErr.Op)
+}
+
+// Go 1.26+ 泛型版 errors.As
+if netErr := errors.AsType[*net.OpError](err); netErr != nil {
     fmt.Println("network op:", netErr.Op)
 }
 
@@ -551,7 +556,7 @@ time.Parse("2006-01-02", "2024-01-15")
 
 ---
 
-## 現代 Go API (Go 1.20-1.22) 速查
+## 現代 Go API (Go 1.20-1.26) 速查
 
 ### 泛型集合 (`slices` / `maps`) (Go 1.21)
 
@@ -596,4 +601,28 @@ import "math/rand/v2"
 // 全自動 Seed，不再需要 rand.Seed()
 n := rand.IntN(100)
 f := rand.Float64()
+```
+
+### Go 1.25/1.26 工具鏈與 runtime
+
+| 功能 | 版本 | 用途 |
+|---|---:|---|
+| container-aware `GOMAXPROCS` | Go 1.25+ | Linux container 內預設會考慮 cgroup CPU limit，避免過度排程 |
+| `testing/synctest` | Go 1.25+ | 用虛擬時間測併發與 timeout，減少 `time.Sleep` flaky test |
+| `go fix` modernizers | Go 1.26+ | 用官方 analyzer 套用現代化 idiom 與標準庫 API 遷移 |
+| Green Tea GC | Go 1.26+ | 預設 GC，改善小物件標記與掃描 locality |
+| goroutine leak profile | Go 1.26+ experiment | 用 `GOEXPERIMENT=goroutineleakprofile` 偵測部分永久阻塞 goroutine |
+| `T.ArtifactDir` / `B.ArtifactDir` / `F.ArtifactDir` | Go 1.26+ | 測試、benchmark、fuzz 產物輸出到固定 artifact 目錄 |
+
+```go
+// Go 1.25+：併發測試不用靠 sleep 猜時間
+synctest.Test(t, func(t *testing.T) {
+    ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+    defer cancel()
+
+    <-ctx.Done()
+    if err := ctx.Err(); !errors.Is(err, context.DeadlineExceeded) {
+        t.Fatalf("unexpected err: %v", err)
+    }
+})
 ```

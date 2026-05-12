@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.4 - 2026-05-13
+
+- 新增 2026-05-13 01:03 資深工程師審查報告，確認主章節已現代化，但輔助教材仍有 Go 1.22/1.21-1.22 版本訊號不一致。
+- 康乃爾筆記索引與各章版本基準同步到 Go 1.26.3。
+- 康乃爾筆記補上 Go 1.26 `errors.AsType`、`new(expression)`、Green Tea GC 與 Go 1.25 `testing/synctest` / container-aware `GOMAXPROCS` 摘要。
+- 進階 Cheat Sheet 將「現代 Go API」延伸到 Go 1.26，修正 `cmp.Ordered`、補上 `go fix` modernizers、`testing/synctest`、`T.ArtifactDir`、Green Tea GC 與 goroutine leak profile。
+- 圖解筆記4與圖解筆記3-4整合頁更新 production 補強篇的版本定位，避免首頁仍顯示只涵蓋 Go 1.21/1.22。
+
 ## v1.0.3 - 2026-05-13
 
 - 新增 2026-05-13 資深工程師審查報告，確認教材深度足夠但 Go 版本基準需現代化。
