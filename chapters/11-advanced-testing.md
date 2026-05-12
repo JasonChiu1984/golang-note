@@ -139,6 +139,56 @@ func setupDB(t *testing.T) *sql.DB {
 }
 ```
 
+## Go 1.25+：`testing/synctest`
+
+併發測試最難的是「時間」：`time.Sleep` 會讓測試慢又 flaky。Go 1.25 的 `testing/synctest` 可在隔離 bubble 中測試 goroutine，並讓時間在所有 goroutine blocked 時快速前進。
+
+```go
+func TestTimeoutPath(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		done := make(chan struct{})
+		go func() {
+			<-ctx.Done()
+			close(done)
+		}()
+
+		synctest.Wait()
+		<-done
+	})
+}
+```
+
+| 適合場景 | 說明 |
+|---|---|
+| timeout / retry | 不必真的 sleep 幾秒 |
+| goroutine leak 測試 | 等待 goroutine 進入 blocked 狀態後再斷言 |
+| channel 協調 | 比任意 sleep 更穩定 |
+
+> 若你的 module 仍是 Go 1.22，這段只能作為新版 Go 補充；要實際執行需切到 Go 1.25+。
+
+## Go 1.26：測試 Artifact 目錄
+
+Go 1.26 的 `T.ArtifactDir`、`B.ArtifactDir`、`F.ArtifactDir` 可讓測試輸出檔案有固定位置，適合保留 golden diff、截圖、profile、fuzz repro 資料。
+
+```go
+func TestRenderGolden(t *testing.T) {
+	dir := t.ArtifactDir()
+	path := filepath.Join(dir, "render-output.json")
+	if err := os.WriteFile(path, []byte(`{"ok":true}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+```
+
+| 過去做法 | Go 1.26 做法 |
+|---|---|
+| 手刻 temp dir 命名規則 | 使用 `t.ArtifactDir()` |
+| CI artifact 路徑分散 | 集中收集 testing artifact |
+| golden/debug 輸出易污染 repo | 輸出到測試框架管理的位置 |
+
 ## 常見陷阱
 
 | 陷阱 | 說明 | 解決方案 |
@@ -155,6 +205,8 @@ func setupDB(t *testing.T) *sql.DB {
 | 排除快取權限問題 | `TMPDIR=$PWD/.tmp GOCACHE=$PWD/.gocache GOMODCACHE=$PWD/.gomodcache go test ./...` | 適合 sandbox、CI、受限目錄 |
 | 競態檢查 | `go test -race ./...` | 併發程式改動後必跑 |
 | 單一封包 | `go test ./project-concurrent-crawler/crawler -run TestCrawlerRetriesThenSucceeds -count=1` | 聚焦單點回歸 |
+| Go 1.25+ 併發時間測試 | `go test ./... -run Synctest` | 驗證 `testing/synctest` 類型案例 |
+| Go 1.26 artifact 測試 | `go test -artifacts ./test-artifacts ./...` | 搭配 CI 收集 `T.ArtifactDir` 產物 |
 | Production 專案 | `cd production-api-worker && TMPDIR=$PWD/.tmp GOCACHE=$PWD/.gocache GOMODCACHE=$PWD/.gomodcache go test ./...` | 第一次需要可下載依賴的網路 |
 
 ### 受限環境排錯

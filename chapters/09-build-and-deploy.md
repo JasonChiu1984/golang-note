@@ -172,7 +172,7 @@ mux.Handle("/static/", http.FileServer(http.FS(staticFS)))
 
 ```dockerfile
 # Stage 1: Build
-FROM golang:1.22-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
 WORKDIR /app
 
@@ -268,7 +268,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.26.x'
       - run: go test -race -cover ./...
 
   build:
@@ -279,7 +279,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.26.x'
       - name: Build
         run: |
           CGO_ENABLED=0 go build \

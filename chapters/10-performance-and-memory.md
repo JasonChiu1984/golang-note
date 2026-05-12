@@ -84,6 +84,17 @@ Go 使用 **Tricolor Mark-and-Sweep (三色標記清除法)**，並高度優化�
 **GC 觸發時機**：預設情況下，當 heap 成長到上一次的兩倍時（`GOGC=100`）會觸發。
 **Go 1.19+ 新增 `GOMEMLIMIT`**：可以設定記憶體軟上限，避免 OOM (Out Of Memory)。
 
+### Go 1.26：Green Tea GC
+
+Go 1.26 起，Green Tea GC 已由實驗功能變成預設 GC。它改善小物件標記與掃描的 locality 與 CPU scalability，對大量小物件分配的服務通常更友善。
+
+| 重點 | 實務解讀 |
+|---|---|
+| 預設啟用 | 升級 Go 1.26 後不需要額外 flag 才會使用新版 GC |
+| 仍需量測 | 不要只因新版 GC 就移除 pprof / metrics；升級前後要比較 latency、heap、GC pause |
+| 可暫時關閉 | 若遇到明確回歸，可用 `GOEXPERIMENT=nogreenteagc` 建置並回報問題 |
+| 與容器相關 | 搭配 `GOMEMLIMIT` 與 Go 1.25+ container-aware `GOMAXPROCS` 一起看，避免只調單一參數 |
+
 ## `sync.Pool` 重複利用物件
 
 當你的服務每秒產生數萬個短命的物件（如 byte buffer），會對 GC 造成龐大壓力。`sync.Pool` 提供了一個物件池，讓你可以重複利用這些物件。

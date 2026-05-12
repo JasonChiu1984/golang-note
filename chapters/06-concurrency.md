@@ -220,7 +220,7 @@ flowchart TD
 |---|---|---|
 | **G** | Goroutine | 使用者的併發單位，初始 stack 僅 2-8 KB |
 | **M** | Machine | 對應 OS thread，執行 goroutine 的實體 |
-| **P** | Processor | 邏輯處理器，數量 = `GOMAXPROCS`（預設 = CPU 核數） |
+| **P** | Processor | 邏輯處理器，數量 = `GOMAXPROCS`（Go 1.25+ 在 Linux 容器內會考慮 cgroup CPU limit） |
 
 | 關鍵行為 | 說明 |
 |---|---|
@@ -377,7 +377,17 @@ if err := g.Wait(); err != nil {
 | Channel vs Mutex 怎麼選？ | 傳遞資料所有權 → channel；保護共享狀態 → mutex |
 | Goroutine stack 多大？ | 初始 2-8 KB，自動增長到 GB 級。但大量 goroutine 仍需注意記憶體 |
 | Buffered channel 容量多少？ | 不確定就用 unbuffered；有明確批次大小才用 buffered |
-| `GOMAXPROCS` 要設嗎？ | 通常不需要，Go 預設用全部 CPU。容器內注意 `automaxprocs` |
+| `GOMAXPROCS` 要設嗎？ | 通常不需要。Go 1.25+ 會在 Linux 容器內依 cgroup CPU limit 調整預設值；舊版或特殊平台才考慮 `automaxprocs` / 明確設定 |
+
+### Go 1.25+ 的 container-aware `GOMAXPROCS`
+
+舊觀念常說 `GOMAXPROCS` 預設等於機器邏輯 CPU 數；這在容器環境容易高估可用 CPU。Go 1.25 起，Linux 上的 runtime 會參考 cgroup CPU bandwidth limit，讓 Kubernetes / Docker 裡的服務比較不容易因為 CPU limit 與 goroutine 排程不匹配而產生延遲尖峰。
+
+| 情境 | 建議 |
+|---|---|
+| 新版 Go、Linux container | 先相信 runtime 預設，觀察 latency、CPU throttling、runtime metrics |
+| 舊版 Go 或非標準容器 | 可評估 `automaxprocs` 或手動設定 `GOMAXPROCS` |
+| 已手動設定 `GOMAXPROCS` | runtime 不會覆蓋你的設定，需自行負責容量與壓測 |
 
 ## Goroutine Leak 偵測
 
