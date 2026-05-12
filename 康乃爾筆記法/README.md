@@ -24,7 +24,7 @@
 | 07 | [大型專案架構](07-大型專案架構.md) | 目錄結構、DI、Config、Makefile |
 | 08 | [版本管理](08-版本管理.md) | go.mod、SemVer、go work |
 | 09 | [執行檔打包與部署](09-執行檔打包與部署.md) | build、交叉編譯、Docker、CI/CD |
-| 10 | [效能調優與記憶體](10-效能調優與記憶體.md) | pprof、GC、escape analysis、sync.Pool |
+| 10 | [效能調優與記憶體](10-效能調優與記憶體.md) | pprof、GC、escape analysis、sync.Pool、runtime metrics、benchstat |
 | 11 | [進階測試實務](11-進階測試實務.md) | mock、fuzz、integration test |
 | A1 | [語言規範速覽](A1-語言規範速覽.md) | 識別符、關鍵字、字面量、作用域 |
 

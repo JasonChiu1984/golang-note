@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.8 - 2026-05-13
+
+- 新增 2026-05-13 05:04 資深工程師審查報告，確認教程已具備專案開發深度，但效能調優章仍缺少可重複的診斷決策流程。
+- README 新增效能診斷版本策略與驗證指令，將 benchmark A/B、`benchstat`、pprof 與 execution trace 納入主教材入口。
+- 第 10 章補上效能問題定位流程、benchmark 統計比較、runtime metrics、block/mutex profile、production profiling 安全邊界與 trace 使用時機。
+- 康乃爾筆記與進階 Cheat Sheet 同步補上 runtime metrics、`benchstat`、block/mutex profile、GODEBUG 與 trace 決策表。
+- `production-api-worker` README 新增效能驗證 gate，要求 API / worker 改動保留 benchmark、profile 或 metrics 證據。
+
 ## v1.0.7 - 2026-05-13
 
 - 新增 2026-05-13 04:04 資深工程師審查報告，確認教程已具備專案開發主線，但依賴治理與供應鏈安全 gate 仍需明確化。

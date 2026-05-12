@@ -340,6 +340,11 @@ go run -race .
 # HTTP pprof（生產環境）
 import _ "net/http/pprof"
 go tool pprof http://localhost:6060/debug/pprof/heap
+
+# Benchmark A/B
+go test -run='^$' -bench=. -benchmem -count=10 ./... > old.txt
+go test -run='^$' -bench=. -benchmem -count=10 ./... > new.txt
+benchstat old.txt new.txt
 ```
 
 | 工具 | 用途 |
@@ -349,6 +354,23 @@ go tool pprof http://localhost:6060/debug/pprof/heap
 | `-race` | 偵測 data race |
 | `goleak` | 偵測 goroutine leak |
 | `benchstat` | 比較 benchmark 結果 |
+| block profile | 找 channel / timer / cond 等同步等待 |
+| mutex profile | 找 lock contention |
+| `runtime/metrics` | 長期監控 GC、heap、scheduler、goroutine 指標 |
+
+### 效能診斷選工具
+
+| 症狀 | 第一工具 | 指令 / API |
+|---|---|---|
+| CPU 高 | CPU profile | `go tool pprof .../profile?seconds=30` |
+| allocation 高 | heap / alloc profile | `go test -memprofile=mem.out -bench=.` |
+| goroutine 變多 | goroutine profile / metrics | `/debug/pprof/goroutine`、`/sched/goroutines:goroutines` |
+| lock 等待 | mutex profile | `runtime.SetMutexProfileFraction(5)` |
+| channel / timer 阻塞 | block profile | `runtime.SetBlockProfileRate(1)` |
+| 平行度不足 / syscall 等待 | execution trace | `go test -trace=trace.out` |
+| GC 壓力 | runtime metrics / gctrace | `/gc/heap/live:bytes`、`GODEBUG=gctrace=1` |
+
+> 正式效能結論要附修改前後資料；單次 benchmark 或只看平均值不足以支撐 release decision。
 
 ---
 

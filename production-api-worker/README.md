@@ -46,6 +46,7 @@ go mod verify
 go list -m -u all
 govulncheck ./...
 go test -race -cover ./...
+go test -run='^$' -bench=. -benchmem -count=10 ./... > bench.txt
 docker compose up --build
 ```
 
@@ -55,4 +56,15 @@ docker compose up --build
 | `go list -m -u all` | 發現可更新依賴並建立維護紀錄 |
 | `govulncheck ./...` | 掃描 API / worker 實際可達的已知漏洞 |
 | `go test -race -cover ./...` | 驗證 service、handler、queue 與併發安全 |
+| `go test -run='^$' -bench=. -benchmem -count=10 ./...` | API / worker 效能改動需保留 benchmark 證據 |
 | `docker compose up --build` | 驗證 Postgres、migration、API、worker、metrics 整體鏈路 |
+
+## Performance Diagnostics
+
+| 場景 | 建議工具 |
+|---|---|
+| API handler CPU 高 | `go tool pprof` CPU profile |
+| queue 或 worker throughput 下降 | benchmark A/B + `benchstat` |
+| worker goroutine 數量異常 | goroutine profile + `/sched/goroutines:goroutines` |
+| repository lock contention | mutex profile |
+| request latency 長尾 | OpenTelemetry span + execution trace |
