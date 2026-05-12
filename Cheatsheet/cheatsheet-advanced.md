@@ -366,6 +366,26 @@ go tool pprof http://localhost:6060/debug/pprof/heap
 | `go get pkg@none` | 移除 |
 | `go list -m all` | 列出所有依賴 |
 | `go list -m -u all` | 檢查可更新版本 |
+| `govulncheck ./...` | 掃描實際可達的已知漏洞 |
+| `go get -tool pkg` | Go 1.24+ 管理專案工具依賴 |
+
+### 依賴更新 Gate
+
+```bash
+go list -m -u all
+go get example.com/pkg@v1.2.3
+go mod tidy
+go mod verify
+go test ./...
+govulncheck ./...
+```
+
+| 檢查 | release 判斷 |
+|---|---|
+| `go.mod` / `go.sum` diff | 必須是預期變更 |
+| `go mod verify` | 失敗就停止 release |
+| `govulncheck` | 有可達漏洞就升級或移除呼叫 |
+| `go list -m -u all` | 高風險安全更新需有處理紀錄 |
 
 ---
 

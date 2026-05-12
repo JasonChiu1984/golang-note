@@ -207,6 +207,9 @@ func TestRenderGolden(t *testing.T) {
 | 單一封包 | `go test ./project-concurrent-crawler/crawler -run TestCrawlerRetriesThenSucceeds -count=1` | 聚焦單點回歸 |
 | Go 1.25+ 併發時間測試 | `go test ./... -run Synctest` | 驗證 `testing/synctest` 類型案例 |
 | Go 1.26 artifact 測試 | `go test -artifacts -outputdir ./test-artifacts ./...` | 搭配 CI 收集 `T.ArtifactDir` 產物 |
+| Module checksum | `go mod verify` | 確認 module cache 未被竄改 |
+| Dependency updates | `go list -m -u all` | 發現可更新版本，作為維護 PR 依據 |
+| Vulnerability scan | `govulncheck ./...` | 掃描實際可達的 Go 已知漏洞 |
 | Production 專案 | `cd production-api-worker && TMPDIR=$PWD/.tmp GOCACHE=$PWD/.gocache GOMODCACHE=$PWD/.gomodcache go test ./...` | 第一次需要可下載依賴的網路 |
 
 ### 受限環境排錯
@@ -215,6 +218,7 @@ func TestRenderGolden(t *testing.T) {
 |---|---|---|
 | `operation not permitted` 指向系統 cache | `go test` 正在寫系統 `go-build` 或 module cache | 改用 repo-local `TMPDIR` / `GOCACHE` / `GOMODCACHE` |
 | `lookup proxy.golang.org: no such host` | 當前環境不能連外抓 module | 改在有網路的環境先下載依賴，或改用 vendoring |
+| `govulncheck` 無法連線 | 不能讀取漏洞資料庫或下載工具 | 記錄為待補掃描，不要標成已通過 |
 | `dyld ... missing LC_UUID load command` | 本機 test binary / linker 工具鏈異常，不一定是程式邏輯錯 | 先用 `go build` 或更換 toolchain / 測試環境驗證 |
 
 ## 小練習
@@ -223,3 +227,4 @@ func TestRenderGolden(t *testing.T) {
 2. 寫一個自訂的字串反轉函式，並用 `Fuzz` 測試看看傳入包含 Emoji 或罕見字元的隨機字串時是否會 panic。
 3. 將你的專案測試加上 `t.Cleanup` 取代原本的 `defer`。
 4. 把你的測試指令改寫成可在 `TMPDIR/GOCACHE/GOMODCACHE` 受限環境重現的版本。
+5. 把 `go mod verify` 與 `govulncheck ./...` 加進 CI，並定義哪些結果要阻擋合併。

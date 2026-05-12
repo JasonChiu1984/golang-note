@@ -232,7 +232,27 @@ flowchart TD
 | `Dockerfile` | `FROM golang:1.26-alpine` / `golang:1.26` | builder image 停在舊版，導致新語法或新 testing API 無法編譯 |
 | GitHub Actions | `actions/setup-go@v5` + `go-version: '1.26.x'` | CI 與開發機版本不一致 |
 | Makefile | release matrix 與 `CGO_ENABLED` | 仍輸出已移除或未驗證的平台 |
+| dependency gate | `go mod verify` + `govulncheck ./...` | 只跑測試，忽略 module hash 或已知漏洞 |
 | smoke test | `docker run --rm image --version` | 只 build image，沒有確認容器內 binary 可啟動 |
+
+### Release 前依賴安全 Gate
+
+```bash
+go mod tidy
+git diff --exit-code -- go.mod go.sum
+go mod verify
+go list -m -u all
+govulncheck ./...
+go test -race -cover ./...
+```
+
+| Gate | 阻擋 release 的條件 |
+|---|---|
+| `git diff --exit-code -- go.mod go.sum` | `go mod tidy` 後仍有未提交變更 |
+| `go mod verify` | module cache checksum 與 `go.sum` 不一致 |
+| `go list -m -u all` | 發現安全修補相關版本但沒有升級理由 |
+| `govulncheck ./...` | 目前程式有可達漏洞呼叫路徑 |
+| `go test -race -cover ./...` | 單元、整合或競態測試失敗 |
 
 ## Makefile 完整範例
 
@@ -292,6 +312,9 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.26.x'
+      - run: go mod verify
+      - run: go install golang.org/x/vuln/cmd/govulncheck@latest
+      - run: govulncheck ./...
       - run: go test -race -cover ./...
 
   build:

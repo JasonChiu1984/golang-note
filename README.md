@@ -2,9 +2,9 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
-> 教材版本：`v1.0.6`
+> 教材版本：`v1.0.7`
 > 教材基準：`Go 1.26.3`
-> 這次更新重點：補齊 Go 1.26 升級、平台支援、Docker/CI toolchain 與 CGO 靜態連結判斷。
+> 這次更新重點：補齊依賴治理、漏洞掃描、供應鏈安全與 release gate 的工程化流程。
 
 ## 版本策略
 
@@ -15,6 +15,7 @@
 | 新特性標示 | Go 1.25 / 1.26 內容會在章節、康乃爾筆記與速查表內明確標示版本 |
 | 實務建議 | 新專案建議直接使用目前受支援的最新 Go 1.26 patch release |
 | 升級檢查 | 升級 Go 1.26 時同步確認 bootstrap toolchain、目標 OS/ARCH、Docker base image、CI `setup-go` 與 CGO 依賴 |
+| 依賴治理 | 每次新增或升級 module 都要跑 `go mod tidy`、`go mod verify`、`go list -m -u all` 與 `govulncheck ./...` |
 
 ## 學習路線
 
@@ -92,10 +93,12 @@ go test ./project-concurrent-crawler/...
 | Go 1.26 新特性 | `go1.26.3 test ./...` 或本機 Go 1.26.3 | 驗證 `new(expression)`、`testing/synctest` 等新版內容 |
 | Go 1.26 test artifact | `go1.26.3 test -artifacts -outputdir ./test-artifacts ./...` | 驗證 `T.ArtifactDir` / `B.ArtifactDir` / `F.ArtifactDir` 並收集輸出產物 |
 | Go 1.26 升級盤點 | 對照第 1 / 9 章的支援矩陣 | 確認 macOS、Windows、FreeBSD、Wasm、bootstrap 與容器建置限制 |
+| 依賴供應鏈檢查 | `go mod tidy && go mod verify && go list -m -u all && govulncheck ./...` | 第 8 / 9 / 11 章的依賴治理與 release gate 基線 |
 
 > 若在 sandbox / 離線環境執行：
 > - `project-concurrent-crawler` 可能因本機 `dyld` / test binary 工具鏈異常失敗。
 > - `production-api-worker` 第一次抓依賴需要網路；無法連外時會停在 module download。
+> - `govulncheck` 與 `go list -m -u all` 需要可連線到 module proxy / vulnerability database；離線環境可保留命令與結果待補。
 > - 目前本機若仍是 Go 1.22.x，只能驗證既有相容範例；Go 1.26 新語法與測試 API 需換成 Go 1.26.3 toolchain。
 
 ## 建議讀法

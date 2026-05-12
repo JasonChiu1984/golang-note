@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.7 - 2026-05-13
+
+- 新增 2026-05-13 04:04 資深工程師審查報告，確認教程已具備專案開發主線，但依賴治理與供應鏈安全 gate 仍需明確化。
+- README 新增依賴治理版本策略與驗證指令，將 `go mod tidy`、`go mod verify`、`go list -m -u all`、`govulncheck ./...` 納入主教材入口。
+- 第 8 章補上依賴升級審核流程、`govulncheck` 使用方式、Go 1.24+ `tool` directive 管理開發工具，以及 private module 的供應鏈風險提醒。
+- 第 9 / 11 章補上 release / CI gate，讓部署與測試不只跑單元測試，也檢查 module hash、可更新版本與已知漏洞。
+- 康乃爾筆記、進階 Cheat Sheet 與 `production-api-worker` README 同步加入依賴安全速查與受限環境說明。
+
 ## v1.0.6 - 2026-05-13
 
 - 新增 2026-05-13 03:03 資深工程師審查報告，確認教程專案開發深度已足夠，但 Go 1.26 升級與部署決策面仍需補強。
