@@ -57,6 +57,19 @@ GOOS=windows GOARCH=amd64 go build -o bin/myservice.exe ./cmd/api
 go tool dist list
 ```
 
+### Go 1.26 Release Matrix 檢查
+
+發布前不要只確認「本機可以 build」，而要把 toolchain 版本、目標平台與 runtime 限制寫成可重複的 release gate。
+
+| 檢查項 | 指令 / 設定 | Go 1.26 實務重點 |
+|---|---|---|
+| Toolchain | `go version` / `go env GOTOOLCHAIN` | CI 與本機應固定到 Go 1.26 最新 patch；自建 Go 需 Go 1.24.6+ bootstrap |
+| Module | `go list -m -f '{{.GoVersion}}'` | 新專案可用 `go 1.26`；教學相容 repo 可保留較低版本但要標註 |
+| Platform | `go tool dist list` | 移除 `windows/arm`；特殊 FreeBSD/RISC-V 目標需實機或專用 CI |
+| macOS runner | GitHub Actions / self-hosted runner 版本 | Go 1.27 起將要求 macOS 13+，舊 macOS 12 runner 應提前淘汰 |
+| Wasm | build script / Makefile | Go 1.26 後 `GOWASM=signext,satconv` 不再有意義 |
+| Race test | `GOOS=linux GOARCH=riscv64 go test -race` | Go 1.26 的 linux/riscv64 可納入 race detector 驗證 |
+
 ## `-ldflags` 注入版本資訊
 
 在編譯時注入版本、commit hash、build time，不用寫死在程式碼中。
@@ -103,7 +116,7 @@ CGO_ENABLED=0 go build -o bin/myservice ./cmd/api
 | `CGO_ENABLED=0` | 禁用 CGO，產生純 Go 靜態二進制 |
 | `CGO_ENABLED=1` | 啟用 CGO，需要系統 C 庫（如 SQLite） |
 
-> **工程經驗**：除非依賴 C library（如 SQLite、某些加密庫），否則一律用 `CGO_ENABLED=0`。容器部署幾乎都是靜態連結。
+> **工程經驗**：除非依賴 C library（如 SQLite、某些加密庫），否則優先用 `CGO_ENABLED=0`。但「單一 binary」不等於永遠 100% 靜態：只要啟用 CGO 或連到系統 C library，就要用 `ldd` / `otool -L` / container smoke test 確認實際依賴。
 
 ## Build Tags（條件編譯）
 
@@ -210,6 +223,16 @@ flowchart TD
   C --> D["RUN go build"]
   B -. "依賴沒變就用 cache" .-> D
 ```
+
+### Go 1.26 Docker / CI 升級清單
+
+| 檔案 | 需要同步的值 | 常見失誤 |
+|---|---|---|
+| `go.mod` | `go 1.26` 或明確保留相容版本 | 文字教學說 Go 1.26，但 module 版本沒有註明相容策略 |
+| `Dockerfile` | `FROM golang:1.26-alpine` / `golang:1.26` | builder image 停在舊版，導致新語法或新 testing API 無法編譯 |
+| GitHub Actions | `actions/setup-go@v5` + `go-version: '1.26.x'` | CI 與開發機版本不一致 |
+| Makefile | release matrix 與 `CGO_ENABLED` | 仍輸出已移除或未驗證的平台 |
+| smoke test | `docker run --rm image --version` | 只 build image，沒有確認容器內 binary 可啟動 |
 
 ## Makefile 完整範例
 

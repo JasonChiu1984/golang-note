@@ -21,6 +21,21 @@ Go 是跨平台語言，官方支援以下主要環境：
 
 > 完整列表可用 `go tool dist list` 查看，Go 支援超過 40 種 GOOS/GOARCH 組合。
 
+### Go 1.26 平台與升級注意事項
+
+Go 的平台支援不是永久不變。升級 toolchain 時，應把語法/API 相容性、OS 生命週期、交叉編譯目標與 CI runner 一起檢查。
+
+| 項目 | Go 1.26 重點 | 對專案的影響 |
+|---|---|---|
+| Bootstrap toolchain | Go 1.26 需要 Go 1.24.6 或更新版本才能從原始碼 bootstrap | 自建 toolchain 或企業內部映像需先更新 builder |
+| macOS | Go 1.26 是最後支援 macOS 12 Monterey 的版本；Go 1.27 將要求 macOS 13+ | 舊 Mac runner / 開發機要提前規劃升級 |
+| Windows | `GOOS=windows GOARCH=arm` 已移除 | 發布矩陣不要再保留 32-bit Windows ARM 目標 |
+| FreeBSD | `freebsd/riscv64` 在 Go 1.26 標記為 broken | 若有特殊平台部署，需用 `go tool dist list` 與實機 CI 驗證 |
+| Linux RISC-V | `linux/riscv64` 支援 race detector | RISC-V 服務可把 `go test -race` 納入更完整的併發驗證 |
+| WebAssembly | `GOWASM=signext` / `satconv` 設定已被忽略 | Wasm build script 可移除過時 feature flag |
+
+> **工程經驗**：不要只把 `go.mod` 改成新版本。一次完整升級至少要同步檢查 `go.mod`、Docker builder image、CI `setup-go`、本機安裝版本、release build matrix 與客戶端最低作業系統。
+
 ### 安裝方式
 
 | 作業系統 | 安裝方式 | 指令 |

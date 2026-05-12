@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.6 - 2026-05-13
+
+- 新增 2026-05-13 03:03 資深工程師審查報告，確認教程專案開發深度已足夠，但 Go 1.26 升級與部署決策面仍需補強。
+- README 新增 Go 1.26 升級檢查項，將 bootstrap toolchain、OS/ARCH、Docker base image、CI 與 CGO 依賴納入版本策略。
+- 第 1 章補上 Go 1.26 平台生命週期與 bootstrap 重點：Go 1.26 需 Go 1.24.6+ bootstrap、Go 1.27 將要求 macOS 13+、windows/arm 已移除、freebsd/riscv64 標記 broken。
+- 第 9 章補上 Go 1.26 build/release gate，將 `go.mod`、Docker builder image、GitHub Actions `setup-go`、交叉編譯目標與 CGO 動態連結檢查放入 release checklist。
+- 康乃爾筆記第 1 / 9 章同步補上平台支援、Docker `golang:1.26-alpine` 與靜態連結限制，避免學習摘要保留舊版部署訊號。
+
 ## v1.0.5 - 2026-05-13
 
 - 新增 2026-05-13 02:05 資深工程師審查報告，確認 Go 1.26.3 仍是目前官方最新穩定版本，但教材內有新版 API 範例需校正。
