@@ -206,7 +206,7 @@ func TestRenderGolden(t *testing.T) {
 | 競態檢查 | `go test -race ./...` | 併發程式改動後必跑 |
 | 單一封包 | `go test ./project-concurrent-crawler/crawler -run TestCrawlerRetriesThenSucceeds -count=1` | 聚焦單點回歸 |
 | Go 1.25+ 併發時間測試 | `go test ./... -run Synctest` | 驗證 `testing/synctest` 類型案例 |
-| Go 1.26 artifact 測試 | `go test -artifacts ./test-artifacts ./...` | 搭配 CI 收集 `T.ArtifactDir` 產物 |
+| Go 1.26 artifact 測試 | `go test -artifacts -outputdir ./test-artifacts ./...` | 搭配 CI 收集 `T.ArtifactDir` 產物 |
 | Production 專案 | `cd production-api-worker && TMPDIR=$PWD/.tmp GOCACHE=$PWD/.gocache GOMODCACHE=$PWD/.gomodcache go test ./...` | 第一次需要可下載依賴的網路 |
 
 ### 受限環境排錯

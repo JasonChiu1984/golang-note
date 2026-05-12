@@ -217,7 +217,7 @@ if errors.As(err, &netErr) {
 }
 
 // Go 1.26+ 泛型版 errors.As
-if netErr := errors.AsType[*net.OpError](err); netErr != nil {
+if netErr, ok := errors.AsType[*net.OpError](err); ok {
     fmt.Println("network op:", netErr.Op)
 }
 
@@ -613,6 +613,11 @@ f := rand.Float64()
 | Green Tea GC | Go 1.26+ | 預設 GC，改善小物件標記與掃描 locality |
 | goroutine leak profile | Go 1.26+ experiment | 用 `GOEXPERIMENT=goroutineleakprofile` 偵測部分永久阻塞 goroutine |
 | `T.ArtifactDir` / `B.ArtifactDir` / `F.ArtifactDir` | Go 1.26+ | 測試、benchmark、fuzz 產物輸出到固定 artifact 目錄 |
+
+```bash
+# Go 1.26+：把 ArtifactDir 產物保留到 CI 可收集的資料夾
+go test -artifacts -outputdir ./test-artifacts ./...
+```
 
 ```go
 // Go 1.25+：併發測試不用靠 sleep 猜時間

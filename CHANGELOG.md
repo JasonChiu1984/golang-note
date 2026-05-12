@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.5 - 2026-05-13
+
+- 新增 2026-05-13 02:05 資深工程師審查報告，確認 Go 1.26.3 仍是目前官方最新穩定版本，但教材內有新版 API 範例需校正。
+- 修正進階 Cheat Sheet 的 `errors.AsType` 範例，改為官方簽名 `func AsType[E error](err error) (E, bool)` 對應的 `value, ok` 寫法。
+- 修正 README 與第 11 章的 Go 1.26 test artifact 指令，明確使用 `go test -artifacts -outputdir ./test-artifacts ./...`。
+- 康乃爾筆記第 4 章補充 `errors.AsType` 回傳 `(E, bool)`，避免讀者誤以為可用單一回傳值判斷 nil。
+- 本輪未變更 `go.mod` 的 `go 1.22` 相容層，也未新增外部依賴。
+
 ## v1.0.4 - 2026-05-13
 
 - 新增 2026-05-13 01:03 資深工程師審查報告，確認主章節已現代化，但輔助教材仍有 Go 1.22/1.21-1.22 版本訊號不一致。

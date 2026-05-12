@@ -2,9 +2,9 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
-> 教材版本：`v1.0.4`
+> 教材版本：`v1.0.5`
 > 教材基準：`Go 1.26.3`
-> 這次更新重點：同步康乃爾筆記、進階速查與圖解索引的 Go 1.26.3 版本訊號。
+> 這次更新重點：校正 Go 1.26 `errors.AsType` 與 test artifact 指令範例，避免新 API 教學誤用。
 
 ## 版本策略
 
@@ -88,7 +88,8 @@ go test ./project-concurrent-crawler/...
 | 爬蟲專案 | `go test ./project-concurrent-crawler/...` | 驗證並發流程與 retry |
 | Production 專案 | `cd production-api-worker && go test ./...` | 驗證 API、service、worker |
 | 受限環境 | `TMPDIR=$PWD/.tmp GOCACHE=$PWD/.gocache GOMODCACHE=$PWD/.gomodcache go test ./...` | 避免使用系統快取路徑 |
-| Go 1.26 新特性 | `go1.26.3 test ./...` 或本機 Go 1.26.3 | 驗證 `new(expression)`、`testing/synctest`、`T.ArtifactDir` 等新版內容 |
+| Go 1.26 新特性 | `go1.26.3 test ./...` 或本機 Go 1.26.3 | 驗證 `new(expression)`、`testing/synctest` 等新版內容 |
+| Go 1.26 test artifact | `go1.26.3 test -artifacts -outputdir ./test-artifacts ./...` | 驗證 `T.ArtifactDir` / `B.ArtifactDir` / `F.ArtifactDir` 並收集輸出產物 |
 
 > 若在 sandbox / 離線環境執行：
 > - `project-concurrent-crawler` 可能因本機 `dyld` / test binary 工具鏈異常失敗。
