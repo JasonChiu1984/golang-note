@@ -189,6 +189,43 @@ func TestRenderGolden(t *testing.T) {
 | CI artifact 路徑分散 | 集中收集 testing artifact |
 | golden/debug 輸出易污染 repo | 輸出到測試框架管理的位置 |
 
+## API Contract Test
+
+單元測試驗證內部邏輯，合約測試驗證外部使用者看到的 HTTP 行為。對 production API 來說，handler 重構後仍通過單元測試，不代表 client 不會壞；status code、JSON 欄位、錯誤 code、header 都是合約的一部分。
+
+```go
+func TestCreateJobContract(t *testing.T) {
+	req := httptest.NewRequest(http.MethodPost, "/jobs", strings.NewReader(`{"name":"resize","payload":"image"}`))
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("status = %d, want 202", rec.Code)
+	}
+	if ct := rec.Header().Get("Content-Type"); !strings.HasPrefix(ct, "application/json") {
+		t.Fatalf("content-type = %q, want application/json", ct)
+	}
+}
+```
+
+| 合約測試項 | 為什麼重要 |
+|---|---|
+| HTTP method / path | 防止路由重構破壞 client |
+| Status code | client 常用 status 決定 retry、顯示或告警 |
+| Response JSON shape | 防止 rename / nesting 造成 decode 失敗 |
+| Error code | 比自然語言 message 更適合穩定分支 |
+| Header | `Content-Type`、cache、request id 都可能是 client 依賴 |
+
+對 `production-api-worker` 這類 service，建議把合約測試獨立命名，讓 release gate 可以聚焦執行：
+
+```bash
+cd production-api-worker
+go test ./internal/api -run 'Test.*Contract' -count=1
+```
+
+> 合約測試不應過度綁定內部 struct；它要固定「外部看見的行為」，例如 JSON 欄位與錯誤 code，而不是 service 裡用了哪個 repository 實作。
+
 ## 常見陷阱
 
 | 陷阱 | 說明 | 解決方案 |
@@ -207,6 +244,7 @@ func TestRenderGolden(t *testing.T) {
 | 單一封包 | `go test ./project-concurrent-crawler/crawler -run TestCrawlerRetriesThenSucceeds -count=1` | 聚焦單點回歸 |
 | Go 1.25+ 併發時間測試 | `go test ./... -run Synctest` | 驗證 `testing/synctest` 類型案例 |
 | Go 1.26 artifact 測試 | `go test -artifacts -outputdir ./test-artifacts ./...` | 搭配 CI 收集 `T.ArtifactDir` 產物 |
+| API 合約測試 | `cd production-api-worker && go test ./internal/api -run 'Test.*Contract' -count=1` | 固定 status、JSON schema、錯誤 code 與 header |
 | Module checksum | `go mod verify` | 確認 module cache 未被竄改 |
 | Dependency updates | `go list -m -u all` | 發現可更新版本，作為維護 PR 依據 |
 | Vulnerability scan | `govulncheck ./...` | 掃描實際可達的 Go 已知漏洞 |

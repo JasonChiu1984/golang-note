@@ -84,20 +84,24 @@ func routeLabel(r *http.Request) string {
 
 func (h *Handler) writeError(w http.ResponseWriter, err error) {
 	status := http.StatusInternalServerError
+	code := "internal_error"
 	message := "internal error"
 	switch {
 	case errors.Is(err, domain.ErrInvalidInput):
 		status = http.StatusBadRequest
+		code = "invalid_input"
 		message = "invalid input"
 	case errors.Is(err, domain.ErrQueueFull):
 		status = http.StatusServiceUnavailable
+		code = "queue_full"
 		message = "queue full"
 	case errors.Is(err, domain.ErrNotFound):
 		status = http.StatusNotFound
+		code = "not_found"
 		message = "not found"
 	}
 	h.obs.Logger.Warn("request failed", "status", status, "error", err.Error())
-	writeJSON(w, status, map[string]string{"error": message})
+	writeJSON(w, status, errorResponse{Error: errorBody{Code: code, Message: message}})
 }
 
 func writeJSON(w http.ResponseWriter, status int, value any) {
@@ -109,6 +113,15 @@ func writeJSON(w http.ResponseWriter, status int, value any) {
 type statusRecorder struct {
 	http.ResponseWriter
 	status int
+}
+
+type errorResponse struct {
+	Error errorBody `json:"error"`
+}
+
+type errorBody struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
 }
 
 func (r *statusRecorder) WriteHeader(status int) {

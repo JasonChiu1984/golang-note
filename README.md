@@ -2,9 +2,9 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
-> 教材版本：`v1.0.8`
+> 教材版本：`v1.0.9`
 > 教材基準：`Go 1.26.3`
-> 這次更新重點：補齊效能診斷決策流程、benchmark A/B、runtime metrics、block/mutex profile 與 trace 使用邊界。
+> 這次更新重點：補齊 API 合約、錯誤格式、相容性測試與 production release gate。
 
 ## 版本策略
 
@@ -17,6 +17,7 @@
 | 升級檢查 | 升級 Go 1.26 時同步確認 bootstrap toolchain、目標 OS/ARCH、Docker base image、CI `setup-go` 與 CGO 依賴 |
 | 依賴治理 | 每次新增或升級 module 都要跑 `go mod tidy`、`go mod verify`、`go list -m -u all` 與 `govulncheck ./...` |
 | 效能診斷 | 效能修改前後需保留 benchmark / profile / metrics 證據，避免只靠直覺調整 |
+| API 合約 | 對外 HTTP endpoint 需有穩定 request/response/error schema，並用 contract test 阻擋破壞性變更 |
 
 ## 學習路線
 
@@ -83,6 +84,8 @@ go test ./project-concurrent-crawler/...
 | `project-concurrent-crawler` | 練習 worker pool、retry、parser/store 抽象 | 第一次完成第 7 章後 | `go test ./project-concurrent-crawler/...` |
 | `production-api-worker` | 練習 HTTP API、transaction、queue、observability、Docker Compose | 完成第 5、7、9、11 章後 | `cd production-api-worker && go test ./...` |
 
+`production-api-worker` 也附上 [API 合約文件](production-api-worker/docs/api-contract.md)，用來示範 production service 不只要能跑，也要把 endpoint、錯誤格式、相容性規則與 release gate 寫清楚。
+
 ## 驗證指令
 
 | 場景 | 指令 | 說明 |
@@ -95,6 +98,7 @@ go test ./project-concurrent-crawler/...
 | Go 1.26 test artifact | `go1.26.3 test -artifacts -outputdir ./test-artifacts ./...` | 驗證 `T.ArtifactDir` / `B.ArtifactDir` / `F.ArtifactDir` 並收集輸出產物 |
 | Go 1.26 升級盤點 | 對照第 1 / 9 章的支援矩陣 | 確認 macOS、Windows、FreeBSD、Wasm、bootstrap 與容器建置限制 |
 | 依賴供應鏈檢查 | `go mod tidy && go mod verify && go list -m -u all && govulncheck ./...` | 第 8 / 9 / 11 章的依賴治理與 release gate 基線 |
+| API 合約回歸 | `cd production-api-worker && go test ./internal/api -run 'Test.*Contract' -count=1` | 驗證 HTTP status、JSON schema 與錯誤 code 沒有意外改變 |
 | 效能 A/B 驗證 | `go test -run='^$' -bench=. -benchmem -count=10 ./... > bench.txt` | 搭配 `benchstat old.txt new.txt` 比較修改前後差異 |
 | Runtime profile | `go tool pprof http://localhost:6060/debug/pprof/profile?seconds=30` | CPU 熱點；block/mutex profile 需先在程式中啟用 |
 | Execution trace | `go test -trace=trace.out ./... && go tool trace trace.out` | 分析排程、syscall、GC 與平行度，不用來取代 CPU/heap profile |

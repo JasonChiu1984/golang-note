@@ -318,6 +318,34 @@ ENTRYPOINT ["/app"]
 
 ---
 
+## API 合約速查
+
+| 合約項 | Release 前檢查 |
+|---|---|
+| Endpoint | method、path、path parameter 是否仍相容 |
+| Request schema | 必填欄位與型別是否改變 |
+| Response schema | status code、JSON 欄位、enum 是否仍可被舊 client decode |
+| Error envelope | 是否維持穩定 `error.code` 與 `error.message` |
+| Observability label | route label、span name、metrics label 是否會破壞 dashboard |
+
+```bash
+cd production-api-worker
+go test ./internal/api -run 'Test.*Contract' -count=1
+```
+
+```json
+{
+  "error": {
+    "code": "invalid_input",
+    "message": "invalid input"
+  }
+}
+```
+
+> 對外錯誤分支用穩定 code，不用自然語言 message 做 client 判斷。
+
+---
+
 ## 效能工具
 
 ```bash

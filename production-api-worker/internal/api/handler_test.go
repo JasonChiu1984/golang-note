@@ -53,6 +53,98 @@ func TestCreateJobAndMetrics(t *testing.T) {
 	}
 }
 
+func TestCreateJobContract(t *testing.T) {
+	handler := newContractHandler(t, nil)
+
+	req := httptest.NewRequest(http.MethodPost, "/jobs", strings.NewReader(`{"name":"resize","payload":"image"}`))
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("status = %d, want %d: %s", rec.Code, http.StatusAccepted, rec.Body.String())
+	}
+	if ct := rec.Header().Get("Content-Type"); !strings.HasPrefix(ct, "application/json") {
+		t.Fatalf("content-type = %q, want application/json", ct)
+	}
+
+	var job domain.Job
+	if err := json.NewDecoder(rec.Body).Decode(&job); err != nil {
+		t.Fatal(err)
+	}
+	if job.ID != "contract-job-1" || job.Name != "resize" || job.Payload != "image" || job.Status != domain.JobPending {
+		t.Fatalf("unexpected contract response: %+v", job)
+	}
+}
+
+func TestErrorContract(t *testing.T) {
+	tests := []struct {
+		name       string
+		handler    http.Handler
+		request    *http.Request
+		wantStatus int
+		wantCode   string
+	}{
+		{
+			name:       "invalid input",
+			handler:    newContractHandler(t, nil),
+			request:    httptest.NewRequest(http.MethodPost, "/jobs", strings.NewReader(`{"payload":"image"}`)),
+			wantStatus: http.StatusBadRequest,
+			wantCode:   "invalid_input",
+		},
+		{
+			name:       "not found",
+			handler:    newContractHandler(t, nil),
+			request:    httptest.NewRequest(http.MethodGet, "/jobs/missing", nil),
+			wantStatus: http.StatusNotFound,
+			wantCode:   "not_found",
+		},
+		{
+			name:       "queue full",
+			handler:    newContractHandler(t, domain.ErrQueueFull),
+			request:    httptest.NewRequest(http.MethodPost, "/jobs", strings.NewReader(`{"name":"resize","payload":"image"}`)),
+			wantStatus: http.StatusServiceUnavailable,
+			wantCode:   "queue_full",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			tt.handler.ServeHTTP(rec, tt.request)
+
+			if rec.Code != tt.wantStatus {
+				t.Fatalf("status = %d, want %d: %s", rec.Code, tt.wantStatus, rec.Body.String())
+			}
+			if ct := rec.Header().Get("Content-Type"); !strings.HasPrefix(ct, "application/json") {
+				t.Fatalf("content-type = %q, want application/json", ct)
+			}
+
+			var response errorResponse
+			if err := json.NewDecoder(rec.Body).Decode(&response); err != nil {
+				t.Fatal(err)
+			}
+			if response.Error.Code != tt.wantCode {
+				t.Fatalf("error code = %q, want %q", response.Error.Code, tt.wantCode)
+			}
+			if response.Error.Message == "" {
+				t.Fatal("error message must not be empty")
+			}
+		})
+	}
+}
+
+func newContractHandler(t *testing.T, enqueueErr error) http.Handler {
+	t.Helper()
+	obs := newTestObs(t)
+	service := app.NewService(
+		repository.NewMemoryStore(),
+		fakeQueue{err: enqueueErr},
+		obs,
+		func() string { return "contract-job-1" },
+	)
+	return NewHandler(service, obs).Routes()
+}
+
 func newTestObs(t *testing.T) *observability.Observability {
 	t.Helper()
 	obs, err := observability.New(context.Background(), "test-api", discardWriter{})
@@ -67,3 +159,10 @@ type discardWriter struct{}
 
 func (discardWriter) Write(p []byte) (int, error) { return len(p), nil }
 
+type fakeQueue struct {
+	err error
+}
+
+func (q fakeQueue) Enqueue(ctx context.Context, task worker.Task) error {
+	return q.err
+}

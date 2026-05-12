@@ -244,12 +244,49 @@ production-api-worker/
 | 驗證方式 | `go test` 為主 | `go test` + `docker compose up --build` |
 | 專案階段 | 教學型大型專案 | 接近 production 的服務骨架 |
 
+### API 合約與相容性
+
+production service 的對外邊界不是 handler 程式碼本身，而是「使用端可以依賴的合約」。如果沒有明確的合約文件與測試，重構 handler、調整錯誤訊息或新增欄位時，很容易無意間破壞前端、CLI 或其他服務。
+
+| 合約面向 | 必須固定的內容 | 破壞風險 |
+|---|---|---|
+| Endpoint | method、path、path parameter | client 找不到路由或誤用動詞 |
+| Request schema | 必填欄位、型別、大小限制 | 舊 client 送出的 payload 被拒絕 |
+| Response schema | HTTP status、JSON 欄位、狀態 enum | client decode 失敗或狀態判斷錯誤 |
+| Error envelope | `error.code`、`error.message` | client 無法用穩定 code 做分支 |
+| Observability | route label、trace span name、metrics label | dashboard 與 alert 突然失效 |
+
+`production-api-worker/docs/api-contract.md` 示範了最小可維護合約：`POST /jobs`、`GET /jobs/{id}`、health endpoint、metrics endpoint、錯誤格式與 release gate。這不是要把文件寫成百科，而是讓每次 release 都能回答三個問題：
+
+1. 這次變更是否改了使用端看得到的 HTTP 合約？
+2. 若改了，是否向後相容？
+3. 若不相容，是否需要新版本路由、feature flag 或 migration 計畫？
+
+### Contract Test Gate
+
+合約文件需要測試保護。`production-api-worker/internal/api` 的 contract test 應至少固定：
+
+```bash
+cd production-api-worker
+go test ./internal/api -run 'Test.*Contract' -count=1
+```
+
+| 測試項 | 檢查內容 |
+|---|---|
+| 成功建立 job | `202 Accepted`、`Content-Type: application/json`、`id/name/payload/status` |
+| 不合法 request | `400 Bad Request`、`error.code=invalid_input` |
+| 找不到資源 | `404 Not Found`、`error.code=not_found` |
+| Queue full | `503 Service Unavailable`、`error.code=queue_full` |
+
+> 工程經驗：內部重構可以自由，但外部合約要保守。若需要破壞性變更，先新增新路由或新欄位，讓舊 client 有遷移窗口。
+
 ### 建議閱讀順序
 
 1. 先完成 `crawler/types.go`、`crawler/crawler.go` 的 worker / queue 心智模型。
 2. 再看 `production-api-worker/internal/app/service.go`，理解 service transaction boundary。
 3. 接著讀 `internal/api/handler.go` 與 `internal/observability/observability.go`，把 HTTP、metrics、tracing 串起來。
-4. 最後跑 `docker compose up --build`，驗證 migration、API、worker、metrics 整體鏈路。
+4. 對照 `docs/api-contract.md` 與 `internal/api/handler_test.go`，理解合約文件如何被測試守住。
+5. 最後跑 `docker compose up --build`，驗證 migration、API、worker、metrics 整體鏈路。
 
 ## 讀程式順序
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.9 - 2026-05-13
+
+- 新增 2026-05-13 06:03 資深工程師審查報告，確認教材已具備專案開發深度與廣度，但 production API 合約與相容性 gate 仍需補強。
+- README 新增 API 合約版本策略與驗證指令，將 `production-api-worker` 的 contract test 納入主教材入口。
+- 第 7 章補上 API 合約與相容性設計：request/response schema、錯誤格式、狀態碼、版本策略與 release gate。
+- 第 11 章與進階 Cheat Sheet 補上 API contract test 檢查重點，避免 HTTP status、JSON shape 或 error code 意外破壞使用端。
+- `production-api-worker` 新增 API 合約文件，並把錯誤回應改成穩定的 `error.code` / `error.message` envelope，附上合約回歸測試。
+
 ## v1.0.8 - 2026-05-13
 
 - 新增 2026-05-13 05:04 資深工程師審查報告，確認教程已具備專案開發深度，但效能調優章仍缺少可重複的診斷決策流程。

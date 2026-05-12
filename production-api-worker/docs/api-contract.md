@@ -1,0 +1,129 @@
+# production-api-worker API Contract
+
+> 版本：v1.0.9 ｜ 基準日期：2026-05-13 ｜ 適用範圍：local memory mode、Postgres + OTLP mode
+
+這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue 或 observability 可以重構，但下列 endpoint、status code、JSON shape 與錯誤 code 需要透過 contract test 保護。
+
+## Compatibility Rules
+
+| 規則 | 說明 |
+|---|---|
+| 向後相容新增 | 可新增 response 欄位，但不得移除或改名既有欄位 |
+| 錯誤分支 | client 應依 `error.code` 判斷，不依自然語言 message |
+| Status enum | `pending`、`processing`、`done`、`failed` 是穩定字串 |
+| Breaking change | 需新增版本路由或遷移期，不能直接覆蓋既有合約 |
+| Release gate | 任何 handler 改動都要跑 API contract test |
+
+## Error Envelope
+
+所有錯誤回應使用相同格式：
+
+```json
+{
+  "error": {
+    "code": "invalid_input",
+    "message": "invalid input"
+  }
+}
+```
+
+| Code | HTTP status | 觸發條件 |
+|---|---:|---|
+| `invalid_input` | 400 | JSON 無法解析、缺少 `name`、payload 超過限制 |
+| `not_found` | 404 | 查詢不存在的 job |
+| `queue_full` | 503 | bounded queue 無法接受新工作 |
+| `internal_error` | 500 | 未分類的伺服器錯誤 |
+
+## POST /jobs
+
+建立 job 並排入 worker queue。
+
+### Request
+
+```http
+POST /jobs
+Content-Type: application/json
+```
+
+```json
+{
+  "name": "resize",
+  "payload": "image"
+}
+```
+
+| 欄位 | 型別 | 必填 | 限制 |
+|---|---|---|---|
+| `name` | string | 是 | 不可為空 |
+| `payload` | string | 否 | 最大 4096 bytes |
+
+### Success Response
+
+```http
+202 Accepted
+Content-Type: application/json
+```
+
+```json
+{
+  "id": "job-1",
+  "name": "resize",
+  "payload": "image",
+  "status": "pending",
+  "attempts": 0,
+  "created_at": "2026-05-13T06:03:49Z",
+  "updated_at": "2026-05-13T06:03:49Z"
+}
+```
+
+## GET /jobs/{id}
+
+查詢 job 目前狀態。
+
+### Success Response
+
+```http
+200 OK
+Content-Type: application/json
+```
+
+Response schema 與 `POST /jobs` 成功回應相同。
+
+### Not Found
+
+```http
+404 Not Found
+Content-Type: application/json
+```
+
+```json
+{
+  "error": {
+    "code": "not_found",
+    "message": "not found"
+  }
+}
+```
+
+## Health and Metrics
+
+| Endpoint | Status | 用途 |
+|---|---:|---|
+| `GET /livez` | 200 | process 存活檢查 |
+| `GET /readyz` | 200 | readiness 檢查 |
+| `GET /metrics` | 200 | Prometheus metrics |
+
+## Contract Test Gate
+
+```bash
+cd production-api-worker
+go test ./internal/api -run 'Test.*Contract' -count=1
+```
+
+這個 gate 固定：
+
+- `POST /jobs` 成功時回傳 `202 Accepted` 與穩定 job JSON 欄位。
+- 不合法 request 回傳 `400` 與 `error.code=invalid_input`。
+- 查詢不存在 job 回傳 `404` 與 `error.code=not_found`。
+- queue 滿載時回傳 `503` 與 `error.code=queue_full`。
+- 錯誤與成功回應都維持 `Content-Type: application/json`。
