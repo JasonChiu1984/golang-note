@@ -2,6 +2,10 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
+> 教材版本：`v1.0.2`
+> 教材基準：`go 1.22`
+> 這次更新重點：補齊專案開發路線、production 範例入口、受限環境驗證指引。
+
 ## 學習路線
 
 ```mermaid
@@ -56,11 +60,29 @@ flowchart TD
 go run ./examples/...
 ```
 
-## 大型專案測試
+## 專案實戰路線
 
 ```bash
 go test ./project-concurrent-crawler/...
 ```
+
+| 專案 | 目標 | 建議時機 | 入口 |
+|---|---|---|---|
+| `project-concurrent-crawler` | 練習 worker pool、retry、parser/store 抽象 | 第一次完成第 7 章後 | `go test ./project-concurrent-crawler/...` |
+| `production-api-worker` | 練習 HTTP API、transaction、queue、observability、Docker Compose | 完成第 5、7、9、11 章後 | `cd production-api-worker && go test ./...` |
+
+## 驗證指令
+
+| 場景 | 指令 | 說明 |
+|---|---|---|
+| 根目錄範例 | `go run ./examples/...` | 快速確認語法範例可執行 |
+| 爬蟲專案 | `go test ./project-concurrent-crawler/...` | 驗證並發流程與 retry |
+| Production 專案 | `cd production-api-worker && go test ./...` | 驗證 API、service、worker |
+| 受限環境 | `TMPDIR=$PWD/.tmp GOCACHE=$PWD/.gocache GOMODCACHE=$PWD/.gomodcache go test ./...` | 避免使用系統快取路徑 |
+
+> 若在 sandbox / 離線環境執行：
+> - `project-concurrent-crawler` 可能因本機 `dyld` / test binary 工具鏈異常失敗。
+> - `production-api-worker` 第一次抓依賴需要網路；無法連外時會停在 module download。
 
 ## 建議讀法
 
@@ -68,7 +90,8 @@ go test ./project-concurrent-crawler/...
 |---|---|
 | 第一次讀 | 先照章節順序看，重點放在心智模型 |
 | 第二次讀 | 邊讀邊跑 `examples`，改參數觀察輸出 |
-| 第三次讀 | 看大型專案，把語法對應到真實程式結構 |
+| 第三次讀 | 先看 `project-concurrent-crawler`，把語法對應到真實程式結構 |
+| 第四次讀 | 再看 `production-api-worker`，補上 API、觀測性與部署流程 |
 | 實務前 | 補上測試、錯誤處理、context，再寫功能 |
 | 速查 | 開發中隨時翻 Cheat Sheet |
 
@@ -85,7 +108,8 @@ go test ./project-concurrent-crawler/...
 │   └── cheatsheet-advanced.md     ← 進階速查
 ├── chapters/
 ├── examples/
-└── project-concurrent-crawler/
+├── project-concurrent-crawler/    ← 第 1 個大型專案：並發爬蟲
+└── production-api-worker/         ← 第 2 個大型專案：production API + worker
 ```
 
 
