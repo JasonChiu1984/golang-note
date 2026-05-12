@@ -254,13 +254,26 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Request schema | 必填欄位、型別、大小限制 | 舊 client 送出的 payload 被拒絕 |
 | Response schema | HTTP status、JSON 欄位、狀態 enum | client decode 失敗或狀態判斷錯誤 |
 | Error envelope | `error.code`、`error.message` | client 無法用穩定 code 做分支 |
-| Observability | route label、trace span name、metrics label | dashboard 與 alert 突然失效 |
+| Observability | route label、trace span name、metrics label、`X-Request-ID` | dashboard、alert 與 incident log 無法對照 |
 
 `production-api-worker/docs/api-contract.md` 示範了最小可維護合約：`POST /jobs`、`GET /jobs/{id}`、health endpoint、metrics endpoint、錯誤格式與 release gate。這不是要把文件寫成百科，而是讓每次 release 都能回答三個問題：
 
 1. 這次變更是否改了使用端看得到的 HTTP 合約？
 2. 若改了，是否向後相容？
 3. 若不相容，是否需要新版本路由、feature flag 或 migration 計畫？
+
+### Request Correlation 與可排障性
+
+Production service 的 observability 不是「有 metrics endpoint」就結束。當使用者回報一個失敗 request 時，工程師必須能從 response header 找到同一筆 structured log 與 trace span。`production-api-worker` 用 `X-Request-ID` 做最小關聯：
+
+| 關聯位置 | 固定內容 |
+|---|---|
+| HTTP response | 永遠回傳 `X-Request-ID`；若 client 已提供則原樣保留 |
+| Structured log | `request_id`、`method`、`route`、`error_code` |
+| Trace attribute | `request.id`、`http.route` |
+| Contract test | `TestRequestIDContract` 固定自動產生與 header 回傳行為 |
+
+這類欄位也屬於外部操作合約。改掉 route label、span name 或 request id header，可能不會讓單元測試失敗，卻會讓 dashboard、alert rule、客服查詢與 incident review 失去關聯。
 
 ### Contract Test Gate
 
@@ -277,6 +290,7 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 | 不合法 request | `400 Bad Request`、`error.code=invalid_input` |
 | 找不到資源 | `404 Not Found`、`error.code=not_found` |
 | Queue full | `503 Service Unavailable`、`error.code=queue_full` |
+| Request ID | client header 原樣回傳；未提供時產生 `req-*` |
 
 > 工程經驗：內部重構可以自由，但外部合約要保守。若需要破壞性變更，先新增新路由或新欄位，讓舊 client 有遷移窗口。
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.10 - 2026-05-13
+
+- 新增 2026-05-13 07:02 資深工程師審查報告，確認教材已具備專案深度，但 production observability correlation 仍需落到可測試合約。
+- README 新增 Request ID 與觀測性關聯版本策略，將 `X-Request-ID` contract test 納入主教材入口。
+- 第 7 / 11 章、進階 Cheat Sheet 與康乃爾筆記補上 request correlation gate：header、structured log 欄位、trace attribute 與 metrics label 需保持穩定。
+- `production-api-worker` API middleware 新增 `X-Request-ID` 保留/產生、request-scoped logger、trace attributes，錯誤 log 會帶上 `request_id` 與 `error_code`。
+- `production-api-worker` contract tests 新增 Request ID header 回傳與自動產生回歸檢查。
+
 ## v1.0.9 - 2026-05-13
 
 - 新增 2026-05-13 06:03 資深工程師審查報告，確認教材已具備專案開發深度與廣度，但 production API 合約與相容性 gate 仍需補強。

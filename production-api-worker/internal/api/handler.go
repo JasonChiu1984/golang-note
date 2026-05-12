@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
 	"golang-learning-notes/production-api-worker/internal/app"
 	"golang-learning-notes/production-api-worker/internal/domain"
 	"golang-learning-notes/production-api-worker/internal/observability"
@@ -28,12 +29,16 @@ func (h *Handler) Routes() http.Handler {
 	mux.Handle("GET /metrics", h.obs.MetricsHandler())
 	mux.HandleFunc("GET /livez", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
 	mux.HandleFunc("GET /readyz", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
-	return h.metricsMiddleware(mux)
+	return h.requestContextMiddleware(h.metricsMiddleware(mux))
 }
 
 func (h *Handler) createJob(w http.ResponseWriter, r *http.Request) {
 	ctx, span := h.obs.Tracer.Start(r.Context(), "POST /jobs")
 	defer span.End()
+	span.SetAttributes(
+		attribute.String("http.route", "/jobs"),
+		attribute.String("request.id", requestIDFromContext(ctx)),
+	)
 
 	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	ctx, cancel := contextWithTimeout(ctx, 2*time.Second)
@@ -41,12 +46,12 @@ func (h *Handler) createJob(w http.ResponseWriter, r *http.Request) {
 
 	var input domain.JobInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		h.writeError(w, err)
+		h.writeError(w, r, err)
 		return
 	}
 	job, err := h.service.CreateJob(ctx, input)
 	if err != nil {
-		h.writeError(w, err)
+		h.writeError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusAccepted, job)
@@ -55,13 +60,35 @@ func (h *Handler) createJob(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) getJob(w http.ResponseWriter, r *http.Request) {
 	ctx, span := h.obs.Tracer.Start(r.Context(), "GET /jobs/{id}")
 	defer span.End()
+	span.SetAttributes(
+		attribute.String("http.route", "/jobs/{id}"),
+		attribute.String("request.id", requestIDFromContext(ctx)),
+	)
 
 	job, err := h.service.GetJob(ctx, r.PathValue("id"))
 	if err != nil {
-		h.writeError(w, err)
+		h.writeError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, job)
+}
+
+func (h *Handler) requestContextMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id := strings.TrimSpace(r.Header.Get(requestIDHeader))
+		if id == "" {
+			id = nextRequestID()
+		}
+		w.Header().Set(requestIDHeader, id)
+
+		logger := h.obs.Logger.With(
+			"request_id", id,
+			"method", r.Method,
+			"route", routeLabel(r),
+		)
+		ctx := withLogger(withRequestID(r.Context(), id), logger)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
 func (h *Handler) metricsMiddleware(next http.Handler) http.Handler {
@@ -82,7 +109,7 @@ func routeLabel(r *http.Request) string {
 	return r.URL.Path
 }
 
-func (h *Handler) writeError(w http.ResponseWriter, err error) {
+func (h *Handler) writeError(w http.ResponseWriter, r *http.Request, err error) {
 	status := http.StatusInternalServerError
 	code := "internal_error"
 	message := "internal error"
@@ -100,7 +127,13 @@ func (h *Handler) writeError(w http.ResponseWriter, err error) {
 		code = "not_found"
 		message = "not found"
 	}
-	h.obs.Logger.Warn("request failed", "status", status, "error", err.Error())
+	loggerFromContext(r.Context(), h.obs.Logger).WarnContext(
+		r.Context(),
+		"request failed",
+		"status", status,
+		"error_code", code,
+		"error", err.Error(),
+	)
 	writeJSON(w, status, errorResponse{Error: errorBody{Code: code, Message: message}})
 }
 

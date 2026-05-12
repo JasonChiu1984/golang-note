@@ -57,6 +57,7 @@ func TestCreateJobContract(t *testing.T) {
 	handler := newContractHandler(t, nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/jobs", strings.NewReader(`{"name":"resize","payload":"image"}`))
+	req.Header.Set(requestIDHeader, "request-from-client")
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 
@@ -66,6 +67,9 @@ func TestCreateJobContract(t *testing.T) {
 	if ct := rec.Header().Get("Content-Type"); !strings.HasPrefix(ct, "application/json") {
 		t.Fatalf("content-type = %q, want application/json", ct)
 	}
+	if got := rec.Header().Get(requestIDHeader); got != "request-from-client" {
+		t.Fatalf("request id header = %q, want request-from-client", got)
+	}
 
 	var job domain.Job
 	if err := json.NewDecoder(rec.Body).Decode(&job); err != nil {
@@ -73,6 +77,21 @@ func TestCreateJobContract(t *testing.T) {
 	}
 	if job.ID != "contract-job-1" || job.Name != "resize" || job.Payload != "image" || job.Status != domain.JobPending {
 		t.Fatalf("unexpected contract response: %+v", job)
+	}
+}
+
+func TestRequestIDContract(t *testing.T) {
+	handler := newContractHandler(t, nil)
+
+	req := httptest.NewRequest(http.MethodGet, "/jobs/missing", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusNotFound)
+	}
+	if got := rec.Header().Get(requestIDHeader); !strings.HasPrefix(got, "req-") {
+		t.Fatalf("generated request id header = %q, want req-*", got)
 	}
 }
 

@@ -1,8 +1,8 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.9 ｜ 基準日期：2026-05-13 ｜ 適用範圍：local memory mode、Postgres + OTLP mode
+> 版本：v1.0.10 ｜ 基準日期：2026-05-13 ｜ 適用範圍：local memory mode、Postgres + OTLP mode
 
-這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue 或 observability 可以重構，但下列 endpoint、status code、JSON shape 與錯誤 code 需要透過 contract test 保護。
+這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code 與 request correlation header 需要透過 contract test 保護。
 
 ## Compatibility Rules
 
@@ -11,8 +11,21 @@
 | 向後相容新增 | 可新增 response 欄位，但不得移除或改名既有欄位 |
 | 錯誤分支 | client 應依 `error.code` 判斷，不依自然語言 message |
 | Status enum | `pending`、`processing`、`done`、`failed` 是穩定字串 |
+| Request correlation | server 必須回傳 `X-Request-ID`；client 提供時需原樣保留 |
 | Breaking change | 需新增版本路由或遷移期，不能直接覆蓋既有合約 |
 | Release gate | 任何 handler 改動都要跑 API contract test |
+
+## Request Correlation
+
+所有 endpoint 都回傳 `X-Request-ID`：
+
+- Client 提供 `X-Request-ID` 時，server 原樣回傳同一個值。
+- Client 未提供時，server 產生 `req-*` 格式 ID。
+- 同一個 ID 會放進 request context、structured log 欄位 `request_id` 與 trace attribute `request.id`。
+
+```http
+X-Request-ID: request-from-client
+```
 
 ## Error Envelope
 
@@ -43,6 +56,7 @@
 ```http
 POST /jobs
 Content-Type: application/json
+X-Request-ID: request-from-client
 ```
 
 ```json
@@ -62,6 +76,7 @@ Content-Type: application/json
 ```http
 202 Accepted
 Content-Type: application/json
+X-Request-ID: request-from-client
 ```
 
 ```json
@@ -127,3 +142,4 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 - 查詢不存在 job 回傳 `404` 與 `error.code=not_found`。
 - queue 滿載時回傳 `503` 與 `error.code=queue_full`。
 - 錯誤與成功回應都維持 `Content-Type: application/json`。
+- client 提供的 `X-Request-ID` 需原樣回傳；未提供時需自動產生 `req-*`。

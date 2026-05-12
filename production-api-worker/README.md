@@ -7,7 +7,7 @@
 - Service transaction boundary：`sql.TxOptions`、deadlock retry、queue enqueue
 - Repository：memory 與 Postgres `database/sql` 版本
 - Worker queue：bounded queue、worker pool、graceful shutdown
-- Observability：Prometheus client、OpenTelemetry OTLP/stdout exporter、slog
+- Observability：Prometheus client、OpenTelemetry OTLP/stdout exporter、slog、`X-Request-ID`
 - Pipeline：migration CLI、Docker Compose、GitHub Actions
 
 ## Local Memory Mode
@@ -28,6 +28,7 @@ Then:
 ```bash
 curl -X POST http://localhost:8080/jobs \
   -H 'Content-Type: application/json' \
+  -H 'X-Request-ID: demo-request-1' \
   -d '{"name":"resize","payload":"image"}'
 
 curl http://localhost:8080/metrics
@@ -72,6 +73,17 @@ docker compose up --build
 | Error response | 統一使用 `{"error":{"code":"...","message":"..."}}` |
 | Status enum | `pending`、`processing`、`done`、`failed` 不任意改名 |
 | Breaking change | 新增版本路由或遷移期，不直接覆蓋既有合約 |
+
+## Observability Correlation
+
+每個 HTTP request 都會保留 client 提供的 `X-Request-ID`，若未提供則由 server 產生 `req-*` 格式 ID。Handler 會把同一個 ID 放進 response header、request context、structured log 欄位與 trace attribute，讓 API 錯誤、worker 行為、Prometheus route label 與 OTLP span 可以在 incident review 時對起來。
+
+| 關聯點 | 目前策略 |
+|---|---|
+| Response header | 永遠回傳 `X-Request-ID` |
+| Log 欄位 | `request_id`、`method`、`route`、`error_code` |
+| Trace attribute | `request.id`、`http.route` |
+| Contract test | `TestRequestIDContract` 與 `TestCreateJobContract` 固定 header 行為 |
 
 ## Performance Diagnostics
 

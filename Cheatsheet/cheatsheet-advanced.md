@@ -326,11 +326,13 @@ ENTRYPOINT ["/app"]
 | Request schema | 必填欄位與型別是否改變 |
 | Response schema | status code、JSON 欄位、enum 是否仍可被舊 client decode |
 | Error envelope | 是否維持穩定 `error.code` 與 `error.message` |
-| Observability label | route label、span name、metrics label 是否會破壞 dashboard |
+| Request ID | `X-Request-ID` 是否會回傳，client 提供時是否原樣保留 |
+| Observability label | route label、span name、metrics label、`request.id` 是否會破壞 dashboard |
 
 ```bash
 cd production-api-worker
 go test ./internal/api -run 'Test.*Contract' -count=1
+go test ./internal/api -run 'TestRequestIDContract|TestCreateJobContract' -count=1
 ```
 
 ```json
