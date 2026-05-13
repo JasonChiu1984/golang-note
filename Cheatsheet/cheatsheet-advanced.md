@@ -338,11 +338,13 @@ ENTRYPOINT ["/app"]
 | Error envelope | 是否維持穩定 `error.code` 與 `error.message` |
 | Request ID | `X-Request-ID` 是否會回傳，client 提供時是否原樣保留 |
 | Observability label | route label、span name、metrics label、`request.id` 是否會破壞 dashboard |
+| Panic recovery | 未預期 panic 是否仍回 `500 internal_error` JSON 與原 request id |
 
 ```bash
 cd production-api-worker
 go test ./internal/api -run 'Test.*Contract' -count=1
 go test ./internal/api -run 'TestRequestIDContract|TestCreateJobContract' -count=1
+go test ./internal/api -run 'TestPanicRecoveryContract' -count=1
 ```
 
 ```json
@@ -355,6 +357,17 @@ go test ./internal/api -run 'TestRequestIDContract|TestCreateJobContract' -count
 ```
 
 > 對外錯誤分支用穩定 code，不用自然語言 message 做 client 判斷。
+
+```json
+{
+  "error": {
+    "code": "internal_error",
+    "message": "internal error"
+  }
+}
+```
+
+> Panic recovery 是 HTTP 邊界保護：記錄 panic，但 client 只看到穩定 `internal_error`，並保留 `X-Request-ID` 方便排障。
 
 ---
 

@@ -8,6 +8,7 @@
 - Repository：memory 與 Postgres `database/sql` 版本
 - Worker queue：bounded queue、worker pool、graceful shutdown
 - Service lifecycle：`/livez`、`/readyz`、draining、HTTP shutdown、queue drain
+- Panic recovery：handler 未預期 panic 時回穩定 `internal_error` JSON
 - Observability：Prometheus client、OpenTelemetry OTLP/stdout exporter、slog、`X-Request-ID`
 - Pipeline：migration CLI、Docker Compose、GitHub Actions
 
@@ -49,7 +50,7 @@ go mod tidy
 go mod verify
 go list -m -u all
 govulncheck ./...
-go test ./internal/api -run 'Test.*Contract|TestReadinessContract' -count=1
+go test ./internal/api -run 'Test.*Contract|TestReadinessContract|TestPanicRecoveryContract' -count=1
 go test -race -cover ./...
 go test -run='^$' -bench=. -benchmem -count=10 ./... > bench.txt
 docker compose up --build
@@ -62,6 +63,7 @@ docker compose up --build
 | `govulncheck ./...` | 掃描 API / worker 實際可達的已知漏洞 |
 | `go test ./internal/api -run 'Test.*Contract' -count=1` | 固定 HTTP status、JSON shape、錯誤 code 與 response header |
 | `go test ./internal/api -run 'TestReadinessContract' -count=1` | 固定 ready / draining 狀態與 `/readyz` status code |
+| `go test ./internal/api -run 'TestPanicRecoveryContract' -count=1` | 固定 handler panic 時的 `500 internal_error` JSON 與 request id 行為 |
 | `go test -race -cover ./...` | 驗證 service、handler、queue 與併發安全 |
 | `go test -run='^$' -bench=. -benchmem -count=10 ./...` | API / worker 效能改動需保留 benchmark 證據 |
 | `docker compose up --build` | 驗證 Postgres、migration、API、worker、metrics 整體鏈路 |
@@ -87,6 +89,18 @@ docker compose up --build
 | Log 欄位 | `request_id`、`method`、`route`、`error_code` |
 | Trace attribute | `request.id`、`http.route` |
 | Contract test | `TestRequestIDContract` 與 `TestCreateJobContract` 固定 header 行為 |
+
+## Panic Recovery
+
+Production API 不能讓未預期 panic 直接中斷連線或回傳非 JSON 錯誤頁。Routes 會先建立 request context，再經過 metrics 與 recover middleware；若 handler、service 或 queue 發生 panic，server 會記錄 structured log，保留原 `X-Request-ID`，並回傳穩定錯誤 envelope。
+
+| 項目 | 行為 |
+|---|---|
+| HTTP status | `500 Internal Server Error` |
+| Error envelope | `{"error":{"code":"internal_error","message":"internal error"}}` |
+| Request ID | client 提供的 `X-Request-ID` 仍會原樣回傳 |
+| Metrics | 仍可記錄 `/jobs`、method 與 `Internal Server Error` status label |
+| Contract test | `TestPanicRecoveryContract` 固定 panic recovery 行為 |
 
 ## Service Lifecycle
 

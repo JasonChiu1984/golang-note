@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.12 - 2026-05-13
+
+- 新增 2026-05-13 09:02 資深工程師審查報告，確認教程已具備 API contract、request correlation 與 lifecycle gate，但 HTTP panic recovery 尚未形成可測合約。
+- README 新增 panic recovery 版本策略與驗證指令，將 `TestPanicRecoveryContract` 納入主教材入口。
+- 第 7 / 11 章、進階 Cheat Sheet 與康乃爾筆記補上 recover middleware 的 production 邊界：保留 `X-Request-ID`、回 `500 internal_error` JSON、記錄 structured log。
+- `production-api-worker` API routes 新增 recover middleware，panic 會轉為穩定錯誤 envelope，並讓 metrics middleware 可記錄 500 結果。
+- `production-api-worker` contract tests 新增 panic recovery 回歸檢查，避免 handler / queue 未預期 panic 破壞外部錯誤格式。
+
 ## v1.0.11 - 2026-05-13
 
 - 新增 2026-05-13 08:03 資深工程師審查報告，確認教材已具備 production API / observability 深度，但服務生命週期仍需可測化。

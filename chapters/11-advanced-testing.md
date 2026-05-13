@@ -217,6 +217,7 @@ func TestCreateJobContract(t *testing.T) {
 | Error code | 比自然語言 message 更適合穩定分支 |
 | Header | `Content-Type`、cache、request id 都可能是 client 依賴 |
 | Readiness | draining 時 `/readyz=503` 是部署系統依賴的操作合約 |
+| Panic recovery | 未預期 panic 仍需回穩定 `500 internal_error` JSON |
 
 對 `production-api-worker` 這類 service，建議把合約測試獨立命名，讓 release gate 可以聚焦執行：
 
@@ -226,6 +227,34 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 ```
 
 > 合約測試不應過度綁定內部 struct；它要固定「外部看見的行為」，例如 JSON 欄位與錯誤 code，而不是 service 裡用了哪個 repository 實作。
+
+### Panic Recovery Contract
+
+HTTP handler 的 recover middleware 是 production 邊界測試，不是用來掩蓋 bug。測試目標是固定「panic 發生時 client 看到什麼」：status code、JSON envelope、request id header 與 log correlation。
+
+```go
+func TestPanicRecoveryContract(t *testing.T) {
+	req := httptest.NewRequest(http.MethodPost, "/jobs", strings.NewReader(`{"name":"resize"}`))
+	req.Header.Set("X-Request-ID", "panic-request")
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("status = %d, want 500", rec.Code)
+	}
+	if got := rec.Header().Get("X-Request-ID"); got != "panic-request" {
+		t.Fatalf("request id = %q", got)
+	}
+}
+```
+
+| 測試項 | 為什麼重要 |
+|---|---|
+| `500 Internal Server Error` | client 可用穩定 status 做 retry / 告警 |
+| `error.code=internal_error` | 不暴露 panic 細節，也不讓錯誤格式漂移 |
+| `X-Request-ID` | panic path 仍能對照 log、trace 與 metrics |
+| Contract test | 防止 middleware 順序調整時破壞 recovery 行為 |
 
 ## 常見陷阱
 
@@ -248,6 +277,7 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 | API 合約測試 | `cd production-api-worker && go test ./internal/api -run 'Test.*Contract' -count=1` | 固定 status、JSON schema、錯誤 code 與 header |
 | Request ID 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestIDContract|TestCreateJobContract' -count=1` | 固定 `X-Request-ID` 保留與自動產生行為 |
 | Readiness 合約 | `cd production-api-worker && go test ./internal/api -run 'TestReadinessContract' -count=1` | 固定 ready / draining 對 `/readyz` 的 status code |
+| Panic recovery 合約 | `cd production-api-worker && go test ./internal/api -run 'TestPanicRecoveryContract' -count=1` | 固定 panic path 的 `500 internal_error` JSON 與 request id |
 | Module checksum | `go mod verify` | 確認 module cache 未被竄改 |
 | Dependency updates | `go list -m -u all` | 發現可更新版本，作為維護 PR 依據 |
 | Vulnerability scan | `govulncheck ./...` | 掃描實際可達的 Go 已知漏洞 |

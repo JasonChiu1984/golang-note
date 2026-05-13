@@ -48,7 +48,7 @@ func (h *Handler) Routes() http.Handler {
 	mux.Handle("GET /metrics", h.obs.MetricsHandler())
 	mux.HandleFunc("GET /livez", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
 	mux.HandleFunc("GET /readyz", h.readyz)
-	return h.requestContextMiddleware(h.metricsMiddleware(mux))
+	return h.requestContextMiddleware(h.metricsMiddleware(h.recoverMiddleware(mux)))
 }
 
 func (h *Handler) readyz(w http.ResponseWriter, r *http.Request) {
@@ -123,6 +123,25 @@ func (h *Handler) metricsMiddleware(next http.Handler) http.Handler {
 		recorder := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
 		next.ServeHTTP(recorder, r)
 		h.obs.Metrics.RequestsTotal.WithLabelValues(routeLabel(r), r.Method, http.StatusText(recorder.status)).Inc()
+	})
+}
+
+func (h *Handler) recoverMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if recovered := recover(); recovered != nil {
+				loggerFromContext(r.Context(), h.obs.Logger).ErrorContext(
+					r.Context(),
+					"panic recovered",
+					"panic", recovered,
+					"route", routeLabel(r),
+				)
+				writeJSON(w, http.StatusInternalServerError, errorResponse{
+					Error: errorBody{Code: "internal_error", Message: "internal error"},
+				})
+			}
+		}()
+		next.ServeHTTP(w, r)
 	})
 }
 

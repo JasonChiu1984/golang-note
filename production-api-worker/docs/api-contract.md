@@ -1,8 +1,8 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.11 ｜ 基準日期：2026-05-13 ｜ 適用範圍：local memory mode、Postgres + OTLP mode
+> 版本：v1.0.12 ｜ 基準日期：2026-05-13 ｜ 適用範圍：local memory mode、Postgres + OTLP mode
 
-這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header 與 readiness 行為需要透過 contract test 保護。
+這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 panic recovery 行為需要透過 contract test 保護。
 
 ## Compatibility Rules
 
@@ -13,6 +13,7 @@
 | Status enum | `pending`、`processing`、`done`、`failed` 是穩定字串 |
 | Request correlation | server 必須回傳 `X-Request-ID`；client 提供時需原樣保留 |
 | Readiness lifecycle | draining 時 `/readyz` 必須回 `503`，讓外部導流系統停止送新 request |
+| Panic recovery | 未預期 panic 必須回 `500` 與穩定 `internal_error` JSON，不暴露 panic 細節 |
 | Breaking change | 需新增版本路由或遷移期，不能直接覆蓋既有合約 |
 | Release gate | 任何 handler 改動都要跑 API contract test |
 
@@ -46,7 +47,7 @@ X-Request-ID: request-from-client
 | `invalid_input` | 400 | JSON 無法解析、缺少 `name`、payload 超過限制 |
 | `not_found` | 404 | 查詢不存在的 job |
 | `queue_full` | 503 | bounded queue 無法接受新工作 |
-| `internal_error` | 500 | 未分類的伺服器錯誤 |
+| `internal_error` | 500 | 未分類的伺服器錯誤或 handler panic recovery |
 
 ## POST /jobs
 
@@ -130,6 +131,25 @@ Content-Type: application/json
 | `GET /readyz` | 503 | draining，停止接新流量並等待既有工作收斂 |
 | `GET /metrics` | 200 | Prometheus metrics |
 
+## Panic Recovery
+
+若 handler、service 或 queue 發生未預期 panic，API 必須保留 request correlation 並回傳穩定錯誤格式。
+
+```http
+500 Internal Server Error
+Content-Type: application/json
+X-Request-ID: request-from-client
+```
+
+```json
+{
+  "error": {
+    "code": "internal_error",
+    "message": "internal error"
+  }
+}
+```
+
 ## Contract Test Gate
 
 ```bash
@@ -146,3 +166,4 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 - 錯誤與成功回應都維持 `Content-Type: application/json`。
 - client 提供的 `X-Request-ID` 需原樣回傳；未提供時需自動產生 `req-*`。
 - draining 時 `/readyz` 需回 `503 Service Unavailable`，避免 shutdown 期間仍接收新流量。
+- handler panic 需回 `500 internal_error` JSON，並保留原 `X-Request-ID`。

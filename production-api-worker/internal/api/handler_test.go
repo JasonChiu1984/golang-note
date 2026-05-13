@@ -114,6 +114,33 @@ func TestReadinessContract(t *testing.T) {
 	}
 }
 
+func TestPanicRecoveryContract(t *testing.T) {
+	handler := newContractHandlerWithQueue(t, fakeQueue{panicValue: "queue panic"})
+
+	req := httptest.NewRequest(http.MethodPost, "/jobs", strings.NewReader(`{"name":"resize","payload":"image"}`))
+	req.Header.Set(requestIDHeader, "panic-request")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("status = %d, want %d: %s", rec.Code, http.StatusInternalServerError, rec.Body.String())
+	}
+	if got := rec.Header().Get(requestIDHeader); got != "panic-request" {
+		t.Fatalf("request id header = %q, want panic-request", got)
+	}
+	if ct := rec.Header().Get("Content-Type"); !strings.HasPrefix(ct, "application/json") {
+		t.Fatalf("content-type = %q, want application/json", ct)
+	}
+
+	var response errorResponse
+	if err := json.NewDecoder(rec.Body).Decode(&response); err != nil {
+		t.Fatal(err)
+	}
+	if response.Error.Code != "internal_error" {
+		t.Fatalf("error code = %q, want internal_error", response.Error.Code)
+	}
+}
+
 func TestErrorContract(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -178,10 +205,15 @@ func newContractHandler(t *testing.T, enqueueErr error) http.Handler {
 
 func newContractHandlerWithOptions(t *testing.T, enqueueErr error, options ...Option) http.Handler {
 	t.Helper()
+	return newContractHandlerWithQueue(t, fakeQueue{err: enqueueErr}, options...)
+}
+
+func newContractHandlerWithQueue(t *testing.T, queue fakeQueue, options ...Option) http.Handler {
+	t.Helper()
 	obs := newTestObs(t)
 	service := app.NewService(
 		repository.NewMemoryStore(),
-		fakeQueue{err: enqueueErr},
+		queue,
 		obs,
 		func() string { return "contract-job-1" },
 	)
@@ -203,9 +235,13 @@ type discardWriter struct{}
 func (discardWriter) Write(p []byte) (int, error) { return len(p), nil }
 
 type fakeQueue struct {
-	err error
+	err        error
+	panicValue any
 }
 
 func (q fakeQueue) Enqueue(ctx context.Context, task worker.Task) error {
+	if q.panicValue != nil {
+		panic(q.panicValue)
+	}
 	return q.err
 }

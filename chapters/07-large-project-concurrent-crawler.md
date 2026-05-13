@@ -255,6 +255,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Response schema | HTTP status、JSON 欄位、狀態 enum | client decode 失敗或狀態判斷錯誤 |
 | Error envelope | `error.code`、`error.message` | client 無法用穩定 code 做分支 |
 | Observability | route label、trace span name、metrics label、`X-Request-ID` | dashboard、alert 與 incident log 無法對照 |
+| Panic recovery | `500 internal_error` JSON、request id header | panic 造成連線中斷、非 JSON 錯誤或洩漏內部細節 |
 
 `production-api-worker/docs/api-contract.md` 示範了最小可維護合約：`POST /jobs`、`GET /jobs/{id}`、health endpoint、metrics endpoint、錯誤格式與 release gate。這不是要把文件寫成百科，而是讓每次 release 都能回答三個問題：
 
@@ -291,8 +292,22 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 | 找不到資源 | `404 Not Found`、`error.code=not_found` |
 | Queue full | `503 Service Unavailable`、`error.code=queue_full` |
 | Request ID | client header 原樣回傳；未提供時產生 `req-*` |
+| Panic recovery | handler panic 仍回 `500`、`error.code=internal_error` 與原 `X-Request-ID` |
 
 > 工程經驗：內部重構可以自由，但外部合約要保守。若需要破壞性變更，先新增新路由或新欄位，讓舊 client 有遷移窗口。
+
+### Panic Recovery 與錯誤邊界
+
+Go 的 `panic/recover` 不應拿來取代一般錯誤處理，但 production HTTP server 需要在最外層 handler 邊界做 recover。原因不是要吞掉 bug，而是避免未預期 panic 讓 client 看到連線中斷、HTML 錯誤頁或 panic 細節。
+
+`production-api-worker` 的 routes 順序是：request context middleware 建立 `X-Request-ID`，metrics middleware 記錄 status，recover middleware 把 panic 轉成穩定 JSON。這讓 panic path 仍然有 request id、structured log 與 metrics label。
+
+| 邊界 | 做法 |
+|---|---|
+| Handler / service panic | recover middleware 記錄 `panic recovered` structured log |
+| Client response | 固定 `500 Internal Server Error` 與 `error.code=internal_error` |
+| Request correlation | 原本的 `X-Request-ID` 仍回傳，方便排障 |
+| 測試保護 | `TestPanicRecoveryContract` 固定外部錯誤格式 |
 
 ### Service Lifecycle：ready、draining、shutdown
 
@@ -311,7 +326,7 @@ Production service 的生命週期要分清楚三件事：process 是否活著�
 
 1. 先完成 `crawler/types.go`、`crawler/crawler.go` 的 worker / queue 心智模型。
 2. 再看 `production-api-worker/internal/app/service.go`，理解 service transaction boundary。
-3. 接著讀 `internal/api/handler.go` 與 `internal/observability/observability.go`，把 HTTP、metrics、tracing 串起來。
+3. 接著讀 `internal/api/handler.go` 與 `internal/observability/observability.go`，把 HTTP、metrics、tracing 與 panic recovery 串起來。
 4. 再看 `internal/lifecycle/readiness.go` 與 `cmd/api-worker/main.go`，理解 ready / draining / queue drain。
 5. 對照 `docs/api-contract.md` 與 `internal/api/handler_test.go`，理解合約文件如何被測試守住。
 6. 最後跑 `docker compose up --build`，驗證 migration、API、worker、metrics 整體鏈路。
