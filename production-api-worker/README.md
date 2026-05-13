@@ -4,6 +4,7 @@
 
 - HTTP API：`POST /jobs`、`GET /jobs/{id}`、`GET /metrics`
 - API contract：穩定 request/response/error schema，文件在 `docs/api-contract.md`
+- Request decoding：拒絕 malformed JSON、unknown field、trailing JSON value 與空白 name
 - Service transaction boundary：`sql.TxOptions`、deadlock retry、queue enqueue
 - Repository：memory 與 Postgres `database/sql` 版本
 - Worker queue：bounded queue、worker pool、graceful shutdown
@@ -50,7 +51,7 @@ go mod tidy
 go mod verify
 go list -m -u all
 govulncheck ./...
-go test ./internal/api -run 'Test.*Contract|TestReadinessContract|TestPanicRecoveryContract' -count=1
+go test ./internal/api -run 'Test.*Contract|TestReadinessContract|TestPanicRecoveryContract|TestRequestDecodingContract' -count=1
 go test -race -cover ./...
 go test -run='^$' -bench=. -benchmem -count=10 ./... > bench.txt
 docker compose up --build
@@ -62,6 +63,7 @@ docker compose up --build
 | `go list -m -u all` | 發現可更新依賴並建立維護紀錄 |
 | `govulncheck ./...` | 掃描 API / worker 實際可達的已知漏洞 |
 | `go test ./internal/api -run 'Test.*Contract' -count=1` | 固定 HTTP status、JSON shape、錯誤 code 與 response header |
+| `go test ./internal/api -run 'TestRequestDecodingContract' -count=1` | 固定 malformed JSON、unknown field、trailing JSON 與空白 name 的 `400 invalid_input` |
 | `go test ./internal/api -run 'TestReadinessContract' -count=1` | 固定 ready / draining 狀態與 `/readyz` status code |
 | `go test ./internal/api -run 'TestPanicRecoveryContract' -count=1` | 固定 handler panic 時的 `500 internal_error` JSON 與 request id 行為 |
 | `go test -race -cover ./...` | 驗證 service、handler、queue 與併發安全 |
@@ -75,6 +77,7 @@ docker compose up --build
 | 合約項 | 目前策略 |
 |---|---|
 | Success response | 保持 `id`、`name`、`payload`、`status` 欄位向後相容 |
+| Request decoding | 只接受單一 JSON object；unknown field、trailing JSON value 與空白 `name` 都回 `invalid_input` |
 | Error response | 統一使用 `{"error":{"code":"...","message":"..."}}` |
 | Status enum | `pending`、`processing`、`done`、`failed` 不任意改名 |
 | Breaking change | 新增版本路由或遷移期，不直接覆蓋既有合約 |

@@ -3,6 +3,8 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -67,12 +69,11 @@ func (h *Handler) createJob(w http.ResponseWriter, r *http.Request) {
 		attribute.String("request.id", requestIDFromContext(ctx)),
 	)
 
-	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	ctx, cancel := contextWithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	var input domain.JobInput
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+	input, err := decodeJobInput(w, r)
+	if err != nil {
 		h.writeError(w, r, err)
 		return
 	}
@@ -98,6 +99,21 @@ func (h *Handler) getJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, job)
+}
+
+func decodeJobInput(w http.ResponseWriter, r *http.Request) (domain.JobInput, error) {
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	var input domain.JobInput
+	if err := decoder.Decode(&input); err != nil {
+		return domain.JobInput{}, fmt.Errorf("decode job input: %v: %w", err, domain.ErrInvalidInput)
+	}
+	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
+		return domain.JobInput{}, fmt.Errorf("decode job input: multiple JSON values: %w", domain.ErrInvalidInput)
+	}
+	return input, nil
 }
 
 func (h *Handler) requestContextMiddleware(next http.Handler) http.Handler {

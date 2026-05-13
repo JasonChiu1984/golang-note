@@ -333,7 +333,7 @@ ENTRYPOINT ["/app"]
 | 合約項 | Release 前檢查 |
 |---|---|
 | Endpoint | method、path、path parameter 是否仍相容 |
-| Request schema | 必填欄位與型別是否改變 |
+| Request schema | 必填欄位、型別、unknown field、trailing JSON 與大小限制是否改變 |
 | Response schema | status code、JSON 欄位、enum 是否仍可被舊 client decode |
 | Error envelope | 是否維持穩定 `error.code` 與 `error.message` |
 | Request ID | `X-Request-ID` 是否會回傳，client 提供時是否原樣保留 |
@@ -343,6 +343,7 @@ ENTRYPOINT ["/app"]
 ```bash
 cd production-api-worker
 go test ./internal/api -run 'Test.*Contract' -count=1
+go test ./internal/api -run 'TestRequestDecodingContract' -count=1
 go test ./internal/api -run 'TestRequestIDContract|TestCreateJobContract' -count=1
 go test ./internal/api -run 'TestPanicRecoveryContract' -count=1
 ```
@@ -357,6 +358,8 @@ go test ./internal/api -run 'TestPanicRecoveryContract' -count=1
 ```
 
 > 對外錯誤分支用穩定 code，不用自然語言 message 做 client 判斷。
+
+> Request decoder 錯誤也屬於 API 合約：malformed JSON、unknown field、trailing JSON value 與空白必填欄位都應回 `400 invalid_input`，不能漂移成 `500 internal_error`。
 
 ```json
 {

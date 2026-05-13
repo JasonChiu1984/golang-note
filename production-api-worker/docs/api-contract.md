@@ -1,6 +1,6 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.12 ｜ 基準日期：2026-05-13 ｜ 適用範圍：local memory mode、Postgres + OTLP mode
+> 版本：v1.0.13 ｜ 基準日期：2026-05-13 ｜ 適用範圍：local memory mode、Postgres + OTLP mode
 
 這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 panic recovery 行為需要透過 contract test 保護。
 
@@ -9,6 +9,7 @@
 | 規則 | 說明 |
 |---|---|
 | 向後相容新增 | 可新增 response 欄位，但不得移除或改名既有欄位 |
+| Request decoding | `POST /jobs` 只接受單一 JSON object；malformed JSON、unknown field、trailing JSON value 與空白 `name` 都必須回 `400 invalid_input` |
 | 錯誤分支 | client 應依 `error.code` 判斷，不依自然語言 message |
 | Status enum | `pending`、`processing`、`done`、`failed` 是穩定字串 |
 | Request correlation | server 必須回傳 `X-Request-ID`；client 提供時需原樣保留 |
@@ -44,7 +45,7 @@ X-Request-ID: request-from-client
 
 | Code | HTTP status | 觸發條件 |
 |---|---:|---|
-| `invalid_input` | 400 | JSON 無法解析、缺少 `name`、payload 超過限制 |
+| `invalid_input` | 400 | JSON 無法解析、unknown field、trailing JSON value、缺少/空白 `name`、payload 超過限制 |
 | `not_found` | 404 | 查詢不存在的 job |
 | `queue_full` | 503 | bounded queue 無法接受新工作 |
 | `internal_error` | 500 | 未分類的伺服器錯誤或 handler panic recovery |
@@ -72,6 +73,8 @@ X-Request-ID: request-from-client
 |---|---|---|---|
 | `name` | string | 是 | 不可為空 |
 | `payload` | string | 否 | 最大 4096 bytes |
+
+Request body 必須是單一 JSON object；多個 JSON value、未知欄位或格式錯誤都視為 `invalid_input`。
 
 ### Success Response
 
@@ -160,7 +163,7 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 這個 gate 固定：
 
 - `POST /jobs` 成功時回傳 `202 Accepted` 與穩定 job JSON 欄位。
-- 不合法 request 回傳 `400` 與 `error.code=invalid_input`。
+- 不合法 request 回傳 `400` 與 `error.code=invalid_input`，包含 malformed JSON、unknown field、trailing JSON value 與空白 `name`。
 - 查詢不存在 job 回傳 `404` 與 `error.code=not_found`。
 - queue 滿載時回傳 `503` 與 `error.code=queue_full`。
 - 錯誤與成功回應都維持 `Content-Type: application/json`。

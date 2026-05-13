@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.13 - 2026-05-13
+
+- 新增 2026-05-13 10:02 資深工程師審查報告，確認教程已具備 API contract、request correlation、lifecycle 與 panic recovery，但 request decode 失敗仍會誤分類成 500。
+- README 新增 strict request decoding 版本策略與驗證指令，將 `TestRequestDecodingContract` 納入主教材入口。
+- 第 7 / 11 章、進階 Cheat Sheet 與康乃爾筆記補上 request decoder gate：malformed JSON、unknown field、trailing JSON value 與空白 name 都需回 `400 invalid_input`。
+- `production-api-worker` API handler 新增 `decodeJobInput`，使用 `DisallowUnknownFields`、單一 JSON value 檢查與 `domain.ErrInvalidInput` wrapping。
+- `production-api-worker` contract tests 新增 request decoding 回歸檢查，避免 JSON parser 錯誤漂移為 `500 internal_error`。
+
 ## v1.0.12 - 2026-05-13
 
 - 新增 2026-05-13 09:02 資深工程師審查報告，確認教程已具備 API contract、request correlation 與 lifecycle gate，但 HTTP panic recovery 尚未形成可測合約。

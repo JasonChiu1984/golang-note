@@ -141,6 +141,56 @@ func TestPanicRecoveryContract(t *testing.T) {
 	}
 }
 
+func TestRequestDecodingContract(t *testing.T) {
+	tests := []struct {
+		name string
+		body string
+	}{
+		{
+			name: "malformed json",
+			body: `{"name":`,
+		},
+		{
+			name: "unknown field",
+			body: `{"name":"resize","priority":"high"}`,
+		},
+		{
+			name: "trailing json value",
+			body: `{"name":"resize"} {"name":"extra"}`,
+		},
+		{
+			name: "blank name",
+			body: `{"name":"   ","payload":"image"}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handler := newContractHandler(t, nil)
+			req := httptest.NewRequest(http.MethodPost, "/jobs", strings.NewReader(tt.body))
+			req.Header.Set(requestIDHeader, "decode-request")
+			rec := httptest.NewRecorder()
+
+			handler.ServeHTTP(rec, req)
+
+			if rec.Code != http.StatusBadRequest {
+				t.Fatalf("status = %d, want %d: %s", rec.Code, http.StatusBadRequest, rec.Body.String())
+			}
+			if got := rec.Header().Get(requestIDHeader); got != "decode-request" {
+				t.Fatalf("request id header = %q, want decode-request", got)
+			}
+
+			var response errorResponse
+			if err := json.NewDecoder(rec.Body).Decode(&response); err != nil {
+				t.Fatal(err)
+			}
+			if response.Error.Code != "invalid_input" {
+				t.Fatalf("error code = %q, want invalid_input", response.Error.Code)
+			}
+		})
+	}
+}
+
 func TestErrorContract(t *testing.T) {
 	tests := []struct {
 		name       string

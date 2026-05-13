@@ -216,6 +216,7 @@ func TestCreateJobContract(t *testing.T) {
 | Response JSON shape | 防止 rename / nesting 造成 decode 失敗 |
 | Error code | 比自然語言 message 更適合穩定分支 |
 | Header | `Content-Type`、cache、request id 都可能是 client 依賴 |
+| Request decoding | malformed JSON、unknown field、trailing JSON 與空白必填欄位都應固定為 `400 invalid_input` |
 | Readiness | draining 時 `/readyz=503` 是部署系統依賴的操作合約 |
 | Panic recovery | 未預期 panic 仍需回穩定 `500 internal_error` JSON |
 
@@ -227,6 +228,38 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 ```
 
 > 合約測試不應過度綁定內部 struct；它要固定「外部看見的行為」，例如 JSON 欄位與錯誤 code，而不是 service 裡用了哪個 repository 實作。
+
+### Request Decoding Contract
+
+Request decoder 的錯誤分類很容易被忽略：`json.Decoder` 回傳的格式錯誤若直接丟到統一錯誤轉換層，可能被當成未分類伺服器錯誤而回 `500`。Production API 應該把 decoder 錯誤視為 client input problem，並固定成 `400 invalid_input`。
+
+```go
+func TestRequestDecodingContract(t *testing.T) {
+    cases := []string{
+        `{"name":`,
+        `{"name":"resize","priority":"high"}`,
+        `{"name":"resize"} {"name":"extra"}`,
+        `{"name":"   "}`,
+    }
+    for _, body := range cases {
+        req := httptest.NewRequest(http.MethodPost, "/jobs", strings.NewReader(body))
+        rec := httptest.NewRecorder()
+
+        handler.ServeHTTP(rec, req)
+
+        if rec.Code != http.StatusBadRequest {
+            t.Fatalf("status = %d, want 400", rec.Code)
+        }
+    }
+}
+```
+
+| 測試項 | 為什麼重要 |
+|---|---|
+| Malformed JSON | client request 格式錯誤，不應被誤報為 server fault |
+| Unknown field | 防止 client typo 被靜默忽略 |
+| Trailing JSON value | 防止只 decode 第一個 object 後放過多餘資料 |
+| 空白必填欄位 | `name` 只有空白時仍屬於缺少有效業務輸入 |
 
 ### Panic Recovery Contract
 
@@ -275,6 +308,7 @@ func TestPanicRecoveryContract(t *testing.T) {
 | Go 1.25+ 併發時間測試 | `go test ./... -run Synctest` | 驗證 `testing/synctest` 類型案例 |
 | Go 1.26 artifact 測試 | `go test -artifacts -outputdir ./test-artifacts ./...` | 搭配 CI 收集 `T.ArtifactDir` 產物 |
 | API 合約測試 | `cd production-api-worker && go test ./internal/api -run 'Test.*Contract' -count=1` | 固定 status、JSON schema、錯誤 code 與 header |
+| Request decoding 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestDecodingContract' -count=1` | 固定 malformed JSON、unknown field、trailing JSON 與空白 name 的 `400 invalid_input` |
 | Request ID 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestIDContract|TestCreateJobContract' -count=1` | 固定 `X-Request-ID` 保留與自動產生行為 |
 | Readiness 合約 | `cd production-api-worker && go test ./internal/api -run 'TestReadinessContract' -count=1` | 固定 ready / draining 對 `/readyz` 的 status code |
 | Panic recovery 合約 | `cd production-api-worker && go test ./internal/api -run 'TestPanicRecoveryContract' -count=1` | 固定 panic path 的 `500 internal_error` JSON 與 request id |

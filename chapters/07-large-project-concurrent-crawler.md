@@ -251,7 +251,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | 合約面向 | 必須固定的內容 | 破壞風險 |
 |---|---|---|
 | Endpoint | method、path、path parameter | client 找不到路由或誤用動詞 |
-| Request schema | 必填欄位、型別、大小限制 | 舊 client 送出的 payload 被拒絕 |
+| Request schema | 必填欄位、型別、大小限制、unknown field、trailing JSON | 舊 client 送出的 payload 被拒絕，或錯誤 request 被誤當 500 |
 | Response schema | HTTP status、JSON 欄位、狀態 enum | client decode 失敗或狀態判斷錯誤 |
 | Error envelope | `error.code`、`error.message` | client 無法用穩定 code 做分支 |
 | Observability | route label、trace span name、metrics label、`X-Request-ID` | dashboard、alert 與 incident log 無法對照 |
@@ -288,13 +288,28 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 | 測試項 | 檢查內容 |
 |---|---|
 | 成功建立 job | `202 Accepted`、`Content-Type: application/json`、`id/name/payload/status` |
-| 不合法 request | `400 Bad Request`、`error.code=invalid_input` |
+| 不合法 request | malformed JSON、unknown field、trailing JSON、空白 name 都回 `400 Bad Request`、`error.code=invalid_input` |
 | 找不到資源 | `404 Not Found`、`error.code=not_found` |
 | Queue full | `503 Service Unavailable`、`error.code=queue_full` |
 | Request ID | client header 原樣回傳；未提供時產生 `req-*` |
 | Panic recovery | handler panic 仍回 `500`、`error.code=internal_error` 與原 `X-Request-ID` |
 
 > 工程經驗：內部重構可以自由，但外部合約要保守。若需要破壞性變更，先新增新路由或新欄位，讓舊 client 有遷移窗口。
+
+### Request Decoding 與輸入邊界
+
+HTTP handler 的第一個 production 邊界是 request decoder。`json.Decoder` 預設允許一些容易被忽略的情況，例如只 decode 第一個 JSON value，或把 unknown field 交給後續流程無聲略過。對 API contract 來說，這些都應該明確化，否則 client typo 可能長期潛伏，真正出錯時又被誤分類成 `500 internal_error`。
+
+`production-api-worker` 的 `POST /jobs` 使用獨立的 `decodeJobInput` gate：
+
+| 檢查 | 合約行為 |
+|---|---|
+| Malformed JSON | `400 invalid_input` |
+| Unknown field | `400 invalid_input` |
+| Trailing JSON value | `400 invalid_input` |
+| 空白 `name` | `400 invalid_input` |
+
+這類檢查不只是「表單驗證」，而是 API 相容性的一部分。當欄位命名、payload 限制或 decoder 嚴格度改變時，都應該進入 contract test 與 release note。
 
 ### Panic Recovery 與錯誤邊界
 
