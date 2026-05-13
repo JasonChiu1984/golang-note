@@ -207,6 +207,7 @@ func FetchUser(ctx context.Context, id int) (*User, error) {
 | Draining | readiness 狀態轉為 false，讓 `/readyz` 回 503 |
 | HTTP shutdown | `http.Server.Shutdown(ctx)` 停止接新連線並等待既有 request |
 | Worker drain | close queue 並用 `WaitGroup` 等待已排入 task 完成 |
+| Queue close/send | close 與 enqueue send 需共用 mutex 或單一 owner，避免送入已關閉 channel |
 | Timeout | drain deadline 到期才 cancel worker context |
 
 ---
@@ -338,6 +339,7 @@ ENTRYPOINT ["/app"]
 | Error envelope | 是否維持穩定 `error.code` 與 `error.message` |
 | Request ID | `X-Request-ID` 是否會回傳，client 提供時是否原樣保留 |
 | Observability label | route label、span name、metrics label、`request.id` 是否會破壞 dashboard |
+| Worker shutdown | concurrent enqueue + shutdown 是否不 panic，close 後是否回穩定錯誤 |
 | Panic recovery | 未預期 panic 是否仍回 `500 internal_error` JSON 與原 request id |
 
 ```bash
@@ -345,6 +347,7 @@ cd production-api-worker
 go test ./internal/api -run 'Test.*Contract' -count=1
 go test ./internal/api -run 'TestRequestDecodingContract' -count=1
 go test ./internal/api -run 'TestRequestIDContract|TestCreateJobContract' -count=1
+go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1
 go test ./internal/api -run 'TestPanicRecoveryContract' -count=1
 ```
 

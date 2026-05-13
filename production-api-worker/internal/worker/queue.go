@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"golang-learning-notes/production-api-worker/internal/domain"
-	"golang-learning-notes/production-api-worker/internal/observability"
 )
 
 type Task struct {
@@ -16,16 +15,24 @@ type Task struct {
 
 type Processor func(ctx context.Context, task Task) error
 
+type Observer interface {
+	ObserveWorkerQueueDepth(depth int)
+	ObserveWorkerJobDuration(seconds float64)
+	ObserveWorkerJobResult(result string)
+}
+
+var ErrClosed = errors.New("queue closed")
+
 type Queue struct {
 	jobs      chan Task
 	processor Processor
-	obs       *observability.Observability
+	obs       Observer
 	wg        sync.WaitGroup
 	mu        sync.Mutex
 	closed    bool
 }
 
-func New(size int, processor Processor, obs *observability.Observability) *Queue {
+func New(size int, processor Processor, obs Observer) *Queue {
 	if size <= 0 {
 		size = 32
 	}
@@ -38,10 +45,10 @@ func New(size int, processor Processor, obs *observability.Observability) *Queue
 
 func (q *Queue) Enqueue(ctx context.Context, task Task) error {
 	q.mu.Lock()
-	closed := q.closed
-	q.mu.Unlock()
-	if closed {
-		return errors.New("queue closed")
+	defer q.mu.Unlock()
+
+	if q.closed {
+		return ErrClosed
 	}
 
 	select {
@@ -52,7 +59,7 @@ func (q *Queue) Enqueue(ctx context.Context, task Task) error {
 		return ctx.Err()
 	default:
 		if q.obs != nil {
-			q.obs.Metrics.JobsTotal.WithLabelValues("dropped").Inc()
+			q.obs.ObserveWorkerJobResult("dropped")
 		}
 		return domain.ErrQueueFull
 	}
@@ -76,11 +83,11 @@ func (q *Queue) Start(ctx context.Context, workers int) {
 					start := time.Now()
 					err := q.processor(ctx, task)
 					if q.obs != nil {
-						q.obs.Metrics.JobDuration.Observe(time.Since(start).Seconds())
+						q.obs.ObserveWorkerJobDuration(time.Since(start).Seconds())
 						if err != nil {
-							q.obs.Metrics.JobsTotal.WithLabelValues("failed").Inc()
+							q.obs.ObserveWorkerJobResult("failed")
 						} else {
-							q.obs.Metrics.JobsTotal.WithLabelValues("success").Inc()
+							q.obs.ObserveWorkerJobResult("success")
 						}
 					}
 				case <-ctx.Done():
@@ -119,6 +126,6 @@ func (q *Queue) ShutdownContext(ctx context.Context) error {
 
 func (q *Queue) observeDepth() {
 	if q.obs != nil {
-		q.obs.Metrics.QueueDepth.Set(float64(len(q.jobs)))
+		q.obs.ObserveWorkerQueueDepth(len(q.jobs))
 	}
 }

@@ -239,7 +239,7 @@ production-api-worker/
 
 | 對比面向 | `project-concurrent-crawler` | `production-api-worker` |
 |---|---|---|
-| 學習重點 | worker pool、parser、retry | API、transaction、queue、observability、部署 |
+| 學習重點 | worker pool、parser、retry | API、transaction、queue shutdown safety、observability、部署 |
 | 外部依賴 | 幾乎沒有 | Postgres、OTLP、Docker Compose |
 | 驗證方式 | `go test` 為主 | `go test` + `docker compose up --build` |
 | 專案階段 | 教學型大型專案 | 接近 production 的服務骨架 |
@@ -256,6 +256,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Error envelope | `error.code`、`error.message` | client 無法用穩定 code 做分支 |
 | Observability | route label、trace span name、metrics label、`X-Request-ID` | dashboard、alert 與 incident log 無法對照 |
 | Panic recovery | `500 internal_error` JSON、request id header | panic 造成連線中斷、非 JSON 錯誤或洩漏內部細節 |
+| Queue shutdown | enqueue 與 close 的同步邊界 | shutdown 期間可能送入已關閉 channel，造成 panic |
 
 `production-api-worker/docs/api-contract.md` 示範了最小可維護合約：`POST /jobs`、`GET /jobs/{id}`、health endpoint、metrics endpoint、錯誤格式與 release gate。這不是要把文件寫成百科，而是讓每次 release 都能回答三個問題：
 
@@ -336,6 +337,8 @@ Production service 的生命週期要分清楚三件事：process 是否活著�
 | Forced cancel | 可能結束 | 503 | drain deadline 到期才取消 worker context |
 
 這個流程避免兩種常見錯誤：第一，process 還活著但其實已準備關閉，load balancer 仍繼續送流量；第二，收到 signal 立刻 cancel worker context，導致 queue 裡已接受的 job 被中斷。
+
+Queue 本身也要有明確的同步邊界。`production-api-worker/internal/worker.Queue` 用 mutex 同時保護 `closed` 狀態、enqueue send 與 channel close，確保 `ShutdownContext` 開始後的新 enqueue 只會得到 `ErrClosed`，不會在高併發 shutdown path 觸發 `send on closed channel`。
 
 ### 建議閱讀順序
 

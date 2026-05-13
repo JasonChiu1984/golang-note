@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.14 - 2026-05-13
+
+- 新增 2026-05-13 11:02 資深工程師審查報告，確認 production API 合約已補齊，但 worker queue shutdown 仍有 enqueue 與 close 競態風險。
+- `production-api-worker/internal/worker` 移除對完整 observability package 的直接依賴，改用小型 `Observer` interface，讓 worker queue 可在離線/受限環境獨立測試。
+- `Queue.Enqueue` 與 `Queue.ShutdownContext` 現在共用 mutex 保護 `closed` 狀態與 channel close/send 邊界，避免 shutdown 期間 `send on closed channel` panic。
+- 新增 worker queue shutdown 回歸測試，固定 close 後 enqueue 回 `ErrClosed`，並覆蓋 concurrent enqueue + shutdown 不 panic 的情境。
+- README、第 7 / 11 章、進階 Cheat Sheet、康乃爾筆記與 `production-api-worker` 文件補上 queue shutdown safety 與驗證 gate。
+
 ## v1.0.13 - 2026-05-13
 
 - 新增 2026-05-13 10:02 資深工程師審查報告，確認教程已具備 API contract、request correlation、lifecycle 與 panic recovery，但 request decode 失敗仍會誤分類成 500。
