@@ -217,40 +217,6 @@ go test ./project-concurrent-crawler/...
 go run ./project-concurrent-crawler/cmd/crawler
 ```
 
-## 第二階段專案：production API + worker
-
-如果並發爬蟲已經讓你理解 worker pool、retry、store abstraction，下一步就不該停在 toy project。這個教材已經附了一個更接近實務服務的第二階段專案：`production-api-worker/`。
-
-```text
-production-api-worker/
-├── cmd/
-│   ├── api-worker/      # HTTP API + queue 啟動入口
-│   └── migrate/         # migration CLI
-├── internal/
-│   ├── api/             # handler / routing / metrics endpoint
-│   ├── app/             # service / transaction boundary
-│   ├── domain/          # 核心型別
-│   ├── observability/   # slog + Prometheus + OpenTelemetry
-│   ├── repository/      # memory / Postgres store
-│   └── worker/          # bounded queue + graceful shutdown
-├── docker-compose.yml
-└── README.md
-```
-
-| 對比面向 | `project-concurrent-crawler` | `production-api-worker` |
-|---|---|---|
-| 學習重點 | worker pool、parser、retry | API、transaction、queue、observability、部署 |
-| 外部依賴 | 幾乎沒有 | Postgres、OTLP、Docker Compose |
-| 驗證方式 | `go test` 為主 | `go test` + `docker compose up --build` |
-| 專案階段 | 教學型大型專案 | 接近 production 的服務骨架 |
-
-### 建議閱讀順序
-
-1. 先完成 `crawler/types.go`、`crawler/crawler.go` 的 worker / queue 心智模型。
-2. 再看 `production-api-worker/internal/app/service.go`，理解 service transaction boundary。
-3. 接著讀 `internal/api/handler.go` 與 `internal/observability/observability.go`，把 HTTP、metrics、tracing 串起來。
-4. 最後跑 `docker compose up --build`，驗證 migration、API、worker、metrics 整體鏈路。
-
 ## 讀程式順序
 
 1. 先看 `crawler/types.go` 理解資料模型與介面。
@@ -263,4 +229,3 @@ production-api-worker/
 1. 把 `MaxDepth` 改成 2，觀察任務數量變化。
 2. 新增一個 `FileStore`，把結果寫成 JSON lines。
 3. 對 retry 分支新增更多測試案例。
-4. 參照 `production-api-worker`，幫 crawler 加上 metrics 與 graceful shutdown。

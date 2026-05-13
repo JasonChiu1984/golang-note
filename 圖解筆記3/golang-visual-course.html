@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Golang 互動 HTML 圖解教學與 200 個常用案例</title>
+  <title>Golang 互動 HTML 圖解教學</title>
   <style>
     :root {
       --bg: #f6f8fb;
@@ -570,13 +570,11 @@
         <div>
           <p class="eyebrow">10 年 Go 專案工程師視角 / 畫給你看</p>
           <h1>Golang 互動 HTML 圖解教學</h1>
-          <p>用 SVG 心智圖、流程圖、可展開步驟卡、200 個常用語法範例與 200 個常用案例說明，把 Go 從基礎語法一路接到大型並發任務系統。</p>
+          <p>用 SVG 心智圖、流程圖、可展開步驟卡與 200 個常用語法範例，把 Go 從基礎語法一路接到大型並發任務系統。</p>
         </div>
         <div class="hero-stats" aria-label="課程摘要">
           <div class="stat"><strong>40</strong><span>單一語法卡</span></div>
           <div class="stat"><strong>200</strong><span>常用語法例</span></div>
-          <div class="stat"><strong>200</strong><span>常用案例</span></div>
-          <div class="stat"><strong>10</strong><span>完整事故案例</span></div>
         </div>
       </div>
     </header>
@@ -592,7 +590,6 @@
         <a class="btn" href="#production-checklist">Production Checklist</a>
         <a class="btn" href="#production-deep-dive">DB / Observability</a>
         <a class="btn" href="#executable-walkthrough">可執行專案</a>
-        <a class="btn" href="#cases">200 常用案例</a>
         <button class="btn" type="button" id="openAll">展開全部</button>
         <button class="btn" type="button" id="closeAll">收合全部</button>
       </div>
@@ -679,7 +676,7 @@
                 <li>先看心智圖，建立全局地圖。</li>
                 <li>點節點跳到語法卡，看 SVG 與 Go 範例。</li>
                 <li>展開步驟卡，照順序理解使用情境。</li>
-                <li>最後用 200 個常用案例把語法套進實務問題。</li>
+                <li>最後用 200 個常用語法範例把語法套進實務問題。</li>
               </ol>
             </details>
           </div>
@@ -882,16 +879,6 @@ go test -ldflags=-linkmode=external ./...</code></pre>
         <div class="case-grid" id="syntaxExampleGrid"></div>
       </section>
 
-      <section id="cases">
-        <div class="section-head">
-          <div>
-            <h2>200 個常用案例說明</h2>
-            <p>10 組分類，每組 20 個；可依分類篩選，每張卡可點開看步驟、設計取捨、驗收標準與陷阱。</p>
-          </div>
-        </div>
-        <div class="case-controls" id="caseFilters"></div>
-        <div class="case-grid" id="caseGrid"></div>
-      </section>
     </main>
 
     <a class="btn top-link" href="#top" aria-label="回到頂部">Top</a>
@@ -1163,7 +1150,7 @@ go test -ldflags=-linkmode=external ./...</code></pre>
           `_ = os.WriteFile(name, data, 0644) // bad: error ignored`,
           `defer func() {\n\tif r := recover(); r != nil { log.Println(r) }\n}()`,
           `if errors.Is(err, ErrNotFound) {\n\thttp.Error(w, "not found", http.StatusNotFound)\n}`,
-          `if temporary(err) {\n\treturn retry()\n}`,
+          `type temporary interface {\n\tTemporary() bool\n}\n\nfunc RetryTemporary(ctx context.Context, max int, run func(context.Context) error) error {\n\tvar last error\n\tfor attempt := 1; attempt <= max; attempt++ {\n\t\tif err := run(ctx); err != nil {\n\t\t\tlast = err\n\t\t\tvar te temporary\n\t\t\tif !errors.As(err, &te) || !te.Temporary() {\n\t\t\t\treturn err // permanent error: do not retry\n\t\t\t}\n\t\t\tselect {\n\t\t\tcase <-time.After(time.Duration(attempt) * 100 * time.Millisecond):\n\t\t\tcase <-ctx.Done():\n\t\t\t\treturn ctx.Err()\n\t\t\t}\n\t\t\tcontinue\n\t\t}\n\t\treturn nil\n\t}\n\treturn fmt.Errorf("retry exhausted: %w", last)\n}`,
           `return fmt.Errorf("decode config file %s: %w", name, err)`,
           `// log once at boundary\nreturn fmt.Errorf("service failed: %w", err)`,
           `if errors.Is(err, io.EOF) {\n\treturn nil\n}`,
@@ -1689,7 +1676,7 @@ go test -ldflags=-linkmode=external ./...</code></pre>
           <rect class="flow-box" x="155" y="43" width="115" height="64" rx="10" fill="#fff" stroke="#cbd5e1"></rect>
           <text class="flow-title" x="212" y="80" text-anchor="middle" font-size="15">語法</text>
           <rect class="flow-box" x="300" y="43" width="115" height="64" rx="10" fill="#fff" stroke="#cbd5e1"></rect>
-          <text class="flow-title" x="357" y="80" text-anchor="middle" font-size="15">案例</text>
+          <text class="flow-title" x="357" y="80" text-anchor="middle" font-size="15">語法例</text>
           <text class="flow-caption" x="260" y="130" text-anchor="middle">${topic.summary}</text>
         </svg>
       `;
@@ -1856,7 +1843,7 @@ go test -ldflags=-linkmode=external ./...</code></pre>
             color: categoryInfo[categoryIndex].color,
             scene: categoryInfo[categoryIndex].scene,
             pitfall: categoryInfo[categoryIndex].pitfall,
-            code: codeForCase(categoryIndex, title),
+            code: codeForCase(categoryIndex, title, titleIndex, no),
             steps: stepsForCase(categoryIndex, title),
             tradeoff: tradeoffForCase(categoryIndex, title),
             acceptance: acceptanceForCase(categoryIndex, title),
@@ -1867,20 +1854,37 @@ go test -ldflags=-linkmode=external ./...</code></pre>
       return cases;
     }
 
-    function codeForCase(categoryIndex, title) {
+    function codeForCase(categoryIndex, title, titleIndex, no) {
+      const caseID = String(no).padStart(3, "0");
+      const fn = `Case${caseID}${englishSuffix(title)}`;
+      const caseTitle = goQuote(title);
+      if (title === "API 邊界錯誤轉換") {
+        return `// Case #${caseID}: ${title}\n` +
+`var ErrCase${caseID}InvalidInput = errors.New("invalid input")\nvar ErrCase${caseID}NotFound = errors.New("not found")\n\ntype Case${caseID}Service interface {\n\tCreate(ctx context.Context) error\n}\n\ntype Case${caseID}APIError struct {\n\tCode    string ` + "`json:\"code\"`" + `\n\tMessage string ` + "`json:\"message\"`" + `\n}\n\nfunc ${fn}(w http.ResponseWriter, r *http.Request, svc Case${caseID}Service) {\n\tif err := svc.Create(r.Context()); err != nil {\n\t\tstatus, body := Case${caseID}MapError(err)\n\t\tCase${caseID}WriteJSON(w, status, body)\n\t\treturn\n\t}\n\tw.WriteHeader(http.StatusCreated)\n}\n\nfunc Case${caseID}MapError(err error) (int, Case${caseID}APIError) {\n\tswitch {\n\tcase errors.Is(err, ErrCase${caseID}InvalidInput):\n\t\treturn http.StatusBadRequest, Case${caseID}APIError{\n\t\t\tCode: "invalid_input",\n\t\t\tMessage: "request payload is invalid",\n\t\t}\n\tcase errors.Is(err, ErrCase${caseID}NotFound):\n\t\treturn http.StatusNotFound, Case${caseID}APIError{\n\t\t\tCode: "not_found",\n\t\t\tMessage: "resource not found",\n\t\t}\n\tdefault:\n\t\treturn http.StatusInternalServerError, Case${caseID}APIError{\n\t\t\tCode: "internal_error",\n\t\t\tMessage: "service temporarily unavailable",\n\t\t}\n\t}\n}\n\nfunc Case${caseID}WriteJSON(w http.ResponseWriter, status int, body Case${caseID}APIError) {\n\tw.Header().Set("Content-Type", "application/json")\n\tw.WriteHeader(status)\n\t_ = json.NewEncoder(w).Encode(body)\n}`;
+      }
       const snippets = [
-`var ErrNotFound = errors.New("not found")\n\nfunc Load(id string) error {\n\tif id == "" {\n\t\treturn fmt.Errorf("load %q: %w", id, ErrNotFound)\n\t}\n\treturn nil\n}`,
-`type Clock interface { Now() time.Time }\n\ntype Service struct { clock Clock }\nfunc NewService(clock Clock) *Service { return &Service{clock: clock} }`,
-`func Contains[T comparable](items []T, target T) bool {\n\tfor _, item := range items {\n\t\tif item == target { return true }\n\t}\n\treturn false\n}`,
-`ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)\ndefer cancel()\n\nif err := worker.Run(ctx); err != nil {\n\treturn err\n}`,
-`select {\ncase value := <-input:\n\toutput <- transform(value)\ncase <-ctx.Done():\n\treturn ctx.Err()\n}`,
-`for i := 0; i < workers; i++ {\n\tgo func() {\n\t\tfor job := range jobs { handle(job) }\n\t}()\n}`,
-`client := &http.Client{Timeout: 3 * time.Second}\nreq, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)\nresp, err := client.Do(req)`,
-`func TestService(t *testing.T) {\n\ttests := []struct{ name string; input int; want int }{{"double", 2, 4}}\n\tfor _, tt := range tests { t.Run(tt.name, func(t *testing.T) {}) }\n}`,
-`items := make([]Result, 0, expected)\nfor _, raw := range raws {\n\titems = append(items, parse(raw))\n}`,
-`var version = "dev"\n\nfunc main() {\n\tfmt.Println("version:", version)\n}`
+        () => `var ErrCase${caseID}NotFound = errors.New("not found")\n\nfunc ${fn}(id string) error {\n\tcaseTitle := ${caseTitle}\n\tif id == "" {\n\t\treturn fmt.Errorf(\n\t\t\t"case #${caseID} %s id %q: %w",\n\t\t\tcaseTitle,\n\t\t\tid,\n\t\t\tErrCase${caseID}NotFound,\n\t\t)\n\t}\n\treturn nil\n}`,
+        () => `type Case${caseID}Clock interface {\n\tNow() time.Time\n}\n\ntype Case${caseID}Service struct {\n\tclock Case${caseID}Clock\n\tname  string\n}\n\nfunc New${fn}(clock Case${caseID}Clock) *Case${caseID}Service {\n\treturn &Case${caseID}Service{clock: clock, name: ${caseTitle}}\n}`,
+        () => `func ${fn}[T comparable](items []T, target T) bool {\n\tcaseTitle := ${caseTitle}\n\t_ = caseTitle\n\tfor _, item := range items {\n\t\tif item == target { return true }\n\t}\n\treturn false\n}`,
+        () => `func ${fn}(parent context.Context, worker Worker) error {\n\tcaseTitle := ${caseTitle}\n\tctx, cancel := context.WithTimeout(parent, 2*time.Second)\n\tdefer cancel()\n\tif err := worker.Run(ctx); err != nil {\n\t\treturn fmt.Errorf("case #${caseID} %s: %w", caseTitle, err)\n\t}\n\treturn nil\n}`,
+        () => `func ${fn}(ctx context.Context, input <-chan Item, output chan<- Item) error {\n\tcaseTitle := ${caseTitle}\n\tselect {\n\tcase value := <-input:\n\t\toutput <- transform(value)\n\t\treturn nil\n\tcase <-ctx.Done():\n\t\treturn fmt.Errorf("case #${caseID} %s: %w", caseTitle, ctx.Err())\n\t}\n}`,
+        () => `func ${fn}(ctx context.Context, workers int, jobs <-chan Job) {\n\tcaseTitle := ${caseTitle}\n\tfor i := 0; i < workers; i++ {\n\t\tgo func(workerID int) {\n\t\t\tfor job := range jobs {\n\t\t\t\thandle(ctx, caseTitle, workerID, job)\n\t\t\t}\n\t\t}(i)\n\t}\n}`,
+        () => `func ${fn}(ctx context.Context, url string) (*http.Response, error) {\n\tcaseTitle := ${caseTitle}\n\tclient := &http.Client{Timeout: 3 * time.Second}\n\treq, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)\n\tif err != nil { return nil, fmt.Errorf("%s request: %w", caseTitle, err) }\n\treturn client.Do(req)\n}`,
+        () => `func Test${fn}(t *testing.T) {\n\ttests := []struct{\n\t\tname string\n\t\tinput int\n\t\twant int\n\t}{\n\t\t{${caseTitle}, 2, 4},\n\t}\n\tfor _, tt := range tests {\n\t\tt.Run(tt.name, func(t *testing.T) {})\n\t}\n}`,
+        () => `func ${fn}(raws []Raw, expected int) []Result {\n\tcaseTitle := ${caseTitle}\n\t_ = caseTitle\n\titems := make([]Result, 0, expected)\n\tfor _, raw := range raws {\n\t\titems = append(items, parse(raw))\n\t}\n\treturn items\n}`,
+        () => `var Case${caseID}Version = "dev"\n\nfunc ${fn}Main() {\n\tcaseTitle := ${caseTitle}\n\tfmt.Println("case #${caseID}:", caseTitle)\n\tfmt.Println("version:", Case${caseID}Version)\n}`
       ];
-      return `// Case: ${title}\n` + snippets[categoryIndex];
+      return `// Case #${caseID}: ${title}\n` + snippets[categoryIndex](titleIndex);
+    }
+
+    function englishSuffix(value) {
+      const words = String(value).match(/[A-Za-z][A-Za-z0-9]*/g) || [];
+      if (words.length === 0) return "Example";
+      return words.map(word => word[0].toUpperCase() + word.slice(1)).join("");
+    }
+
+    function goQuote(value) {
+      return JSON.stringify(String(value));
     }
 
     function stepsForCase(categoryIndex, title) {
@@ -1947,91 +1951,6 @@ go test -ldflags=-linkmode=external ./...</code></pre>
           <text class="flow-title" x="492" y="66" text-anchor="middle" fill="#166534" font-size="14">OK</text>
         </svg>
       `;
-    }
-
-    function renderFilters(cases) {
-      const root = document.getElementById("caseFilters");
-      const buttons = [`<button class="btn active" type="button" data-category="all">全部 ${cases.length}</button>`]
-        .concat(categoryNames.map(name => `<button class="btn" type="button" data-category="${name}">${name}</button>`));
-      root.innerHTML = buttons.join("");
-
-      root.addEventListener("click", event => {
-        const button = event.target.closest("button[data-category]");
-        if (!button) return;
-        root.querySelectorAll("button").forEach(btn => btn.classList.remove("active"));
-        button.classList.add("active");
-        const category = button.dataset.category;
-        document.querySelectorAll("#caseGrid .case-card").forEach(card => {
-          card.hidden = category !== "all" && card.dataset.category !== category;
-        });
-      });
-    }
-
-    function renderCases(cases) {
-      const root = document.getElementById("caseGrid");
-      root.innerHTML = cases.map(item => {
-        const incidentBlock = item.incident ? `
-          <details open>
-            <summary>完整事故案例</summary>
-            <table>
-              <tbody>
-                <tr><th>現象</th><td>${item.incident.symptom}</td></tr>
-                <tr><th>原因</th><td>${item.incident.cause}</td></tr>
-                <tr><th>修正</th><td>${item.incident.fix}</td></tr>
-                <tr><th>復盤</th><td>${item.incident.review}</td></tr>
-              </tbody>
-            </table>
-          </details>
-        ` : "";
-        const engineeringBlock = item.problem ? `
-          ${incidentBlock}
-          <details open>
-            <summary>問題背景</summary>
-            <p>${item.problem}</p>
-          </details>
-          <details>
-            <summary>錯誤版本</summary>
-            <pre><code class="language-go">${escapeHtml(item.wrongCode)}</code></pre>
-          </details>
-          <details>
-            <summary>修正版</summary>
-            <pre><code class="language-go">${escapeHtml(item.fixedCode)}</code></pre>
-          </details>
-          <details>
-            <summary>驗收測試</summary>
-            <p>${item.testPlan}</p>
-          </details>
-          <div class="acceptance"><strong>Production 指標：</strong>${item.productionMetric}</div>
-        ` : "";
-        return `
-        <article class="case-card" data-category="${item.category}">
-          <span class="badge">#${String(item.no).padStart(3, "0")}</span>
-          <h3>${item.title}</h3>
-          <div class="case-meta">
-            <span class="badge">${item.category}</span>
-            ${item.problem ? `<span class="badge">真實工程案例</span>` : ""}
-            ${item.incident ? `<span class="badge">完整事故案例</span>` : ""}
-          </div>
-          <p class="muted"><strong>適用場景：</strong>${item.scene}</p>
-          <div class="mini-flow">${caseMiniSvg(item)}</div>
-          <pre><code class="language-go">${escapeHtml(item.code)}</code></pre>
-          ${engineeringBlock}
-          <details>
-            <summary>設計取捨</summary>
-            <p>${item.tradeoff}</p>
-          </details>
-          <details>
-            <summary>Step-by-step 解法</summary>
-            <ol class="steps">${item.steps.map(step => `<li>${step}</li>`).join("")}</ol>
-          </details>
-          <div class="acceptance"><strong>驗收標準：</strong>${item.acceptance}</div>
-          <details>
-            <summary>常見陷阱</summary>
-            <p>${item.pitfall}</p>
-          </details>
-        </article>
-      `;
-      }).join("");
     }
 
     function renderSyntaxExampleFilters(examples) {
@@ -2141,9 +2060,6 @@ go test -ldflags=-linkmode=external ./...</code></pre>
     const syntaxExamples = buildSyntaxExamples();
     renderSyntaxExampleFilters(syntaxExamples);
     renderSyntaxExamples(syntaxExamples);
-    const cases = createCases();
-    renderFilters(cases);
-    renderCases(cases);
     wireInteractions();
   </script>
 </body>

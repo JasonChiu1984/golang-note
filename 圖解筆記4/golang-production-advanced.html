@@ -230,7 +230,7 @@
       <div>
         <p class="eyebrow">圖解筆記4 / Go Production Advanced</p>
         <h1>把 Go 語法升級成可上線的工程決策</h1>
-        <p>這份補強篇聚焦資深後端開發最常碰到的三個缺口：Go 1.21/1.22 新標準庫、資料庫層、可觀察性。目標不是背 API，而是看懂一個 production request 從進入服務到落庫、觀測、除錯的完整路徑。</p>
+        <p>這份補強篇聚焦資深後端開發最常碰到的三個缺口：Go 1.21 / 1.22 / 1.23 標準庫版本邊界、資料庫層、可觀察性。目標不是背 API，而是看懂一個 production request 從進入服務到落庫、觀測、除錯的完整路徑。</p>
       </div>
       <div class="hero-stats">
         <div class="stat"><strong>3</strong><span>工程主軸</span></div>
@@ -288,7 +288,7 @@
           <g class="mind-node" data-target="modern-stdlib" tabindex="0">
             <rect x="40" y="70" width="210" height="84" rx="12" fill="#ecfeff" stroke="#0f766e" stroke-width="3"></rect>
             <text x="145" y="105" text-anchor="middle" fill="#115e59">Modern Stdlib</text>
-            <text x="145" y="130" text-anchor="middle" fill="#115e59">slices / maps / ServeMux</text>
+            <text x="145" y="130" text-anchor="middle" fill="#115e59">Go 1.21 / 1.22 / 1.23</text>
           </g>
           <g class="mind-node" data-target="database-layer" tabindex="0">
             <rect x="40" y="218" width="210" height="84" rx="12" fill="#f0fdf4" stroke="#15803d" stroke-width="3"></rect>
@@ -337,7 +337,12 @@
           <button class="syntax-index-card syntax-link" type="button" data-target="maps-card">
             <span class="badge teal">Go 1.21</span>
             <strong>maps</strong>
-            <span>Clone / Equal / DeleteFunc / Keys / Values</span>
+            <span>Clone / Equal / DeleteFunc</span>
+          </button>
+          <button class="syntax-index-card syntax-link" type="button" data-target="maps-iter-card">
+            <span class="badge violet">Go 1.23+</span>
+            <strong>maps iterators</strong>
+            <span>Keys / Values / slices.Collect</span>
           </button>
           <button class="syntax-index-card syntax-link" type="button" data-target="servemux-card">
             <span class="badge">Go 1.22</span>
@@ -396,9 +401,19 @@
     <section id="modern-stdlib">
       <div class="section-head">
         <div>
-          <h2>Modern Stdlib：Go 1.21/1.22 標準庫</h2>
-          <p>新版標準庫把常見集合操作與 HTTP 路由收斂到官方 API，減少手寫迴圈與第三方 router 的基本依賴。</p>
+          <h2>Modern Stdlib：Go 1.21 / 1.22 / 1.23 版本邊界</h2>
+          <p>新版標準庫把常見集合操作與 HTTP 路由收斂到官方 API；本章明確切開 Go 1.21、Go 1.22 與 Go 1.23+ 的可用 API，避免專案版本假設混淆。</p>
         </div>
+      </div>
+      <div class="panel">
+        <table>
+          <thead><tr><th>版本</th><th>本章重點</th><th>專案判斷</th></tr></thead>
+          <tbody>
+            <tr><td>Go 1.21</td><td><code>slices</code> / <code>maps</code> 基礎集合工具，例如 <code>slices.Clone</code>、<code>slices.Sort</code>、<code>maps.Clone</code>、<code>maps.Equal</code>。</td><td>適合降低自寫 helper 數量，但 clone 是 shallow copy。</td></tr>
+            <tr><td>Go 1.22</td><td><code>net/http.ServeMux</code> 支援 method pattern、path wildcard 與 <code>Request.PathValue</code>。</td><td>中小型 API 可優先用標準庫 router。</td></tr>
+            <tr><td>Go 1.23+</td><td><code>maps.Keys</code> / <code>maps.Values</code> 回傳 iterator，常搭配 <code>slices.Sorted</code> 或 <code>slices.Collect</code>。</td><td>若專案固定 Go 1.21/1.22，不應直接使用 Go 1.23 iterator API。</td></tr>
+          </tbody>
+        </table>
       </div>
       <div class="grid">
         <article class="topic-card span-6" id="slices-maps-card">
@@ -453,8 +468,7 @@ func main() {
               <tr><td><code>maps.Clone</code></td><td>複製 map</td><td>避免把內部狀態交給呼叫端修改</td></tr>
               <tr><td><code>maps.Equal</code></td><td>比較 key/value</td><td>適合測試與設定 diff</td></tr>
               <tr><td><code>maps.DeleteFunc</code></td><td>依條件刪除</td><td>清理空值、過期值</td></tr>
-              <tr><td><code>maps.Keys</code></td><td>取得 key iterator</td><td>Go 1.23 後常搭配 <code>slices.Collect</code></td></tr>
-              <tr><td><code>maps.Values</code></td><td>取得 value iterator</td><td>順序不可依賴</td></tr>
+              <tr><td>版本邊界</td><td><code>maps.Keys</code> / <code>maps.Values</code></td><td>屬於 Go 1.23+ iterator API，不放進 Go 1.21 假設</td></tr>
             </tbody>
           </table>
           <pre><code class="language-go">package main
@@ -485,6 +499,43 @@ func main() {
             </ol>
           </details>
           <div class="anti">反例：把內部 map 直接回傳給 handler，讓其他 goroutine 同時讀寫造成 data race。</div>
+        </article>
+
+        <article class="topic-card span-6" id="maps-iter-card">
+          <span class="badge violet">Go 1.23+</span>
+          <h3>maps iterators：Keys / Values 與 slices 收集</h3>
+          <p class="muted">Go 1.23 後 <code>maps.Keys</code> 與 <code>maps.Values</code> 回傳 iterator。這很適合輸出排序後的 key list，但專案若仍固定 Go 1.21/1.22，不能直接採用。</p>
+          <table>
+            <thead><tr><th>API</th><th>用途</th><th>工程注意</th></tr></thead>
+            <tbody>
+              <tr><td><code>maps.Keys</code></td><td>取得 key iterator</td><td>輸出順序仍不可依賴</td></tr>
+              <tr><td><code>maps.Values</code></td><td>取得 value iterator</td><td>適合搭配 <code>slices.Collect</code></td></tr>
+              <tr><td><code>slices.Sorted</code></td><td>收集並排序 iterator</td><td>適合設定 diff、穩定輸出</td></tr>
+            </tbody>
+          </table>
+          <pre><code class="language-go">package main
+
+import (
+	"fmt"
+	"maps"
+	"slices"
+)
+
+func main() {
+	labels := map[string]string{"service": "api", "env": "prod"}
+	keys := slices.Sorted(maps.Keys(labels))
+	values := slices.Collect(maps.Values(labels))
+	fmt.Println(keys, values)
+}</code></pre>
+          <details>
+            <summary>Step-by-step：版本升級時再採用</summary>
+            <ol class="steps">
+              <li>先確認 <code>go.mod</code> 與 CI 使用 Go 1.23+。</li>
+              <li>需要穩定輸出時用 <code>slices.Sorted(maps.Keys(m))</code>。</li>
+              <li>若維持 Go 1.21/1.22，仍用手寫 key slice 再排序。</li>
+            </ol>
+          </details>
+          <div class="anti">反例：教材或專案標示 Go 1.21/1.22，卻直接使用 <code>maps.Keys</code> iterator，導致 CI 編譯失敗。</div>
         </article>
 
         <article class="topic-card span-12" id="servemux-card">

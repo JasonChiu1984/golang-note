@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Go 1.21 Release Note | Golang 學習筆記</title>
+  <style>
+    :root { --ink:#172033; --muted:#667085; --line:#d8dee9; --brand:#0f766e; --soft:#ecfdf5; --dark:#064e3b; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif; background:#f7faf9; color:var(--ink); line-height:1.65; }
+    header { padding:44px 20px; color:white; background:linear-gradient(135deg,#052e2b,#0f766e); }
+    main { max-width:1100px; margin:0 auto; padding:28px 20px 56px; }
+    .eyebrow { margin:0 0 8px; letter-spacing:.08em; text-transform:uppercase; font-size:13px; opacity:.82; }
+    h1 { margin:0; font-size:clamp(32px,5vw,54px); line-height:1.05; }
+    h2 { margin:0 0 14px; font-size:24px; }
+    .lead { max-width:840px; margin:18px 0 0; color:#d1fae5; font-size:18px; }
+    .grid { display:grid; grid-template-columns:repeat(12,1fr); gap:16px; }
+    .card { grid-column:span 6; background:white; border:1px solid var(--line); border-radius:8px; padding:20px; box-shadow:0 10px 28px rgba(15,23,42,.06); }
+    .wide { grid-column:1/-1; }
+    .tag { display:inline-flex; min-height:28px; align-items:center; padding:2px 10px; border-radius:999px; background:var(--soft); color:var(--brand); font-weight:700; font-size:13px; }
+    ul { margin:10px 0 0; padding-left:22px; }
+    li + li { margin-top:6px; }
+    table { width:100%; border-collapse:collapse; background:white; }
+    th,td { border:1px solid var(--line); padding:11px 12px; text-align:left; vertical-align:top; }
+    th { background:#eef8f3; }
+    code { background:#e6f7f1; padding:2px 5px; border-radius:5px; }
+    a { color:var(--brand); }
+    .footer { color:var(--muted); font-size:14px; margin-top:20px; }
+    @media (max-width:760px){ .card{grid-column:1/-1;} }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="eyebrow">Release Note 專欄 / Go 1.21</p>
+    <h1>Go 1.21：標準庫泛型工具與 toolchain 管理成形</h1>
+    <p class="lead">Go 1.21 是現代 Go 日常開發的重要分水嶺：泛型集合工具進入標準庫，結構化日誌落地，工具鏈版本管理也更明確。</p>
+  </header>
+  <main>
+    <section class="grid">
+      <article class="card">
+        <span class="tag">語言</span>
+        <h2>內建函式補強</h2>
+        <ul>
+          <li><code>min</code>、<code>max</code>、<code>clear</code> 成為內建函式。</li>
+          <li><code>panic(nil)</code> 行為改得更可觀測，recover 直接呼叫時不再得到 nil。</li>
+        </ul>
+      </article>
+      <article class="card">
+        <span class="tag">標準庫</span>
+        <h2>泛型集合與結構化日誌</h2>
+        <ul>
+          <li><code>slices</code>、<code>maps</code>、<code>cmp</code> 讓常用集合操作回到標準庫。</li>
+          <li><code>log/slog</code> 提供官方結構化日誌 API，適合 API、worker、CLI 共用欄位語意。</li>
+        </ul>
+      </article>
+      <article class="card">
+        <span class="tag">工具鏈</span>
+        <h2>go / toolchain directive</h2>
+        <p>Go 1.21 將 <code>go</code> directive 視為更嚴格的最低版本要求，並引入 <code>toolchain</code> directive，讓專案可以明確建議使用較新的工具鏈。</p>
+      </article>
+      <article class="card">
+        <span class="tag">效能</span>
+        <h2>PGO Auto</h2>
+        <p><code>-pgo=auto</code> 讓主套件目錄中的 <code>default.pgo</code> 可自動被使用。這讓效能優化更適合納入 release pipeline。</p>
+      </article>
+      <article class="card wide">
+        <h2>升級檢查表</h2>
+        <table>
+          <thead><tr><th>檢查項</th><th>建議</th></tr></thead>
+          <tbody>
+            <tr><td>集合工具</td><td>把手寫 key collection、clone、sort、delete 邏輯逐步改用 <code>slices</code> / <code>maps</code>。</td></tr>
+            <tr><td>日誌</td><td>新服務優先設計 <code>slog</code> 欄位規格，例如 request_id、trace_id、error_kind。</td></tr>
+            <tr><td>版本策略</td><td>明確分離 <code>go</code> 最低版本與 <code>toolchain</code> 建議版本。</td></tr>
+            <tr><td>GODEBUG</td><td>升級後若遇行為差異，先查 <code>go.mod</code> 版本與 GODEBUG 相容設定。</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </section>
+    <p class="footer">資料來源：<a href="https://go.dev/doc/go1.21">Go 1.21 Release Notes</a>。本頁為教學整理，非官方逐字翻譯。</p>
+  </main>
+</body>
+</html>

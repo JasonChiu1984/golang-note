@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Go 1.20 Release Note | Golang 學習筆記</title>
+  <style>
+    :root { color-scheme: light; --ink:#172033; --muted:#667085; --line:#d8dee9; --brand:#2563eb; --soft:#eff6ff; --ok:#0f766e; --warn:#b45309; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif; color: var(--ink); background: #f7f9fc; line-height: 1.65; }
+    header { background: linear-gradient(135deg, #0f172a, #1d4ed8); color: white; padding: 44px 20px; }
+    main { max-width: 1100px; margin: 0 auto; padding: 28px 20px 56px; }
+    .eyebrow { margin: 0 0 8px; letter-spacing: .08em; text-transform: uppercase; font-size: 13px; opacity: .82; }
+    h1 { margin: 0; font-size: clamp(32px, 5vw, 54px); line-height: 1.05; }
+    h2 { margin: 0 0 14px; font-size: 24px; }
+    h3 { margin: 0 0 8px; font-size: 18px; }
+    .lead { max-width: 840px; margin: 18px 0 0; color: #dbeafe; font-size: 18px; }
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+    .card { grid-column: span 6; background: white; border: 1px solid var(--line); border-radius: 8px; padding: 20px; box-shadow: 0 10px 28px rgba(15,23,42,.06); }
+    .wide { grid-column: 1 / -1; }
+    .tag { display:inline-flex; align-items:center; min-height:28px; padding:2px 10px; border-radius:999px; background:var(--soft); color:var(--brand); font-weight:700; font-size:13px; }
+    ul { margin: 10px 0 0; padding-left: 22px; }
+    li + li { margin-top: 6px; }
+    table { width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 8px; background: white; }
+    th, td { border: 1px solid var(--line); padding: 11px 12px; text-align: left; vertical-align: top; }
+    th { background: #f1f5f9; }
+    code { background:#eef2ff; padding:2px 5px; border-radius:5px; }
+    a { color: var(--brand); }
+    .footer { color: var(--muted); font-size: 14px; margin-top: 20px; }
+    @media (max-width: 760px) { .card { grid-column: 1 / -1; } }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="eyebrow">Release Note 專欄 / Go 1.20</p>
+    <h1>Go 1.20：PGO、整合覆蓋率與工具鏈細節升級</h1>
+    <p class="lead">Go 1.20 的主軸是讓大型專案更容易量測、最佳化與自動化；語言變動不大，但工具鏈、coverage、PGO preview 與標準庫錯誤處理很值得納入工程流程。</p>
+  </header>
+  <main>
+    <section class="grid">
+      <article class="card">
+        <span class="tag">語言與型別</span>
+        <h2>開發者應知道的語法變化</h2>
+        <ul>
+          <li>支援從 slice 直接轉成 array，讓固定長度資料處理更清楚。</li>
+          <li><code>comparable</code> 約束更符合實務泛型需求，但介面值比較仍可能在 runtime panic。</li>
+          <li><code>unsafe</code> 補齊 slice / string 底層資料存取 API，適合底層函式庫作者，不適合一般業務碼濫用。</li>
+        </ul>
+      </article>
+      <article class="card">
+        <span class="tag">工具鏈</span>
+        <h2>Build / Test / Coverage</h2>
+        <ul>
+          <li><code>go test -json</code> 輸出更穩定，適合 CI 收集測試事件。</li>
+          <li><code>go</code> 子命令加入 <code>-C</code>，多 module 腳本可少寫 shell 切目錄邏輯。</li>
+          <li><code>go build -cover</code> 與 <code>GOCOVERDIR</code> 讓整合測試與長時間服務也能收 coverage。</li>
+        </ul>
+      </article>
+      <article class="card">
+        <span class="tag">效能</span>
+        <h2>PGO Preview</h2>
+        <p>Go 1.20 讓 profile-guided optimization 進入 preview。對 CPU 熱路徑明顯的服務，可用 production-like profile 驅動編譯器做更好的 inline 決策。</p>
+      </article>
+      <article class="card">
+        <span class="tag">標準庫</span>
+        <h2>錯誤與 Context</h2>
+        <ul>
+          <li><code>errors.Join</code> 適合彙整多個失敗原因，保留 <code>errors.Is</code> / <code>errors.As</code> 判斷能力。</li>
+          <li><code>context.WithCancelCause</code> 讓取消原因可以被上層觀測，適合排查 worker 或 request lifecycle。</li>
+        </ul>
+      </article>
+      <article class="card wide">
+        <h2>升級檢查表</h2>
+        <table>
+          <thead><tr><th>檢查項</th><th>建議</th></tr></thead>
+          <tbody>
+            <tr><td>CI 測試輸出</td><td>若已消費 <code>go test -json</code>，確認 parser 能處理 start event。</td></tr>
+            <tr><td>Coverage</td><td>把整合測試與 CLI smoke test 納入 <code>GOCOVERDIR</code> 報表。</td></tr>
+            <tr><td>效能</td><td>先建立穩定 benchmark / pprof，再評估 <code>-pgo</code>。</td></tr>
+            <tr><td>平台</td><td>注意 Go 1.20 是部分舊 Windows / macOS 版本的最後支援線。</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </section>
+    <p class="footer">資料來源：<a href="https://go.dev/doc/go1.20">Go 1.20 Release Notes</a>。本頁為教學整理，非官方逐字翻譯。</p>
+  </main>
+</body>
+</html>
