@@ -296,6 +296,20 @@ release:
 
 ## GitHub Actions CI/CD 範例
 
+本教材現在已把 CI/CD 範例落成真實 workflow：`.github/workflows/ci.yml`。它不是展示用 YAML，而是 release gate：root course job 驗證教材範例與 docs 入口，production job 驗證 API / migration / worker 合約與 race/coverage，vulnerability job 執行 `govulncheck`，Docker job 確認 `production-api-worker` image 可建置。
+
+本機對照指令：
+
+```bash
+ruby -e 'require "yaml"; YAML.load_file(".github/workflows/ci.yml")'
+go mod verify
+go test ./... -count=1
+cd production-api-worker
+make ci-contract
+go test -race -cover ./... -count=1
+docker build -t production-api-worker:local .
+```
+
 ```yaml
 name: CI
 
@@ -345,6 +359,7 @@ jobs:
 | ldflags 注入沒生效 | 變數 package path 錯誤 | 用完整 `module/pkg.var` |
 | Docker image 太大 | 沒用 multi-stage | 分離 build 和 run stage |
 | race detector 線上啟用 | `-race` 有 5-10x 效能損耗 | 只在測試啟用 |
+| CI YAML 只放文件沒進 repo | release gate 無法阻擋回歸 | 把 workflow 放在 `.github/workflows/ci.yml` 並用 PR/push 觸發 |
 
 ## 小練習
 

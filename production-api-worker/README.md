@@ -14,7 +14,7 @@
 - Panic recovery：handler 未預期 panic 時回穩定 `internal_error` JSON
 - Request timeout：handler deadline exceeded 時回穩定 `request_timeout` JSON
 - Observability：Prometheus client、OpenTelemetry OTLP/stdout exporter、slog、`X-Request-ID`
-- Pipeline：migration CLI、Docker Compose、GitHub Actions
+- Pipeline：migration CLI、Docker Compose、GitHub Actions workflow、Docker image build gate
 
 ## Local Memory Mode
 
@@ -57,6 +57,7 @@ go mod tidy
 go mod verify
 go list -m -u all
 govulncheck ./...
+make ci-contract
 go test ./internal/config -count=1
 go test ./internal/migration -count=1
 go test ./internal/api -run 'Test.*Contract|TestReadinessContract|TestPanicRecoveryContract|TestRequestDecodingContract' -count=1
@@ -69,6 +70,8 @@ docker compose up --build
 
 | Gate | 目的 |
 |---|---|
+| `.github/workflows/ci.yml` | 固定 root module、production contract、race/coverage、govulncheck 與 Docker build，避免 release gate 只停在文件 |
+| `make ci-contract` | 本機快速重跑與 CI 相同的核心 production 合約測試 |
 | `go mod verify` | 確認 module cache 與 `go.sum` hash 一致 |
 | `go list -m -u all` | 發現可更新依賴並建立維護紀錄 |
 | `govulncheck ./...` | 掃描 API / worker 實際可達的已知漏洞 |
@@ -84,6 +87,26 @@ docker compose up --build
 | `go test -race -cover ./...` | 驗證 service、handler、queue 與併發安全 |
 | `go test -run='^$' -bench=. -benchmem -count=10 ./...` | API / worker 效能改動需保留 benchmark 證據 |
 | `docker compose up --build` | 驗證 Postgres、migration、API、worker、metrics 整體鏈路 |
+
+## CI Workflow Contract
+
+根目錄 `.github/workflows/ci.yml` 是本專案的 release gate 實作，不只是文件範例。workflow 分成四個 job：
+
+| Job | 驗證範圍 | 阻擋風險 |
+|---|---|---|
+| `root-course` | root module、範例、crawler、`docs/index.html` 與補充教材入口 | 教材範例壞掉、Pages 入口缺檔 |
+| `production-contract` | production-api-worker config、migration、API contract、retry、worker shutdown、`-race -cover` | 對外 API / shutdown / migration / 併發合約漂移 |
+| `vulnerability-scan` | root module 與 production module 的 `govulncheck ./...` | 已知漏洞進入 release |
+| `docker-build` | `production-api-worker` Docker image build | Dockerfile、migration binary 或 runtime image 回歸 |
+
+本機修改 production 行為前，至少先跑：
+
+```bash
+cd production-api-worker
+make ci-contract
+go test -race -cover ./... -count=1
+docker build -t production-api-worker:local .
+```
 
 ## API Contract
 

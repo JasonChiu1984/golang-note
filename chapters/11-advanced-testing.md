@@ -426,6 +426,8 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | Retry cancellation | `cd production-api-worker && go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1` | 固定 deadlock retry backoff 會尊重 context cancellation / deadline |
 | Startup / DB pool config | `cd production-api-worker && go test ./internal/config -count=1` | 固定設定預設值、合法 env、DB pool 關係與錯誤設定 fail-fast 行為 |
 | Migration contract | `cd production-api-worker && go test ./internal/config ./internal/migration -count=1` | 固定 migration env、timeout、SQL 檔排序與 version 命名規則 |
+| CI workflow syntax | `ruby -e 'require "yaml"; YAML.load_file(".github/workflows/ci.yml")'` | 固定 GitHub Actions workflow 至少可被 YAML parser 解析 |
+| CI production gate | `cd production-api-worker && make ci-contract && go test -race -cover ./... -count=1` | 本機重跑與 CI 對齊的核心合約、race 與 coverage gate |
 | Module checksum | `go mod verify` | 確認 module cache 未被竄改 |
 | Dependency updates | `go list -m -u all` | 發現可更新版本，作為維護 PR 依據 |
 | Vulnerability scan | `govulncheck ./...` | 掃描實際可達的 Go 已知漏洞 |
@@ -446,4 +448,4 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 2. 寫一個自訂的字串反轉函式，並用 `Fuzz` 測試看看傳入包含 Emoji 或罕見字元的隨機字串時是否會 panic。
 3. 將你的專案測試加上 `t.Cleanup` 取代原本的 `defer`。
 4. 把你的測試指令改寫成可在 `TMPDIR/GOCACHE/GOMODCACHE` 受限環境重現的版本。
-5. 把 `go mod verify` 與 `govulncheck ./...` 加進 CI，並定義哪些結果要阻擋合併。
+5. 把 `go mod verify`、`govulncheck ./...`、contract tests、`go test -race -cover ./...` 與 Docker build 加進 CI，並定義哪些結果要阻擋合併。

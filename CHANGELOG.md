@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.24 - 2026-05-13
+
+- 新增 2026-05-13 20:02 資深工程師審查報告，確認教材已具備 production 合約與效能補充深度，但 CI / release gate 仍停在章節說明，缺少 repo 內可執行 workflow。
+- 新增 `.github/workflows/ci.yml`，把 root module、production-api-worker contract tests、race/coverage、govulncheck 與 Docker build 固定成 GitHub Actions release gate。
+- `production-api-worker/Makefile` 新增 `ci`、`ci-contract` 與 `docker-build` target，讓本機驗證可以對齊 CI job。
+- README、production-api-worker README、第 9 / 11 章、進階 Cheat Sheet 與康乃爾筆記補上 CI workflow contract 與本機對照指令。
+- `圖解筆記3-4整合/golang-complete-visual-course.html` 修正 GitHub Actions 連結到根目錄 `.github/workflows/ci.yml`，`docs/index.html` 重新由整合課程複製產生。
+
 ## v1.0.23 - 2026-05-13
 
 - 新增 2026-05-13 19:13 資深工程師審查報告，確認 Go 1.1-1.26 ReleaseNote 與補充教材入口已成形，但 C/Python/Go 效能補充頁仍需要可重跑 benchmark、正式報告模板與教材驗證 gate。
