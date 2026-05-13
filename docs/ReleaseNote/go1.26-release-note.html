@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Go 1.26 Release Note | Golang 學習筆記</title>
+  <style>
+    :root { --ink:#172033; --muted:#667085; --line:#d8dee9; --brand:#1d4ed8; --soft:#dbeafe; --dark:#1e3a8a; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif; background:#f5f8ff; color:var(--ink); line-height:1.65; }
+    header { padding:44px 20px; color:white; background:linear-gradient(135deg,#111827,#1d4ed8); }
+    main { max-width:1100px; margin:0 auto; padding:28px 20px 56px; }
+    .eyebrow { margin:0 0 8px; letter-spacing:.08em; text-transform:uppercase; font-size:13px; opacity:.84; }
+    h1 { margin:0; font-size:clamp(32px,5vw,54px); line-height:1.05; }
+    h2 { margin:0 0 14px; font-size:24px; }
+    .lead { max-width:840px; margin:18px 0 0; color:#dbeafe; font-size:18px; }
+    .grid { display:grid; grid-template-columns:repeat(12,1fr); gap:16px; }
+    .card { grid-column:span 6; background:white; border:1px solid var(--line); border-radius:8px; padding:20px; box-shadow:0 10px 28px rgba(15,23,42,.06); }
+    .wide { grid-column:1/-1; }
+    .tag { display:inline-flex; min-height:28px; align-items:center; padding:2px 10px; border-radius:999px; background:var(--soft); color:var(--dark); font-weight:700; font-size:13px; }
+    ul { margin:10px 0 0; padding-left:22px; }
+    li + li { margin-top:6px; }
+    table { width:100%; border-collapse:collapse; background:white; }
+    th,td { border:1px solid var(--line); padding:11px 12px; text-align:left; vertical-align:top; }
+    th { background:#eff6ff; }
+    code { background:#dbeafe; padding:2px 5px; border-radius:5px; }
+    a { color:var(--brand); }
+    .footer { color:var(--muted); font-size:14px; margin-top:20px; }
+    @media (max-width:760px){ .card{grid-column:1/-1;} }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="eyebrow">Release Note 專欄 / Go 1.26</p>
+    <h1>Go 1.26：語言小幅精簡，Runtime 與標準庫持續現代化</h1>
+    <p class="lead">Go 1.26 補上 new(expression)、泛型自我參照約束、Green Tea GC、測試 artifact、errors.AsType 與多個標準庫效能/安全改進，是 2026 教材基準的重要版本。</p>
+  </header>
+  <main>
+    <section class="grid">
+      <article class="card">
+        <span class="tag">語言</span>
+        <h2>new(expression) 與泛型約束</h2>
+        <ul>
+          <li><code>new</code> 可直接接 expression，例如 <code>p := new(42)</code>。</li>
+          <li>泛型型別可在 type parameter list 中參照自己，讓自我約束資料結構更自然。</li>
+        </ul>
+      </article>
+      <article class="card">
+        <span class="tag">Runtime</span>
+        <h2>Green Tea GC</h2>
+        <p>Green Tea GC 成為預設 GC，重點在改善小物件標記與掃描 locality。實務上仍要用 pprof、runtime metrics 與壓測確認工作負載是否受益。</p>
+      </article>
+      <article class="card">
+        <span class="tag">Testing</span>
+        <h2>ArtifactDir</h2>
+        <ul>
+          <li><code>T.ArtifactDir</code>、<code>B.ArtifactDir</code>、<code>F.ArtifactDir</code> 可讓測試產物有固定輸出位置。</li>
+          <li>適合 golden diff、截圖、profile、fuzz repro，由 CI 收集留證。</li>
+        </ul>
+      </article>
+      <article class="card">
+        <span class="tag">標準庫</span>
+        <h2>errors.AsType 與 I/O 改進</h2>
+        <ul>
+          <li><code>errors.AsType</code> 是泛型版 <code>errors.As</code>，更型別安全也更易讀。</li>
+          <li><code>io.ReadAll</code> 減少中間配置，對大量讀取更友善。</li>
+          <li><code>log/slog.NewMultiHandler</code> 方便把同一筆 log 送到多個 handler。</li>
+        </ul>
+      </article>
+      <article class="card wide">
+        <h2>升級檢查表</h2>
+        <table>
+          <thead><tr><th>檢查項</th><th>建議</th></tr></thead>
+          <tbody>
+            <tr><td>語法採用</td><td><code>new(expression)</code> 適合 optional field 與測試資料，但不要降低可讀性。</td></tr>
+            <tr><td>GC 驗證</td><td>升級後重跑 allocation profile、latency benchmark、memory limit 壓測。</td></tr>
+            <tr><td>測試證據</td><td>把需要留存的 diff、截圖、profile 改寫到 artifact 目錄。</td></tr>
+            <tr><td>錯誤處理</td><td>新碼可用 <code>errors.AsType</code>，舊碼不必一次性機械替換。</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </section>
+    <p class="footer">資料來源：<a href="https://go.dev/doc/go1.26">Go 1.26 Release Notes</a>。本頁為教學整理，非官方逐字翻譯。</p>
+  </main>
+</body>
+</html>

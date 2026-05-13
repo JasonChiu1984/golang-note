@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Go 1.25 Release Note | Golang 學習筆記</title>
+  <style>
+    :root { --ink:#172033; --muted:#667085; --line:#d8dee9; --brand:#0369a1; --soft:#e0f2fe; --dark:#075985; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif; background:#f4fbff; color:var(--ink); line-height:1.65; }
+    header { padding:44px 20px; color:white; background:linear-gradient(135deg,#082f49,#0369a1); }
+    main { max-width:1100px; margin:0 auto; padding:28px 20px 56px; }
+    .eyebrow { margin:0 0 8px; letter-spacing:.08em; text-transform:uppercase; font-size:13px; opacity:.84; }
+    h1 { margin:0; font-size:clamp(32px,5vw,54px); line-height:1.05; }
+    h2 { margin:0 0 14px; font-size:24px; }
+    .lead { max-width:840px; margin:18px 0 0; color:#e0f2fe; font-size:18px; }
+    .grid { display:grid; grid-template-columns:repeat(12,1fr); gap:16px; }
+    .card { grid-column:span 6; background:white; border:1px solid var(--line); border-radius:8px; padding:20px; box-shadow:0 10px 28px rgba(15,23,42,.06); }
+    .wide { grid-column:1/-1; }
+    .tag { display:inline-flex; min-height:28px; align-items:center; padding:2px 10px; border-radius:999px; background:var(--soft); color:var(--dark); font-weight:700; font-size:13px; }
+    ul { margin:10px 0 0; padding-left:22px; }
+    li + li { margin-top:6px; }
+    table { width:100%; border-collapse:collapse; background:white; }
+    th,td { border:1px solid var(--line); padding:11px 12px; text-align:left; vertical-align:top; }
+    th { background:#e0f2fe; }
+    code { background:#e0f2fe; padding:2px 5px; border-radius:5px; }
+    a { color:var(--brand); }
+    .footer { color:var(--muted); font-size:14px; margin-top:20px; }
+    @media (max-width:760px){ .card{grid-column:1/-1;} }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="eyebrow">Release Note 專欄 / Go 1.25</p>
+    <h1>Go 1.25：容器感知 GOMAXPROCS 與可控併發測試</h1>
+    <p class="lead">Go 1.25 對雲端服務很重要：runtime 開始理解 Linux container CPU limit，testing/synctest 讓併發與 timeout 測試不再依賴脆弱的 sleep。</p>
+  </header>
+  <main>
+    <section class="grid">
+      <article class="card">
+        <span class="tag">Runtime</span>
+        <h2>Container-aware GOMAXPROCS</h2>
+        <ul>
+          <li>Linux container 內預設 <code>GOMAXPROCS</code> 會考慮 cgroup CPU bandwidth limit。</li>
+          <li>runtime 也可週期性更新可用 CPU 或 cgroup limit 的變化。</li>
+          <li>手動設定 <code>GOMAXPROCS</code> 或呼叫 <code>runtime.GOMAXPROCS</code> 會停用自動行為。</li>
+        </ul>
+      </article>
+      <article class="card">
+        <span class="tag">Testing</span>
+        <h2>testing/synctest</h2>
+        <ul>
+          <li>用隔離 bubble 與虛擬時間測 goroutine、timer、timeout。</li>
+          <li>適合 context deadline、background worker、channel 協調測試。</li>
+          <li>減少 <code>time.Sleep</code> 導致的慢測試與 flaky test。</li>
+        </ul>
+      </article>
+      <article class="card">
+        <span class="tag">Vet</span>
+        <h2>waitgroup / hostport Analyzer</h2>
+        <p>新的 vet analyzer 能抓出 <code>sync.WaitGroup.Add</code> 放錯位置，以及用字串拼接 host:port 造成 IPv6 不相容的問題。</p>
+      </article>
+      <article class="card">
+        <span class="tag">專案影響</span>
+        <h2>Kubernetes 服務調校</h2>
+        <p>服務升到 Go 1.25 後，CPU limit、worker count、queue depth、latency SLO 要一起重測；不要沿用舊版固定 <code>GOMAXPROCS</code> 假設。</p>
+      </article>
+      <article class="card wide">
+        <h2>升級檢查表</h2>
+        <table>
+          <thead><tr><th>檢查項</th><th>建議</th></tr></thead>
+          <tbody>
+            <tr><td>Kubernetes CPU limit</td><td>比對升級前後 <code>runtime.GOMAXPROCS(0)</code>、p95 latency、CPU throttling。</td></tr>
+            <tr><td>併發測試</td><td>把 sleep-based timeout 測試逐步改為 <code>testing/synctest</code>。</td></tr>
+            <tr><td>WaitGroup</td><td>CI 開啟新版 vet，修正 Add / Go 啟動順序風險。</td></tr>
+            <tr><td>網路位址</td><td>用 <code>net.JoinHostPort</code> 取代手寫 <code>host:port</code>。</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </section>
+    <p class="footer">資料來源：<a href="https://go.dev/doc/go1.25">Go 1.25 Release Notes</a>。本頁為教學整理，非官方逐字翻譯。</p>
+  </main>
+</body>
+</html>

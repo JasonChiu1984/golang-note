@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Go 1.24 Release Note | Golang 學習筆記</title>
+  <style>
+    :root { --ink:#172033; --muted:#667085; --line:#d8dee9; --brand:#be123c; --soft:#ffe4e6; --dark:#881337; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif; background:#fff7f8; color:var(--ink); line-height:1.65; }
+    header { padding:44px 20px; color:white; background:linear-gradient(135deg,#4c0519,#be123c); }
+    main { max-width:1100px; margin:0 auto; padding:28px 20px 56px; }
+    .eyebrow { margin:0 0 8px; letter-spacing:.08em; text-transform:uppercase; font-size:13px; opacity:.84; }
+    h1 { margin:0; font-size:clamp(32px,5vw,54px); line-height:1.05; }
+    h2 { margin:0 0 14px; font-size:24px; }
+    .lead { max-width:840px; margin:18px 0 0; color:#ffe4e6; font-size:18px; }
+    .grid { display:grid; grid-template-columns:repeat(12,1fr); gap:16px; }
+    .card { grid-column:span 6; background:white; border:1px solid var(--line); border-radius:8px; padding:20px; box-shadow:0 10px 28px rgba(15,23,42,.06); }
+    .wide { grid-column:1/-1; }
+    .tag { display:inline-flex; min-height:28px; align-items:center; padding:2px 10px; border-radius:999px; background:var(--soft); color:var(--dark); font-weight:700; font-size:13px; }
+    ul { margin:10px 0 0; padding-left:22px; }
+    li + li { margin-top:6px; }
+    table { width:100%; border-collapse:collapse; background:white; }
+    th,td { border:1px solid var(--line); padding:11px 12px; text-align:left; vertical-align:top; }
+    th { background:#fff1f2; }
+    code { background:#ffe4e6; padding:2px 5px; border-radius:5px; }
+    a { color:var(--brand); }
+    .footer { color:var(--muted); font-size:14px; margin-top:20px; }
+    @media (max-width:760px){ .card{grid-column:1/-1;} }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="eyebrow">Release Note 專欄 / Go 1.24</p>
+    <h1>Go 1.24：工具依賴、檔案系統邊界與安全標準庫補強</h1>
+    <p class="lead">Go 1.24 對 production 專案很實用：go.mod 可追蹤 tool dependency，os.Root 提供受限檔案系統操作，benchmark、finalizer、安全密碼學也都有重要更新。</p>
+  </header>
+  <main>
+    <section class="grid">
+      <article class="card">
+        <span class="tag">語言</span>
+        <h2>Generic Type Aliases</h2>
+        <p>泛型 type alias 進入正式支援，讓大型專案在重構 package 邊界、保留 API 相容時更有彈性。</p>
+      </article>
+      <article class="card">
+        <span class="tag">工具鏈</span>
+        <h2>Tool Directive</h2>
+        <ul>
+          <li><code>go.mod</code> 可用 <code>tool</code> directive 管理可執行工具依賴。</li>
+          <li><code>go tool</code> 可執行 module 追蹤的工具，減少傳統 <code>tools.go</code> workaround。</li>
+          <li><code>go build -json</code> 與 <code>go test -json</code> build output 更利於 CI 平台解析。</li>
+        </ul>
+      </article>
+      <article class="card">
+        <span class="tag">安全</span>
+        <h2>os.Root 與 Crypto</h2>
+        <ul>
+          <li><code>os.Root</code> 讓檔案操作限制在指定目錄內，適合處理 upload、解壓縮、template 檔案。</li>
+          <li>新增 <code>crypto/mlkem</code>、<code>crypto/hkdf</code>、<code>crypto/pbkdf2</code>、<code>crypto/sha3</code> 等套件。</li>
+        </ul>
+      </article>
+      <article class="card">
+        <span class="tag">Runtime</span>
+        <h2>Swiss Table Map 與 Cleanup</h2>
+        <p>runtime map 實作採用 Swiss Table 方向，並新增 <code>runtime.AddCleanup</code> 與 <code>weak</code> package，讓資源釋放與弱參照場景更安全。</p>
+      </article>
+      <article class="card wide">
+        <h2>升級檢查表</h2>
+        <table>
+          <thead><tr><th>檢查項</th><th>建議</th></tr></thead>
+          <tbody>
+            <tr><td>工具依賴</td><td>把 lint、generator、mock 工具逐步遷移到 <code>tool</code> directive。</td></tr>
+            <tr><td>檔案安全</td><td>上傳、解壓縮、使用者指定路徑優先評估 <code>os.Root</code>。</td></tr>
+            <tr><td>Benchmark</td><td>新 benchmark 可使用 <code>testing.B.Loop</code>，減少手寫 <code>b.N</code> 陷阱。</td></tr>
+            <tr><td>加密</td><td>優先使用標準庫 crypto 新套件，減少額外 dependency 面積。</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </section>
+    <p class="footer">資料來源：<a href="https://go.dev/doc/go1.24">Go 1.24 Release Notes</a>。本頁為教學整理，非官方逐字翻譯。</p>
+  </main>
+</body>
+</html>

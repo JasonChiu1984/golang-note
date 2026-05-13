@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Go 1.23 Release Note | Golang 學習筆記</title>
+  <style>
+    :root { --ink:#172033; --muted:#667085; --line:#d8dee9; --brand:#ca8a04; --soft:#fef9c3; --dark:#713f12; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif; background:#fffdf3; color:var(--ink); line-height:1.65; }
+    header { padding:44px 20px; color:white; background:linear-gradient(135deg,#422006,#ca8a04); }
+    main { max-width:1100px; margin:0 auto; padding:28px 20px 56px; }
+    .eyebrow { margin:0 0 8px; letter-spacing:.08em; text-transform:uppercase; font-size:13px; opacity:.84; }
+    h1 { margin:0; font-size:clamp(32px,5vw,54px); line-height:1.05; }
+    h2 { margin:0 0 14px; font-size:24px; }
+    .lead { max-width:840px; margin:18px 0 0; color:#fef3c7; font-size:18px; }
+    .grid { display:grid; grid-template-columns:repeat(12,1fr); gap:16px; }
+    .card { grid-column:span 6; background:white; border:1px solid var(--line); border-radius:8px; padding:20px; box-shadow:0 10px 28px rgba(15,23,42,.06); }
+    .wide { grid-column:1/-1; }
+    .tag { display:inline-flex; min-height:28px; align-items:center; padding:2px 10px; border-radius:999px; background:var(--soft); color:var(--dark); font-weight:700; font-size:13px; }
+    ul { margin:10px 0 0; padding-left:22px; }
+    li + li { margin-top:6px; }
+    table { width:100%; border-collapse:collapse; background:white; }
+    th,td { border:1px solid var(--line); padding:11px 12px; text-align:left; vertical-align:top; }
+    th { background:#fffbeb; }
+    code { background:#fef9c3; padding:2px 5px; border-radius:5px; }
+    a { color:#a16207; }
+    .footer { color:var(--muted); font-size:14px; margin-top:20px; }
+    @media (max-width:760px){ .card{grid-column:1/-1;} }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="eyebrow">Release Note 專欄 / Go 1.23</p>
+    <h1>Go 1.23：Iterator 進入語言，版本相容檢查更精準</h1>
+    <p class="lead">Go 1.23 的亮點是 range-over-function，讓 iterator 風格 API 能用 Go 原生 for-range 消費；工具鏈也補上 stdversion vet 與 module tidy diff，對大型 repo 維護很實用。</p>
+  </header>
+  <main>
+    <section class="grid">
+      <article class="card">
+        <span class="tag">語言</span>
+        <h2>Range Over Function</h2>
+        <ul>
+          <li><code>for range</code> 可消費特定 iterator function 型別。</li>
+          <li>適合串流資料、容器走訪、lazy traversal，不必暴露底層 slice。</li>
+          <li>設計 API 時要讓停止條件與錯誤路徑清楚，避免 callback 失控。</li>
+        </ul>
+      </article>
+      <article class="card">
+        <span class="tag">工具</span>
+        <h2>維護大型 Repo 的工具</h2>
+        <ul>
+          <li><code>go mod tidy -diff</code> 可在 CI 檢查 go.mod / go.sum 是否需要整理。</li>
+          <li><code>go env -changed</code> 可快速看出環境與預設值差異。</li>
+          <li><code>go vet stdversion</code> 可抓出使用高於 module go directive 的 API。</li>
+        </ul>
+      </article>
+      <article class="card">
+        <span class="tag">觀測</span>
+        <h2>Toolchain Telemetry</h2>
+        <p>Go 1.23 加入工具鏈 telemetry 機制，預設保留本機統計；是否上傳由使用者選擇。企業環境應明確訂定工具鏈 telemetry 政策。</p>
+      </article>
+      <article class="card">
+        <span class="tag">標準庫</span>
+        <h2>Iterator 生態</h2>
+        <p><code>iter</code> 套件與 slices / maps 的 iterator 相關 API 讓集合處理更容易組合。專案可逐步用 iterator 改善大型資料走訪記憶體壓力。</p>
+      </article>
+      <article class="card wide">
+        <h2>升級檢查表</h2>
+        <table>
+          <thead><tr><th>檢查項</th><th>建議</th></tr></thead>
+          <tbody>
+            <tr><td>Iterator API</td><td>優先用在資料量大、需要 lazy traversal 的邊界，不要為了新語法改寫所有迴圈。</td></tr>
+            <tr><td>go directive</td><td>用 <code>stdversion</code> 檢查 package 是否誤用太新的標準庫 API。</td></tr>
+            <tr><td>依賴整理</td><td>CI 加入 <code>go mod tidy -diff</code>，避免人工整理遺漏。</td></tr>
+            <tr><td>Telemetry</td><td>在公司環境明確設定 <code>go telemetry local/off/on</code> 政策。</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </section>
+    <p class="footer">資料來源：<a href="https://go.dev/doc/go1.23">Go 1.23 Release Notes</a>。本頁為教學整理，非官方逐字翻譯。</p>
+  </main>
+</body>
+</html>
