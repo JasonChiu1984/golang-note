@@ -14,7 +14,7 @@
 - Panic recovery：handler 未預期 panic 時回穩定 `internal_error` JSON
 - Request timeout：handler deadline exceeded 時回穩定 `request_timeout` JSON
 - Observability：Prometheus client、OpenTelemetry OTLP/stdout exporter、slog、`X-Request-ID`
-- Pipeline：migration CLI、Docker Compose、GitHub Actions workflow、Docker image build gate
+- Pipeline：migration CLI、Docker Compose、GitHub Actions workflow、Docker image build gate、Compose smoke gate
 
 ## Local Memory Mode
 
@@ -39,6 +39,14 @@ curl -X POST http://localhost:8080/jobs \
 
 curl http://localhost:8080/metrics
 curl -i http://localhost:8080/readyz
+```
+
+可重跑 smoke gate：
+
+```bash
+docker compose up -d --build
+make compose-smoke
+docker compose down -v
 ```
 
 ## Migration
@@ -66,6 +74,7 @@ go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownD
 go test -race -cover ./...
 go test -run='^$' -bench=. -benchmem -count=10 ./... > bench.txt
 docker compose up --build
+make compose-smoke
 ```
 
 | Gate | 目的 |
@@ -86,7 +95,8 @@ docker compose up --build
 | `go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1` | 固定 queue close/enqueue 同步邊界，避免 shutdown race panic |
 | `go test -race -cover ./...` | 驗證 service、handler、queue 與併發安全 |
 | `go test -run='^$' -bench=. -benchmem -count=10 ./...` | API / worker 效能改動需保留 benchmark 證據 |
-| `docker compose up --build` | 驗證 Postgres、migration、API、worker、metrics 整體鏈路 |
+| `docker compose up --build` | 啟動 Postgres、migration、API、worker 與 metrics 整體鏈路 |
+| `make compose-smoke` | 用主機端 curl 驗證 `/livez`、`/readyz`、job create/read 與 `/metrics` |
 
 ## CI Workflow Contract
 
@@ -97,7 +107,7 @@ docker compose up --build
 | `root-course` | root module、範例、crawler、`docs/index.html` 與補充教材入口 | 教材範例壞掉、Pages 入口缺檔 |
 | `production-contract` | production-api-worker config、migration、API contract、retry、worker shutdown、`-race -cover` | 對外 API / shutdown / migration / 併發合約漂移 |
 | `vulnerability-scan` | root module 與 production module 的 `govulncheck ./...` | 已知漏洞進入 release |
-| `docker-build` | `production-api-worker` Docker image build | Dockerfile、migration binary 或 runtime image 回歸 |
+| `docker-build` | `production-api-worker` Docker image build + Compose smoke | Dockerfile、migration binary、runtime image 或端到端啟動流程回歸 |
 
 本機修改 production 行為前，至少先跑：
 
@@ -106,7 +116,12 @@ cd production-api-worker
 make ci-contract
 go test -race -cover ./... -count=1
 docker build -t production-api-worker:local .
+docker compose up -d --build
+make compose-smoke
+docker compose down -v
 ```
+
+`scripts/compose-smoke.sh` 故意在 host 端執行，而不是把 curl 塞進 distroless runtime image。這保留 runtime image 的最小攻擊面，同時仍能驗證 Compose 啟動後的 `/livez`、`/readyz`、`POST /jobs`、`GET /jobs/{id}` 與 Prometheus metrics。
 
 ## API Contract
 

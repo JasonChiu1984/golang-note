@@ -667,13 +667,16 @@
             <tr><td><a href="../production-api-worker/internal/repository/postgres.go"><code>internal/repository/postgres.go</code></a></td><td>Postgres</td><td>pgx/stdlib、database/sql、PingContext、pool、deadlock 分類。</td></tr>
             <tr><td><a href="../production-api-worker/internal/observability/observability.go"><code>internal/observability/observability.go</code></a></td><td>Observability</td><td>Prometheus registry、OTel stdout/OTLP exporter、slog。</td></tr>
             <tr><td><a href="../production-api-worker/docker-compose.yml"><code>docker-compose.yml</code></a></td><td>Runtime</td><td>Postgres、OTel collector、migration、API 串接。</td></tr>
-            <tr><td><a href="https://github.com/JasonChiu1984/golang-note/blob/main/.github/workflows/ci.yml"><code>GitHub Actions</code></a></td><td>CI</td><td>root test、production contract、race/coverage、govulncheck、Docker build。</td></tr>
+            <tr><td><a href="../production-api-worker/scripts/compose-smoke.sh"><code>compose-smoke.sh</code></a></td><td>Smoke</td><td>驗證 livez、readyz、job create/read 與 metrics。</td></tr>
+            <tr><td><a href="https://github.com/JasonChiu1984/golang-note/blob/main/.github/workflows/ci.yml"><code>GitHub Actions</code></a></td><td>CI</td><td>root test、production contract、race/coverage、govulncheck、Docker build、Compose smoke。</td></tr>
           </tbody>
         </table>
         <pre><code class="language-bash">cd production-api-worker
 go test ./...
 go test -race ./...
-docker compose up --build</code></pre>
+docker compose up -d --build
+make compose-smoke
+docker compose down -v</code></pre>
       </div>
       <div class="jump-grid">
         <button class="jump-card" style="border-top-color:var(--blue)" data-src="../圖解筆記3/golang-visual-course.html#syntax-index">

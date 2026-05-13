@@ -233,7 +233,7 @@ flowchart TD
 | GitHub Actions | `actions/setup-go@v5` + `go-version: '1.26.x'` | CI 與開發機版本不一致 |
 | Makefile | release matrix 與 `CGO_ENABLED` | 仍輸出已移除或未驗證的平台 |
 | dependency gate | `go mod verify` + `govulncheck ./...` | 只跑測試，忽略 module hash 或已知漏洞 |
-| smoke test | `docker run --rm image --version` | 只 build image，沒有確認容器內 binary 可啟動 |
+| smoke test | `docker compose up -d --build && make compose-smoke` | 只 build image，沒有確認容器內 API、migration、DB 與 metrics 可用 |
 
 ### Release 前依賴安全 Gate
 
@@ -296,7 +296,7 @@ release:
 
 ## GitHub Actions CI/CD 範例
 
-本教材現在已把 CI/CD 範例落成真實 workflow：`.github/workflows/ci.yml`。它不是展示用 YAML，而是 release gate：root course job 驗證教材範例與 docs 入口，production job 驗證 API / migration / worker 合約與 race/coverage，vulnerability job 執行 `govulncheck`，Docker job 確認 `production-api-worker` image 可建置。
+本教材現在已把 CI/CD 範例落成真實 workflow：`.github/workflows/ci.yml`。它不是展示用 YAML，而是 release gate：root course job 驗證教材範例與 docs 入口，production job 驗證 API / migration / worker 合約與 race/coverage，vulnerability job 執行 `govulncheck`，Docker job 確認 `production-api-worker` image 可建置，並用 Compose smoke 驗證服務真的 ready、可建 job、可讀 job 與可輸出 metrics。
 
 本機對照指令：
 
@@ -308,6 +308,9 @@ cd production-api-worker
 make ci-contract
 go test -race -cover ./... -count=1
 docker build -t production-api-worker:local .
+docker compose up -d --build
+make compose-smoke
+docker compose down -v
 ```
 
 ```yaml
@@ -360,6 +363,7 @@ jobs:
 | Docker image 太大 | 沒用 multi-stage | 分離 build 和 run stage |
 | race detector 線上啟用 | `-race` 有 5-10x 效能損耗 | 只在測試啟用 |
 | CI YAML 只放文件沒進 repo | release gate 無法阻擋回歸 | 把 workflow 放在 `.github/workflows/ci.yml` 並用 PR/push 觸發 |
+| Docker build 成功但服務起不來 | build gate 沒驗證 migration、readiness 或 API 路徑 | 在 CI 加 `docker compose up -d --build` 與 `make compose-smoke` |
 
 ## 小練習
 

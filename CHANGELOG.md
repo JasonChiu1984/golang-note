@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.25 - 2026-05-13
+
+- 新增 2026-05-13 21:03 資深工程師審查報告，確認 v1.0.24 已把 CI / release gate 落成 workflow，但 Docker job 仍只驗證 image build，缺少 Compose 端到端 smoke gate。
+- 新增 `production-api-worker/scripts/compose-smoke.sh`，用 host 端 `curl` 驗證 `/readyz`、`/livez`、`POST /jobs`、`GET /jobs/{id}` 與 `/metrics`。
+- `production-api-worker/Makefile` 新增 `compose-smoke` target，讓本機與 CI 可共用同一個 smoke 驗證入口。
+- `.github/workflows/ci.yml` 的 Docker job 改為 build 後啟動 Compose stack，執行 smoke script，失敗時輸出 compose logs，最後清理 volume。
+- README、production-api-worker README、第 9 / 11 章、進階 Cheat Sheet、康乃爾筆記與整合視覺課程補上 Compose smoke gate。
+- `docs/index.html` 已重新由 `圖解筆記3-4整合/golang-complete-visual-course.html` 複製產生，保留 GitHub Pages 入口同步。
+
 ## v1.0.24 - 2026-05-13
 
 - 新增 2026-05-13 20:02 資深工程師審查報告，確認教材已具備 production 合約與效能補充深度，但 CI / release gate 仍停在章節說明，缺少 repo 內可執行 workflow。

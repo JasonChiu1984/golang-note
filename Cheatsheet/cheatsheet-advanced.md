@@ -771,7 +771,8 @@ synctest.Test(t, func(t *testing.T) {
 |---|---|---|
 | Go benchmark | `go test -run='^$' -bench=. -benchmem -count=10 ./...` | 用 `benchstat` 比較，不用單次數字下結論 |
 | 跨語言比較 | `cd examples/performance-comparison && clang -O2 c/bench.c -o /tmp/bench-c && /tmp/bench-c && go test -bench=. -benchmem -count=10 ./go && python3 python/bench.py` | 記錄 CPU、OS、compiler flags、Go/Python 版本與 raw output |
-| CI workflow | `ruby -e 'require "yaml"; YAML.load_file(".github/workflows/ci.yml")'` + GitHub Actions run | workflow 必須真的存在於 repo，並固定 root test、production contract、race/coverage、govulncheck、Docker build |
+| CI workflow | `ruby -e 'require "yaml"; YAML.load_file(".github/workflows/ci.yml")'` + GitHub Actions run | workflow 必須真的存在於 repo，並固定 root test、production contract、race/coverage、govulncheck、Docker build 與 Compose smoke |
+| Compose smoke | `cd production-api-worker && docker compose up -d --build && make compose-smoke && docker compose down -v` | 驗證 livez、readyz、job create/read 與 metrics，不只確認 image build 成功 |
 | CPU 熱點 | `go tool pprof http://localhost:6060/debug/pprof/profile?seconds=30` | 適合 CPU-bound，不適合直接判斷 I/O wait |
 | Runtime metrics | `/gc/*`、`/sched/*`、RSS、scrape payload | 升級 Go runtime / GC 前後要用同一組 dashboard threshold |
 | 工業通訊效能 | polling interval、timeout、retry、設備回應時間、queue backlog | PLC / DDC / SCADA 場景常被 I/O wait 主導，不能只看語言層 CPU |

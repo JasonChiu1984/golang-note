@@ -1,4 +1,4 @@
-.PHONY: test test-race ci ci-contract docker-build run migrate docker-up docker-down
+.PHONY: test test-race ci ci-contract docker-build compose-smoke run migrate docker-up docker-down
 
 test:
 	go test ./...
@@ -19,6 +19,9 @@ ci-contract:
 
 docker-build:
 	docker build -t production-api-worker:local .
+
+compose-smoke:
+	./scripts/compose-smoke.sh
 
 run:
 	go run ./cmd/api-worker
