@@ -60,7 +60,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           api.NewHandler(service, obs, api.WithReadiness(readiness.Ready)).Routes(),
+		Handler:           api.NewHandler(service, obs, api.WithReadiness(readiness.Ready), api.WithAuthToken(cfg.APIKey)).Routes(),
 		ReadHeaderTimeout: 3 * time.Second,
 	}
 

@@ -256,7 +256,7 @@ production-api-worker/
 
 | 對比面向 | `project-concurrent-crawler` | `production-api-worker` |
 |---|---|---|
-| 學習重點 | worker pool、parser、retry | API、transaction、context-aware retry、request timeout contract、queue shutdown safety、observability、部署 |
+| 學習重點 | worker pool、parser、retry | API、API key security contract、transaction、context-aware retry、request timeout contract、queue shutdown safety、observability、部署 |
 | 外部依賴 | 幾乎沒有 | Postgres、OTLP、Docker Compose |
 | 驗證方式 | `go test` 為主 | `go test` + `docker compose up --build` |
 | 專案階段 | 教學型大型專案 | 接近 production 的服務骨架 |
@@ -272,6 +272,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Response schema | HTTP status、JSON 欄位、狀態 enum | client decode 失敗或狀態判斷錯誤 |
 | Error envelope | `error.code`、`error.message` | client 無法用穩定 code 做分支 |
 | Observability | route label、trace span name、metrics label、`X-Request-ID` | dashboard、alert 與 incident log 無法對照 |
+| API security | `API_KEY`、Bearer token、公開 health endpoint、安全標頭 | 業務 endpoint 或 metrics 無條件公開，或 health check 被認證擋住 |
 | Panic recovery | `500 internal_error` JSON、request id header | panic 造成連線中斷、非 JSON 錯誤或洩漏內部細節 |
 | Request timeout | `504 request_timeout` JSON、request id header | handler deadline exceeded 被誤分類成 `500 internal_error`，client 無法區分 timeout 與 bug |
 | Retry cancellation | deadlock backoff、request context、shutdown deadline | request 已取消後仍繼續重試 DB 交易或排入 queue |
@@ -298,6 +299,19 @@ Production service 的 observability 不是「有 metrics endpoint」就結束�
 
 這類欄位也屬於外部操作合約。改掉 route label、span name 或 request id header，可能不會讓單元測試失敗，卻會讓 dashboard、alert rule、客服查詢與 incident review 失去關聯。
 
+### API Security Contract
+
+教學專案常為了好跑而省略認證，但 production 教材至少要示範「可公開」與「需保護」的 HTTP 邊界。`production-api-worker` 使用可選 `API_KEY` 做最小 security contract：local mode 可留空，部署時設定後，業務 endpoint 與 metrics endpoint 需要 Bearer token。
+
+| Endpoint | 安全邊界 | 原因 |
+|---|---|---|
+| `POST /jobs`、`GET /jobs/{id}` | `Authorization: Bearer <API_KEY>` | 避免未授權建立或查詢工作 |
+| `GET /metrics` | `Authorization: Bearer <API_KEY>` | metrics 可能洩漏 route、status、容量與錯誤訊號 |
+| `GET /livez`、`GET /readyz` | 公開 | load balancer / orchestrator 需要不用業務 token 即可探測 |
+| 所有 response | `nosniff`、`DENY`、`no-referrer` | 固定基本安全標頭，避免不同 handler 漏設 |
+
+這不是完整 IAM 設計；真正的 production 仍應評估 OAuth2、mTLS、API gateway、WAF、rate limit 與 secret rotation。教材這裡先固定最小可測邊界，避免讀者把「能跑」誤解成「可上線」。
+
 ### Contract Test Gate
 
 合約文件需要測試保護。`production-api-worker/internal/api` 的 contract test 應至少固定：
@@ -314,6 +328,8 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 | 找不到資源 | `404 Not Found`、`error.code=not_found` |
 | Queue full | `503 Service Unavailable`、`error.code=queue_full` |
 | Request ID | client header 原樣回傳；未提供時產生 `req-*` |
+| API security | `API_KEY` 啟用後 `/jobs`、`/metrics` 未帶 token 回 `401 unauthorized`，health endpoint 仍公開 |
+| Security headers | 所有 response 保留 `X-Content-Type-Options`、`X-Frame-Options`、`Referrer-Policy` |
 | Panic recovery | handler panic 仍回 `500`、`error.code=internal_error` 與原 `X-Request-ID` |
 | Request timeout | handler deadline exceeded 仍回 `504`、`error.code=request_timeout` 與原 `X-Request-ID` |
 
@@ -435,10 +451,11 @@ Deadlock retry 是 production service 常見的保護機制，但 backoff 不能
 2. 再看 `production-api-worker/internal/app/service.go`，理解 service transaction boundary。
 3. 對照 `internal/app/service_test.go`，理解 deadlock retry 如何被 context cancellation 中斷。
 4. 接著讀 `internal/api/handler.go` 與 `internal/observability/observability.go`，把 HTTP、metrics、tracing 與 panic recovery 串起來。
-5. 再看 `internal/lifecycle/readiness.go` 與 `cmd/api-worker/main.go`，理解 ready / draining / queue drain。
-6. 對照 `docs/api-contract.md` 與 `internal/api/handler_test.go`，理解合約文件如何被測試守住。
-7. 再看 `internal/migration/migration.go` 與 `cmd/migrate/main.go`，理解 schema migration 如何被 version table 與 timeout 保護。
-8. 最後跑 `docker compose up --build`，驗證 migration、API、worker、metrics 整體鏈路。
+5. 對照 `TestAPIKeyAuthContract` 與 `TestSecurityHeadersContract`，理解 security middleware 如何保護業務 endpoint 並保留 health probe。
+6. 再看 `internal/lifecycle/readiness.go` 與 `cmd/api-worker/main.go`，理解 ready / draining / queue drain。
+7. 對照 `docs/api-contract.md` 與 `internal/api/handler_test.go`，理解合約文件如何被測試守住。
+8. 再看 `internal/migration/migration.go` 與 `cmd/migrate/main.go`，理解 schema migration 如何被 version table 與 timeout 保護。
+9. 最後跑 `docker compose up --build`，驗證 migration、API、worker、metrics 整體鏈路。
 
 ## 讀程式順序
 

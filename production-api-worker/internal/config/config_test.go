@@ -30,7 +30,7 @@ func TestLoadFromLookupDefaults(t *testing.T) {
 	if cfg.DatabaseConnMaxLifetime != DefaultDatabaseConnMaxLifetime {
 		t.Fatalf("DatabaseConnMaxLifetime = %s, want %s", cfg.DatabaseConnMaxLifetime, DefaultDatabaseConnMaxLifetime)
 	}
-	if cfg.DatabaseURL != "" || cfg.OTLPEndpoint != "" {
+	if cfg.APIKey != "" || cfg.DatabaseURL != "" || cfg.OTLPEndpoint != "" {
 		t.Fatalf("unexpected optional config: %+v", cfg)
 	}
 }
@@ -40,6 +40,7 @@ func TestLoadFromLookupUsesEnvironment(t *testing.T) {
 		"PORT":                        "9090",
 		"QUEUE_SIZE":                  "128",
 		"WORKERS":                     "8",
+		"API_KEY":                     " secret-token ",
 		"DATABASE_URL":                " postgres://app:app@localhost:5432/app?sslmode=disable ",
 		"DATABASE_MAX_OPEN_CONNS":     "40",
 		"DATABASE_MAX_IDLE_CONNS":     "12",
@@ -52,6 +53,9 @@ func TestLoadFromLookupUsesEnvironment(t *testing.T) {
 
 	if cfg.Port != "9090" || cfg.QueueSize != 128 || cfg.Workers != 8 {
 		t.Fatalf("unexpected required config: %+v", cfg)
+	}
+	if cfg.APIKey != "secret-token" {
+		t.Fatalf("APIKey = %q", cfg.APIKey)
 	}
 	if cfg.DatabaseURL != "postgres://app:app@localhost:5432/app?sslmode=disable" {
 		t.Fatalf("DatabaseURL = %q", cfg.DatabaseURL)

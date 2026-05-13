@@ -1,6 +1,6 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.18 ｜ 基準日期：2026-05-13 ｜ 適用範圍：local memory mode、Postgres + OTLP mode
+> 版本：v1.0.28 ｜ 基準日期：2026-05-13 ｜ 適用範圍：local memory mode、Postgres + OTLP mode
 
 這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery、retry 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 cancellation 行為需要透過 contract test 保護。
 
@@ -17,6 +17,8 @@
 | Panic recovery | 未預期 panic 必須回 `500` 與穩定 `internal_error` JSON，不暴露 panic 細節 |
 | Request timeout | handler deadline exceeded 必須回 `504 request_timeout`，不得漂移成 `500 internal_error` |
 | Startup configuration | `PORT`、`QUEUE_SIZE`、`WORKERS` 與 DB pool 設定必須先驗證；錯誤設定 fail fast，不可 silent fallback |
+| API security | `API_KEY` 有值時，`/jobs` 與 `/metrics` 必須要求 Bearer token；health endpoint 仍需公開供部署系統探測 |
+| Security headers | 所有 response 應回 `X-Content-Type-Options`、`X-Frame-Options` 與 `Referrer-Policy` |
 | Worker shutdown | queue close 與 enqueue send 必須同步，shutdown 後新 enqueue 回穩定錯誤 |
 | Retry cancellation | deadlock retry 的 backoff 必須尊重 `context` cancellation / deadline |
 | Breaking change | 需新增版本路由或遷移期，不能直接覆蓋既有合約 |
@@ -53,7 +55,32 @@ X-Request-ID: request-from-client
 | `not_found` | 404 | 查詢不存在的 job |
 | `queue_full` | 503 | bounded queue 無法接受新工作 |
 | `request_timeout` | 504 | request context deadline exceeded |
+| `unauthorized` | 401 | `API_KEY` 已設定但缺少或送錯 `Authorization: Bearer <token>` |
 | `internal_error` | 500 | 未分類的伺服器錯誤或 handler panic recovery |
+
+## API Security
+
+`API_KEY` 是最小安全合約，用於示範 production API 不應讓業務 endpoint 與 metrics endpoint 無條件公開。空值代表 local teaching mode；有值時受保護 endpoint 必須帶 Bearer token。
+
+```http
+Authorization: Bearer dev-secret
+```
+
+| Endpoint | 認證策略 |
+|---|---|
+| `POST /jobs` | `API_KEY` 有值時必須帶 Bearer token |
+| `GET /jobs/{id}` | `API_KEY` 有值時必須帶 Bearer token |
+| `GET /metrics` | `API_KEY` 有值時必須帶 Bearer token |
+| `GET /livez` | 永遠公開 |
+| `GET /readyz` | 永遠公開 |
+
+所有 endpoint response 需保留：
+
+```http
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Referrer-Policy: no-referrer
+```
 
 ## POST /jobs
 
@@ -153,6 +180,7 @@ Content-Type: application/json
 | `DATABASE_MAX_IDLE_CONNS` | `10` | 正整數，且不可大於 `DATABASE_MAX_OPEN_CONNS` |
 | `DATABASE_CONN_MAX_LIFETIME` | `30m0s` | 正數 duration，例如 `30m` 或 `1h` |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | 空字串 | 空字串時使用 stdout trace exporter |
+| `API_KEY` | 空字串 | 空值停用 API key；有值時保護 `/jobs` 與 `/metrics` |
 
 錯誤設定必須讓 process fail fast，例如 `PORT=http`、`QUEUE_SIZE=0`、`WORKERS=-1`、`DATABASE_MAX_IDLE_CONNS > DATABASE_MAX_OPEN_CONNS` 或 `DATABASE_CONN_MAX_LIFETIME=soon` 不應被靜默改成預設值。
 
@@ -217,6 +245,7 @@ X-Request-ID: request-from-client
 ```bash
 cd production-api-worker
 go test ./internal/api -run 'Test.*Contract' -count=1
+go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1
 go test ./internal/config -count=1
 go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
 go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1

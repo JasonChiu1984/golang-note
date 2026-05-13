@@ -222,6 +222,97 @@ func TestRequestTimeoutContract(t *testing.T) {
 	}
 }
 
+func TestSecurityHeadersContract(t *testing.T) {
+	handler := newContractHandler(t, nil)
+	req := httptest.NewRequest(http.MethodGet, "/livez", nil)
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
+	}
+	if got := rec.Header().Get("X-Content-Type-Options"); got != "nosniff" {
+		t.Fatalf("X-Content-Type-Options = %q, want nosniff", got)
+	}
+	if got := rec.Header().Get("X-Frame-Options"); got != "DENY" {
+		t.Fatalf("X-Frame-Options = %q, want DENY", got)
+	}
+	if got := rec.Header().Get("Referrer-Policy"); got != "no-referrer" {
+		t.Fatalf("Referrer-Policy = %q, want no-referrer", got)
+	}
+}
+
+func TestAPIKeyAuthContract(t *testing.T) {
+	handler := newContractHandlerWithOptions(t, nil, WithAuthToken("secret-token"))
+
+	tests := []struct {
+		name       string
+		method     string
+		path       string
+		body       string
+		auth       string
+		wantStatus int
+		wantCode   string
+	}{
+		{
+			name:       "protected post without token",
+			method:     http.MethodPost,
+			path:       "/jobs",
+			body:       `{"name":"resize","payload":"image"}`,
+			wantStatus: http.StatusUnauthorized,
+			wantCode:   "unauthorized",
+		},
+		{
+			name:       "protected metrics without token",
+			method:     http.MethodGet,
+			path:       "/metrics",
+			wantStatus: http.StatusUnauthorized,
+			wantCode:   "unauthorized",
+		},
+		{
+			name:       "health stays public",
+			method:     http.MethodGet,
+			path:       "/readyz",
+			wantStatus: http.StatusOK,
+		},
+		{
+			name:       "protected post with token",
+			method:     http.MethodPost,
+			path:       "/jobs",
+			body:       `{"name":"resize","payload":"image"}`,
+			auth:       "Bearer secret-token",
+			wantStatus: http.StatusAccepted,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(tt.method, tt.path, strings.NewReader(tt.body))
+			if tt.auth != "" {
+				req.Header.Set("Authorization", tt.auth)
+			}
+			rec := httptest.NewRecorder()
+
+			handler.ServeHTTP(rec, req)
+
+			if rec.Code != tt.wantStatus {
+				t.Fatalf("status = %d, want %d: %s", rec.Code, tt.wantStatus, rec.Body.String())
+			}
+			if tt.wantCode == "" {
+				return
+			}
+			var response errorResponse
+			if err := json.NewDecoder(rec.Body).Decode(&response); err != nil {
+				t.Fatal(err)
+			}
+			if response.Error.Code != tt.wantCode {
+				t.Fatalf("error code = %q, want %q", response.Error.Code, tt.wantCode)
+			}
+		})
+	}
+}
+
 func TestErrorContract(t *testing.T) {
 	tests := []struct {
 		name       string

@@ -17,9 +17,10 @@ import (
 )
 
 type Handler struct {
-	service *app.Service
-	obs     *observability.Observability
-	ready   func() bool
+	service   *app.Service
+	obs       *observability.Observability
+	ready     func() bool
+	authToken string
 }
 
 type Option func(*Handler)
@@ -29,6 +30,12 @@ func WithReadiness(ready func() bool) Option {
 		if ready != nil {
 			h.ready = ready
 		}
+	}
+}
+
+func WithAuthToken(token string) Option {
+	return func(h *Handler) {
+		h.authToken = strings.TrimSpace(token)
 	}
 }
 
@@ -51,7 +58,7 @@ func (h *Handler) Routes() http.Handler {
 	mux.Handle("GET /metrics", h.obs.MetricsHandler())
 	mux.HandleFunc("GET /livez", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
 	mux.HandleFunc("GET /readyz", h.readyz)
-	return h.requestContextMiddleware(h.metricsMiddleware(h.recoverMiddleware(mux)))
+	return h.securityHeadersMiddleware(h.requestContextMiddleware(h.metricsMiddleware(h.recoverMiddleware(h.authMiddleware(mux)))))
 }
 
 func (h *Handler) readyz(w http.ResponseWriter, r *http.Request) {
@@ -133,6 +140,41 @@ func (h *Handler) requestContextMiddleware(next http.Handler) http.Handler {
 		ctx := withLogger(withRequestID(r.Context(), id), logger)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func (h *Handler) securityHeadersMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("Referrer-Policy", "no-referrer")
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (h *Handler) authMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if h.authToken == "" || !requiresAuth(r) {
+			next.ServeHTTP(w, r)
+			return
+		}
+		if r.Header.Get("Authorization") != "Bearer "+h.authToken {
+			writeJSON(w, http.StatusUnauthorized, errorResponse{
+				Error: errorBody{Code: "unauthorized", Message: "unauthorized"},
+			})
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func requiresAuth(r *http.Request) bool {
+	if r.URL.Path == "/metrics" {
+		return true
+	}
+	if r.URL.Path == "/jobs" || strings.HasPrefix(r.URL.Path, "/jobs/") {
+		return true
+	}
+	return false
 }
 
 func (h *Handler) metricsMiddleware(next http.Handler) http.Handler {

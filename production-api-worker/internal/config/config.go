@@ -23,6 +23,7 @@ type Config struct {
 	Port                    string
 	QueueSize               int
 	Workers                 int
+	APIKey                  string
 	DatabaseURL             string
 	DatabaseMaxOpenConns    int
 	DatabaseMaxIdleConns    int
@@ -81,6 +82,7 @@ func LoadFromLookup(lookup func(string) (string, bool)) (Config, error) {
 		Port:                    port,
 		QueueSize:               queueSize,
 		Workers:                 workers,
+		APIKey:                  strings.TrimSpace(readString(lookup, "API_KEY", "")),
 		DatabaseURL:             strings.TrimSpace(readString(lookup, "DATABASE_URL", "")),
 		DatabaseMaxOpenConns:    databaseMaxOpenConns,
 		DatabaseMaxIdleConns:    databaseMaxIdleConns,

@@ -4,6 +4,7 @@ set -euo pipefail
 base_url="${API_BASE_URL:-http://localhost:8080}"
 request_id="${REQUEST_ID:-compose-smoke-1}"
 timeout_seconds="${SMOKE_TIMEOUT_SECONDS:-60}"
+api_key="${API_KEY:-}"
 
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
@@ -21,17 +22,21 @@ http_code() {
   local body="${3:-}"
   local output="$4"
 
+  local headers=(-H "X-Request-ID: $request_id")
+  if [[ -n "$api_key" ]]; then
+    headers+=(-H "Authorization: Bearer $api_key")
+  fi
   if [[ -n "$body" ]]; then
     curl -fsS -o "$output" -w '%{http_code}' \
       -X "$method" \
       -H "Content-Type: application/json" \
-      -H "X-Request-ID: $request_id" \
+      "${headers[@]}" \
       --data "$body" \
       "$url"
   else
     curl -fsS -o "$output" -w '%{http_code}' \
       -X "$method" \
-      -H "X-Request-ID: $request_id" \
+      "${headers[@]}" \
       "$url"
   fi
 }

@@ -4,6 +4,7 @@
 
 - HTTP API：`POST /jobs`、`GET /jobs/{id}`、`GET /metrics`
 - API contract：穩定 request/response/error schema，文件在 `docs/api-contract.md`
+- API security：可用 `API_KEY` 啟用 Bearer token 保護 `/jobs` 與 `/metrics`，health endpoint 保持公開
 - Request decoding：拒絕 malformed JSON、unknown field、trailing JSON value 與空白 name
 - Service transaction boundary：`sql.TxOptions`、context-aware deadlock retry、queue enqueue
 - Startup configuration：集中驗證 `PORT`、`QUEUE_SIZE`、`WORKERS` 與 DB pool 設定，錯誤設定 fail fast
@@ -35,6 +36,7 @@ Then:
 curl -X POST http://localhost:8080/jobs \
   -H 'Content-Type: application/json' \
   -H 'X-Request-ID: demo-request-1' \
+  -H 'Authorization: Bearer dev-secret' \
   -d '{"name":"resize","payload":"image"}'
 
 curl http://localhost:8080/metrics
@@ -69,6 +71,7 @@ make ci-contract
 go test ./internal/config -count=1
 go test ./internal/migration -count=1
 go test ./internal/api -run 'Test.*Contract|TestReadinessContract|TestPanicRecoveryContract|TestRequestDecodingContract' -count=1
+go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1
 go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
 go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1
 go test -race -cover ./...
@@ -91,6 +94,7 @@ make compose-smoke
 | `go test ./internal/api -run 'TestReadinessContract' -count=1` | 固定 ready / draining 狀態與 `/readyz` status code |
 | `go test ./internal/api -run 'TestPanicRecoveryContract' -count=1` | 固定 handler panic 時的 `500 internal_error` JSON 與 request id 行為 |
 | `go test ./internal/api -run 'TestRequestTimeoutContract' -count=1` | 固定 handler timeout 時的 `504 request_timeout` JSON 與 request id 行為 |
+| `go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1` | 固定 API key 認證邊界、公開 health endpoint 與安全標頭 |
 | `go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1` | 固定 deadlock retry backoff 會尊重 request cancellation / shutdown deadline |
 | `go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1` | 固定 queue close/enqueue 同步邊界，避免 shutdown race panic |
 | `go test -race -cover ./...` | 驗證 service、handler、queue 與併發安全 |
@@ -150,14 +154,34 @@ docker compose down -v
 | `DATABASE_MAX_IDLE_CONNS` | `10` | 正整數，且不可大於 `DATABASE_MAX_OPEN_CONNS` | Postgres idle connection 上限 |
 | `DATABASE_CONN_MAX_LIFETIME` | `30m0s` | 正數 duration，例如 `30m`、`1h` | Postgres connection 最大生命週期 |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | 空字串 | 空字串時只用 stdout trace exporter | OTLP collector endpoint |
+| `API_KEY` | 空字串 | 空字串時不啟用 API key；有值時 trim 後要求 Bearer token | 保護 `/jobs` 與 `/metrics` |
 
 ```bash
 cd production-api-worker
-PORT=9090 QUEUE_SIZE=128 WORKERS=8 DATABASE_MAX_OPEN_CONNS=40 DATABASE_MAX_IDLE_CONNS=12 DATABASE_CONN_MAX_LIFETIME=45m go run ./cmd/api-worker
+PORT=9090 QUEUE_SIZE=128 WORKERS=8 API_KEY=dev-secret DATABASE_MAX_OPEN_CONNS=40 DATABASE_MAX_IDLE_CONNS=12 DATABASE_CONN_MAX_LIFETIME=45m go run ./cmd/api-worker
 go test ./internal/config -count=1
 ```
 
 DB pool 設定不可藏在 repository 內硬編碼，因為 production 容量通常同時受 API concurrency、worker 數、Postgres `max_connections`、migration job 與維運連線影響。設定 loader 會先驗證 idle connection 不可大於 open connection，避免部署後才由資料庫壓力或連線耗盡暴露問題。
+
+## API Security Contract
+
+`API_KEY` 是教學用的最小 production security gate。它不取代正式 IAM、OAuth2、mTLS 或 API gateway，但能把「公開 health endpoint」與「受保護業務 / metrics endpoint」的邊界寫成可測合約。
+
+| Endpoint | `API_KEY` 空值 | `API_KEY` 有值 |
+|---|---|---|
+| `POST /jobs` | 不要求認證 | 需 `Authorization: Bearer <API_KEY>` |
+| `GET /jobs/{id}` | 不要求認證 | 需 `Authorization: Bearer <API_KEY>` |
+| `GET /metrics` | 不要求認證 | 需 `Authorization: Bearer <API_KEY>` |
+| `GET /livez` / `GET /readyz` | 公開 | 公開，供 LB / orchestrator 探測 |
+
+所有 response 會帶上 `X-Content-Type-Options: nosniff`、`X-Frame-Options: DENY` 與 `Referrer-Policy: no-referrer`。啟用 API key 後重跑 smoke test 時，host 端也要帶同一個環境變數：
+
+```bash
+API_KEY=dev-secret docker compose up -d --build
+API_KEY=dev-secret make compose-smoke
+docker compose down -v
+```
 
 ## Migration Contract
 

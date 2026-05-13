@@ -39,6 +39,7 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
       QUEUE_SIZE: "64"
       WORKERS: "4"
+      API_KEY: ${API_KEY:-}
     ports:
       - "8080:8080"
     depends_on:
@@ -46,4 +47,3 @@ services:
         condition: service_completed_successfully
       otel-collector:
         condition: service_started
-

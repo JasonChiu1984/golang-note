@@ -224,15 +224,44 @@ func TestCreateJobContract(t *testing.T) {
 | Retry cancellation | retry backoff 遇到 `ctx.Done()` 時應停止，不再重試交易或 enqueue |
 | Startup / DB pool config | 不合法 `PORT`、`QUEUE_SIZE`、`WORKERS`、DB pool size 或 DB pool duration 應 fail fast，不可 silent fallback |
 | Migration contract | migration env、timeout、SQL 檔排序與 version 命名應固定，避免 release pipeline 漂移 |
+| API security | `API_KEY` 啟用後 `/jobs`、`/metrics` 需 Bearer token；`/livez`、`/readyz` 不應被認證擋住 |
+| Security headers | `X-Content-Type-Options`、`X-Frame-Options`、`Referrer-Policy` 應由 middleware 固定 |
 
 對 `production-api-worker` 這類 service，建議把合約測試獨立命名，讓 release gate 可以聚焦執行：
 
 ```bash
 cd production-api-worker
 go test ./internal/api -run 'Test.*Contract' -count=1
+go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1
 ```
 
 > 合約測試不應過度綁定內部 struct；它要固定「外部看見的行為」，例如 JSON 欄位與錯誤 code，而不是 service 裡用了哪個 repository 實作。
+
+### API Security Contract Test
+
+API security 的測試重點不是把 token 寫死在所有測試裡，而是固定安全邊界：業務 endpoint 與 metrics endpoint 在啟用 `API_KEY` 後需要 Bearer token；health endpoint 仍保持公開，避免 Kubernetes、Docker Compose 或 load balancer 探測被擋住。
+
+```go
+func TestAPIKeyAuthContract(t *testing.T) {
+    handler := NewHandler(service, obs, WithAuthToken("secret-token")).Routes()
+
+    req := httptest.NewRequest(http.MethodPost, "/jobs", strings.NewReader(`{"name":"resize"}`))
+    rec := httptest.NewRecorder()
+    handler.ServeHTTP(rec, req)
+    if rec.Code != http.StatusUnauthorized {
+        t.Fatalf("status = %d, want 401", rec.Code)
+    }
+
+    req = httptest.NewRequest(http.MethodGet, "/readyz", nil)
+    rec = httptest.NewRecorder()
+    handler.ServeHTTP(rec, req)
+    if rec.Code != http.StatusOK {
+        t.Fatalf("readyz status = %d, want 200", rec.Code)
+    }
+}
+```
+
+安全標頭也適合放在合約測試中，因為它們應由 middleware 統一套用，不應依賴每個 handler 手動設定。
 
 ### Request Decoding Contract
 

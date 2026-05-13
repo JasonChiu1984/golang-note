@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.28 - 2026-05-13
+
+- 新增 2026-05-13 22:55 資深工程師審查報告，確認 v1.0.27 已補齊效能與補充頁發布鏈路，但 production API security contract 仍未進入可測合約。
+- `production-api-worker` 新增可選 `API_KEY` 設定；設定後 `/jobs` 與 `/metrics` 需帶 `Authorization: Bearer <token>`，`/livez`、`/readyz` 保持公開供 LB / orchestrator 使用。
+- API middleware 新增 `X-Content-Type-Options: nosniff`、`X-Frame-Options: DENY` 與 `Referrer-Policy: no-referrer` 安全標頭。
+- 新增 `TestAPIKeyAuthContract` 與 `TestSecurityHeadersContract`，固定認證邊界與 security headers 行為；config test 同步固定 `API_KEY` trim 行為。
+- `compose-smoke.sh` 支援 `API_KEY`，Docker Compose 也可由環境注入 API key，讓啟用認證時仍可重跑 smoke gate。
+- README、production README、第 7 / 11 章、進階 Cheat Sheet、API 合約文件與整合視覺課程同步補上 API security contract 驗證 gate。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.27 - 2026-05-13
 
 - `docs/c-python-go-performance-supplement.html` 加入 GPU / Metal 效能比較與正式測試結果，明確分開 CPU sequential workload、GPU kernel time 與 GPU total time。

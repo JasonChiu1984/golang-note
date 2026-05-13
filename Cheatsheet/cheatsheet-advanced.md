@@ -223,6 +223,18 @@ func FetchUser(ctx context.Context, id int) (*User, error) {
 | Migration version | SQL 檔名去掉 `.sql` 後寫入 `schema_migrations.version`；不可空白或含 whitespace |
 | 測試 | `go test ./internal/config -count=1` 固定 default、valid env、invalid env |
 
+### API Security Contract
+
+| 項目 | Go 實作重點 |
+|---|---|
+| `API_KEY` | 空值代表 local teaching mode；有值時 trim 後啟用 Bearer token |
+| Protected endpoints | `/jobs`、`/jobs/{id}`、`/metrics` 需 `Authorization: Bearer <API_KEY>` |
+| Public probes | `/livez`、`/readyz` 不要被認證擋住，否則 LB / orchestrator 無法探測 |
+| Error code | 認證失敗回 `401 unauthorized`，不要回 HTML 或自然語言錯誤頁 |
+| Security headers | middleware 統一設定 `nosniff`、`DENY`、`no-referrer` |
+| Smoke test | `compose-smoke.sh` 要能帶 `API_KEY`，避免啟用認證後 smoke gate 失效 |
+| 測試 | `go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1` |
+
 ---
 
 ## Error Wrapping
