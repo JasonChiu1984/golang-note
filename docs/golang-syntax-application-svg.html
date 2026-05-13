@@ -467,7 +467,7 @@
       <div class="section-head">
         <div>
           <h2>12 個語法域：SVG 流程圖與範例程式碼解說</h2>
-          <p>依照你提供的語法域矩陣產生。每一列都對應一張 SVG：語法集合如何進入實務場景、如何落到專案層、最後要檢查哪些風險。</p>
+          <p>依照你提供的語法域矩陣產生。每一列都改用城市路線圖呈現：語法集合如何進入實務場景、如何落到專案層、何時走風險回查路線、最後在哪個驗收站確認。</p>
         </div>
         <span class="tag">Domain Flow + Code</span>
       </div>
@@ -530,7 +530,7 @@
       <div class="section-head">
         <div>
           <h2>每個語法的 SVG 應用流程圖</h2>
-          <p>每張卡都用同一套工程流程描述：什麼情境會用到、實際語法怎麼寫、在專案中落到哪一層、review 時要驗證什麼。</p>
+          <p>每張卡改用城市路線圖風格：格線底圖、開始站、輸入站、判斷路口、輸出站、主路線與修正回查路線，對照實際 Go 程式碼與 review gate。</p>
         </div>
         <span class="tag">25 Syntax Flow SVGs</span>
       </div>
@@ -1220,45 +1220,126 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
       return rect;
     }
 
-    function svgPath(svg, d, markerId = "flow-arrow") {
+    function svgEllipse(svg, cx, cy, rx, ry, fill, stroke = "#cbd5e1") {
+      const ellipse = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
+      ellipse.setAttribute("cx", String(cx));
+      ellipse.setAttribute("cy", String(cy));
+      ellipse.setAttribute("rx", String(rx));
+      ellipse.setAttribute("ry", String(ry));
+      ellipse.setAttribute("fill", fill);
+      ellipse.setAttribute("stroke", stroke);
+      ellipse.setAttribute("stroke-width", "2");
+      svg.appendChild(ellipse);
+      return ellipse;
+    }
+
+    function svgPolygon(svg, points, fill, stroke = "#cbd5e1") {
+      const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+      polygon.setAttribute("points", points);
+      polygon.setAttribute("fill", fill);
+      polygon.setAttribute("stroke", stroke);
+      polygon.setAttribute("stroke-width", "2");
+      svg.appendChild(polygon);
+      return polygon;
+    }
+
+    function svgParallelogram(svg, x, y, width, height, fill, stroke = "#cbd5e1") {
+      const lean = Math.min(22, Math.round(width * 0.16));
+      return svgPolygon(svg, `${x + lean},${y} ${x + width},${y} ${x + width - lean},${y + height} ${x},${y + height}`, fill, stroke);
+    }
+
+    function svgPath(svg, d, markerId = "flow-arrow", options = {}) {
       const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
       path.setAttribute("d", d);
       path.setAttribute("fill", "none");
-      path.setAttribute("stroke", "#64748b");
-      path.setAttribute("stroke-width", "2.4");
+      path.setAttribute("stroke", options.stroke || "#64748b");
+      path.setAttribute("stroke-width", String(options.width || 2.4));
       path.setAttribute("stroke-linecap", "round");
-      path.setAttribute("marker-end", `url(#${markerId})`);
+      path.setAttribute("stroke-linejoin", "round");
+      if (options.dash) path.setAttribute("stroke-dasharray", options.dash);
+      if (markerId) path.setAttribute("marker-end", `url(#${markerId})`);
       svg.appendChild(path);
       return path;
+    }
+
+    function drawGridBackground(svg, patternId, width, height) {
+      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      rect.setAttribute("x", "0");
+      rect.setAttribute("y", "0");
+      rect.setAttribute("width", String(width));
+      rect.setAttribute("height", String(height));
+      rect.setAttribute("fill", `url(#${patternId})`);
+      svg.appendChild(rect);
+      return rect;
     }
 
     function drawCodeSnippet(svg, code, x, y, width, height, title = "範例程式碼") {
       svgRect(svg, x, y, width, height, "#0f172a", "#1e293b");
       svgText(svg, title, x + 14, y + 24, { size: 12, fill: "#93c5fd", weight: 900 });
       String(code).split("\n").slice(0, 8).forEach((line, index) => {
-        svgText(svg, line || " ", x + 14, y + 48 + index * 17, { size: 11, fill: "#e2e8f0", code: true });
+        const visibleLine = line.length > 48 ? `${line.slice(0, 45)}...` : line;
+        svgText(svg, visibleLine || " ", x + 14, y + 48 + index * 17, { size: 11, fill: "#e2e8f0", code: true });
       });
     }
 
     function drawStepChain(svg, steps, options) {
-      const x = options.x || 24;
-      const y = options.y || 74;
-      const width = options.width || 124;
-      const height = options.height || 72;
-      const gap = options.gap || 26;
       const markerId = options.markerId;
-      const accent = options.accent || "#eff6ff";
-      const stroke = options.stroke || "#bfdbfe";
-      steps.forEach((step, index) => {
-        const currentX = x + index * (width + gap);
-        svgRect(svg, currentX, y, width, height, index === 0 ? accent : "#ffffff", index === 0 ? stroke : "#cbd5e1");
-        svgText(svg, `Step ${index + 1}`, currentX + width / 2, y + 23, { anchor: "middle", weight: 900, size: 12, fill: index === 0 ? "#0f766e" : "#334155" });
-        svgWrappedText(svg, step, currentX + width / 2, y + 47, { anchor: "middle", size: 10, fill: "#475569", maxChars: 10, maxLines: 2, lineHeight: 13 });
-        if (index < steps.length - 1) {
-          const arrowY = y + height / 2;
-          svgPath(svg, `M${currentX + width} ${arrowY} H${currentX + width + gap - 4}`, markerId);
-        }
+      const route = options.route || "#0f4c81";
+      const alertRoute = options.alertRoute || "#b45353";
+      const accent = options.accent || "#dcfce7";
+      const stroke = options.stroke || "#86efac";
+      const mode = options.mode || "syntax";
+
+      if (mode === "domain") {
+        svgPath(svg, "M156 118 H205", markerId, { stroke: route, width: 3.2 });
+        svgPath(svg, "M328 118 H352", markerId, { stroke: route, width: 3.2 });
+        svgPath(svg, "M424 156 V178", markerId, { stroke: route, width: 3.2 });
+        svgPath(svg, "M496 210 H560", markerId, { stroke: route, width: 3.2 });
+        svgPath(svg, "M424 242 V270 H100 V140", markerId, { stroke: alertRoute, width: 2.2, dash: "7 6" });
+
+        svgEllipse(svg, 96, 118, 60, 28, "#dcfce7", "#7fb069");
+        svgParallelogram(svg, 206, 84, 122, 68, "#fef3c7", "#d6b658");
+        svgPolygon(svg, "424,78 496,118 424,158 352,118", "#fee2e2", "#c65f5f");
+        svgRect(svg, 356, 178, 140, 64, "#dbeafe", "#93c5fd");
+        svgEllipse(svg, 626, 210, 66, 29, "#dcfce7", "#7fb069");
+
+        const labels = [
+          [steps[0], 96, 112, 11, 10],
+          [steps[1], 267, 110, 10, 10],
+          [steps[2], 424, 112, 10, 9],
+          [steps[3], 426, 204, 10, 10],
+          [steps[4], 626, 204, 10, 10],
+        ];
+        labels.forEach(([text, cx, cy, size, chars], index) => {
+          svgText(svg, index === 0 ? "開始站" : index === labels.length - 1 ? "驗收站" : `路口 ${index}`, cx, cy - 10, { anchor: "middle", weight: 900, size: 10, fill: index === 2 ? "#991b1b" : "#064e3b" });
+          svgWrappedText(svg, text, cx, cy + 8, { anchor: "middle", size, fill: "#1f2937", maxChars: chars, maxLines: 2, lineHeight: 13 });
+        });
+        svgText(svg, "回查", 104, 270, { size: 11, fill: alertRoute, weight: 900 });
+        return;
+      }
+
+      svgPath(svg, "M136 108 H206", markerId, { stroke: route, width: 3.2 });
+      svgPath(svg, "M340 108 H360", markerId, { stroke: route, width: 3.2 });
+      svgPath(svg, "M430 146 V170", markerId, { stroke: route, width: 3.2 });
+      svgPath(svg, "M500 202 H536", markerId, { stroke: route, width: 3.2 });
+      svgPath(svg, "M430 234 V250 H96 V138", markerId, { stroke: alertRoute, width: 2.2, dash: "7 6" });
+
+      svgEllipse(svg, 78, 108, 58, 28, accent, stroke);
+      svgParallelogram(svg, 206, 74, 134, 68, "#fef3c7", "#d6b658");
+      svgPolygon(svg, "430,146 500,202 430,258 360,202", "#fee2e2", "#c65f5f");
+      svgRect(svg, 536, 170, 80, 64, "#dbeafe", "#93c5fd");
+
+      const labels = [
+        [steps[0], 78, 101, 10, 10, "開始"],
+        [steps[1], 273, 101, 10, 11, "輸入"],
+        [steps[2], 430, 196, 10, 10, "判斷"],
+        [steps[3], 576, 196, 10, 8, "輸出"],
+      ];
+      labels.forEach(([text, cx, cy, size, chars, title], index) => {
+        svgText(svg, title, cx, cy - 10, { anchor: "middle", weight: 900, size: 10, fill: index === 2 ? "#991b1b" : "#064e3b" });
+        svgWrappedText(svg, text, cx, cy + 8, { anchor: "middle", size, fill: "#1f2937", maxChars: chars, maxLines: 2, lineHeight: 13 });
       });
+      svgText(svg, "修正路線", 104, 250, { size: 11, fill: alertRoute, weight: 900 });
     }
 
     function createSyntaxFlowCard(item, index) {
@@ -1270,28 +1351,36 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-      svg.setAttribute("viewBox", "0 0 640 330");
+      svg.setAttribute("viewBox", "0 0 640 430");
       svg.setAttribute("role", "img");
       svg.setAttribute("aria-label", `${item.key} 語法應用流程圖`);
 
       const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
       const arrowId = `flow-arrow-${item.key}`;
-      defs.innerHTML = `<marker id="${arrowId}" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M1 1 L9 5 L1 9 Z" fill="#64748b"/></marker>`;
+      const gridId = `syntax-grid-${item.key}`;
+      defs.innerHTML = `
+        <pattern id="${gridId}" width="18" height="18" patternUnits="userSpaceOnUse">
+          <path d="M18 0H0V18" fill="none" stroke="#e2e8f0" stroke-width=".8"/>
+        </pattern>
+        <marker id="${arrowId}" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+          <path d="M1 1 L9 5 L1 9 Z" fill="#0f4c81"/>
+        </marker>`;
       svg.appendChild(defs);
       const background = document.createElementNS("http://www.w3.org/2000/svg", "g");
       background.setAttribute("id", `flow-background-${item.key}`);
       svg.appendChild(background);
 
+      drawGridBackground(svg, gridId, 640, 430);
       const accent = ["#eff6ff", "#ecfdf5", "#fffbeb", "#f5f3ff", "#fff1f2"][index % 5];
       const stroke = ["#bfdbfe", "#99f6e4", "#fde68a", "#ddd6fe", "#fecdd3"][index % 5];
       svgText(svg, `${item.key} 對應流程`, 24, 34, { weight: 900, size: 17 });
       svgWrappedText(svg, item.kind, 616, 34, { anchor: "end", weight: 900, size: 12, fill: "#0f766e", maxChars: 12, maxLines: 1 });
-      drawStepChain(svg, item.steps, { x: 24, y: 62, width: 126, height: 78, gap: 30, markerId: arrowId, accent, stroke });
+      drawStepChain(svg, item.steps, { markerId: arrowId, accent, stroke, mode: "syntax" });
 
-      drawCodeSnippet(svg, item.code, 24, 176, 340, 126, "Go 實作片段");
-      svgRect(svg, 390, 176, 226, 126, "#ffffff");
-      svgText(svg, "Review Gate", 410, 204, { weight: 900, size: 14, fill: "#0f766e" });
-      svgWrappedText(svg, item.check, 410, 230, { size: 12, fill: "#334155", maxChars: 16, maxLines: 4, lineHeight: 16 });
+      drawCodeSnippet(svg, item.code, 24, 284, 340, 116, "Go 實作片段");
+      svgRect(svg, 390, 284, 226, 116, "#ffffff");
+      svgText(svg, "Review Gate", 410, 312, { weight: 900, size: 14, fill: "#0f766e" });
+      svgWrappedText(svg, item.check, 410, 338, { size: 12, fill: "#334155", maxChars: 16, maxLines: 3, lineHeight: 16 });
       card.appendChild(svg);
       return card;
     }
@@ -1321,12 +1410,19 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-      svg.setAttribute("viewBox", "0 0 760 390");
+      svg.setAttribute("viewBox", "0 0 760 430");
       svg.setAttribute("role", "img");
       svg.setAttribute("aria-label", `${item.domain} 語法域應用流程圖`);
       const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
       const arrowId = `domain-arrow-${index}`;
-      defs.innerHTML = `<marker id="${arrowId}" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M2 2 L10 6 L2 10 Z" fill="#64748b"/></marker>`;
+      const gridId = `domain-grid-${index}`;
+      defs.innerHTML = `
+        <pattern id="${gridId}" width="18" height="18" patternUnits="userSpaceOnUse">
+          <path d="M18 0H0V18" fill="none" stroke="#e2e8f0" stroke-width=".8"/>
+        </pattern>
+        <marker id="${arrowId}" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+          <path d="M2 2 L10 6 L2 10 Z" fill="#0f4c81"/>
+        </marker>`;
       svg.appendChild(defs);
       const background = document.createElementNS("http://www.w3.org/2000/svg", "g");
       background.setAttribute("id", `domain-background-${index}`);
@@ -1340,21 +1436,22 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
         ["#fff1f2", "#fecdd3"],
       ][index % 5];
 
+      drawGridBackground(svg, gridId, 760, 430);
       svgText(svg, item.domain, 380, 35, { anchor: "middle", weight: 900, size: 22 });
       svgText(svg, "由實際開發流程回推語法使用位置，不只列關鍵字。", 380, 60, { anchor: "middle", size: 13, fill: "#64748b" });
-      drawStepChain(svg, item.steps, { x: 28, y: 92, width: 116, height: 92, gap: 32, markerId: arrowId, accent: colors[0], stroke: colors[1] });
+      drawStepChain(svg, item.steps, { markerId: arrowId, accent: colors[0], stroke: colors[1], mode: "domain" });
 
-      svgRect(svg, 42, 222, 316, 94, "#ffffff");
-      svgText(svg, "涵蓋語法", 64, 252, { weight: 900, size: 14, fill: "#0f766e" });
-      svgWrappedText(svg, item.syntax, 64, 278, { size: 12, fill: "#334155", maxChars: 24, maxLines: 2, lineHeight: 16 });
+      svgRect(svg, 42, 270, 316, 80, "#ffffff");
+      svgText(svg, "涵蓋語法", 64, 300, { weight: 900, size: 14, fill: "#0f766e" });
+      svgWrappedText(svg, item.syntax, 64, 326, { size: 12, fill: "#334155", maxChars: 24, maxLines: 2, lineHeight: 16 });
 
-      svgRect(svg, 402, 222, 316, 94, "#ffffff");
-      svgText(svg, "風險控制", 424, 252, { weight: 900, size: 14, fill: "#be123c" });
-      svgWrappedText(svg, item.risk, 424, 278, { size: 12, fill: "#334155", maxChars: 23, maxLines: 2, lineHeight: 16 });
+      svgRect(svg, 402, 270, 316, 80, "#ffffff");
+      svgText(svg, "風險控制", 424, 300, { weight: 900, size: 14, fill: "#be123c" });
+      svgWrappedText(svg, item.risk, 424, 326, { size: 12, fill: "#334155", maxChars: 23, maxLines: 2, lineHeight: 16 });
 
-      svgRect(svg, 42, 334, 676, 42, "#ffffff");
-      svgText(svg, "工程判斷", 64, 360, { weight: 900, size: 13 });
-      svgWrappedText(svg, item.explain, 148, 360, { size: 11, fill: "#334155", maxChars: 64, maxLines: 1 });
+      svgRect(svg, 42, 370, 676, 42, "#ffffff");
+      svgText(svg, "工程判斷", 64, 396, { weight: 900, size: 13 });
+      svgWrappedText(svg, item.explain, 148, 396, { size: 11, fill: "#334155", maxChars: 64, maxLines: 1 });
 
       const codeBox = document.createElement("div");
       codeBox.className = "code-explain";

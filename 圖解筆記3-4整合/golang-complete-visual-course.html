@@ -311,7 +311,8 @@
       <a class="btn" href="../docs/golang-syntax-application-svg.html">語法應用圖解</a>
       <a class="btn" href="../docs/golang-third-party-modules.html">第三方模組</a>
       <a class="btn" href="../docs/c-python-go-performance-supplement.html">效能補充</a>
-      <a class="btn" href="../docs/golang-assembly-microservice.html">Assembly 微服務</a>
+      <a class="btn" href="../docs/golang-assembly-tutorial.html">Assembly</a>
+      <a class="btn" href="../docs/golang-microservice-tutorial.html">微服務</a>
       <a class="btn" id="releaseNotesShortcut" href="../ReleaseNote/index.html" accesskey="r" title="開啟 Release Notes（Alt+R）">Release Notes <span class="shortcut-key">Alt+R</span></a>
     </div>
   </nav>
@@ -670,6 +671,7 @@
             <tr><td><a href="../production-api-worker/docker-compose.yml"><code>docker-compose.yml</code></a></td><td>Runtime</td><td>Postgres、OTel collector、migration、API 串接。</td></tr>
             <tr><td><a href="../production-api-worker/scripts/compose-smoke.sh"><code>compose-smoke.sh</code></a></td><td>Smoke</td><td>驗證 livez、readyz、job create/read 與 metrics。</td></tr>
             <tr><td><a href="https://github.com/JasonChiu1984/golang-note/blob/main/.github/workflows/ci.yml"><code>GitHub Actions</code></a></td><td>CI</td><td>root test、production contract、race/coverage、govulncheck、Docker build、Compose smoke。</td></tr>
+            <tr><td><a href="../examples/performance-comparison/README.md"><code>examples/performance-comparison</code></a></td><td>Benchmark</td><td>C / Go / Python sequential workload 與 Swift / Metal GPU data-parallel workload。</td></tr>
           </tbody>
         </table>
         <pre><code class="language-bash">cd production-api-worker

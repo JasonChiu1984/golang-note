@@ -1,0 +1,2 @@
+$ GPU_ELEMENTS='1048576' GPU_ROUNDS='128' '/Users/jasonchiu/Documents/CodexData/Golang學習筆記/測試報告/raw/2026-05-13-221043/bench-gpu-metal'
+language=SwiftMetal workload=parallel_hash elements=1048576 rounds=128 cpu_seconds=0.319504 gpu_kernel_seconds=0.007999 gpu_total_seconds=0.008889 cpu_checksum=15982242969618707319 gpu_checksum=15982242969618707319 status=ok gpu_device="Apple M1 Max"

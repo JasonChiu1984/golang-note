@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.27 - 2026-05-13
+
+- `docs/c-python-go-performance-supplement.html` 加入 GPU / Metal 效能比較與正式測試結果，明確分開 CPU sequential workload、GPU kernel time 與 GPU total time。
+- 新增 `examples/performance-comparison/gpu/bench.swift`，並擴充 `TestCode/performance-comparison/run-real-benchmark.sh` 產生 C / Go / Python / GPU 綜合報告。
+- 將原本合併的 Assembly 微服務教材拆成 `docs/golang-assembly-tutorial.html` 與 `docs/golang-microservice-tutorial.html`，讓 hot path 與服務架構分開學習。
+- `docs/golang-assembly-microservice.html` 改為過渡入口，保留舊連結導流到兩個新教程。
+- 新增 `scripts/fix-docs-index-links.mjs`，每次重產 `docs/index.html` 後可自動修正 GitHub Pages `docs/` root 相對路徑，避免 `/docs` 與 `/ReleaseNote` 404。
+- README、整合課程入口、語法應用圖解與測試報告索引同步補上 GPU、Assembly、微服務與 Docs index 連結驗證 gate。
+
 ## v1.0.26 - 2026-05-13
 
 - 新增 2026-05-13 22:03 資深工程師審查報告，確認 v1.0.25 已補齊 Compose smoke gate，但進階效能教材仍有兩個整合缺口：真實效能測試報告尚未進入主教材 gate，Assembly 微服務補充頁尚未形成正式學習入口與風險邊界。

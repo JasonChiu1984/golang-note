@@ -2,9 +2,9 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
-> 教材版本：`v1.0.26`
+> 教材版本：`v1.0.27`
 > 教材基準：`Go 1.26.3`
-> 這次更新重點：把 C/Python/Go 效能比較補成可重跑正式測試流程，並把 Assembly 微服務補充教材接回主教程入口，避免進階效能內容停留在孤立 HTML。
+> 這次更新重點：補上 GPU / Metal 真實效能比較、拆分 Assembly 與微服務獨立教程，並加入 `docs/index.html` 自動連結修正腳本，避免 GitHub Pages 路徑 404。
 
 ## 版本策略
 
@@ -20,9 +20,10 @@
 | Release Note 效能矩陣 | 版本升級頁需列出官方效能數字、升級前後狀態、受影響場景與本地驗證指令 |
 | Release Note 官方覆蓋 | Go 1.1-1.26 報告需對照官方段落標題、Tools、Ports、minor changes 與 Patch Revisions，並同步 `ReleaseNote/` 與 `docs/ReleaseNote/` |
 | Release Note 支援狀態 | ReleaseNote 索引需依官方 Release Policy 標示目前支援版本、未支援版本與最新 patch，並用 SVG 圖表呈現 |
-| 補充教材頁 | 重大補充 HTML 需放入 `docs/`，包含語法應用圖解、第三方模組選型、C/Python/Go 效能比較與 Assembly 微服務 |
-| Assembly 微服務教材 | Assembly 只能作為可量測 hot path 的小型 adapter，必須保留 pure Go fallback、benchmark、pprof 與部署風險說明 |
-| 跨語言效能範例 | C/Python/Go 效能比較需提供可重跑 workload、正式測試 script、compiler flags、語言版本、raw output 與 Markdown 報告，不可只留下概念倍率 |
+| 補充教材頁 | 重大補充 HTML 需放入 `docs/`，包含語法應用圖解、第三方模組選型、C/Python/Go 效能比較、Assembly 與微服務 |
+| Assembly 教材 | Assembly 只能作為可量測 hot path 的小型 adapter，必須保留 pure Go fallback、benchmark、pprof 與部署風險說明 |
+| 微服務教材 | Go 微服務需獨立說明 handler、service、config、timeout、health check、Docker smoke 與 deployment risk |
+| 跨語言 / GPU 效能範例 | C/Python/Go 效能比較需提供可重跑 workload、正式測試 script、compiler flags、語言版本、raw output 與 Markdown 報告；GPU/Metal 比較需分開標示 CPU baseline、GPU kernel time 與 GPU total time |
 | CI release gate | `.github/workflows/ci.yml` 需固定 root module、production-api-worker contract、race/coverage、govulncheck 與 Docker build，避免教材只描述 CI 卻沒有真實 workflow |
 | Compose smoke gate | Docker Compose 不只要 build 成功，還要用主機端 smoke script 驗證 API ready、建立 job、讀回 job 與 metrics 暴露 |
 | API 合約 | 對外 HTTP endpoint 需有穩定 request/response/error schema，並用 contract test 阻擋破壞性變更 |
@@ -132,10 +133,13 @@ go test ./project-concurrent-crawler/...
 | Go 1.26 升級盤點 | 對照第 1 / 9 章的支援矩陣 | 確認 macOS、Windows、FreeBSD、Wasm、bootstrap 與容器建置限制 |
 | Go 1.20 效能矩陣 | `rg -n "效能比較|crypto/rsa encryption|runtime/metrics histogram" ReleaseNote/go1.20-release-note.html docs/ReleaseNote/go1.20-release-note.html` | 確認 Release Note 同步記錄官方效能數字與 benchmark / metrics 驗證建議 |
 | Release Note 官方段落覆蓋 | `rg -n "Go 1.1-1.26|support-status-chart|Go 1.25、Go 1.26|go1.1-release-note" ReleaseNote docs/ReleaseNote` | 確認根目錄與 Pages 版都保留 Go 1.1、Roadmap、支援狀態圖與最新 patch 訊號 |
-| 補充教材頁 | `test -f docs/golang-syntax-application-svg.html && test -f docs/golang-third-party-modules.html && test -f docs/c-python-go-performance-supplement.html && test -f docs/golang-assembly-microservice.html` | 確認四個補充 HTML 交付頁存在 |
+| 補充教材頁 | `test -f docs/golang-syntax-application-svg.html && test -f docs/golang-third-party-modules.html && test -f docs/c-python-go-performance-supplement.html && test -f docs/golang-assembly-tutorial.html && test -f docs/golang-microservice-tutorial.html` | 確認補充 HTML 交付頁存在 |
+| Docs index 連結自動修正 | `node scripts/fix-docs-index-links.mjs --sync-source && node scripts/fix-docs-index-links.mjs --check` | 每次重產 `docs/index.html` 後，自動改成 GitHub Pages `docs/` root 可用路徑，避免 `/docs`、`/ReleaseNote` 404 |
 | 跨語言效能範例 | `cd examples/performance-comparison && clang -O2 c/bench.c -o /tmp/bench-c && /tmp/bench-c && go test -bench=. -benchmem -count=1 ./go && python3 python/bench.py` | 確認 C/Python/Go 範例可重跑，並保留正式報告所需原始輸出 |
 | 跨語言正式測試報告 | `./TestCode/performance-comparison/run-real-benchmark.sh` | 產出 `測試報告/<timestamp>-C-Python-Go-真實效能測試報告.md` 與 raw stdout |
-| Assembly 微服務補充頁 | `test -f docs/golang-assembly-microservice.html && rg -n "ENGINE=auto|pure Go fallback|go tool objdump" docs/golang-assembly-microservice.html` | 確認 Assembly 只作為可替換 hot path，且保留 fallback / benchmark / disassembly 驗證 |
+| GPU / Metal 效能範例 | `cd examples/performance-comparison && swiftc -O -module-cache-path /tmp/swift-module-cache -framework Metal -framework Foundation gpu/bench.swift -o /tmp/bench-gpu-metal && GPU_ELEMENTS=1048576 GPU_ROUNDS=128 /tmp/bench-gpu-metal` | 驗證 data-parallel GPU workload；不可與 sequential CPU loop 混成單一倍率結論 |
+| Assembly 補充頁 | `test -f docs/golang-assembly-tutorial.html && rg -n "Pure Go Fallback|go tool objdump|GOARCH=arm64" docs/golang-assembly-tutorial.html` | 確認 Assembly 只作為可替換 hot path，且保留 fallback / benchmark / disassembly 驗證 |
+| 微服務補充頁 | `test -f docs/golang-microservice-tutorial.html && rg -n "REQUEST_TIMEOUT|/readyz|Dockerfile|scripts/smoke.sh" docs/golang-microservice-tutorial.html` | 確認微服務教程包含 config、health check、Docker 與 smoke 驗證 |
 | CI workflow 語法 | `ruby -e 'require "yaml"; YAML.load_file(".github/workflows/ci.yml")'` | 確認 GitHub Actions YAML 可解析 |
 | CI release gate | `.github/workflows/ci.yml` | GitHub Actions 會跑 root module、production-api-worker contract、race/coverage、govulncheck、Docker build 與 Compose smoke |
 | Compose smoke gate | `cd production-api-worker && docker compose up -d --build && make compose-smoke && docker compose down -v` | 驗證 Postgres、migration、API、worker、readiness 與 metrics 端到端可用 |

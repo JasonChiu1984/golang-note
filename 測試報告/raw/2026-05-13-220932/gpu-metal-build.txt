@@ -1,0 +1,1 @@
+$ cd '/Users/jasonchiu/Documents/CodexData/Golang學習筆記/examples/performance-comparison' && swiftc -O -module-cache-path '/Users/jasonchiu/Documents/CodexData/Golang學習筆記/測試報告/raw/2026-05-13-220932/swift-module-cache' -framework Metal -framework Foundation gpu/bench.swift -o '/Users/jasonchiu/Documents/CodexData/Golang學習筆記/測試報告/raw/2026-05-13-220932/bench-gpu-metal'

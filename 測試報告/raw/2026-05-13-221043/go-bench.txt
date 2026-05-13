@@ -1,0 +1,11 @@
+$ cd '/Users/jasonchiu/Documents/CodexData/Golang學習筆記/examples/performance-comparison' && TMPDIR='/Users/jasonchiu/Documents/CodexData/Golang學習筆記/.tmp' GOCACHE='/Users/jasonchiu/Documents/CodexData/Golang學習筆記/.gocache' GOMODCACHE='/Users/jasonchiu/Documents/CodexData/Golang學習筆記/.gomodcache' GOFLAGS='-ldflags=-linkmode=external' go test -bench=. -benchmem -count=5 ./go
+goos: darwin
+goarch: arm64
+pkg: golang-learning-notes/examples/performance-comparison/go
+BenchmarkRun-10    	      72	  16767903 ns/op	       0 B/op	       0 allocs/op
+BenchmarkRun-10    	      74	  16554593 ns/op	       0 B/op	       0 allocs/op
+BenchmarkRun-10    	      74	  16995453 ns/op	       0 B/op	       0 allocs/op
+BenchmarkRun-10    	      72	  16476937 ns/op	       0 B/op	       0 allocs/op
+BenchmarkRun-10    	      74	  17710176 ns/op	       0 B/op	       0 allocs/op
+PASS
+ok  	golang-learning-notes/examples/performance-comparison/go	6.475s

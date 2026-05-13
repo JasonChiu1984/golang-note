@@ -184,6 +184,7 @@
       <a class="btn" href="#overview">總覽</a>
       <a class="btn" href="#architecture">執行模型</a>
       <a class="btn" href="#speed">執行速度</a>
+      <a class="btn" href="#gpu">GPU 比較</a>
       <a class="btn" href="#syscall">系統呼叫</a>
       <a class="btn" href="#cases">應用案例</a>
       <a class="btn" href="#verification">驗證方法</a>
@@ -328,6 +329,72 @@
             <tr><td>記憶體控制</td><td>手動配置與釋放</td><td>物件 overhead 高</td><td>GC 管理，需看 allocation profile</td><td>硬即時或極低記憶體設備偏 C；一般 service 用 Go 成本較低</td></tr>
             <tr><td>併發服務</td><td>需自行管理 thread / event loop</td><td>asyncio 可行，CPU parallel 受 GIL 限制</td><td>goroutine + netpoller 是強項</td><td>大量連線、API gateway、protocol bridge 常偏 Go</td></tr>
             <tr><td>可維護性</td><td>高風險高控制</td><td>語法快、團隊上手快</td><td>語法小、編譯期檢查好</td><td>長期服務通常要把速度與維護成本一起評估</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="gpu">
+      <div class="section-head">
+        <div>
+          <h2>GPU 比較：CPU 熱路徑與資料平行加速</h2>
+          <p>GPU 適合大量資料平行工作，例如影像檢測、AI inference、historian 批次分析與矩陣運算；PLC polling、OPC UA subscription、Modbus timeout 這類 I/O-bound 流程通常不會因 GPU 直接變快。</p>
+        </div>
+      </div>
+      <div class="grid-3">
+        <article class="metric-card"><span class="badge green">CPU</span><strong>低延遲控制</strong><span>適合 sequential logic、protocol parsing、短迴圈、系統呼叫與 gateway 控制流程。</span></article>
+        <article class="metric-card"><span class="badge">GPU</span><strong>高吞吐批次</strong><span>適合可切成大量獨立元素的 kernel；資料搬移與同步成本必須列入 total time。</span></article>
+        <article class="metric-card"><span class="badge amber">Go 角色</span><strong>調度與服務</strong><span>Go 常負責 API、queue、batch、timeout 與 observability；GPU kernel 多由 Metal/CUDA/OpenCL 或 Python AI stack 執行。</span></article>
+      </div>
+      <div class="flow-wrap" style="margin-top:12px">
+        <svg class="diagram" viewBox="0 0 1080 450" role="img" aria-label="CPU GPU 效能比較架構圖" aria-describedby="gpu-compare-desc">
+          <desc id="gpu-compare-desc">說明工業自動化服務如何由 Go gateway 收集資料，再視 workload 交給 CPU hot path 或 GPU data-parallel kernel。</desc>
+          <defs>
+            <marker id="gpuarrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L9,3 L0,6 Z" fill="#52637a"></path>
+            </marker>
+          </defs>
+          <rect x="0" y="0" width="1080" height="450" fill="#fff"></rect>
+          <text x="40" y="42" font-size="22" font-weight="800" fill="#17202a">CPU / GPU 工作分流</text>
+          <text x="40" y="70" font-size="13" fill="#5b6675">先判斷瓶頸是 sequential control、I/O wait、allocation，還是可平行計算；再決定是否導入 GPU。</text>
+
+          <rect x="48" y="116" width="220" height="92" rx="8" fill="#eff6ff" stroke="#93c5fd"></rect>
+          <text x="72" y="150" font-size="17" font-weight="800" fill="#1d4ed8">Go Edge Service</text>
+          <text x="72" y="176" font-size="13" fill="#1d4ed8">Modbus / OPC UA / BACnet</text>
+          <text x="72" y="194" font-size="13" fill="#1d4ed8">batch、timeout、queue</text>
+
+          <line x1="268" y1="162" x2="370" y2="162" stroke="#52637a" stroke-width="3" marker-end="url(#gpuarrow)"></line>
+          <rect x="384" y="92" width="260" height="110" rx="8" fill="#f0fdf4" stroke="#86efac"></rect>
+          <text x="410" y="128" font-size="18" font-weight="800" fill="#166534">CPU Hot Path</text>
+          <text x="410" y="154" font-size="13" fill="#166534">protocol parsing / control logic</text>
+          <text x="410" y="174" font-size="13" fill="#166534">低 latency、資料量小、分支多</text>
+
+          <line x1="268" y1="260" x2="370" y2="260" stroke="#52637a" stroke-width="3" marker-end="url(#gpuarrow)"></line>
+          <rect x="384" y="228" width="260" height="118" rx="8" fill="#f8fafc" stroke="#cbd5e1"></rect>
+          <text x="410" y="264" font-size="18" font-weight="800" fill="#243244">Batch Buffer</text>
+          <text x="410" y="290" font-size="13" fill="#475569">影像 frame / waveform / historian chunk</text>
+          <text x="410" y="310" font-size="13" fill="#475569">資料量足夠大才值得 dispatch</text>
+
+          <line x1="644" y1="287" x2="744" y2="287" stroke="#52637a" stroke-width="3" marker-end="url(#gpuarrow)"></line>
+          <rect x="758" y="220" width="270" height="136" rx="8" fill="#fffbeb" stroke="#fbbf24"></rect>
+          <text x="784" y="258" font-size="18" font-weight="800" fill="#92400e">GPU Kernel</text>
+          <text x="784" y="284" font-size="13" fill="#92400e">Metal / CUDA / OpenCL / AI runtime</text>
+          <text x="784" y="304" font-size="13" fill="#92400e">kernel time + sync/readback time</text>
+          <text x="784" y="324" font-size="13" fill="#92400e">適合大量 data-parallel workload</text>
+
+          <line x1="514" y1="202" x2="514" y2="228" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6 6"></line>
+          <text x="384" y="398" font-size="13" fill="#64748b">工程原則：GPU 不是替代 Go/C/Python 的語言選擇，而是替代特定資料平行 hot path 的 compute backend。</text>
+        </svg>
+      </div>
+      <p class="figure-caption">圖解摘要：Go 適合長駐服務與工業通訊協調；GPU 適合資料已批次化、計算密度高、可平行拆分的工作。</p>
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead><tr><th>場景</th><th>CPU 較適合</th><th>GPU 較適合</th><th>工業自動化判斷</th></tr></thead>
+          <tbody>
+            <tr><td>PLC / DDC polling</td><td>封包解析、timeout、retry、狀態機</td><td>通常不適合</td><td>瓶頸多在設備回應與網路，不在純計算。</td></tr>
+            <tr><td>影像檢測</td><td>觸發、批次、結果整合</td><td>卷積、影像前處理、AI inference</td><td>GPU 可放在 edge IPC 或獨立 inference service。</td></tr>
+            <tr><td>Historian 分析</td><td>查詢規劃、資料清理、I/O</td><td>大型矩陣、批次特徵計算</td><td>資料量夠大才會蓋過搬移與同步成本。</td></tr>
+            <tr><td>Go 微服務</td><td>HTTP/gRPC、queue、觀測性、錯誤處理</td><td>透過 cgo、外部 process 或 GPU service 呼叫</td><td>避免把 GPU kernel 與業務服務硬耦合。</td></tr>
           </tbody>
         </table>
       </div>
@@ -507,7 +574,13 @@ clang -O2 c/bench.c -o /tmp/bench-c
 go test -bench=. -benchmem -count=10 ./go
 
 # Python
-python3 python/bench.py</code></pre>
+python3 python/bench.py
+
+# GPU（macOS Metal）
+swiftc -O -module-cache-path /tmp/golang-perf-module-cache \
+  -framework Metal -framework Foundation \
+  gpu/bench.swift -o /tmp/bench-gpu-metal
+GPU_ELEMENTS=1048576 GPU_ROUNDS=128 /tmp/bench-gpu-metal</code></pre>
         </div>
         <div class="panel">
           <h3>System call / I/O benchmark 範例流程</h3>
@@ -536,7 +609,7 @@ sudo dtruss ./your-program</code></pre>
           </tbody>
         </table>
       </div>
-      <p class="note">可重跑範例已放在 <code>examples/performance-comparison/</code>。該資料夾提供同一個整數運算 workload 的 C、Python、Go 版本，用來示範 benchmark 方法，而不是作為跨平台固定結論。</p>
+      <p class="note">可重跑範例已放在 <code>examples/performance-comparison/</code>。該資料夾提供 C、Python、Go 的 CPU sequential workload，以及 Swift/Metal 的 GPU data-parallel workload，用來示範 benchmark 方法，而不是作為跨平台固定結論。</p>
     </section>
 
     <section id="report-template">
@@ -555,8 +628,10 @@ sudo dtruss ./your-program</code></pre>
             <tr><td>Compiler</td><td>C compiler 與 flags</td><td>`clang -O2`、`gcc -O3`</td><td>debug / release build 差距很大</td></tr>
             <tr><td>Go version</td><td>`go version` 完整輸出</td><td>`go version go1.26.3 darwin/arm64`</td><td>runtime、GC、compiler optimization 會隨版本改變</td></tr>
             <tr><td>Python version</td><td>CPython / PyPy 與版本</td><td>`Python 3.13.x CPython`</td><td>interpreter 與 JIT 差異會改變結果</td></tr>
+            <tr><td>GPU / runtime</td><td>GPU 型號、核心數、CUDA/Metal/OpenCL 狀態</td><td>Apple M1 Max 24-core GPU、Metal 4</td><td>GPU 結果高度依賴 hardware、driver 與 runtime</td></tr>
             <tr><td>C flags</td><td>最佳化、連結與安全選項</td><td>`-O2 -march=native`、是否啟用 ASAN</td><td>flags 直接影響 CPU hot path 與安全檢查成本</td></tr>
             <tr><td>資料量</td><td>迴圈次數、檔案大小、payload、連線數</td><td>`n=50,000,000`、`256MiB`、`128 connections`</td><td>小資料容易被啟動與 cache effect 主導</td></tr>
+            <tr><td>GPU timing</td><td>kernel time、total time、資料搬移/同步方式</td><td>`gpu_kernel_seconds`、`gpu_total_seconds`</td><td>只看 kernel time 會低估端到端成本</td></tr>
             <tr><td>原始結果</td><td>完整 stdout、benchmark output、time output</td><td>`bench.txt`、`go test -bench` 原文</td><td>保留可追溯證據，避免只留下結論</td></tr>
           </tbody>
         </table>
@@ -572,8 +647,9 @@ sudo dtruss ./your-program</code></pre>
 | C compiler / flags |  |
 | Go version |  |
 | Python version |  |
+| GPU / runtime |  |
 | Data size |  |
-| Workload | CPU-bound / file I/O / TCP / protocol polling |
+| Workload | CPU-bound / GPU data-parallel / file I/O / TCP / protocol polling |
 | Raw result file |  |
 
 ### Commands
@@ -583,19 +659,20 @@ clang -O2 c/bench.c -o /tmp/bench-c
 /tmp/bench-c
 go test -bench=. -benchmem -count=10 ./go
 python3 python/bench.py
+GPU_ELEMENTS=1048576 GPU_ROUNDS=128 /tmp/bench-gpu-metal
 ```
 
 ### Conclusion
 
-        說明瓶頸是在 CPU、allocation、system call、I/O wait、device timeout，還是跨語言 FFI 邊界。</code></pre>
+        說明瓶頸是在 CPU、GPU kernel、資料同步、allocation、system call、I/O wait、device timeout，還是跨語言 FFI 邊界。</code></pre>
       </div>
     </section>
 
     <section id="real-test-report">
       <div class="section-head">
         <div>
-          <h2>真實測試報告：C / Python / Go CPU-bound workload</h2>
-          <p>以下資料由 <code>TestCode/performance-comparison/run-real-benchmark.sh</code> 於 2026-05-13 22:06:02 +0800 實際執行產生，包含環境、build flags、資料量、測試結果與 raw output 追溯位置。</p>
+          <h2>真實測試報告：C / Python / Go / GPU workload</h2>
+          <p>以下資料由 <code>TestCode/performance-comparison/run-real-benchmark.sh</code> 於 2026-05-13 22:10:43 +0800 實際執行產生，包含 CPU 語言比較、Metal GPU 比較、build flags、資料量、測試結果與 raw output 追溯位置。</p>
         </div>
       </div>
 
@@ -603,17 +680,17 @@ python3 python/bench.py
         <article class="metric-card">
           <span class="badge green">CPU</span>
           <strong>Apple M1 Max</strong>
-          <span>10 cores，8 Performance + 2 Efficiency，macOS 26.4.1。</span>
+          <span>10 cores，macOS 26.4.1，CPU sequential hash loop。</span>
         </article>
         <article class="metric-card">
-          <span class="badge">Workload</span>
-          <strong>50,000,000</strong>
-          <span>64-bit integer hash loop；CPU-bound microbenchmark。</span>
+          <span class="badge">GPU</span>
+          <strong>Metal 4</strong>
+          <span>Apple M1 Max GPU，24 cores，Swift/Metal data-parallel hash kernel。</span>
         </article>
         <article class="metric-card">
           <span class="badge amber">Raw</span>
           <strong>完整保留</strong>
-          <span><code>測試報告/raw/2026-05-13-220602/</code></span>
+          <span><code>測試報告/raw/2026-05-13-221043/</code></span>
         </article>
       </div>
 
@@ -621,15 +698,18 @@ python3 python/bench.py
         <table>
           <thead><tr><th>欄位</th><th>實測內容</th><th>工程意義</th></tr></thead>
           <tbody>
-            <tr><td>測試時間</td><td>2026-05-13 22:06:02 +0800</td><td>結果只代表當次環境與負載狀態。</td></tr>
-            <tr><td>CPU</td><td>Apple M1 Max，10 cores（8 Performance + 2 Efficiency）</td><td>CPU cache、核心類型、turbo 與背景負載都會影響結果。</td></tr>
-            <tr><td>OS</td><td>macOS 26.4.1，Darwin 25.4.0，arm64</td><td>scheduler、syscall 與計時精度會影響 benchmark。</td></tr>
+            <tr><td>測試時間</td><td>2026-05-13 22:10:43 +0800</td><td>結果只代表當次環境與負載狀態。</td></tr>
+            <tr><td>CPU</td><td>Apple M1 Max，10 logical cores</td><td>CPU cache、核心類型、turbo 與背景負載都會影響結果。</td></tr>
+            <tr><td>GPU</td><td>Apple M1 Max GPU，24 cores，Metal 4</td><td>GPU 核心數、記憶體頻寬、driver/runtime 與資料同步都會影響結果。</td></tr>
+            <tr><td>OS</td><td>macOS 26.4.1，Darwin 25.4.0，arm64</td><td>scheduler、syscall、driver 與計時精度會影響 benchmark。</td></tr>
             <tr><td>C compiler</td><td>Apple clang 17.0.0（clang-1700.6.3.2）</td><td>C hot path 對 compiler 最佳化非常敏感。</td></tr>
             <tr><td>C flags</td><td><code>-O2</code>、<code>-O3</code></td><td>本輪比較 release-style optimization，不含 ASAN/TSAN。</td></tr>
             <tr><td>Go version</td><td><code>go version go1.22.2 darwin/arm64</code></td><td>此結果不是 Go 1.26 runtime 結果；正式升級評估需用目標 Go 版本重跑。</td></tr>
             <tr><td>Python version</td><td><code>Python 3.14.4</code></td><td>CPython / PyPy / native extension 會產生不同結果。</td></tr>
-            <tr><td>資料量</td><td><code>iterations=50000000</code></td><td>固定資料量避免小樣本被啟動成本主導。</td></tr>
-            <tr><td>報告檔</td><td><a href="../測試報告/2026-05-13-220602-C-Python-Go-真實效能測試報告.md">Markdown 真實測試報告</a></td><td>保留完整文字報告，可作為交付附件。</td></tr>
+            <tr><td>Swift / Metal</td><td><code>Apple Swift 6.2.3</code> + Metal framework</td><td>GPU benchmark 使用 runtime compile 的 Metal kernel。</td></tr>
+            <tr><td>CPU 資料量</td><td><code>iterations=50000000</code></td><td>固定 sequential workload，避免小樣本被啟動成本主導。</td></tr>
+            <tr><td>GPU 資料量</td><td><code>elements=1048576 rounds=128</code></td><td>GPU workload 是 data-parallel hash，不可直接和 sequential CPU loop 混比。</td></tr>
+            <tr><td>報告檔</td><td><a href="../測試報告/2026-05-13-221043-C-Python-Go-GPU-真實效能測試報告.md">Markdown 真實測試報告</a></td><td>保留完整文字報告，可作為交付附件。</td></tr>
           </tbody>
         </table>
       </div>
@@ -638,8 +718,8 @@ python3 python/bench.py
         <svg class="diagram" viewBox="0 0 1080 520" role="img" aria-label="C Python Go 真實效能測試圖表" aria-describedby="real-benchmark-desc">
           <desc id="real-benchmark-desc">以 Apple M1 Max 本機測試結果呈現 C O2、C O3、Go benchmark 與 Python 的 CPU-bound workload 時間比較。</desc>
           <rect x="0" y="0" width="1080" height="520" fill="#fff"></rect>
-          <text x="40" y="44" font-size="24" font-weight="800" fill="#17202a">真實測試結果圖表</text>
-          <text x="40" y="72" font-size="14" fill="#5b6675">資料來源：測試報告/2026-05-13-220602-C-Python-Go-真實效能測試報告.md；時間單位為秒，Go 使用第一筆 ns/op 換算。</text>
+          <text x="40" y="44" font-size="24" font-weight="800" fill="#17202a">真實 CPU 語言測試結果</text>
+          <text x="40" y="72" font-size="14" fill="#5b6675">資料來源：測試報告/2026-05-13-221043-C-Python-Go-GPU-真實效能測試報告.md；時間單位為秒，Go 使用第一筆 ns/op 換算。</text>
 
           <g transform="translate(40 112)">
             <text x="0" y="0" font-size="18" font-weight="800" fill="#243244">執行時間（秒）</text>
@@ -647,32 +727,32 @@ python3 python/bench.py
 
             <text x="0" y="74" font-size="14" font-weight="800" fill="#15803d">Go</text>
             <rect x="120" y="56" width="3" height="26" rx="3" fill="#2563eb"></rect>
-            <text x="138" y="74" font-size="13" fill="#17202a">0.016457s</text>
+            <text x="138" y="74" font-size="13" fill="#17202a">0.016768s</text>
 
             <text x="0" y="122" font-size="14" font-weight="800" fill="#0f766e">C -O3</text>
-            <rect x="120" y="104" width="10" height="26" rx="3" fill="#0f766e"></rect>
-            <text x="145" y="122" font-size="13" fill="#17202a">0.109143s</text>
+            <rect x="120" y="104" width="9" height="26" rx="3" fill="#0f766e"></rect>
+            <text x="144" y="122" font-size="13" fill="#17202a">0.097833s</text>
 
             <text x="0" y="170" font-size="14" font-weight="800" fill="#15803d">C -O2</text>
             <rect x="120" y="152" width="10" height="26" rx="3" fill="#15803d"></rect>
-            <text x="145" y="170" font-size="13" fill="#17202a">0.097666s</text>
+            <text x="145" y="170" font-size="13" fill="#17202a">0.102259s</text>
 
             <text x="0" y="218" font-size="14" font-weight="800" fill="#b45309">Python</text>
             <rect x="120" y="200" width="820" height="26" rx="3" fill="#b45309"></rect>
-            <text x="956" y="218" font-size="13" fill="#17202a">8.640206s</text>
+            <text x="956" y="218" font-size="13" fill="#17202a">8.893503s</text>
           </g>
 
           <g transform="translate(40 380)">
             <text x="0" y="0" font-size="18" font-weight="800" fill="#243244">低延遲區放大（只看 C / Go）</text>
             <text x="0" y="44" font-size="14" font-weight="800" fill="#2563eb">Go</text>
-            <rect x="120" y="27" width="124" height="24" rx="3" fill="#2563eb"></rect>
-            <text x="272" y="44" font-size="13" fill="#17202a">0.016457s</text>
+            <rect x="120" y="27" width="134" height="24" rx="3" fill="#2563eb"></rect>
+            <text x="272" y="44" font-size="13" fill="#17202a">0.016768s</text>
             <text x="0" y="88" font-size="14" font-weight="800" fill="#0f766e">C -O3</text>
-            <rect x="120" y="71" width="820" height="24" rx="3" fill="#0f766e"></rect>
-            <text x="936" y="88" font-size="13" fill="#17202a">0.109143s</text>
+            <rect x="120" y="71" width="784" height="24" rx="3" fill="#0f766e"></rect>
+            <text x="920" y="88" font-size="13" fill="#17202a">0.097833s</text>
             <text x="0" y="132" font-size="14" font-weight="800" fill="#15803d">C -O2</text>
-            <rect x="120" y="115" width="734" height="24" rx="3" fill="#15803d"></rect>
-            <text x="870" y="132" font-size="13" fill="#17202a">0.097666s</text>
+            <rect x="120" y="115" width="820" height="24" rx="3" fill="#15803d"></rect>
+            <text x="955" y="132" font-size="13" fill="#17202a">0.102259s</text>
           </g>
         </svg>
       </div>
@@ -681,10 +761,45 @@ python3 python/bench.py
         <table>
           <thead><tr><th>語言 / 模式</th><th>實測結果</th><th>換算秒數</th><th>相對於 C -O2</th><th>備註</th></tr></thead>
           <tbody>
-            <tr><td>C <code>-O2</code></td><td><code>language=C iterations=50000000 result=3753003574976412281 seconds=0.097666</code></td><td>0.097666</td><td>1.00x</td><td>基準列。</td></tr>
-            <tr><td>C <code>-O3</code></td><td><code>language=C iterations=50000000 result=3753003574976412281 seconds=0.109143</code></td><td>0.109143</td><td>1.12x</td><td>同 workload 下本輪略慢於 <code>-O2</code>。</td></tr>
-            <tr><td>Go benchmark</td><td><code>BenchmarkRun-10 70 16456857 ns/op 0 B/op 0 allocs/op</code></td><td>0.016457</td><td>0.17x</td><td>此數字來自 Go benchmark 單次 operation 的第一筆輸出，不等同整體服務吞吐。</td></tr>
-            <tr><td>Python</td><td><code>language=Python iterations=50000000 result=3753003574976412281 seconds=8.640206</code></td><td>8.640206</td><td>88.47x</td><td>純 CPython loop 成本高；資料分析場景通常應用 vectorization 或 native extension。</td></tr>
+            <tr><td>C <code>-O2</code></td><td><code>language=C iterations=50000000 result=3753003574976412281 seconds=0.102259</code></td><td>0.102259</td><td>1.00x</td><td>CPU sequential baseline。</td></tr>
+            <tr><td>C <code>-O3</code></td><td><code>language=C iterations=50000000 result=3753003574976412281 seconds=0.097833</code></td><td>0.097833</td><td>0.96x</td><td>同 workload 下本輪略快於 <code>-O2</code>。</td></tr>
+            <tr><td>Go benchmark</td><td><code>BenchmarkRun-10 72 16767903 ns/op 0 B/op 0 allocs/op</code></td><td>0.016768</td><td>0.16x</td><td>此數字來自 Go benchmark 單次 operation 的第一筆輸出，不等同整體服務吞吐。</td></tr>
+            <tr><td>Python</td><td><code>language=Python iterations=50000000 result=3753003574976412281 seconds=8.893503</code></td><td>8.893503</td><td>86.97x</td><td>純 CPython loop 成本高；資料分析場景通常應用 vectorization 或 native extension。</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flow-wrap" style="margin-top:12px">
+        <svg class="diagram" viewBox="0 0 1080 360" role="img" aria-label="Metal GPU 真實效能測試圖表" aria-describedby="gpu-real-benchmark-desc">
+          <desc id="gpu-real-benchmark-desc">呈現 Apple M1 Max 上 Swift CPU data-parallel baseline 與 Metal GPU kernel、GPU total elapsed 的實測比較。</desc>
+          <rect x="0" y="0" width="1080" height="360" fill="#fff"></rect>
+          <text x="40" y="44" font-size="24" font-weight="800" fill="#17202a">真實 GPU 比較結果</text>
+          <text x="40" y="72" font-size="14" fill="#5b6675">Workload：parallel_hash，elements=1,048,576，rounds=128；CPU baseline 與 GPU 使用同一個資料平行 hash 邏輯。</text>
+          <g transform="translate(60 122)">
+            <text x="0" y="24" font-size="14" font-weight="800" fill="#166534">CPU baseline</text>
+            <rect x="170" y="3" width="760" height="26" rx="3" fill="#16a34a"></rect>
+            <text x="946" y="24" font-size="13" fill="#17202a">0.319504s</text>
+
+            <text x="0" y="82" font-size="14" font-weight="800" fill="#92400e">GPU kernel</text>
+            <rect x="170" y="61" width="19" height="26" rx="3" fill="#f59e0b"></rect>
+            <text x="205" y="82" font-size="13" fill="#17202a">0.007999s，約 39.94x speedup</text>
+
+            <text x="0" y="140" font-size="14" font-weight="800" fill="#b45309">GPU total</text>
+            <rect x="170" y="119" width="21" height="26" rx="3" fill="#d97706"></rect>
+            <text x="207" y="140" font-size="13" fill="#17202a">0.008889s，約 35.94x speedup</text>
+          </g>
+          <text x="60" y="322" font-size="13" fill="#64748b">注意：GPU total 包含 dispatch、wait 與 shared buffer readback checksum；正式專案需依實際資料搬移路徑重測。</text>
+        </svg>
+      </div>
+
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead><tr><th>GPU 項目</th><th>實測內容</th><th>工程解讀</th></tr></thead>
+          <tbody>
+            <tr><td>GPU benchmark 狀態</td><td>通過</td><td>本輪在沙盒外執行 Metal device，checksum 一致。</td></tr>
+            <tr><td>GPU 實測結果</td><td><code>language=SwiftMetal workload=parallel_hash elements=1048576 rounds=128 cpu_seconds=0.319504 gpu_kernel_seconds=0.007999 gpu_total_seconds=0.008889 status=ok gpu_device="Apple M1 Max"</code></td><td>GPU kernel 與 total time 分開記錄，避免只看 kernel time 低估整體成本。</td></tr>
+            <tr><td>Python GPU runtime</td><td><code>torch=False</code>、<code>cupy=False</code>、<code>numba=False</code>、<code>tensorflow=False</code></td><td>本機未使用 Python GPU stack，本輪 GPU 由 Swift/Metal 實測。</td></tr>
+            <tr><td>Metal 工具鏈</td><td><code>swiftc</code> 可用；<code>xcrun --find metal</code> 不可用</td><td>此 benchmark 使用 Metal runtime source compile，不依賴外部 <code>metal</code> CLI。</td></tr>
           </tbody>
         </table>
       </div>
@@ -693,19 +808,22 @@ python3 python/bench.py
         <table>
           <thead><tr><th>Raw 檔案</th><th>內容</th><th>用途</th></tr></thead>
           <tbody>
-            <tr><td><a href="../測試報告/raw/2026-05-13-220602/environment.txt"><code>environment.txt</code></a></td><td>OS、CPU、核心數、root path、iterations</td><td>追溯測試環境。</td></tr>
-            <tr><td><a href="../測試報告/raw/2026-05-13-220602/clang-version.txt"><code>clang-version.txt</code></a></td><td>Apple clang 版本</td><td>確認 C compiler 來源。</td></tr>
-            <tr><td><a href="../測試報告/raw/2026-05-13-220602/go-version.txt"><code>go-version.txt</code></a></td><td>Go version</td><td>確認 Go runtime / compiler 版本。</td></tr>
-            <tr><td><a href="../測試報告/raw/2026-05-13-220602/python-version.txt"><code>python-version.txt</code></a></td><td>Python version</td><td>確認 CPython 版本。</td></tr>
-            <tr><td><a href="../測試報告/raw/2026-05-13-220602/c-o2-run.txt"><code>c-o2-run.txt</code></a></td><td>C <code>-O2</code> stdout</td><td>保留基準結果。</td></tr>
-            <tr><td><a href="../測試報告/raw/2026-05-13-220602/c-o3-run.txt"><code>c-o3-run.txt</code></a></td><td>C <code>-O3</code> stdout</td><td>比較 compiler flags 差異。</td></tr>
-            <tr><td><a href="../測試報告/raw/2026-05-13-220602/go-bench.txt"><code>go-bench.txt</code></a></td><td><code>go test -bench=. -benchmem -count=5</code></td><td>保留 Go benchmark 原文。</td></tr>
-            <tr><td><a href="../測試報告/raw/2026-05-13-220602/python-run.txt"><code>python-run.txt</code></a></td><td>Python stdout</td><td>保留 interpreter 執行結果。</td></tr>
+            <tr><td><a href="../測試報告/raw/2026-05-13-221043/environment.txt"><code>environment.txt</code></a></td><td>OS、CPU、GPU、核心數、root path、iterations</td><td>追溯測試環境。</td></tr>
+            <tr><td><a href="../測試報告/raw/2026-05-13-221043/gpu-system-profiler.txt"><code>gpu-system-profiler.txt</code></a></td><td>Apple M1 Max GPU、24 cores、Metal 4</td><td>確認 GPU hardware/runtime。</td></tr>
+            <tr><td><a href="../測試報告/raw/2026-05-13-221043/gpu-runtime-probe.txt"><code>gpu-runtime-probe.txt</code></a></td><td>Swift、Metal CLI、Python GPU package 探測</td><td>確認本輪 GPU stack 來源。</td></tr>
+            <tr><td><a href="../測試報告/raw/2026-05-13-221043/gpu-metal-run.txt"><code>gpu-metal-run.txt</code></a></td><td>Swift/Metal GPU stdout</td><td>保留 GPU benchmark 原文。</td></tr>
+            <tr><td><a href="../測試報告/raw/2026-05-13-221043/clang-version.txt"><code>clang-version.txt</code></a></td><td>Apple clang 版本</td><td>確認 C compiler 來源。</td></tr>
+            <tr><td><a href="../測試報告/raw/2026-05-13-221043/go-version.txt"><code>go-version.txt</code></a></td><td>Go version</td><td>確認 Go runtime / compiler 版本。</td></tr>
+            <tr><td><a href="../測試報告/raw/2026-05-13-221043/python-version.txt"><code>python-version.txt</code></a></td><td>Python version</td><td>確認 CPython 版本。</td></tr>
+            <tr><td><a href="../測試報告/raw/2026-05-13-221043/c-o2-run.txt"><code>c-o2-run.txt</code></a></td><td>C <code>-O2</code> stdout</td><td>保留基準結果。</td></tr>
+            <tr><td><a href="../測試報告/raw/2026-05-13-221043/c-o3-run.txt"><code>c-o3-run.txt</code></a></td><td>C <code>-O3</code> stdout</td><td>比較 compiler flags 差異。</td></tr>
+            <tr><td><a href="../測試報告/raw/2026-05-13-221043/go-bench.txt"><code>go-bench.txt</code></a></td><td><code>go test -bench=. -benchmem -count=5</code></td><td>保留 Go benchmark 原文。</td></tr>
+            <tr><td><a href="../測試報告/raw/2026-05-13-221043/python-run.txt"><code>python-run.txt</code></a></td><td>Python stdout</td><td>保留 interpreter 執行結果。</td></tr>
           </tbody>
         </table>
       </div>
 
-      <p class="note">解讀限制：這是 CPU-bound microbenchmark，不代表 OPC UA、Modbus、BACnet、SCADA gateway 或任何 I/O-bound service 的正式效能結論。若要做架構決策，需在目標硬體、目標 OS、目標 compiler/runtime 版本與真實 payload 下重跑。</p>
+      <p class="note">解讀限制：CPU 語言比較是 sequential CPU-bound microbenchmark；GPU 比較是 data-parallel microbenchmark。兩者可用來示範測試方法與報告格式，但不能直接代表 OPC UA、Modbus、BACnet、SCADA gateway 或任何 I/O-bound service 的正式效能結論。</p>
     </section>
 
     <section id="troubleshooting">

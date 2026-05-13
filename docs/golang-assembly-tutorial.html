@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Golang Assembly Hot Path 實作教程</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --ink: #17202a;
+      --muted: #5b6675;
+      --line: #d7e0ea;
+      --blue: #2563eb;
+      --green: #15803d;
+      --amber: #b45309;
+      --rose: #be123c;
+      --code: #0f172a;
+      --shadow: 0 16px 32px rgba(15, 23, 42, .08);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.62;
+    }
+    a { color: inherit; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .hero {
+      background: #111827;
+      color: #f8fafc;
+      padding: 36px 20px 32px;
+      border-bottom: 1px solid rgba(255,255,255,.12);
+    }
+    .hero-inner {
+      max-width: 1220px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr);
+      gap: 22px;
+      align-items: center;
+    }
+    h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.45rem); line-height: 1.08; letter-spacing: 0; }
+    h2 { margin: 0; font-size: clamp(1.45rem, 2.5vw, 2.15rem); letter-spacing: 0; }
+    h3 { margin: 10px 0 8px; font-size: 1.14rem; letter-spacing: 0; }
+    .hero p { margin: 16px 0 0; color: #cbd5e1; max-width: 820px; }
+    .hero-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .hero-card {
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .hero-card strong { display: block; font-size: 1.35rem; line-height: 1.15; }
+    .hero-card span { display: block; margin-top: 7px; color: #dbeafe; font-size: .9rem; }
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(246,248,251,.96);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px);
+    }
+    .toolbar-inner {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 10px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      padding: 8px 11px;
+      border-radius: 8px;
+      font-weight: 800;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn:hover { border-color: var(--blue); color: var(--blue); background: #eff6ff; }
+    main { max-width: 1220px; margin: 0 auto; padding: 22px 20px 64px; }
+    section { margin: 28px 0; scroll-margin-top: 82px; }
+    .section-head { display: flex; justify-content: space-between; gap: 16px; align-items: end; margin-bottom: 14px; }
+    .section-head p, .muted { color: var(--muted); }
+    .section-head p { margin: 6px 0 0; }
+    .panel, .card, .warning, .command-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+    .grid-2, .grid-3, .command-grid { display: grid; gap: 12px; }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3, .command-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #e0f2fe;
+      color: #075985;
+      font-weight: 800;
+      font-size: .78rem;
+    }
+    .badge.green { background: #dcfce7; color: #166534; }
+    .badge.amber { background: #fef3c7; color: #92400e; }
+    .badge.rose { background: #ffe4e6; color: #9f1239; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+    table { width: 100%; min-width: 880px; border-collapse: collapse; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { background: #eef4fb; color: #243244; font-size: .9rem; }
+    tr:last-child td { border-bottom: 0; }
+    .flow-wrap { overflow-x: auto; }
+    .diagram { width: 100%; min-width: 900px; height: auto; display: block; background: #fff; border: 1px solid var(--line); border-radius: 8px; }
+    pre { overflow-x: auto; margin: 0; padding: 14px; background: var(--code); color: #e5e7eb; border-radius: 8px; font-size: .9rem; }
+    .code-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin: 16px 0 0;
+      padding: 10px 12px;
+      background: #1e293b;
+      color: #e2e8f0;
+      border-radius: 8px 8px 0 0;
+      font-weight: 800;
+      font-size: .9rem;
+    }
+    .code-title + pre { border-radius: 0 0 8px 8px; }
+    .copy-btn {
+      border: 1px solid rgba(255,255,255,.22);
+      background: rgba(255,255,255,.08);
+      color: #e2e8f0;
+      border-radius: 7px;
+      padding: 5px 8px;
+      font: inherit;
+      font-size: .78rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .warning { border-left: 4px solid var(--amber); background: #fffbeb; }
+    .warning strong { color: #92400e; }
+    .checklist { margin: 8px 0 0; padding-left: 20px; }
+    .checklist li { margin: 4px 0; }
+    .figure-caption { margin: 8px 0 0; color: var(--muted); font-size: .92rem; }
+    .footer-note { margin-top: 34px; color: var(--muted); font-size: .92rem; text-align: center; }
+    @media (max-width: 860px) {
+      .hero-inner, .grid-2, .grid-3, .command-grid { grid-template-columns: 1fr; }
+      .hero-grid { grid-template-columns: 1fr; }
+      .section-head { display: block; }
+      table { min-width: 760px; }
+      .diagram { min-width: 840px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div>
+        <h1>Golang Assembly Hot Path 實作教程</h1>
+        <p>本頁只講 Assembly：何時值得寫 `.s`、如何建立 Go prototype、build tag、fallback、測試、benchmark 與 objdump 驗證。HTTP 微服務部署已拆到獨立頁面。</p>
+      </div>
+      <div class="hero-grid" aria-label="page summary">
+        <div class="hero-card"><strong>定位</strong><span>Assembly 只處理可量測、可隔離、可替換的 CPU hot path。</span></div>
+        <div class="hero-card"><strong>邊界</strong><span>Go declaration、amd64 `.s`、generic fallback、table tests。</span></div>
+        <div class="hero-card"><strong>驗證</strong><span>go test、benchmark、benchmem、objdump、GOARCH fallback。</span></div>
+        <div class="hero-card"><strong>風險</strong><span>ABI、symbol、stack frame、跨平台與維護成本。</span></div>
+      </div>
+    </div>
+  </header>
+
+  <nav class="toolbar" aria-label="Golang assembly tutorial navigation">
+    <div class="toolbar-inner">
+      <a class="btn" href="#overview">Overview</a>
+      <a class="btn" href="#architecture">Architecture</a>
+      <a class="btn" href="#setup">Setup</a>
+      <a class="btn" href="#configuration">Configuration</a>
+      <a class="btn" href="#example">Example</a>
+      <a class="btn" href="#verification">Verification</a>
+      <a class="btn" href="#troubleshooting">Troubleshooting</a>
+      <a class="btn" href="#best-practices">Best Practices</a>
+      <a class="btn" href="golang-microservice-tutorial.html">微服務教程</a>
+    </div>
+  </nav>
+
+  <main>
+    <section id="overview">
+      <div class="section-head">
+        <div>
+          <h2>Overview</h2>
+          <p>Assembly 不是架構設計工具，而是最後一哩的 CPU hot path 最佳化。先用 pure Go 寫對，再用 profile 證明慢點，最後才替換成 assembly。</p>
+        </div>
+      </div>
+      <div class="grid-3">
+        <article class="card"><span class="badge green">適合</span><h3>固定演算法核心</h3><p>Checksum、hash-like scoring、encoding inner loop、SIMD-friendly loop。輸入輸出應是簡單 scalar、slice、pointer 與 length。</p></article>
+        <article class="card"><span class="badge amber">不適合</span><h3>業務與 I/O</h3><p>HTTP、JSON、DB、queue、OPC UA、Modbus、BACnet、PLC polling 都不應放進 assembly。這些瓶頸多在 I/O wait 與 timeout。</p></article>
+        <article class="card"><span class="badge rose">必要條件</span><h3>可回退</h3><p>每個 assembly function 都要有 pure Go fallback 與同一組測試資料，否則跨平台部署與 rollback 風險太高。</p></article>
+      </div>
+    </section>
+
+    <section id="architecture">
+      <div class="section-head">
+        <div>
+          <h2>Architecture</h2>
+          <p>Assembly 應該被包在最小 compute package 內。外層服務只依賴 Go 函式，不知道內部使用 `.s` 或 fallback。</p>
+        </div>
+      </div>
+      <div class="flow-wrap">
+        <svg class="diagram" viewBox="0 0 1120 430" role="img" aria-label="Golang Assembly hot path architecture" aria-describedby="asm-arch-desc">
+          <desc id="asm-arch-desc">展示 Go public function、architecture-specific assembly implementation、generic fallback、tests、benchmark 與 objdump 的關係。</desc>
+          <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#52637a"></path></marker></defs>
+          <rect x="0" y="0" width="1120" height="430" fill="#fff"></rect>
+          <text x="42" y="48" font-size="24" font-weight="800" fill="#17202a">Assembly Hot Path Boundary</text>
+          <rect x="62" y="102" width="230" height="86" rx="8" fill="#eff6ff" stroke="#93c5fd"></rect>
+          <text x="88" y="137" font-size="18" font-weight="800" fill="#1d4ed8">Go API</text>
+          <text x="88" y="162" font-size="13" fill="#1d4ed8">func Score([]uint64) uint64</text>
+          <line x1="292" y1="145" x2="380" y2="145" stroke="#52637a" stroke-width="3" marker-end="url(#arrow)"></line>
+          <rect x="392" y="76" width="260" height="112" rx="8" fill="#fffbeb" stroke="#fbbf24"></rect>
+          <text x="420" y="112" font-size="18" font-weight="800" fill="#92400e">amd64 Assembly</text>
+          <text x="420" y="138" font-size="13" fill="#92400e">score_amd64.go + score_amd64.s</text>
+          <text x="420" y="160" font-size="13" fill="#92400e">build tag: amd64</text>
+          <rect x="392" y="238" width="260" height="94" rx="8" fill="#f0fdf4" stroke="#86efac"></rect>
+          <text x="420" y="274" font-size="18" font-weight="800" fill="#166534">Pure Go Fallback</text>
+          <text x="420" y="300" font-size="13" fill="#166534">score_generic.go, build tag: !amd64</text>
+          <line x1="522" y1="188" x2="522" y2="238" stroke="#52637a" stroke-width="3" marker-end="url(#arrow)"></line>
+          <rect x="744" y="88" width="290" height="102" rx="8" fill="#f8fafc" stroke="#cbd5e1"></rect>
+          <text x="774" y="124" font-size="18" font-weight="800" fill="#334155">Verification</text>
+          <text x="774" y="150" font-size="13" fill="#475569">unit tests / benchmark / objdump</text>
+          <line x1="652" y1="145" x2="734" y2="145" stroke="#52637a" stroke-width="3" marker-end="url(#arrow)"></line>
+          <line x1="652" y1="285" x2="734" y2="164" stroke="#52637a" stroke-width="3" marker-end="url(#arrow)"></line>
+          <rect x="205" y="362" width="710" height="44" rx="8" fill="#fff7ed" stroke="#fed7aa"></rect>
+          <text x="234" y="390" font-size="14" fill="#9a3412">原則：外部只看 Go API；assembly 是 package 內部 implementation detail。</text>
+        </svg>
+      </div>
+      <p class="figure-caption">架構重點：把 CPU architecture 差異限制在 `internal/compute`，不要讓外部 API、資料格式或部署流程依賴 assembly。</p>
+    </section>
+
+    <section id="setup">
+      <div class="section-head">
+        <div>
+          <h2>Setup</h2>
+          <p>先建立最小 compute package。這裡不建立 HTTP server，讓 Assembly 教程保持單一關注點。</p>
+        </div>
+      </div>
+      <div class="code-title"><span>建立專案骨架</span><button class="copy-btn" data-copy="setup-code">複製</button></div>
+      <pre id="setup-code"><code>mkdir go-asm-hotpath
+cd go-asm-hotpath
+go mod init example.com/go-asm-hotpath
+mkdir -p internal/compute</code></pre>
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead><tr><th>需求</th><th>建議</th><th>原因</th></tr></thead>
+          <tbody>
+            <tr><td>Go toolchain</td><td><code>go version</code></td><td>Go assembler、ABI 與 build constraint 行為會隨版本演進。</td></tr>
+            <tr><td>目標平台</td><td>先從 <code>amd64</code> 開始</td><td>每個 GOARCH 都要獨立實作與驗證。</td></tr>
+            <tr><td>測試資料</td><td>小樣本、空 slice、大樣本、溢位行為</td><td>Assembly 錯誤常是不 panic 但算錯。</td></tr>
+            <tr><td>效能基準</td><td><code>go test -bench=. -benchmem -count=10</code></td><td>沒有數字就不要保留 assembly。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="configuration">
+      <div class="section-head">
+        <div>
+          <h2>Configuration</h2>
+          <p>Assembly 主要靠 build tags 和 GOARCH 控制，不建議用 runtime flag 直接切換未驗證路徑。</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <article class="card">
+          <span class="badge">Build tags</span>
+          <h3>平台檔案分工</h3>
+          <ul class="checklist">
+            <li><code>score_amd64.go</code>：宣告 assembly symbol。</li>
+            <li><code>score_amd64.s</code>：amd64 實作。</li>
+            <li><code>score_generic.go</code>：非 amd64 fallback。</li>
+            <li><code>score_test.go</code>：所有平台共用驗證。</li>
+          </ul>
+        </article>
+        <article class="warning">
+          <strong>部署注意</strong>
+          <p>若 production 會跑在 amd64 與 arm64 混合環境，必須在 CI 加入 <code>GOARCH=amd64</code> 與 <code>GOARCH=arm64</code> 的 build/test gate。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="example">
+      <div class="section-head">
+        <div>
+          <h2>Example</h2>
+          <p>範例實作 <code>Score([]uint64) uint64</code>。Go API 負責空值處理，內部 hot path 由平台實作決定。</p>
+        </div>
+      </div>
+
+      <div class="code-title"><span>internal/compute/score.go</span><button class="copy-btn" data-copy="score-go">複製</button></div>
+      <pre id="score-go"><code>package compute
+
+func Score(values []uint64) uint64 {
+	if len(values) == 0 {
+		return 0
+	}
+	return score(values)
+}</code></pre>
+
+      <div class="code-title"><span>internal/compute/score_amd64.go</span><button class="copy-btn" data-copy="score-amd64-go">複製</button></div>
+      <pre id="score-amd64-go"><code>//go:build amd64
+
+package compute
+
+func score(values []uint64) uint64</code></pre>
+
+      <div class="code-title"><span>internal/compute/score_generic.go</span><button class="copy-btn" data-copy="score-generic-go">複製</button></div>
+      <pre id="score-generic-go"><code>//go:build !amd64
+
+package compute
+
+func score(values []uint64) uint64 {
+	var total uint64
+	for _, value := range values {
+		total += value
+	}
+	return total
+}</code></pre>
+
+      <div class="code-title"><span>internal/compute/score_amd64.s</span><button class="copy-btn" data-copy="score-asm">複製</button></div>
+      <pre id="score-asm"><code>//go:build amd64
+
+#include "textflag.h"
+
+// func score(values []uint64) uint64
+TEXT ·score(SB), NOSPLIT, $0-32
+	MOVQ values_base+0(FP), SI
+	MOVQ values_len+8(FP), CX
+	XORQ AX, AX
+
+loop:
+	TESTQ CX, CX
+	JEQ done
+	ADDQ (SI), AX
+	ADDQ $8, SI
+	DECQ CX
+	JMP loop
+
+done:
+	MOVQ AX, ret+24(FP)
+	RET</code></pre>
+
+      <div class="code-title"><span>internal/compute/score_test.go</span><button class="copy-btn" data-copy="score-test">複製</button></div>
+      <pre id="score-test"><code>package compute
+
+import "testing"
+
+func TestScore(t *testing.T) {
+	cases := []struct {
+		name   string
+		values []uint64
+		want   uint64
+	}{
+		{name: "empty", values: nil, want: 0},
+		{name: "small", values: []uint64{1, 2, 3, 4, 5}, want: 15},
+		{name: "overflow", values: []uint64{^uint64(0), 1}, want: 0},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := Score(tc.values); got != tc.want {
+				t.Fatalf("Score()=%d want %d", got, tc.want)
+			}
+		})
+	}
+}
+
+func BenchmarkScore(b *testing.B) {
+	values := make([]uint64, 4096)
+	for i := range values {
+		values[i] = uint64(i + 1)
+	}
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		_ = Score(values)
+	}
+}</code></pre>
+    </section>
+
+    <section id="verification">
+      <div class="section-head">
+        <div>
+          <h2>Verification</h2>
+          <p>驗證要證明三件事：結果正確、目標平台可編譯、效能收益大於維護成本。</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>驗證項</th><th>指令</th><th>通過條件</th></tr></thead>
+          <tbody>
+            <tr><td>功能測試</td><td><code>go test ./... -count=1</code></td><td>table tests 全部通過。</td></tr>
+            <tr><td>amd64 build</td><td><code>GOARCH=amd64 go test ./... -count=1</code></td><td>assembly symbol 正確連結。</td></tr>
+            <tr><td>fallback build</td><td><code>GOARCH=arm64 go test ./... -count=1</code></td><td>generic fallback 可用。</td></tr>
+            <tr><td>benchmark</td><td><code>go test ./internal/compute -bench=. -benchmem -count=10</code></td><td>記錄 ns/op、B/op、allocs/op 與 CPU/Go version。</td></tr>
+            <tr><td>反組譯</td><td><code>go test -c ./internal/compute && go tool objdump -s 'score' compute.test</code></td><td>能看到目標 symbol 與預期指令。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-title"><span>固定驗證指令</span><button class="copy-btn" data-copy="verify-code">複製</button></div>
+      <pre id="verify-code"><code>go test ./... -count=1
+GOARCH=amd64 go test ./... -count=1
+GOARCH=arm64 go test ./... -count=1
+go test ./internal/compute -bench=. -benchmem -count=10
+go test -c ./internal/compute
+go tool objdump -s 'score' compute.test | sed -n '1,120p'</code></pre>
+    </section>
+
+    <section id="troubleshooting">
+      <div class="section-head">
+        <div>
+          <h2>Troubleshooting</h2>
+          <p>Go assembly 常見錯誤多半不是語法，而是 symbol、ABI、build tag、offset 或平台假設。</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>症狀</th><th>可能原因</th><th>處理方式</th></tr></thead>
+          <tbody>
+            <tr><td><code>missing function body</code></td><td>Go declaration 找不到 `.s` 實作。</td><td>確認 <code>score_amd64.go</code> 和 <code>score_amd64.s</code> build tag 一致。</td></tr>
+            <tr><td><code>relocation target not defined</code></td><td>symbol 名稱不一致。</td><td>同 package 使用 <code>TEXT ·score(SB)</code>，注意 middle dot。</td></tr>
+            <tr><td>結果錯誤但不 panic</td><td>slice header offset 或 return offset 錯誤。</td><td>用空值、小值、溢位與大資料 table tests 固定行為。</td></tr>
+            <tr><td>非 amd64 失敗</td><td>fallback 缺失或 build constraint 錯。</td><td>保留 <code>score_generic.go</code> 並跑 <code>GOARCH=arm64 go test</code>。</td></tr>
+            <tr><td>效能沒提升</td><td>瓶頸不在該 loop，或 Go compiler 已足夠最佳化。</td><td>用 pprof 與 benchstat 判斷，不要只看單次 benchmark。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="best-practices">
+      <div class="section-head">
+        <div>
+          <h2>Best Practices</h2>
+          <p>Assembly 的價值在可測、可替換、可回退。任何不符合這三點的最佳化都應先停下來。</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <article class="card">
+          <span class="badge green">Do</span>
+          <ul class="checklist">
+            <li>先寫 pure Go reference implementation。</li>
+            <li>把 assembly 限制在 internal package。</li>
+            <li>用固定 benchmark 和 raw output 記錄收益。</li>
+            <li>每個 GOARCH 都有 build/test gate。</li>
+            <li>在 release note 標註 Go version、GOARCH、CPU 與 benchmark 條件。</li>
+          </ul>
+        </article>
+        <article class="card">
+          <span class="badge rose">Avoid</span>
+          <ul class="checklist">
+            <li>在 assembly 中處理 JSON、HTTP、DB 或 queue。</li>
+            <li>沒有 fallback 就部署到多架構環境。</li>
+            <li>只用單次 benchmark 宣稱效能提升。</li>
+            <li>讓外部 API 曝露 CPU architecture 差異。</li>
+            <li>為了展示技術而導入 assembly。</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <p class="footer-note">Golang Assembly 教程。若要把 hot path 放入 HTTP API，請接續閱讀 <a href="golang-microservice-tutorial.html">Go 微服務教程</a>。</p>
+  </main>
+
+  <script>
+    document.querySelectorAll("[data-copy]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const target = document.getElementById(button.dataset.copy);
+        if (!target) return;
+        try {
+          await navigator.clipboard.writeText(target.innerText);
+          const original = button.textContent;
+          button.textContent = "已複製";
+          setTimeout(() => { button.textContent = original; }, 1200);
+        } catch {
+          button.textContent = "請手動複製";
+        }
+      });
+    });
+  </script>
+</body>
+</html>

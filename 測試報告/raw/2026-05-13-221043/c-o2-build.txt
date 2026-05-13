@@ -1,0 +1,1 @@
+$ cd '/Users/jasonchiu/Documents/CodexData/Golang學習筆記/examples/performance-comparison' && clang -O2 c/bench.c -o '/Users/jasonchiu/Documents/CodexData/Golang學習筆記/測試報告/raw/2026-05-13-221043/bench-c-o2'

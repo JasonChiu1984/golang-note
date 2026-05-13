@@ -1,0 +1,663 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Golang 微服務實作教程</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --ink: #17202a;
+      --muted: #5b6675;
+      --line: #d7e0ea;
+      --blue: #2563eb;
+      --green: #15803d;
+      --amber: #b45309;
+      --rose: #be123c;
+      --teal: #0f766e;
+      --code: #0f172a;
+      --shadow: 0 16px 32px rgba(15, 23, 42, .08);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.62;
+    }
+    a { color: inherit; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .hero {
+      background: #111827;
+      color: #f8fafc;
+      padding: 36px 20px 32px;
+      border-bottom: 1px solid rgba(255,255,255,.12);
+    }
+    .hero-inner {
+      max-width: 1220px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr);
+      gap: 22px;
+      align-items: center;
+    }
+    h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.45rem); line-height: 1.08; letter-spacing: 0; }
+    h2 { margin: 0; font-size: clamp(1.45rem, 2.5vw, 2.15rem); letter-spacing: 0; }
+    h3 { margin: 10px 0 8px; font-size: 1.14rem; letter-spacing: 0; }
+    .hero p { margin: 16px 0 0; color: #cbd5e1; max-width: 820px; }
+    .hero-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .hero-card {
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .hero-card strong { display: block; font-size: 1.35rem; line-height: 1.15; }
+    .hero-card span { display: block; margin-top: 7px; color: #dbeafe; font-size: .9rem; }
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(246,248,251,.96);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px);
+    }
+    .toolbar-inner {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 10px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      padding: 8px 11px;
+      border-radius: 8px;
+      font-weight: 800;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn:hover { border-color: var(--blue); color: var(--blue); background: #eff6ff; }
+    main { max-width: 1220px; margin: 0 auto; padding: 22px 20px 64px; }
+    section { margin: 28px 0; scroll-margin-top: 82px; }
+    .section-head { display: flex; justify-content: space-between; gap: 16px; align-items: end; margin-bottom: 14px; }
+    .section-head p, .muted { color: var(--muted); }
+    .section-head p { margin: 6px 0 0; }
+    .panel, .card, .warning, .command-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+    .grid-2, .grid-3, .command-grid { display: grid; gap: 12px; }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3, .command-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #e0f2fe;
+      color: #075985;
+      font-weight: 800;
+      font-size: .78rem;
+    }
+    .badge.green { background: #dcfce7; color: #166534; }
+    .badge.amber { background: #fef3c7; color: #92400e; }
+    .badge.rose { background: #ffe4e6; color: #9f1239; }
+    .badge.teal { background: #ccfbf1; color: #0f766e; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+    table { width: 100%; min-width: 880px; border-collapse: collapse; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { background: #eef4fb; color: #243244; font-size: .9rem; }
+    tr:last-child td { border-bottom: 0; }
+    .flow-wrap { overflow-x: auto; }
+    .diagram { width: 100%; min-width: 900px; height: auto; display: block; background: #fff; border: 1px solid var(--line); border-radius: 8px; }
+    pre { overflow-x: auto; margin: 0; padding: 14px; background: var(--code); color: #e5e7eb; border-radius: 8px; font-size: .9rem; }
+    .code-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin: 16px 0 0;
+      padding: 10px 12px;
+      background: #1e293b;
+      color: #e2e8f0;
+      border-radius: 8px 8px 0 0;
+      font-weight: 800;
+      font-size: .9rem;
+    }
+    .code-title + pre { border-radius: 0 0 8px 8px; }
+    .copy-btn {
+      border: 1px solid rgba(255,255,255,.22);
+      background: rgba(255,255,255,.08);
+      color: #e2e8f0;
+      border-radius: 7px;
+      padding: 5px 8px;
+      font: inherit;
+      font-size: .78rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .warning { border-left: 4px solid var(--amber); background: #fffbeb; }
+    .warning strong { color: #92400e; }
+    .checklist { margin: 8px 0 0; padding-left: 20px; }
+    .checklist li { margin: 4px 0; }
+    .figure-caption { margin: 8px 0 0; color: var(--muted); font-size: .92rem; }
+    .footer-note { margin-top: 34px; color: var(--muted); font-size: .92rem; text-align: center; }
+    @media (max-width: 860px) {
+      .hero-inner, .grid-2, .grid-3, .command-grid { grid-template-columns: 1fr; }
+      .hero-grid { grid-template-columns: 1fr; }
+      .section-head { display: block; }
+      table { min-width: 760px; }
+      .diagram { min-width: 840px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div>
+        <h1>Golang 微服務實作教程</h1>
+        <p>本頁只講 Go 微服務：系統架構、功能分層、設定、HTTP API、timeout、logging、health check、Docker、指令碼與驗證流程。Assembly hot path 已拆到獨立頁面。</p>
+      </div>
+      <div class="hero-grid" aria-label="page summary">
+        <div class="hero-card"><strong>系統架構</strong><span>handler、service、repository、observability、configuration。</span></div>
+        <div class="hero-card"><strong>功能解說</strong><span>API contract、timeout、error response、health/readiness。</span></div>
+        <div class="hero-card"><strong>應用範例</strong><span>工業資料 gateway / scoring API / batch service。</span></div>
+        <div class="hero-card"><strong>指令碼</strong><span>dev、test、smoke、docker build、curl 驗證。</span></div>
+      </div>
+    </div>
+  </header>
+
+  <nav class="toolbar" aria-label="Golang microservice tutorial navigation">
+    <div class="toolbar-inner">
+      <a class="btn" href="#overview">Overview</a>
+      <a class="btn" href="#architecture">Architecture</a>
+      <a class="btn" href="#setup">Setup</a>
+      <a class="btn" href="#configuration">Configuration</a>
+      <a class="btn" href="#example">Example</a>
+      <a class="btn" href="#scripts">指令碼</a>
+      <a class="btn" href="#verification">Verification</a>
+      <a class="btn" href="#troubleshooting">Troubleshooting</a>
+      <a class="btn" href="#best-practices">Best Practices</a>
+      <a class="btn" href="golang-assembly-tutorial.html">Assembly 教程</a>
+    </div>
+  </nav>
+
+  <main>
+    <section id="overview">
+      <div class="section-head">
+        <div>
+          <h2>Overview</h2>
+          <p>Go 微服務的價值不只是 HTTP server，而是可部署、可觀測、可設定、可測試、可維護的服務邊界。</p>
+        </div>
+      </div>
+      <div class="grid-3">
+        <article class="card"><span class="badge green">服務邊界</span><h3>清楚 API contract</h3><p>每個 endpoint 都要有固定 request/response/error schema，避免前端、SCADA gateway 或 batch job 對錯誤格式做猜測。</p></article>
+        <article class="card"><span class="badge">可靠性</span><h3>Timeout 與 graceful shutdown</h3><p>HTTP server 必須有 read header timeout、request timeout、shutdown timeout，避免慢連線與卡住的 downstream 拖垮服務。</p></article>
+        <article class="card"><span class="badge amber">維運</span><h3>Health、log、metrics</h3><p>最小 production 服務要有 <code>/livez</code>、<code>/readyz</code>、結構化 log、request id 與可重跑 smoke test。</p></article>
+      </div>
+    </section>
+
+    <section id="architecture">
+      <div class="section-head">
+        <div>
+          <h2>Architecture</h2>
+          <p>把 HTTP、service logic、資料存取、觀測性與設定分層，讓每一層都可單獨測試與替換。</p>
+        </div>
+      </div>
+      <div class="flow-wrap">
+        <svg class="diagram" viewBox="0 0 1120 500" role="img" aria-label="Golang microservice architecture" aria-describedby="microservice-arch-desc">
+          <desc id="microservice-arch-desc">展示 client request 經由 HTTP handler、middleware、service、repository、observability 和 external system 的微服務資料流。</desc>
+          <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#52637a"></path></marker></defs>
+          <rect x="0" y="0" width="1120" height="500" fill="#fff"></rect>
+          <text x="42" y="48" font-size="24" font-weight="800" fill="#17202a">Go Microservice Architecture</text>
+          <rect x="58" y="100" width="190" height="84" rx="8" fill="#dbeafe" stroke="#93c5fd"></rect>
+          <text x="86" y="134" font-size="18" font-weight="800" fill="#1d4ed8">Client</text>
+          <text x="86" y="160" font-size="13" fill="#1d4ed8">curl / UI / gateway</text>
+          <rect x="318" y="100" width="220" height="84" rx="8" fill="#eff6ff" stroke="#93c5fd"></rect>
+          <text x="348" y="134" font-size="18" font-weight="800" fill="#1d4ed8">HTTP Handler</text>
+          <text x="348" y="160" font-size="13" fill="#1d4ed8">decode / validate / encode</text>
+          <rect x="608" y="100" width="220" height="84" rx="8" fill="#f0fdf4" stroke="#86efac"></rect>
+          <text x="638" y="134" font-size="18" font-weight="800" fill="#166534">Service Layer</text>
+          <text x="638" y="160" font-size="13" fill="#166534">business rule / timeout</text>
+          <rect x="888" y="100" width="190" height="84" rx="8" fill="#fffbeb" stroke="#fbbf24"></rect>
+          <text x="916" y="134" font-size="18" font-weight="800" fill="#92400e">Repository</text>
+          <text x="916" y="160" font-size="13" fill="#92400e">DB / cache / external API</text>
+          <line x1="248" y1="142" x2="308" y2="142" stroke="#52637a" stroke-width="3" marker-end="url(#arrow)"></line>
+          <line x1="538" y1="142" x2="598" y2="142" stroke="#52637a" stroke-width="3" marker-end="url(#arrow)"></line>
+          <line x1="828" y1="142" x2="878" y2="142" stroke="#52637a" stroke-width="3" marker-end="url(#arrow)"></line>
+
+          <rect x="318" y="276" width="220" height="92" rx="8" fill="#ecfeff" stroke="#67e8f9"></rect>
+          <text x="348" y="312" font-size="18" font-weight="800" fill="#0f766e">Observability</text>
+          <text x="348" y="338" font-size="13" fill="#0f766e">log / metrics / request id</text>
+          <rect x="608" y="276" width="220" height="92" rx="8" fill="#f8fafc" stroke="#cbd5e1"></rect>
+          <text x="638" y="312" font-size="18" font-weight="800" fill="#334155">Configuration</text>
+          <text x="638" y="338" font-size="13" fill="#475569">env / validation / defaults</text>
+          <rect x="888" y="276" width="190" height="92" rx="8" fill="#ffe4e6" stroke="#fda4af"></rect>
+          <text x="916" y="312" font-size="18" font-weight="800" fill="#9f1239">Health</text>
+          <text x="916" y="338" font-size="13" fill="#9f1239">/livez /readyz</text>
+          <path d="M428 184 V266" stroke="#52637a" stroke-width="3" fill="none" marker-end="url(#arrow)"></path>
+          <path d="M718 184 V266" stroke="#52637a" stroke-width="3" fill="none" marker-end="url(#arrow)"></path>
+          <path d="M983 184 V266" stroke="#52637a" stroke-width="3" fill="none" marker-end="url(#arrow)"></path>
+          <rect x="214" y="420" width="692" height="44" rx="8" fill="#f8fafc" stroke="#cbd5e1"></rect>
+          <text x="244" y="448" font-size="14" fill="#475569">架構原則：handler 不放 business logic，service 不知道 HTTP，repository 不知道 request id 格式。</text>
+        </svg>
+      </div>
+      <p class="figure-caption">架構重點：每個邊界只做自己的事，測試與排錯才會清楚。</p>
+    </section>
+
+    <section id="setup">
+      <div class="section-head">
+        <div>
+          <h2>Setup</h2>
+          <p>此範例只用 Go 標準庫，先建立 production-oriented 的最小服務骨架，再視需求加入 Gin、Fiber、pgx、Prometheus 或 OpenTelemetry。</p>
+        </div>
+      </div>
+      <div class="code-title"><span>建立專案骨架</span><button class="copy-btn" data-copy="setup-code">複製</button></div>
+      <pre id="setup-code"><code>mkdir go-microservice
+cd go-microservice
+go mod init example.com/go-microservice
+mkdir -p cmd/server internal/api internal/config internal/service scripts</code></pre>
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead><tr><th>資料夾</th><th>責任</th><th>不要放什麼</th></tr></thead>
+          <tbody>
+            <tr><td><code>cmd/server</code></td><td>啟動 server、載入 config、接 signal。</td><td>不要放 business logic。</td></tr>
+            <tr><td><code>internal/api</code></td><td>HTTP routing、JSON decode/encode、status code。</td><td>不要直接操作資料庫。</td></tr>
+            <tr><td><code>internal/service</code></td><td>用例邏輯、timeout、輸入規則。</td><td>不要依賴 <code>http.ResponseWriter</code>。</td></tr>
+            <tr><td><code>internal/config</code></td><td>環境變數解析與驗證。</td><td>不要在 handler 裡讀 env。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="configuration">
+      <div class="section-head">
+        <div>
+          <h2>Configuration</h2>
+          <p>設定必須 fail fast。錯誤的 port、timeout 或 queue size 應在服務啟動時失敗，而不是讓 production request 才撞錯。</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <article class="card">
+          <span class="badge">Env</span>
+          <h3>建議設定</h3>
+          <ul class="checklist">
+            <li><code>PORT=8080</code>：HTTP listen port。</li>
+            <li><code>REQUEST_TIMEOUT=2s</code>：單次業務 timeout。</li>
+            <li><code>SHUTDOWN_TIMEOUT=10s</code>：graceful shutdown 最大等待。</li>
+            <li><code>LOG_LEVEL=info</code>：本地與 production 可切換。</li>
+          </ul>
+        </article>
+        <article class="warning">
+          <strong>工業現場提醒</strong>
+          <p>若服務接 PLC、DDC、OPC UA、Modbus 或 BACnet endpoint，timeout 要依設備反應時間、網段延遲、retry 次數與 fail-safe 策略設計，不要沿用 Web API 預設值。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="example">
+      <div class="section-head">
+        <div>
+          <h2>Example</h2>
+          <p>範例 API：<code>POST /score</code> 接收整數陣列並回傳 score；<code>/livez</code> 與 <code>/readyz</code> 用於容器與負載平衡檢查。</p>
+        </div>
+      </div>
+
+      <div class="code-title"><span>internal/config/config.go</span><button class="copy-btn" data-copy="config-go">複製</button></div>
+      <pre id="config-go"><code>package config
+
+import (
+	"fmt"
+	"os"
+	"strconv"
+	"time"
+)
+
+type Config struct {
+	Port            int
+	RequestTimeout  time.Duration
+	ShutdownTimeout time.Duration
+}
+
+func Load() (Config, error) {
+	port, err := intEnv("PORT", 8080)
+	if err != nil {
+		return Config{}, err
+	}
+	return Config{
+		Port:            port,
+		RequestTimeout:  durationEnv("REQUEST_TIMEOUT", 2*time.Second),
+		ShutdownTimeout: durationEnv("SHUTDOWN_TIMEOUT", 10*time.Second),
+	}, nil
+}
+
+func intEnv(key string, fallback int) (int, error) {
+	raw := os.Getenv(key)
+	if raw == "" {
+		return fallback, nil
+	}
+	value, err := strconv.Atoi(raw)
+	if err != nil || value <= 0 {
+		return 0, fmt.Errorf("%s must be a positive integer", key)
+	}
+	return value, nil
+}
+
+func durationEnv(key string, fallback time.Duration) time.Duration {
+	raw := os.Getenv(key)
+	if raw == "" {
+		return fallback
+	}
+	value, err := time.ParseDuration(raw)
+	if err != nil || value <= 0 {
+		return fallback
+	}
+	return value
+}</code></pre>
+
+      <div class="code-title"><span>internal/service/score.go</span><button class="copy-btn" data-copy="service-go">複製</button></div>
+      <pre id="service-go"><code>package service
+
+import "context"
+
+type ScoreService struct{}
+
+func (s ScoreService) Score(ctx context.Context, values []uint64) (uint64, error) {
+	select {
+	case <-ctx.Done():
+		return 0, ctx.Err()
+	default:
+	}
+	var total uint64
+	for _, value := range values {
+		total += value
+	}
+	return total, nil
+}</code></pre>
+
+      <div class="code-title"><span>internal/api/handler.go</span><button class="copy-btn" data-copy="handler-go">複製</button></div>
+      <pre id="handler-go"><code>package api
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"log/slog"
+	"net/http"
+	"time"
+
+	"example.com/go-microservice/internal/service"
+)
+
+type Handler struct {
+	score   service.ScoreService
+	timeout time.Duration
+	logger  *slog.Logger
+}
+
+type ScoreRequest struct {
+	Values []uint64 `json:"values"`
+}
+
+type ScoreResponse struct {
+	Score uint64 `json:"score"`
+}
+
+type ErrorResponse struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
+func New(timeout time.Duration, logger *slog.Logger) http.Handler {
+	h := Handler{score: service.ScoreService{}, timeout: timeout, logger: logger}
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /livez", h.livez)
+	mux.HandleFunc("GET /readyz", h.readyz)
+	mux.HandleFunc("POST /score", h.scoreRoute)
+	return mux
+}
+
+func (h Handler) livez(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h Handler) readyz(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h Handler) scoreRoute(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), h.timeout)
+	defer cancel()
+
+	var input ScoreRequest
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_json", "request body must be valid JSON")
+		return
+	}
+	score, err := h.score.Score(ctx, input.Values)
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+		writeError(w, http.StatusGatewayTimeout, "request_timeout", "request timed out")
+		return
+	}
+	if err != nil {
+		h.logger.Error("score failed", "error", err)
+		writeError(w, http.StatusInternalServerError, "internal_error", "internal error")
+		return
+	}
+	writeJSON(w, http.StatusOK, ScoreResponse{Score: score})
+}
+
+func writeJSON(w http.ResponseWriter, status int, body any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(body)
+}
+
+func writeError(w http.ResponseWriter, status int, code, message string) {
+	writeJSON(w, status, ErrorResponse{Code: code, Message: message})
+}</code></pre>
+
+      <div class="code-title"><span>cmd/server/main.go</span><button class="copy-btn" data-copy="main-go">複製</button></div>
+      <pre id="main-go"><code>package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"log/slog"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"example.com/go-microservice/internal/api"
+	"example.com/go-microservice/internal/config"
+)
+
+func main() {
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	server := &http.Server{
+		Addr:              fmt.Sprintf(":%d", cfg.Port),
+		Handler:           api.New(cfg.RequestTimeout, logger),
+		ReadHeaderTimeout: cfg.RequestTimeout,
+	}
+
+	go func() {
+		logger.Info("server listening", "addr", server.Addr)
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
+	}()
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+	<-stop
+
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
+	defer cancel()
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatal(err)
+	}
+	logger.Info("server stopped")
+}</code></pre>
+    </section>
+
+    <section id="scripts">
+      <div class="section-head">
+        <div>
+          <h2>指令碼</h2>
+          <p>固定指令入口能降低交接成本，也能讓 CI、local dev、Docker smoke test 使用同一套流程。</p>
+        </div>
+      </div>
+      <div class="command-grid">
+        <article class="command-card"><span class="badge">dev</span><h3>本機啟動</h3><pre><code>PORT=8080 go run ./cmd/server</code></pre></article>
+        <article class="command-card"><span class="badge green">test</span><h3>測試</h3><pre><code>go test ./... -count=1
+go test -race ./...</code></pre></article>
+        <article class="command-card"><span class="badge amber">smoke</span><h3>API 驗證</h3><pre><code>curl -i http://127.0.0.1:8080/readyz</code></pre></article>
+      </div>
+
+      <div class="code-title"><span>scripts/dev.sh</span><button class="copy-btn" data-copy="dev-sh">複製</button></div>
+      <pre id="dev-sh"><code>#!/usr/bin/env sh
+set -eu
+
+go test ./... -count=1
+PORT="${PORT:-8080}" REQUEST_TIMEOUT="${REQUEST_TIMEOUT:-2s}" go run ./cmd/server</code></pre>
+
+      <div class="code-title"><span>scripts/smoke.sh</span><button class="copy-btn" data-copy="smoke-sh">複製</button></div>
+      <pre id="smoke-sh"><code>#!/usr/bin/env sh
+set -eu
+
+BASE_URL="${BASE_URL:-http://127.0.0.1:8080}"
+curl -fsS "$BASE_URL/livez" -o /dev/null
+curl -fsS "$BASE_URL/readyz" -o /dev/null
+curl -fsS -X POST "$BASE_URL/score" \
+  -H 'Content-Type: application/json' \
+  -d '{"values":[1,2,3,4,5]}'</code></pre>
+
+      <div class="code-title"><span>Dockerfile</span><button class="copy-btn" data-copy="dockerfile">複製</button></div>
+      <pre id="dockerfile"><code>FROM golang:1.22-alpine AS build
+WORKDIR /src
+COPY go.mod ./
+COPY . .
+RUN go build -trimpath -ldflags="-s -w" -o /out/server ./cmd/server
+
+FROM alpine:3.20
+RUN adduser -D -H app
+USER app
+COPY --from=build /out/server /server
+EXPOSE 8080
+ENTRYPOINT ["/server"]</code></pre>
+    </section>
+
+    <section id="verification">
+      <div class="section-head">
+        <div>
+          <h2>Verification</h2>
+          <p>微服務驗證不只看編譯通過，還要確認 API contract、health endpoint、timeout、shutdown 與容器 smoke test。</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>驗證項</th><th>指令</th><th>通過條件</th></tr></thead>
+          <tbody>
+            <tr><td>Unit test</td><td><code>go test ./... -count=1</code></td><td>config、service、api tests 全部通過。</td></tr>
+            <tr><td>Race test</td><td><code>go test -race ./...</code></td><td>handler、service、shared state 無 race。</td></tr>
+            <tr><td>Health check</td><td><code>curl -i /livez</code>、<code>curl -i /readyz</code></td><td>回傳 204 或明確 JSON 狀態。</td></tr>
+            <tr><td>API contract</td><td><code>curl -X POST /score</code></td><td>成功回傳 <code>{"score":15}</code>；錯誤回傳固定 code/message。</td></tr>
+            <tr><td>Docker smoke</td><td><code>docker build</code> + <code>scripts/smoke.sh</code></td><td>容器內服務可被 host smoke test 驗證。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="troubleshooting">
+      <div class="section-head">
+        <div>
+          <h2>Troubleshooting</h2>
+          <p>微服務問題通常來自設定、timeout、錯誤格式、health check 或 downstream 依賴，而不是 Go 語法本身。</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>症狀</th><th>可能原因</th><th>處理方式</th></tr></thead>
+          <tbody>
+            <tr><td>服務啟動後立刻退出</td><td>設定驗證失敗或 port 被佔用。</td><td>檢查 <code>PORT</code>、啟動 log 與 <code>lsof -i :8080</code>。</td></tr>
+            <tr><td>curl 卡住</td><td>沒有 request timeout 或 downstream 阻塞。</td><td>在 service 層傳遞 context，並設定 server timeout。</td></tr>
+            <tr><td>容器 ready 但 API 失敗</td><td><code>/readyz</code> 沒檢查必要依賴。</td><td>把 DB、queue、外部 gateway 連線狀態納入 readiness。</td></tr>
+            <tr><td>錯誤格式不一致</td><td>各 handler 自己寫錯誤。</td><td>集中 <code>writeError</code>，固定 code/message schema。</td></tr>
+            <tr><td>工業設備資料過期</td><td>polling timeout 或 stale data 未分類。</td><td>增加 <code>device_timeout</code>、<code>stale_value</code>、<code>bad_quality</code> 錯誤碼。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="best-practices">
+      <div class="section-head">
+        <div>
+          <h2>Best Practices</h2>
+          <p>微服務的重點是可維運。功能可以小，但 contract、timeout、log、health 與 smoke test 不能省。</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <article class="card">
+          <span class="badge green">Do</span>
+          <ul class="checklist">
+            <li>handler 只處理 HTTP boundary。</li>
+            <li>service 接收 context 並尊重 timeout。</li>
+            <li>啟動時驗證所有重要環境變數。</li>
+            <li>所有錯誤都回傳固定 code/message。</li>
+            <li>建立 smoke script，讓 Docker/CI/local 共用。</li>
+          </ul>
+        </article>
+        <article class="card">
+          <span class="badge rose">Avoid</span>
+          <ul class="checklist">
+            <li>在 handler 內直接寫資料庫或設備通訊邏輯。</li>
+            <li>用預設 timeout 處理 PLC / DDC / SCADA 場景。</li>
+            <li>只靠 console log 排查 production incident。</li>
+            <li>讓 readiness 永遠回 200 卻不檢查依賴。</li>
+            <li>把架構設定藏在程式碼常數中。</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <p class="footer-note">Golang 微服務教程。若要加入極小範圍 CPU hot path 最佳化，請接續閱讀 <a href="golang-assembly-tutorial.html">Golang Assembly 教程</a>。</p>
+  </main>
+
+  <script>
+    document.querySelectorAll("[data-copy]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const target = document.getElementById(button.dataset.copy);
+        if (!target) return;
+        try {
+          await navigator.clipboard.writeText(target.innerText);
+          const original = button.textContent;
+          button.textContent = "已複製";
+          setTimeout(() => { button.textContent = original; }, 1200);
+        } catch {
+          button.textContent = "請手動複製";
+        }
+      });
+    });
+  </script>
+</body>
+</html>

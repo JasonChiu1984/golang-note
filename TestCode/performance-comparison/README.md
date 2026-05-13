@@ -12,7 +12,7 @@
 
 | 輸出 | 說明 |
 |---|---|
-| `測試報告/<timestamp>-C-Python-Go-真實效能測試報告.md` | 正式 Markdown 測試報告 |
+| `測試報告/<timestamp>-C-Python-Go-GPU-真實效能測試報告.md` | 正式 Markdown 測試報告 |
 | `測試報告/raw/<timestamp>/` | 完整 raw stdout、版本資訊、環境資訊 |
 
 ## 測試範圍
@@ -21,7 +21,8 @@
 - C `clang -O3`
 - Go `go test -bench=. -benchmem`
 - Python `python3`
+- Swift / Metal GPU data-parallel hash workload
 
 ## 風險說明
 
-這是 CPU-bound microbenchmark。它可以驗證報告流程與比較方法，但不能直接代表 OPC UA、Modbus、BACnet、SCADA gateway 或任何 I/O-bound production service 的真實效能。
+CPU 語言比較是 CPU-bound microbenchmark。GPU 比較是 data-parallel microbenchmark，和 sequential CPU loop 不是同一種 workload。它們可以驗證報告流程與比較方法，但不能直接代表 OPC UA、Modbus、BACnet、SCADA gateway 或任何 I/O-bound production service 的真實效能。

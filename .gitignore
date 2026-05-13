@@ -14,3 +14,5 @@ __pycache__/
 
 # Generated benchmark binaries; keep raw text output and reports instead.
 測試報告/raw/*/bench-c-*
+測試報告/raw/*/bench-gpu-metal
+測試報告/raw/*/swift-module-cache/

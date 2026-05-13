@@ -1,0 +1,7 @@
+$ command -v nvidia-smi || true; command -v swiftc || true; xcrun --find metal || true; python3 -c "import importlib.util as u; print('torch=' + str(bool(u.find_spec('torch')))); print('cupy=' + str(bool(u.find_spec('cupy')))); print('numba=' + str(bool(u.find_spec('numba')))); print('tensorflow=' + str(bool(u.find_spec('tensorflow'))))"
+/usr/bin/swiftc
+xcrun: error: unable to find utility "metal", not a developer tool or in PATH
+torch=False
+cupy=False
+numba=False
+tensorflow=False
