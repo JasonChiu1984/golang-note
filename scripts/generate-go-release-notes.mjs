@@ -1050,7 +1050,7 @@ function pageHtml(minor, release, officialSections) {
 <body>
   <header>
     <div class="hero">
-      <div class="crumbs"><a href="index.html">ReleaseNote Index</a><span>/</span><span>Go 1.${minor}</span></div>
+      <div class="crumbs"><a href="../docs/index.html">主頁教程</a><span>/</span><a href="index.html">ReleaseNote Index</a><span>/</span><span>Go 1.${minor}</span></div>
       <p class="report-kicker">Professional Technical Review Report</p>
       <h1>${title}</h1>
       <p class="lead">${esc(data.positioning)} 本頁把官方 release note 與 release history 轉成工程導入、風險與驗收清單。</p>
@@ -1071,6 +1071,7 @@ function pageHtml(minor, release, officialSections) {
   </header>
   <main>
     <nav aria-label="Go 1.${minor} Release Note Navigation">
+      <a class="nav-link" href="../docs/index.html">主頁教程</a>
       <a class="nav-link" href="#executive-summary">摘要</a>
       <a class="nav-link" href="#overview">總覽</a>
       <a class="nav-link" href="#impact-matrix">影響矩陣</a>
@@ -1283,7 +1284,7 @@ function indexHtml(releases) {
       <div class="actions"><a href="go1.${minor}-release-note.html">本地專業報告</a><a href="https://go.dev/doc/go1.${minor}">官方文件</a></div>
     </article>`;
   }).join("\n");
-  const nav = `<a href="#roadmap">Roadmap</a><a href="#support-status">Support</a>` + versions.map((minor) => `<a href="#go1${minor}">Go 1.${minor}</a>`).join("");
+  const nav = `<a href="../docs/index.html">主頁教程</a><a href="#roadmap">Roadmap</a><a href="#support-status">Support</a>` + versions.map((minor) => `<a href="#go1${minor}">Go 1.${minor}</a>`).join("");
   const matrix = versions.map((minor) => {
     const data = releaseData[minor];
     const release = releases.get(minor) ?? { date: "官方未列日期", patches: [] };

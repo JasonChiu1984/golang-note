@@ -136,6 +136,7 @@ go test ./project-concurrent-crawler/...
 | Release Note 官方段落覆蓋 | `rg -n "Go 1.1-1.26|support-status-chart|Go 1.25、Go 1.26|go1.1-release-note" ReleaseNote docs/ReleaseNote` | 確認根目錄與 Pages 版都保留 Go 1.1、Roadmap、支援狀態圖與最新 patch 訊號 |
 | 補充教材頁 | `test -f docs/golang-syntax-application-svg.html && test -f docs/golang-third-party-modules.html && test -f docs/c-python-go-performance-supplement.html && test -f docs/golang-assembly-tutorial.html && test -f docs/golang-microservice-tutorial.html` | 確認補充 HTML 交付頁存在 |
 | Docs index 連結自動修正 | `node scripts/fix-docs-index-links.mjs --sync-source && node scripts/fix-docs-index-links.mjs --check` | 每次重產 `docs/index.html` 後，自動改成 GitHub Pages `docs/` root 可用路徑，避免 `/docs`、`/ReleaseNote` 404 |
+| HTML 回主頁教程檢查 | `node scripts/check-html-home-links.mjs` | 確認 `docs/`、`ReleaseNote/` 與圖解 HTML 頁面都有可解析到 `docs/index.html` 的「主頁教程」入口 |
 | 跨語言效能範例 | `cd examples/performance-comparison && clang -O2 c/bench.c -o /tmp/bench-c && /tmp/bench-c && go test -bench=. -benchmem -count=1 ./go && python3 python/bench.py` | 確認 C/Python/Go 範例可重跑，並保留正式報告所需原始輸出 |
 | 跨語言正式測試報告 | `./TestCode/performance-comparison/run-real-benchmark.sh` | 產出 `測試報告/<timestamp>-C-Python-Go-真實效能測試報告.md` 與 raw stdout |
 | GPU / Metal 效能範例 | `cd examples/performance-comparison && swiftc -O -module-cache-path /tmp/swift-module-cache -framework Metal -framework Foundation gpu/bench.swift -o /tmp/bench-gpu-metal && GPU_ELEMENTS=1048576 GPU_ROUNDS=128 /tmp/bench-gpu-metal` | 驗證 data-parallel GPU workload；不可與 sequential CPU loop 混成單一倍率結論 |

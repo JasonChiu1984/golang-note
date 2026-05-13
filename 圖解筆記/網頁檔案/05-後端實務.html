@@ -11,6 +11,7 @@
   </style>
 </head>
 <body>
+  <p><a href="../../docs/index.html">主頁教程</a></p>
   <h1>05. 後端實務 (Backend Patterns)</h1>
 <h2>1. Middleware 洋蔥模型</h2>
 <p>Go 的 HTTP Middleware 是透過 <code>func(http.Handler) http.Handler</code> 的函數包裝實現的。執行時會像剝洋蔥一樣，從外層往內層執行，拿到回應後再從內層往外層離開。</p>
