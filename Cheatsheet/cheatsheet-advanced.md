@@ -199,6 +199,16 @@ func FetchUser(ctx context.Context, id int) (*User, error) {
 | 只向下傳 | 不要從子 goroutine 回傳 ctx |
 | `WithValue` 只放 request-scoped | trace ID、auth token，不放業務邏輯 |
 
+### Graceful Shutdown
+
+| 階段 | Go 實作重點 |
+|---|---|
+| Signal | `signal.NotifyContext` 接收中斷訊號 |
+| Draining | readiness 狀態轉為 false，讓 `/readyz` 回 503 |
+| HTTP shutdown | `http.Server.Shutdown(ctx)` 停止接新連線並等待既有 request |
+| Worker drain | close queue 並用 `WaitGroup` 等待已排入 task 完成 |
+| Timeout | drain deadline 到期才 cancel worker context |
+
 ---
 
 ## Error Wrapping

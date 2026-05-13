@@ -92,13 +92,29 @@ func (q *Queue) Start(ctx context.Context, workers int) {
 }
 
 func (q *Queue) Shutdown() {
+	_ = q.ShutdownContext(context.Background())
+}
+
+func (q *Queue) ShutdownContext(ctx context.Context) error {
 	q.mu.Lock()
 	if !q.closed {
 		q.closed = true
 		close(q.jobs)
 	}
 	q.mu.Unlock()
-	q.wg.Wait()
+
+	done := make(chan struct{})
+	go func() {
+		q.wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 func (q *Queue) observeDepth() {
@@ -106,4 +122,3 @@ func (q *Queue) observeDepth() {
 		q.obs.Metrics.QueueDepth.Set(float64(len(q.jobs)))
 	}
 }
-

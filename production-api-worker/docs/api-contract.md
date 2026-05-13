@@ -1,8 +1,8 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.10 ｜ 基準日期：2026-05-13 ｜ 適用範圍：local memory mode、Postgres + OTLP mode
+> 版本：v1.0.11 ｜ 基準日期：2026-05-13 ｜ 適用範圍：local memory mode、Postgres + OTLP mode
 
-這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code 與 request correlation header 需要透過 contract test 保護。
+這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header 與 readiness 行為需要透過 contract test 保護。
 
 ## Compatibility Rules
 
@@ -12,6 +12,7 @@
 | 錯誤分支 | client 應依 `error.code` 判斷，不依自然語言 message |
 | Status enum | `pending`、`processing`、`done`、`failed` 是穩定字串 |
 | Request correlation | server 必須回傳 `X-Request-ID`；client 提供時需原樣保留 |
+| Readiness lifecycle | draining 時 `/readyz` 必須回 `503`，讓外部導流系統停止送新 request |
 | Breaking change | 需新增版本路由或遷移期，不能直接覆蓋既有合約 |
 | Release gate | 任何 handler 改動都要跑 API contract test |
 
@@ -125,7 +126,8 @@ Content-Type: application/json
 | Endpoint | Status | 用途 |
 |---|---:|---|
 | `GET /livez` | 200 | process 存活檢查 |
-| `GET /readyz` | 200 | readiness 檢查 |
+| `GET /readyz` | 200 | readiness 檢查，可接新 request |
+| `GET /readyz` | 503 | draining，停止接新流量並等待既有工作收斂 |
 | `GET /metrics` | 200 | Prometheus metrics |
 
 ## Contract Test Gate
@@ -143,3 +145,4 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 - queue 滿載時回傳 `503` 與 `error.code=queue_full`。
 - 錯誤與成功回應都維持 `Content-Type: application/json`。
 - client 提供的 `X-Request-ID` 需原樣回傳；未提供時需自動產生 `req-*`。
+- draining 時 `/readyz` 需回 `503 Service Unavailable`，避免 shutdown 期間仍接收新流量。

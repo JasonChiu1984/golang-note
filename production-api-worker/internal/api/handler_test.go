@@ -95,6 +95,25 @@ func TestRequestIDContract(t *testing.T) {
 	}
 }
 
+func TestReadinessContract(t *testing.T) {
+	ready := true
+	handler := newContractHandlerWithOptions(t, nil, WithReadiness(func() bool { return ready }))
+
+	req := httptest.NewRequest(http.MethodGet, "/readyz", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("ready status = %d, want %d", rec.Code, http.StatusOK)
+	}
+
+	ready = false
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("draining status = %d, want %d", rec.Code, http.StatusServiceUnavailable)
+	}
+}
+
 func TestErrorContract(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -154,6 +173,11 @@ func TestErrorContract(t *testing.T) {
 
 func newContractHandler(t *testing.T, enqueueErr error) http.Handler {
 	t.Helper()
+	return newContractHandlerWithOptions(t, enqueueErr)
+}
+
+func newContractHandlerWithOptions(t *testing.T, enqueueErr error, options ...Option) http.Handler {
+	t.Helper()
 	obs := newTestObs(t)
 	service := app.NewService(
 		repository.NewMemoryStore(),
@@ -161,7 +185,7 @@ func newContractHandler(t *testing.T, enqueueErr error) http.Handler {
 		obs,
 		func() string { return "contract-job-1" },
 	)
-	return NewHandler(service, obs).Routes()
+	return NewHandler(service, obs, options...).Routes()
 }
 
 func newTestObs(t *testing.T) *observability.Observability {

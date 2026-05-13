@@ -2,9 +2,9 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
-> 教材版本：`v1.0.10`
+> 教材版本：`v1.0.11`
 > 教材基準：`Go 1.26.3`
-> 這次更新重點：補齊 Request ID、結構化 log correlation、trace attributes 與 API contract gate。
+> 這次更新重點：補齊 readiness、draining、HTTP shutdown 與 worker queue drain 的服務生命週期教學。
 
 ## 版本策略
 
@@ -19,6 +19,7 @@
 | 效能診斷 | 效能修改前後需保留 benchmark / profile / metrics 證據，避免只靠直覺調整 |
 | API 合約 | 對外 HTTP endpoint 需有穩定 request/response/error schema，並用 contract test 阻擋破壞性變更 |
 | 觀測性關聯 | 對外 API 需保留 `X-Request-ID`，並讓 log、trace、metrics 可互相對照 |
+| 服務生命週期 | SIGINT/SIGTERM 時先讓 readiness 轉為 draining，再停止收新流量並等待 queue drain |
 
 ## 學習路線
 
@@ -83,7 +84,7 @@ go test ./project-concurrent-crawler/...
 | 專案 | 目標 | 建議時機 | 入口 |
 |---|---|---|---|
 | `project-concurrent-crawler` | 練習 worker pool、retry、parser/store 抽象 | 第一次完成第 7 章後 | `go test ./project-concurrent-crawler/...` |
-| `production-api-worker` | 練習 HTTP API、transaction、queue、observability、Docker Compose | 完成第 5、7、9、11 章後 | `cd production-api-worker && go test ./...` |
+| `production-api-worker` | 練習 HTTP API、transaction、queue、observability、graceful shutdown、Docker Compose | 完成第 5、7、9、11 章後 | `cd production-api-worker && go test ./...` |
 
 `production-api-worker` 也附上 [API 合約文件](production-api-worker/docs/api-contract.md)，用來示範 production service 不只要能跑，也要把 endpoint、錯誤格式、相容性規則與 release gate 寫清楚。
 
@@ -101,6 +102,7 @@ go test ./project-concurrent-crawler/...
 | 依賴供應鏈檢查 | `go mod tidy && go mod verify && go list -m -u all && govulncheck ./...` | 第 8 / 9 / 11 章的依賴治理與 release gate 基線 |
 | API 合約回歸 | `cd production-api-worker && go test ./internal/api -run 'Test.*Contract' -count=1` | 驗證 HTTP status、JSON schema 與錯誤 code 沒有意外改變 |
 | Request ID 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestIDContract|TestCreateJobContract' -count=1` | 驗證 `X-Request-ID` 會回傳並進入 request context |
+| Readiness / drain 合約 | `cd production-api-worker && go test ./internal/api -run 'TestReadinessContract' -count=1` | 驗證 draining 時 `/readyz` 會回 503，讓 LB / orchestrator 停止導流 |
 | 效能 A/B 驗證 | `go test -run='^$' -bench=. -benchmem -count=10 ./... > bench.txt` | 搭配 `benchstat old.txt new.txt` 比較修改前後差異 |
 | Runtime profile | `go tool pprof http://localhost:6060/debug/pprof/profile?seconds=30` | CPU 熱點；block/mutex profile 需先在程式中啟用 |
 | Execution trace | `go test -trace=trace.out ./... && go tool trace trace.out` | 分析排程、syscall、GC 與平行度，不用來取代 CPU/heap profile |

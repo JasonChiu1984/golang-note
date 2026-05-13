@@ -16,10 +16,29 @@ import (
 type Handler struct {
 	service *app.Service
 	obs     *observability.Observability
+	ready   func() bool
 }
 
-func NewHandler(service *app.Service, obs *observability.Observability) *Handler {
-	return &Handler{service: service, obs: obs}
+type Option func(*Handler)
+
+func WithReadiness(ready func() bool) Option {
+	return func(h *Handler) {
+		if ready != nil {
+			h.ready = ready
+		}
+	}
+}
+
+func NewHandler(service *app.Service, obs *observability.Observability, options ...Option) *Handler {
+	handler := &Handler{
+		service: service,
+		obs:     obs,
+		ready:   func() bool { return true },
+	}
+	for _, option := range options {
+		option(handler)
+	}
+	return handler
 }
 
 func (h *Handler) Routes() http.Handler {
@@ -28,8 +47,16 @@ func (h *Handler) Routes() http.Handler {
 	mux.HandleFunc("GET /jobs/{id}", h.getJob)
 	mux.Handle("GET /metrics", h.obs.MetricsHandler())
 	mux.HandleFunc("GET /livez", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
-	mux.HandleFunc("GET /readyz", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
+	mux.HandleFunc("GET /readyz", h.readyz)
 	return h.requestContextMiddleware(h.metricsMiddleware(mux))
+}
+
+func (h *Handler) readyz(w http.ResponseWriter, r *http.Request) {
+	if !h.ready() {
+		http.Error(w, "draining", http.StatusServiceUnavailable)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
 func (h *Handler) createJob(w http.ResponseWriter, r *http.Request) {

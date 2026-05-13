@@ -7,6 +7,7 @@
 - Service transaction boundary：`sql.TxOptions`、deadlock retry、queue enqueue
 - Repository：memory 與 Postgres `database/sql` 版本
 - Worker queue：bounded queue、worker pool、graceful shutdown
+- Service lifecycle：`/livez`、`/readyz`、draining、HTTP shutdown、queue drain
 - Observability：Prometheus client、OpenTelemetry OTLP/stdout exporter、slog、`X-Request-ID`
 - Pipeline：migration CLI、Docker Compose、GitHub Actions
 
@@ -32,6 +33,7 @@ curl -X POST http://localhost:8080/jobs \
   -d '{"name":"resize","payload":"image"}'
 
 curl http://localhost:8080/metrics
+curl -i http://localhost:8080/readyz
 ```
 
 ## Migration
@@ -47,7 +49,7 @@ go mod tidy
 go mod verify
 go list -m -u all
 govulncheck ./...
-go test ./internal/api -run 'Test.*Contract' -count=1
+go test ./internal/api -run 'Test.*Contract|TestReadinessContract' -count=1
 go test -race -cover ./...
 go test -run='^$' -bench=. -benchmem -count=10 ./... > bench.txt
 docker compose up --build
@@ -59,6 +61,7 @@ docker compose up --build
 | `go list -m -u all` | 發現可更新依賴並建立維護紀錄 |
 | `govulncheck ./...` | 掃描 API / worker 實際可達的已知漏洞 |
 | `go test ./internal/api -run 'Test.*Contract' -count=1` | 固定 HTTP status、JSON shape、錯誤 code 與 response header |
+| `go test ./internal/api -run 'TestReadinessContract' -count=1` | 固定 ready / draining 狀態與 `/readyz` status code |
 | `go test -race -cover ./...` | 驗證 service、handler、queue 與併發安全 |
 | `go test -run='^$' -bench=. -benchmem -count=10 ./...` | API / worker 效能改動需保留 benchmark 證據 |
 | `docker compose up --build` | 驗證 Postgres、migration、API、worker、metrics 整體鏈路 |
@@ -84,6 +87,18 @@ docker compose up --build
 | Log 欄位 | `request_id`、`method`、`route`、`error_code` |
 | Trace attribute | `request.id`、`http.route` |
 | Contract test | `TestRequestIDContract` 與 `TestCreateJobContract` 固定 header 行為 |
+
+## Service Lifecycle
+
+Production shutdown 不是單純收到 signal 就結束 process。`api-worker` 收到中斷訊號後會先把 readiness 標成 draining，讓 `/readyz` 回 `503 Service Unavailable`，再呼叫 `http.Server.Shutdown` 停止接新 request，最後等待 worker queue drain。
+
+| 階段 | 行為 |
+|---|---|
+| Ready | `/livez=200`、`/readyz=200`，可接受 API request |
+| Draining | `/livez=200`、`/readyz=503`，外部 load balancer 應停止導流 |
+| HTTP shutdown | `http.Server.Shutdown` 最多等待 5 秒讓既有 request 完成 |
+| Queue drain | `Queue.ShutdownContext` 最多等待 10 秒處理已排入工作 |
+| Forced cancel | drain 超時才取消 worker context，避免 shutdown 無限卡住 |
 
 ## Performance Diagnostics
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.11 - 2026-05-13
+
+- 新增 2026-05-13 08:03 資深工程師審查報告，確認教材已具備 production API / observability 深度，但服務生命週期仍需可測化。
+- README 新增服務生命週期版本策略與 readiness / drain 驗證指令，將 `/readyz` draining contract 納入主教材入口。
+- 第 7 / 11 章與進階 Cheat Sheet 補上 graceful shutdown 決策：先 readiness draining，再停止 HTTP intake，最後等待 worker queue drain。
+- `production-api-worker` 新增 lifecycle readiness 狀態，`/readyz` 在 draining 時回 `503 Service Unavailable`。
+- `production-api-worker` shutdown flow 改為獨立 worker context、HTTP shutdown deadline 與 queue drain deadline，並新增 readiness contract test。
+
 ## v1.0.10 - 2026-05-13
 
 - 新增 2026-05-13 07:02 資深工程師審查報告，確認教材已具備專案深度，但 production observability correlation 仍需落到可測試合約。

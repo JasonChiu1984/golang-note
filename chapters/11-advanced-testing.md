@@ -216,6 +216,7 @@ func TestCreateJobContract(t *testing.T) {
 | Response JSON shape | 防止 rename / nesting 造成 decode 失敗 |
 | Error code | 比自然語言 message 更適合穩定分支 |
 | Header | `Content-Type`、cache、request id 都可能是 client 依賴 |
+| Readiness | draining 時 `/readyz=503` 是部署系統依賴的操作合約 |
 
 對 `production-api-worker` 這類 service，建議把合約測試獨立命名，讓 release gate 可以聚焦執行：
 
@@ -246,6 +247,7 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 | Go 1.26 artifact 測試 | `go test -artifacts -outputdir ./test-artifacts ./...` | 搭配 CI 收集 `T.ArtifactDir` 產物 |
 | API 合約測試 | `cd production-api-worker && go test ./internal/api -run 'Test.*Contract' -count=1` | 固定 status、JSON schema、錯誤 code 與 header |
 | Request ID 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestIDContract|TestCreateJobContract' -count=1` | 固定 `X-Request-ID` 保留與自動產生行為 |
+| Readiness 合約 | `cd production-api-worker && go test ./internal/api -run 'TestReadinessContract' -count=1` | 固定 ready / draining 對 `/readyz` 的 status code |
 | Module checksum | `go mod verify` | 確認 module cache 未被竄改 |
 | Dependency updates | `go list -m -u all` | 發現可更新版本，作為維護 PR 依據 |
 | Vulnerability scan | `govulncheck ./...` | 掃描實際可達的 Go 已知漏洞 |

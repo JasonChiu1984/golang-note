@@ -294,13 +294,27 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 
 > 工程經驗：內部重構可以自由，但外部合約要保守。若需要破壞性變更，先新增新路由或新欄位，讓舊 client 有遷移窗口。
 
+### Service Lifecycle：ready、draining、shutdown
+
+Production service 的生命週期要分清楚三件事：process 是否活著、是否還能接新流量、已接收的背景工作是否已處理完。`production-api-worker` 用 `/livez`、`/readyz` 與 queue drain 示範這個差異。
+
+| 階段 | `/livez` | `/readyz` | 主要行為 |
+|---|---:|---:|---|
+| Ready | 200 | 200 | 正常接收 API request 與 queue job |
+| Draining | 200 | 503 | 停止對外導流，既有 request 仍可在 deadline 內完成 |
+| Queue drain | 200 | 503 | 不再接新 job，等待已排入 queue 的工作完成 |
+| Forced cancel | 可能結束 | 503 | drain deadline 到期才取消 worker context |
+
+這個流程避免兩種常見錯誤：第一，process 還活著但其實已準備關閉，load balancer 仍繼續送流量；第二，收到 signal 立刻 cancel worker context，導致 queue 裡已接受的 job 被中斷。
+
 ### 建議閱讀順序
 
 1. 先完成 `crawler/types.go`、`crawler/crawler.go` 的 worker / queue 心智模型。
 2. 再看 `production-api-worker/internal/app/service.go`，理解 service transaction boundary。
 3. 接著讀 `internal/api/handler.go` 與 `internal/observability/observability.go`，把 HTTP、metrics、tracing 串起來。
-4. 對照 `docs/api-contract.md` 與 `internal/api/handler_test.go`，理解合約文件如何被測試守住。
-5. 最後跑 `docker compose up --build`，驗證 migration、API、worker、metrics 整體鏈路。
+4. 再看 `internal/lifecycle/readiness.go` 與 `cmd/api-worker/main.go`，理解 ready / draining / queue drain。
+5. 對照 `docs/api-contract.md` 與 `internal/api/handler_test.go`，理解合約文件如何被測試守住。
+6. 最後跑 `docker compose up --build`，驗證 migration、API、worker、metrics 整體鏈路。
 
 ## 讀程式順序
 
