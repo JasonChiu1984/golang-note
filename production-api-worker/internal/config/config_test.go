@@ -123,6 +123,87 @@ func TestLoadFromLookupRejectsInvalidRequiredConfig(t *testing.T) {
 	}
 }
 
+func TestLoadMigrationFromLookupUsesDefaults(t *testing.T) {
+	cfg, err := LoadMigrationFromLookup(mapLookup(map[string]string{
+		"DATABASE_URL": " postgres://app:app@localhost:5432/app?sslmode=disable ",
+	}))
+	if err != nil {
+		t.Fatalf("LoadMigrationFromLookup returned error: %v", err)
+	}
+
+	if cfg.DatabaseURL != "postgres://app:app@localhost:5432/app?sslmode=disable" {
+		t.Fatalf("DatabaseURL = %q", cfg.DatabaseURL)
+	}
+	if cfg.MigrationsDir != DefaultMigrationsDir {
+		t.Fatalf("MigrationsDir = %q, want %q", cfg.MigrationsDir, DefaultMigrationsDir)
+	}
+	if cfg.MigrationTimeout != DefaultMigrationTimeout {
+		t.Fatalf("MigrationTimeout = %s, want %s", cfg.MigrationTimeout, DefaultMigrationTimeout)
+	}
+}
+
+func TestLoadMigrationFromLookupUsesEnvironment(t *testing.T) {
+	cfg, err := LoadMigrationFromLookup(mapLookup(map[string]string{
+		"DATABASE_URL":      " postgres://app:app@localhost:5432/app?sslmode=disable ",
+		"MIGRATIONS_DIR":    " ./db/migrations ",
+		"MIGRATION_TIMEOUT": "45s",
+	}))
+	if err != nil {
+		t.Fatalf("LoadMigrationFromLookup returned error: %v", err)
+	}
+
+	if cfg.DatabaseURL != "postgres://app:app@localhost:5432/app?sslmode=disable" {
+		t.Fatalf("DatabaseURL = %q", cfg.DatabaseURL)
+	}
+	if cfg.MigrationsDir != "./db/migrations" {
+		t.Fatalf("MigrationsDir = %q", cfg.MigrationsDir)
+	}
+	if cfg.MigrationTimeout != 45*time.Second {
+		t.Fatalf("MigrationTimeout = %s", cfg.MigrationTimeout)
+	}
+}
+
+func TestLoadMigrationFromLookupRejectsInvalidConfig(t *testing.T) {
+	tests := []struct {
+		name      string
+		env       map[string]string
+		wantError string
+	}{
+		{
+			name:      "missing database url",
+			env:       map[string]string{},
+			wantError: "DATABASE_URL is required for migration",
+		},
+		{
+			name:      "blank migrations dir",
+			env:       map[string]string{"DATABASE_URL": "postgres://app", "MIGRATIONS_DIR": "   "},
+			wantError: "MIGRATIONS_DIR must not be empty",
+		},
+		{
+			name:      "bad migration timeout",
+			env:       map[string]string{"DATABASE_URL": "postgres://app", "MIGRATION_TIMEOUT": "soon"},
+			wantError: "MIGRATION_TIMEOUT must be a positive duration",
+		},
+		{
+			name:      "zero migration timeout",
+			env:       map[string]string{"DATABASE_URL": "postgres://app", "MIGRATION_TIMEOUT": "0s"},
+			wantError: "MIGRATION_TIMEOUT must be a positive duration",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := LoadMigrationFromLookup(mapLookup(tt.env))
+			if err == nil {
+				t.Fatal("LoadMigrationFromLookup returned nil error")
+			}
+			if !strings.Contains(err.Error(), tt.wantError) {
+				t.Fatalf("error = %q, want containing %q", err.Error(), tt.wantError)
+			}
+		})
+	}
+}
+
 func emptyLookup(string) (string, bool) {
 	return "", false
 }

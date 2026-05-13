@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Go 1.13 Release Note 專業整理報告 | Golang 學習筆記</title>
+  <style>
+    :root { --bg:#f5f7fa; --paper:#fff; --ink:#172033; --muted:#5f6d7e; --line:#d7e0ea; --head:#eaf0f6; --accent:#0f766e; --blue:#1d4ed8; --warn:#b45309; --risk:#be123c; --ok:#15803d; --code:#eef2f7; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","Microsoft JhengHei",sans-serif; line-height:1.64; }
+    a { color:var(--blue); text-decoration:none; } a:hover,a:focus-visible { text-decoration:underline; }
+    header { border-bottom:1px solid var(--line); background:#fff; }
+    .hero, main { width:min(1180px, calc(100% - 32px)); margin:0 auto; }
+    .hero { padding:34px 0 26px; }
+    .crumbs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; color:var(--muted); font-size:14px; }
+    .report-kicker { margin:0 0 8px; color:var(--accent); font-size:13px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+    h1 { max-width:980px; margin:0; color:#1f2937; font-size:clamp(31px,4.8vw,52px); line-height:1.08; letter-spacing:0; }
+    .lead { max-width:920px; margin:14px 0 0; color:var(--muted); font-size:18px; }
+    .meta-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
+    .meta { display:inline-flex; align-items:center; min-height:30px; padding:4px 9px; border:1px solid var(--line); border-radius:6px; background:#f8fafc; color:#334155; font-size:13px; font-weight:800; }
+    .summary-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:16px 0 0; }
+    .summary-card { min-height:130px; padding:14px; border:1px solid var(--line); border-radius:8px; background:#fff; }
+    .summary-card h3 { margin:0 0 8px; color:#1f2937; font-size:15px; }
+    .summary-card p { margin:0; color:var(--muted); font-size:14px; }
+    .metric { display:block; margin-bottom:6px; color:var(--accent); font-size:26px; font-weight:900; line-height:1; }
+    main { padding:24px 0 60px; }
+    nav { position:sticky; top:0; z-index:3; display:flex; flex-wrap:wrap; gap:8px; padding:10px 0; background:rgba(245,247,250,.96); border-bottom:1px solid var(--line); backdrop-filter:blur(8px); }
+    .nav-link { display:inline-flex; align-items:center; min-height:34px; padding:6px 10px; border:1px solid var(--line); border-radius:6px; background:#fff; color:#253244; font-size:14px; font-weight:800; text-decoration:none; }
+    section { margin:24px 0; scroll-margin-top:72px; }
+    .section-head { margin-bottom:12px; } .section-head h2 { margin:0; color:#1f2937; font-size:26px; } .section-head p { margin:5px 0 0; color:var(--muted); }
+    .report-note { display:grid; grid-template-columns:minmax(240px,.42fr) minmax(0,1fr); gap:16px; align-items:stretch; margin-top:16px; }
+    .panel { border:1px solid var(--line); border-radius:8px; background:var(--paper); overflow:hidden; } .panel-body { padding:18px; }
+    .status-pill { display:inline-flex; align-items:center; justify-content:center; min-height:28px; padding:4px 9px; border-radius:999px; background:#e8f7ed; color:var(--ok); font-size:12px; font-weight:900; white-space:nowrap; }
+    .table-wrap { overflow-x:auto; border:1px solid var(--line); border-radius:8px; background:#fff; }
+    table { width:100%; min-width:900px; border-collapse:collapse; background:#fff; }
+    th,td { padding:11px 12px; border:1px solid var(--line); text-align:left; vertical-align:top; }
+    th { background:var(--head); color:#334155; font-size:13px; letter-spacing:.04em; text-transform:uppercase; white-space:nowrap; }
+    td { color:#2f3a48; overflow-wrap:anywhere; word-break:break-word; }
+    .summary-table { min-width:0; table-layout:fixed; } .summary-table th,.summary-table td { padding:12px 14px; font-size:15px; line-height:1.55; }
+    .summary-table col:nth-child(1){width:18%;}.summary-table col:nth-child(2){width:47%;}.summary-table col:nth-child(3){width:35%;}
+    .tag { display:inline-flex; align-items:center; min-height:24px; padding:2px 8px; border-radius:5px; background:#e6f3f1; color:var(--accent); font-size:12px; font-weight:800; white-space:nowrap; }
+    .tag.blue{background:#e8f0ff;color:var(--blue)} .tag.warn{background:#fff3d9;color:var(--warn)} .tag.risk{background:#ffe6eb;color:var(--risk)} .tag.ok{background:#e8f7ed;color:var(--ok)}
+    code { padding:1px 5px; border-radius:5px; background:var(--code); color:#111827; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.92em; }
+    .footer { margin-top:28px; padding:14px 16px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--muted); }
+    @media (max-width:820px){ .hero,main{width:min(100% - 24px,1180px)} .summary-grid{grid-template-columns:1fr 1fr} .report-note{grid-template-columns:1fr} table{min-width:760px} .summary-table{min-width:0} .summary-table th,.summary-table td{padding:10px 11px;font-size:14px} .lead{font-size:16px} }
+    @media (max-width:560px){ .summary-grid{grid-template-columns:1fr} .summary-table col:nth-child(1){width:24%}.summary-table col:nth-child(2){width:38%}.summary-table col:nth-child(3){width:38%} }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="hero">
+      <div class="crumbs"><a href="index.html">ReleaseNote Index</a><span>/</span><span>Go 1.13</span></div>
+      <p class="report-kicker">Professional Technical Review Report</p>
+      <h1>Go 1.13 Release Note 專業整理報告</h1>
+      <p class="lead">Go 1.13 是錯誤處理與 module 實務的重要版本，加入 error wrapping 與 numeric literal 改善。 本頁把官方 release note 與 release history 轉成工程導入、風險與驗收清單。</p>
+      <div class="meta-row">
+        <span class="meta">報告版本：v2026.05.13</span>
+        <span class="meta">生成時間：2026-05-13 14:35:00 +0800</span>
+        <span class="meta">Major release：Go 1.13（2019-09-03）</span>
+        <span class="meta">官方來源：https://go.dev/doc/go1.13</span>
+        <span class="meta">Patch revisions：15</span>
+      </div>
+      <div class="summary-grid">
+        <div class="summary-card"><span class="metric">4</span><h3>新增能力項目</h3><p>語言、工具鏈、runtime/compiler、stdlib 與平台能力摘要。</p></div>
+        <div class="summary-card"><span class="metric">2</span><h3>相容性風險</h3><p>升級時需檢查的破壞性、棄用、預設行為與安全變更。</p></div>
+        <div class="summary-card"><span class="metric">2</span><h3>Go 指令變更</h3><p>整理 build、test、vet、module、toolchain 或 bootstrap 工作流。</p></div>
+        <div class="summary-card"><span class="metric">15</span><h3>Patch Revisions</h3><p>由官方 Release History 擷取，作為採用最終 patch 的依據。</p></div>
+      </div>
+    </div>
+  </header>
+  <main>
+    <nav aria-label="Go 1.13 Release Note Navigation">
+      <a class="nav-link" href="#executive-summary">摘要</a>
+      <a class="nav-link" href="#overview">總覽</a>
+      <a class="nav-link" href="#impact-matrix">影響矩陣</a>
+      <a class="nav-link" href="#official-coverage">官方覆蓋矩陣</a>
+      <a class="nav-link" href="#added">新增功能</a>
+      <a class="nav-link" href="#removed">移除/棄用</a>
+      <a class="nav-link" href="#commands">Go 指令</a>
+      <a class="nav-link" href="#patch-revisions">Patch Revisions</a>
+      <a class="nav-link" href="#migration-plan">導入計畫</a>
+      <a class="nav-link" href="#verification">驗證</a>
+      <a class="nav-link" href="#troubleshooting">排錯</a>
+      <a class="nav-link" href="https://go.dev/doc/go1.13">官方文件</a>
+    </nav>
+    <section id="executive-summary">
+      <div class="section-head"><h2>Executive Summary</h2><p>本版本報告定位在工程導入與升級審查，不是官方逐字翻譯。</p></div>
+      <div class="report-note">
+        <div class="panel"><div class="panel-body"><span class="status-pill">建議用途：Module/泛型期</span><strong>版本定位</strong><p>適合建立 domain error、API error contract、module proxy/checksum governance。</p></div></div>
+        <div class="table-wrap">
+          <table class="summary-table"><colgroup><col><col><col></colgroup><thead><tr><th>審查面向</th><th>結論</th><th>必要動作</th></tr></thead><tbody>
+            <tr><td>專案價值</td><td>適合建立 domain error、API error contract、module proxy/checksum governance。</td><td>errors wrapping、GOPROXY/GOSUMDB、numeric literals、TLS 1.3 default。</td></tr>
+            <tr><td>主要風險</td><td>錯誤字串解析應改為 `errors.Is` / `errors.As`，module proxy policy 需明確。</td><td>把風險項目轉成 CI、測試與部署 checklist。</td></tr>
+            <tr><td>版本階段</td><td>Module/泛型期：module、errors wrapping、embed、workspaces、generics 與 fuzzing 成為主軸。</td><td>用分期脈絡判斷是否需要回補歷史教材。</td></tr>
+            <tr><td>驗收標準</td><td>需通過 build、test、版本來源連結、patch revision 與本地 HTML 結構檢查。</td><td>在 release PR 或教學更新紀錄中列出證據。</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+    </section>
+    <section id="overview">
+      <div class="section-head"><h2>技術總覽</h2><p>Go 1.13 屬於 Module/泛型期，下列主題是本頁的工程導入重點。</p></div>
+      <div class="table-wrap"><table><thead><tr><th>主題</th><th>重點</th><th>工程意義</th></tr></thead><tbody>
+        <tr><td><span class="tag">Version</span></td><td>Go 1.13 released 2019-09-03</td><td>以 major release note 為主，patch revisions 作為安全與 bugfix 補充。</td></tr>
+        <tr><td><span class="tag blue">Phase</span></td><td>Module/泛型期</td><td>module、errors wrapping、embed、workspaces、generics 與 fuzzing 成為主軸。</td></tr>
+        <tr><td><span class="tag warn">Adoption</span></td><td>errors wrapping、GOPROXY/GOSUMDB、numeric literals、TLS 1.3 default。</td><td>升級時應轉成測試、CI 與文件驗收項目。</td></tr>
+      </tbody></table></div>
+    </section>
+    <section id="impact-matrix">
+      <div class="section-head"><h2>升級影響矩陣</h2><p>此矩陣把版本重點轉成專案升級時的影響、風險與處置方式。</p></div>
+      <div class="table-wrap"><table><thead><tr><th>影響領域</th><th>影響等級</th><th>主要價值</th><th>主要風險</th><th>建議處置</th></tr></thead><tbody><tr><td>新增能力導入</td><td>中</td><td>適合建立 domain error、API error contract、module proxy/checksum governance。</td><td>過度導入不符合版本定位的功能。</td><td>errors wrapping、GOPROXY/GOSUMDB、numeric literals、TLS 1.3 default。</td></tr>
+<tr><td>相容性與安全</td><td>中高</td><td>錯誤字串解析應改為 `errors.Is` / `errors.As`，module proxy policy 需明確。</td><td>舊程式可能依賴已修正或已棄用行為。</td><td>先掃描相容性異動表，再補 regression tests。</td></tr>
+<tr><td>Go 指令 / CI</td><td>中</td><td>本頁列出 2 項指令或工作流變更。</td><td>Makefile、CI、Dockerfile 可能使用舊參數或舊流程。</td><td>把 Go 指令表轉成 CI checklist。</td></tr>
+<tr><td>Patch revisions</td><td>中</td><td>官方 Release History 列出 15 個 patch revision。</td><td>停在早期 patch 可能漏掉安全或 runtime 修正。</td><td>採用該 major version 的最後 patch 並記錄理由。</td></tr>
+<tr><td>部署與觀測</td><td>中</td><td>runtime、network、filesystem、toolchain 變更需要實際部署證據。</td><td>只看編譯成功可能漏掉平台差異。</td><td>執行 smoke test、benchmark 或 observability 比對。</td></tr></tbody></table></div>
+    </section>
+    <section id="official-coverage">
+      <div class="section-head"><h2>官方段落覆蓋矩陣</h2><p>此矩陣依官方 release note 段落標題與 Release History 補齊狀態整理。</p></div>
+      <div class="table-wrap"><table><thead><tr><th>官方段落</th><th>本頁狀態</th><th>整理方式</th><th>落地區域</th><th>風險等級</th></tr></thead><tbody><tr><td>Introduction to Go 1.13</td><td>已整理</td><td>依官方 Introduction to Go 1.13 段落整理為工程摘要。</td><td>放入新增功能、相容性異動、指令變更或導入計畫區。</td><td>中</td></tr>
+<tr><td>Changes to the language</td><td>已整理</td><td>依官方 Changes to the language 段落整理為工程摘要。</td><td>放入新增功能、相容性異動、指令變更或導入計畫區。</td><td>中</td></tr>
+<tr><td>Ports</td><td>已整理</td><td>依官方 Ports 段落整理為工程摘要。</td><td>放入新增功能、相容性異動、指令變更或導入計畫區。</td><td>中</td></tr>
+<tr><td>AIX</td><td>已整理</td><td>依官方 AIX 段落整理為工程摘要。</td><td>放入新增功能、相容性異動、指令變更或導入計畫區。</td><td>中</td></tr>
+<tr><td>Android</td><td>已整理</td><td>依官方 Android 段落整理為工程摘要。</td><td>放入新增功能、相容性異動、指令變更或導入計畫區。</td><td>中</td></tr>
+<tr><td>Darwin</td><td>已整理</td><td>依官方 Darwin 段落整理為工程摘要。</td><td>放入新增功能、相容性異動、指令變更或導入計畫區。</td><td>中</td></tr>
+<tr><td>FreeBSD</td><td>已整理</td><td>依官方 FreeBSD 段落整理為工程摘要。</td><td>放入新增功能、相容性異動、指令變更或導入計畫區。</td><td>中</td></tr>
+<tr><td>Illumos</td><td>已整理</td><td>依官方 Illumos 段落整理為工程摘要。</td><td>放入新增功能、相容性異動、指令變更或導入計畫區。</td><td>中</td></tr>
+<tr><td>Windows</td><td>已整理</td><td>依官方 Windows 段落整理為工程摘要。</td><td>放入新增功能、相容性異動、指令變更或導入計畫區。</td><td>中</td></tr>
+<tr><td>Tools</td><td>已整理</td><td>依官方 Tools 段落整理為工程摘要。</td><td>放入新增功能、相容性異動、指令變更或導入計畫區。</td><td>中</td></tr>
+<tr><td>Patch Revisions</td><td>已整理</td><td>Go 1.13 patch revisions 由官方 Release History 擷取。</td><td>列於 Patch Revisions 區，作為採用最終 patch 的依據。</td><td>中</td></tr></tbody></table></div>
+    </section>
+    <section id="added">
+      <div class="section-head"><h2>條列式表格分析：新增功能列表</h2><p>整理 Go 1.13 值得納入教材與專案升級清單的新能力。</p></div>
+      <div class="table-wrap"><table><thead><tr><th>分類</th><th>新增功能 / 行為</th><th>功能說明</th><th>工程導入建議</th><th>驗證方式</th></tr></thead><tbody><tr><td>Language</td><td>numeric literal improvements</td><td>支援 binary literal、digit separators、imaginary literal 改善。</td><td>提升 bitmask / protocol constants 可讀性。</td><td>語法範例測試。</td></tr>
+<tr><td>Errors</td><td>`errors.Is` / `errors.As` / `%w`</td><td>標準化錯誤包裝與查詢。</td><td>API 不解析錯誤字串，使用 stable error code。</td><td>錯誤鏈測試。</td></tr>
+<tr><td>Modules</td><td>`GOPROXY` / checksum database</td><td>module download 與驗證基礎設施成熟。</td><td>企業需設定 private module policy。</td><td>測 proxy / direct fallback。</td></tr>
+<tr><td>Security</td><td>TLS 1.3 default</td><td>TLS 1.3 成為預設支援。</td><td>網路服務需測 handshake。</td><td>TLS smoke test。</td></tr></tbody></table></div>
+    </section>
+    <section id="removed">
+      <div class="section-head"><h2>條列式表格分析：移除 / 棄用 / 相容性異動列表</h2><p>列出本版本升級時需要特別確認的相容性、預設行為、安全或平台風險。</p></div>
+      <div class="table-wrap"><table><thead><tr><th>分類</th><th>項目</th><th>狀態</th><th>影響</th><th>替代方式 / 建議</th></tr></thead><tbody><tr><td>Errors</td><td>wrapped errors alter text</td><td>API 風險</td><td>client 不應依賴自然語言錯誤。</td><td>使用 `errors.Is` 與 error code。</td></tr>
+<tr><td>Modules</td><td>public checksum DB</td><td>供應鏈風險</td><td>private modules 需 `GONOSUMDB` / `GOPRIVATE`。</td><td>建立私有 module 設定。</td></tr></tbody></table></div>
+    </section>
+    <section id="commands">
+      <div class="section-head"><h2>條列式表格分析：Go 指令新增 / 移除功能</h2><p>整理 Go command、build、test、vet、module、toolchain 或 bootstrap 相關變更。</p></div>
+      <div class="table-wrap"><table><thead><tr><th>指令 / 範圍</th><th>新增 / 移除 / 變更</th><th>類型</th><th>用途 / 影響</th><th>範例 / 替代方式</th></tr></thead><tbody><tr><td>go env -w GOPRIVATE</td><td>private module policy</td><td>建議</td><td>設定私有 module 前綴。</td><td>`go env -w GOPRIVATE=example.com/private/*`</td></tr>
+<tr><td>go test</td><td>error wrapping tests</td><td>建議</td><td>驗證 `errors.Is` / `As`。</td><td>`go test ./...`</td></tr></tbody></table></div>
+    </section>
+    <section id="patch-revisions">
+      <div class="section-head"><h2>Patch Revisions</h2><p>以下由官方 Release History 擷取。實務採用時，通常應選該 major version 的最後 patch。</p></div>
+      <div class="table-wrap"><table><thead><tr><th>Patch</th><th>日期</th><th>官方摘要</th><th>工程建議</th></tr></thead><tbody><tr><td>go1.13.1</td><td>2019-09-25</td><td>(released 2019-09-25) includes security fixes to the net/http and net/textproto packages.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
+<tr><td>go1.13.2</td><td>2019-10-17</td><td>(released 2019-10-17) includes security fixes to the compiler and the crypto/dsa package.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
+<tr><td>go1.13.3</td><td>2019-10-17</td><td>(released 2019-10-17) includes fixes to the go command, the toolchain, the runtime, and the crypto/ecdsa , net , net/http , and syscall packages.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
+<tr><td>go1.13.4</td><td>2019-10-31</td><td>(released 2019-10-31) includes fixes to the net/http and syscall packages. It also fixes an issue on macOS 10.15 Catalina where the non-notarized installer and binaries were being rejected by Gatekeeper .</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
+<tr><td>go1.13.5</td><td>2019-12-04</td><td>(released 2019-12-04) includes fixes to the go command, the runtime, the linker, and the net/http package.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
+<tr><td>go1.13.6</td><td>2020-01-09</td><td>(released 2020-01-09) includes fixes to the runtime and the net/http package.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
+<tr><td>go1.13.7</td><td>2020-01-28</td><td>(released 2020-01-28) includes two security fixes to the crypto/x509 package.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
+<tr><td>go1.13.8</td><td>2020-02-12</td><td>(released 2020-02-12) includes fixes to the runtime, and the crypto/x509 and net/http packages.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
+<tr><td>go1.13.9</td><td>2020-03-19</td><td>(released 2020-03-19) includes fixes to the go command, tools, the runtime, the toolchain, and the crypto/cypher package.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
+<tr><td>go1.13.10</td><td>2020-04-08</td><td>(released 2020-04-08) includes fixes to the go command, the runtime, and the os/exec and time packages.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
+<tr><td>go1.13.11</td><td>2020-05-14</td><td>(released 2020-05-14) includes fixes to the compiler.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
+<tr><td>go1.13.12</td><td>2020-06-01</td><td>(released 2020-06-01) includes fixes to the runtime, and the go/types and math/big packages.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
+<tr><td>go1.13.13</td><td>2020-07-14</td><td>(released 2020-07-14) includes security fixes to the crypto/x509 and net/http packages.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
+<tr><td>go1.13.14</td><td>2020-07-16</td><td>(released 2020-07-16) includes fixes to the compiler, vet, and the database/sql , net/http , and reflect packages.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
+<tr><td>go1.13.15</td><td>2020-08-06</td><td>(released 2020-08-06) includes security fixes to the encoding/binary package.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr></tbody></table></div>
+    </section>
+    <section id="migration-plan">
+      <div class="section-head"><h2>專案導入計畫</h2><p>用四階段把版本資訊轉成可驗收的專案升級流程。</p></div>
+      <div class="table-wrap"><table><thead><tr><th>階段</th><th>工作項目</th><th>驗收證據</th><th>風險處置</th></tr></thead><tbody>
+        <tr><td>Phase 1：版本盤點</td><td>確認目前 toolchain、module go directive、CI image 與部署平台。</td><td><code>go version</code>、<code>go env</code>、CI 設定。</td><td>舊版環境先隔離驗證。</td></tr>
+        <tr><td>Phase 2：功能導入</td><td>只導入本頁列出的高價值功能，不做無關重構。</td><td>對應測試與範例。</td><td>每個功能以小 PR 驗證。</td></tr>
+        <tr><td>Phase 3：相容性清理</td><td>處理移除、棄用、安全收緊與指令變更。</td><td>CI 綠燈與風險清單。</td><td>保留 rollback branch。</td></tr>
+        <tr><td>Phase 4：發布紀錄</td><td>記錄 major release 與 patch revisions 採用依據。</td><td>Release note、更新資料、測試輸出。</td><td>不以口頭結論取代證據。</td></tr>
+      </tbody></table></div>
+    </section>
+    <section id="verification">
+      <div class="section-head"><h2>Verification</h2><p>本頁生成後可用以下檢查確認內容完整。</p></div>
+      <div class="table-wrap"><table><thead><tr><th>檢查項</th><th>指令</th><th>預期</th></tr></thead><tbody>
+        <tr><td>本頁存在</td><td><code>test -s ReleaseNote/go1.13-release-note.html</code></td><td>檔案非空。</td></tr>
+        <tr><td>必要區塊存在</td><td><code>rg -n "Executive Summary|官方段落覆蓋矩陣|新增功能列表|Patch Revisions" ReleaseNote/go1.13-release-note.html</code></td><td>所有報告區塊存在。</td></tr>
+        <tr><td>官方來源存在</td><td><code>rg -n "https://go.dev/doc/go1.13" ReleaseNote/go1.13-release-note.html</code></td><td>官方來源連結存在。</td></tr>
+        <tr><td>格式檢查</td><td><code>git diff --check -- ReleaseNote/go1.13-release-note.html</code></td><td>無 trailing whitespace。</td></tr>
+      </tbody></table></div>
+    </section>
+    <section id="troubleshooting">
+      <div class="section-head"><h2>Troubleshooting</h2><p>升級 Go 1.13 常見問題處理方式。</p></div>
+      <div class="table-wrap"><table><thead><tr><th>症狀</th><th>可能原因</th><th>處理方式</th></tr></thead><tbody>
+        <tr><td>升級後 CI 失敗</td><td>Go command、module、toolchain 或平台行為變更。</td><td>先比對本頁 Go 指令與相容性異動表。</td></tr>
+        <tr><td>測試變 flaky</td><td>runtime、time、scheduler、network 或 filesystem 行為被修正。</td><td>重跑 <code>-count=1</code>、race test，並隔離外部依賴。</td></tr>
+        <tr><td>部署環境無法啟動</td><td>OS、architecture、cgo、linker 或憑證環境差異。</td><td>建立平台 matrix 與最小 smoke test。</td></tr>
+      </tbody></table></div>
+    </section>
+    <section id="best-practices">
+      <div class="section-head"><h2>Best Practices</h2><p>把 release note 轉成可維護工程流程。</p></div>
+      <div class="table-wrap"><table><thead><tr><th>建議</th><th>原因</th><th>落地方式</th></tr></thead><tbody>
+        <tr><td>每次升級都保留官方來源</td><td>避免文件與官方事實漂移。</td><td>頁尾與索引保留 go.dev 連結。</td></tr>
+        <tr><td>Patch revisions 不獨立成頁</td><td>major version 才是教學與升級主體。</td><td>patch 摘要收斂到本頁表格。</td></tr>
+        <tr><td>以測試證據收斂風險</td><td>release note 不是成功升級的證據。</td><td>build、test、vet、smoke、benchmark 依版本風險選用。</td></tr>
+      </tbody></table></div>
+    </section>
+    <p class="footer">資料來源：<a href="https://go.dev/doc/go1.13">Go 1.13 Release Notes</a> 與 <a href="https://go.dev/doc/devel/release">Go Release History</a>。本頁為 Traditional Chinese 工程整理報告，非官方逐字翻譯。</p>
+  </main>
+</body>
+</html>

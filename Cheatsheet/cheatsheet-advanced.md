@@ -219,6 +219,8 @@ func FetchUser(ctx context.Context, id int) (*User, error) {
 | `WORKERS` | 必須是正整數；容量規劃要能被測試固定 |
 | DB pool | `DATABASE_MAX_OPEN_CONNS`、`DATABASE_MAX_IDLE_CONNS`、`DATABASE_CONN_MAX_LIFETIME` 要由 env 驗證；idle 不可大於 open |
 | Optional endpoint | `DATABASE_URL` 空值時明確進 memory mode；OTLP endpoint 空值時明確使用 stdout exporter |
+| Migration CLI | `DATABASE_URL` 必填；`MIGRATIONS_DIR` 預設 `migrations`；`MIGRATION_TIMEOUT` 預設 `30s` |
+| Migration version | SQL 檔名去掉 `.sql` 後寫入 `schema_migrations.version`；不可空白或含 whitespace |
 | 測試 | `go test ./internal/config -count=1` 固定 default、valid env、invalid env |
 
 ---

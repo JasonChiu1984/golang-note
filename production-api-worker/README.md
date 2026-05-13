@@ -7,6 +7,7 @@
 - Request decoding：拒絕 malformed JSON、unknown field、trailing JSON value 與空白 name
 - Service transaction boundary：`sql.TxOptions`、context-aware deadlock retry、queue enqueue
 - Startup configuration：集中驗證 `PORT`、`QUEUE_SIZE`、`WORKERS` 與 DB pool 設定，錯誤設定 fail fast
+- Migration contract：集中驗證 migration env、timeout、SQL version，並用 `schema_migrations` 記錄已套用版本
 - Repository：memory 與 Postgres `database/sql` 版本
 - Worker queue：bounded queue、worker pool、shutdown-safe enqueue / close
 - Service lifecycle：`/livez`、`/readyz`、draining、HTTP shutdown、queue drain
@@ -43,7 +44,10 @@ curl -i http://localhost:8080/readyz
 ## Migration
 
 ```bash
-DATABASE_URL='postgres://app:app@localhost:5432/app?sslmode=disable' go run ./cmd/migrate
+DATABASE_URL='postgres://app:app@localhost:5432/app?sslmode=disable' \
+MIGRATIONS_DIR='./migrations' \
+MIGRATION_TIMEOUT='30s' \
+go run ./cmd/migrate
 ```
 
 ## Release Quality Gate
@@ -54,6 +58,7 @@ go mod verify
 go list -m -u all
 govulncheck ./...
 go test ./internal/config -count=1
+go test ./internal/migration -count=1
 go test ./internal/api -run 'Test.*Contract|TestReadinessContract|TestPanicRecoveryContract|TestRequestDecodingContract' -count=1
 go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
 go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1
@@ -68,6 +73,7 @@ docker compose up --build
 | `go list -m -u all` | 發現可更新依賴並建立維護紀錄 |
 | `govulncheck ./...` | 掃描 API / worker 實際可達的已知漏洞 |
 | `go test ./internal/config -count=1` | 固定啟動設定與 DB pool 預設值、合法 env 與錯誤設定 fail-fast 行為 |
+| `go test ./internal/migration -count=1` | 固定 migration SQL 檔排序、版本命名與檔案掃描規則 |
 | `go test ./internal/api -run 'Test.*Contract' -count=1` | 固定 HTTP status、JSON shape、錯誤 code 與 response header |
 | `go test ./internal/api -run 'TestRequestDecodingContract' -count=1` | 固定 malformed JSON、unknown field、trailing JSON 與空白 name 的 `400 invalid_input` |
 | `go test ./internal/api -run 'TestReadinessContract' -count=1` | 固定 ready / draining 狀態與 `/readyz` status code |
@@ -114,6 +120,24 @@ go test ./internal/config -count=1
 ```
 
 DB pool 設定不可藏在 repository 內硬編碼，因為 production 容量通常同時受 API concurrency、worker 數、Postgres `max_connections`、migration job 與維運連線影響。設定 loader 會先驗證 idle connection 不可大於 open connection，避免部署後才由資料庫壓力或連線耗盡暴露問題。
+
+## Migration Contract
+
+Migration CLI 是 deployment pipeline 的一部分，不應只是逐檔執行 SQL。`cmd/migrate` 會先驗證 migration 專用設定，再建立 `schema_migrations` table，略過已套用版本，並用 transaction 套用每一個新的 SQL 檔。
+
+| Env | 預設值 | 驗證規則 | 用途 |
+|---|---:|---|---|
+| `DATABASE_URL` | 無 | 必填，空值 fail fast | migration 連線目標 |
+| `MIGRATIONS_DIR` | `migrations` | 不可為空白 | SQL migration 目錄 |
+| `MIGRATION_TIMEOUT` | `30s` | 正數 duration | migration ping / apply deadline |
+
+| 規則 | 行為 |
+|---|---|
+| SQL 檔排序 | 依檔名排序，例如 `001_init.sql` 先於 `002_add_index.sql` |
+| Version | 取檔名去掉 `.sql`，不可空白、不可含 whitespace |
+| 已套用版本 | `schema_migrations.version` 已存在時略過 |
+| 新版本 | 在單一 transaction 內執行 SQL 並寫入 `schema_migrations` |
+| Regression test | `go test ./internal/config ./internal/migration -count=1` |
 
 ## Observability Correlation
 

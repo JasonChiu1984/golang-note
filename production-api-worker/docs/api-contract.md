@@ -156,6 +156,24 @@ Content-Type: application/json
 
 錯誤設定必須讓 process fail fast，例如 `PORT=http`、`QUEUE_SIZE=0`、`WORKERS=-1`、`DATABASE_MAX_IDLE_CONNS > DATABASE_MAX_OPEN_CONNS` 或 `DATABASE_CONN_MAX_LIFETIME=soon` 不應被靜默改成預設值。
 
+## Migration Operation Contract
+
+`cmd/migrate` 是部署操作合約的一部分。它不提供 HTTP endpoint，但會直接影響 schema 版本、release rollback 與 incident 排查，因此也需要可測的設定與版本紀錄。
+
+| Env | 預設值 | 驗證 |
+|---|---:|---|
+| `DATABASE_URL` | 無 | 必填，空值 fail fast |
+| `MIGRATIONS_DIR` | `migrations` | 不可為空白 |
+| `MIGRATION_TIMEOUT` | `30s` | 正數 duration |
+
+| 行為 | 合約 |
+|---|---|
+| Migration table | 啟動時建立 `schema_migrations(version, applied_at)` |
+| Version key | SQL 檔名去掉 `.sql`，不可空白、不可含 whitespace |
+| Re-run | 已存在於 `schema_migrations` 的 version 會被略過 |
+| Apply | 每個新 SQL 檔在 transaction 內執行並記錄版本 |
+| Test gate | `go test ./internal/config ./internal/migration -count=1` |
+
 ## Panic Recovery
 
 若 handler、service 或 queue 發生未預期 panic，API 必須保留 request correlation 並回傳穩定錯誤格式。

@@ -15,6 +15,8 @@ const (
 	DefaultDatabaseMaxOpenConns    = 25
 	DefaultDatabaseMaxIdleConns    = 10
 	DefaultDatabaseConnMaxLifetime = 30 * time.Minute
+	DefaultMigrationsDir           = "migrations"
+	DefaultMigrationTimeout        = 30 * time.Second
 )
 
 type Config struct {
@@ -28,8 +30,18 @@ type Config struct {
 	OTLPEndpoint            string
 }
 
+type MigrationConfig struct {
+	DatabaseURL      string
+	MigrationsDir    string
+	MigrationTimeout time.Duration
+}
+
 func Load() (Config, error) {
 	return LoadFromLookup(os.LookupEnv)
+}
+
+func LoadMigration() (MigrationConfig, error) {
+	return LoadMigrationFromLookup(os.LookupEnv)
 }
 
 func LoadFromLookup(lookup func(string) (string, bool)) (Config, error) {
@@ -74,6 +86,31 @@ func LoadFromLookup(lookup func(string) (string, bool)) (Config, error) {
 		DatabaseMaxIdleConns:    databaseMaxIdleConns,
 		DatabaseConnMaxLifetime: databaseConnMaxLifetime,
 		OTLPEndpoint:            strings.TrimSpace(readString(lookup, "OTEL_EXPORTER_OTLP_ENDPOINT", "")),
+	}, nil
+}
+
+func LoadMigrationFromLookup(lookup func(string) (string, bool)) (MigrationConfig, error) {
+	if lookup == nil {
+		lookup = os.LookupEnv
+	}
+
+	databaseURL := strings.TrimSpace(readString(lookup, "DATABASE_URL", ""))
+	if databaseURL == "" {
+		return MigrationConfig{}, fmt.Errorf("DATABASE_URL is required for migration")
+	}
+	migrationsDir := strings.TrimSpace(readString(lookup, "MIGRATIONS_DIR", DefaultMigrationsDir))
+	if migrationsDir == "" {
+		return MigrationConfig{}, fmt.Errorf("MIGRATIONS_DIR must not be empty")
+	}
+	migrationTimeout, err := parsePositiveDuration("MIGRATION_TIMEOUT", readString(lookup, "MIGRATION_TIMEOUT", DefaultMigrationTimeout.String()))
+	if err != nil {
+		return MigrationConfig{}, err
+	}
+
+	return MigrationConfig{
+		DatabaseURL:      databaseURL,
+		MigrationsDir:    migrationsDir,
+		MigrationTimeout: migrationTimeout,
 	}, nil
 }
 

@@ -246,6 +246,7 @@ production-api-worker/
 │   ├── api/             # handler / routing / metrics endpoint
 │   ├── app/             # service / transaction boundary
 │   ├── domain/          # 核心型別
+│   ├── migration/       # SQL migration runner / version contract
 │   ├── observability/   # slog + Prometheus + OpenTelemetry
 │   ├── repository/      # memory / Postgres store
 │   └── worker/          # bounded queue + graceful shutdown
@@ -275,6 +276,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Request timeout | `504 request_timeout` JSON、request id header | handler deadline exceeded 被誤分類成 `500 internal_error`，client 無法區分 timeout 與 bug |
 | Retry cancellation | deadlock backoff、request context、shutdown deadline | request 已取消後仍繼續重試 DB 交易或排入 queue |
 | Startup config | port、queue size、worker count、optional endpoint | 錯誤 env 被 silent fallback，容量與部署設定不一致 |
+| Migration contract | migration env、timeout、schema version、SQL 檔命名 | 重複套用 schema、release 後無法追蹤 DB 版本 |
 | Queue shutdown | enqueue 與 close 的同步邊界 | shutdown 期間可能送入已關閉 channel，造成 panic |
 
 `production-api-worker/docs/api-contract.md` 示範了最小可維護合約：`POST /jobs`、`GET /jobs/{id}`、health endpoint、metrics endpoint、錯誤格式與 release gate。這不是要把文件寫成百科，而是讓每次 release 都能回答三個問題：
@@ -377,6 +379,26 @@ Production API 的 timeout 不是未知錯誤。若 handler 建立的 request de
 
 DB connection pool 也是啟動合約的一部分。若 `SetMaxOpenConns(25)`、`SetMaxIdleConns(10)`、`SetConnMaxLifetime(30*time.Minute)` 直接寫死在 repository，讀者會學到錯誤的維運模型：程式碼編譯值控制 production 容量，而不是部署設定、DB `max_connections` 與 worker 數共同決定。`production-api-worker` 因此把 Postgres pool 參數提升到 config 層，並用 config unit test 固定「idle 不可大於 open」與 duration 格式。
 
+### Migration Contract 與 Schema 版本
+
+資料庫 migration 是 deployment pipeline 的一部分，不應只是 `os.ReadDir` 後把 SQL 逐檔 `Exec`。Production service 至少要知道哪個 schema version 已套用、重跑 release job 時要略過已完成版本，並用 timeout 防止 lock wait 或網路問題無限卡住。
+
+`production-api-worker` 把 migration 分成兩層：
+
+| 層次 | 職責 |
+|---|---|
+| `internal/config.LoadMigration` | 驗證 `DATABASE_URL`、`MIGRATIONS_DIR`、`MIGRATION_TIMEOUT` |
+| `internal/migration.Runner` | 掃描 SQL 檔、建立 `schema_migrations`、略過已套用版本、transaction apply |
+| `cmd/migrate` | 只做 config、DB open / ping 與 runner wire-up |
+
+| 設定 | 預設 | 合約 |
+|---|---:|---|
+| `DATABASE_URL` | 無 | migration 必填；空值 fail fast |
+| `MIGRATIONS_DIR` | `migrations` | 不可為空白 |
+| `MIGRATION_TIMEOUT` | `30s` | 必須是正數 duration |
+
+Migration 檔名就是版本 key：`001_init.sql` 會記成 `001_init`。檔名不可空白、不可含 whitespace，避免 release 後出現難以引用的 schema version。每個新 migration 在 transaction 內執行 SQL 並寫入 `schema_migrations`；重跑時若版本已存在，就略過該檔案。
+
 ### Service Lifecycle：ready、draining、shutdown
 
 Production service 的生命週期要分清楚三件事：process 是否活著、是否還能接新流量、已接收的背景工作是否已處理完。`production-api-worker` 用 `/livez`、`/readyz` 與 queue drain 示範這個差異。
@@ -415,7 +437,8 @@ Deadlock retry 是 production service 常見的保護機制，但 backoff 不能
 4. 接著讀 `internal/api/handler.go` 與 `internal/observability/observability.go`，把 HTTP、metrics、tracing 與 panic recovery 串起來。
 5. 再看 `internal/lifecycle/readiness.go` 與 `cmd/api-worker/main.go`，理解 ready / draining / queue drain。
 6. 對照 `docs/api-contract.md` 與 `internal/api/handler_test.go`，理解合約文件如何被測試守住。
-7. 最後跑 `docker compose up --build`，驗證 migration、API、worker、metrics 整體鏈路。
+7. 再看 `internal/migration/migration.go` 與 `cmd/migrate/main.go`，理解 schema migration 如何被 version table 與 timeout 保護。
+8. 最後跑 `docker compose up --build`，驗證 migration、API、worker、metrics 整體鏈路。
 
 ## 讀程式順序
 

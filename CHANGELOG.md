@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.0.19 - 2026-05-13
+
+- 新增 2026-05-13 15:03 資深工程師審查報告，確認 DB pool contract 已補齊，但 migration CLI 仍缺少 production migration contract。
+- `production-api-worker/internal/config` 新增 `MigrationConfig`、`MIGRATIONS_DIR` 與 `MIGRATION_TIMEOUT` 驗證，migration 缺少 `DATABASE_URL` 時會 fail fast。
+- 新增 `production-api-worker/internal/migration`，負責 SQL 檔排序、版本命名檢查、`schema_migrations` table、已套用版本略過與每檔 transaction 套用。
+- `cmd/migrate` 改為只做設定載入、DB open/ping 與 migration runner wire-up，避免 CLI 入口堆疊 migration 業務邏輯。
+- 新增 config / migration unit tests，固定 migration env、timeout、SQL 檔排序與版本解析規則。
+- README、第 7 / 11 章、進階 Cheat Sheet、康乃爾筆記與 `production-api-worker` 文件補上 migration contract 與 release gate。
+- `docs/index.html` 已重新由 `圖解筆記3-4整合/golang-complete-visual-course.html` 複製產生，並保持 GitHub Pages 可用的 Release Notes 連結。
+- 一併發布前序產生的 Go 1.2-1.26 專業 Release Note HTML 與 `scripts/generate-go-release-notes.mjs`，並同步到 `docs/ReleaseNote/`。
+
 ## v1.0.18 - 2026-05-13
 
 - 新增 2026-05-13 14:02 資深工程師審查報告，確認教程已具備 startup configuration contract，但 Postgres connection pool 仍硬編碼在 repository 層。

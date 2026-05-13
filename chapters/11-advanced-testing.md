@@ -223,6 +223,7 @@ func TestCreateJobContract(t *testing.T) {
 | Request timeout | handler deadline exceeded 應回 `504 request_timeout`，不可漂移成 `500 internal_error` |
 | Retry cancellation | retry backoff 遇到 `ctx.Done()` 時應停止，不再重試交易或 enqueue |
 | Startup / DB pool config | 不合法 `PORT`、`QUEUE_SIZE`、`WORKERS`、DB pool size 或 DB pool duration 應 fail fast，不可 silent fallback |
+| Migration contract | migration env、timeout、SQL 檔排序與 version 命名應固定，避免 release pipeline 漂移 |
 
 對 `production-api-worker` 這類 service，建議把合約測試獨立命名，讓 release gate 可以聚焦執行：
 
@@ -369,6 +370,34 @@ func TestLoadFromLookupRejectsInvalidRequiredConfig(t *testing.T) {
 | 不合法 port | 避免 `PORT=http` 延後到 listen 階段才失敗 |
 | 不合法 queue / workers | 避免容量設定錯誤被 silent fallback 掩蓋 |
 
+### Migration Contract Test
+
+Migration 測試要固定兩類行為：一是設定合約，例如 `DATABASE_URL` 必填與 `MIGRATION_TIMEOUT` 必須是正數 duration；二是 migration 檔案規則，例如只收 `.sql`、依檔名排序、version 不可空白或含 whitespace。這些測試不需要先啟動 Postgres，就能保護 release pipeline 的前置規則。
+
+```go
+func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "002_add_index.sql")
+	writeFile(t, dir, "001_init.sql")
+	writeFile(t, dir, "README.md")
+
+	files, err := SQLFiles(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if filepath.Base(files[0]) != "001_init.sql" {
+		t.Fatalf("first migration = %s", files[0])
+	}
+}
+```
+
+| 測試項 | 為什麼重要 |
+|---|---|
+| `DATABASE_URL` 必填 | migration 不應像 API memory mode 一樣允許空資料庫 |
+| `MIGRATION_TIMEOUT` | 防止 migration job 因 DB lock 或網路問題無限等待 |
+| SQL 檔排序 | release pipeline 必須用可預期順序套用 schema |
+| Version 命名 | `schema_migrations.version` 要能被 release note、rollback 計畫與 incident review 引用 |
+
 ## 常見陷阱
 
 | 陷阱 | 說明 | 解決方案 |
@@ -396,6 +425,7 @@ func TestLoadFromLookupRejectsInvalidRequiredConfig(t *testing.T) {
 | Request timeout 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestTimeoutContract' -count=1` | 固定 handler timeout 的 `504 request_timeout` JSON 與 request id |
 | Retry cancellation | `cd production-api-worker && go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1` | 固定 deadlock retry backoff 會尊重 context cancellation / deadline |
 | Startup / DB pool config | `cd production-api-worker && go test ./internal/config -count=1` | 固定設定預設值、合法 env、DB pool 關係與錯誤設定 fail-fast 行為 |
+| Migration contract | `cd production-api-worker && go test ./internal/config ./internal/migration -count=1` | 固定 migration env、timeout、SQL 檔排序與 version 命名規則 |
 | Module checksum | `go mod verify` | 確認 module cache 未被竄改 |
 | Dependency updates | `go list -m -u all` | 發現可更新版本，作為維護 PR 依據 |
 | Vulnerability scan | `govulncheck ./...` | 掃描實際可達的 Go 已知漏洞 |
