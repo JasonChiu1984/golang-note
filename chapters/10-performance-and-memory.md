@@ -202,6 +202,31 @@ rg -n "效能比較|crypto/rsa encryption|runtime/metrics histogram" \
 
 > **工程經驗**：Release Note 的官方效能數字只能當作升級假設，不是你的 production 結論。真正的結論要來自同一台機器、同一組 workload、同一套 benchmark/profile/metrics 證據。
 
+## 跨語言效能比較範例與報告模板
+
+C、Python、Go 的效能差異不能只用「語言快慢」描述。正式比較至少要控制 workload、資料量、compiler / interpreter 版本、build flags、OS、CPU 與原始輸出。教材提供一個可重跑的最小範例：
+
+```bash
+cd examples/performance-comparison
+
+clang -O2 c/bench.c -o /tmp/bench-c
+/tmp/bench-c
+
+go test -bench=. -benchmem -count=10 ./go
+
+python3 python/bench.py
+```
+
+| 項目 | 必須記錄 | 風險 |
+|---|---|---|
+| CPU / OS | CPU 型號、核心數、OS 版本 | 不同 scheduler、cache、turbo policy 會改變結果 |
+| C compiler flags | `clang -O2`、`gcc -O3`、是否 `-march=native` | debug build 與 optimized build 結論不可混用 |
+| Go / Python 版本 | `go version`、`python3 --version` | runtime、GC、interpreter 差異會讓結果漂移 |
+| 資料量 | iteration、payload size、連線數、檔案大小 | 小資料容易被啟動成本或 cache effect 主導 |
+| 原始結果 | stdout、`go test -bench`、`time` / profiler output | 只寫平均倍率無法被 reviewer 追溯 |
+
+> **工程經驗**：跨語言比較最常見的錯誤，是拿 C 的最佳化 build 對 Go/Python 的預設執行，或把 CPU-bound 結論套到 I/O-bound 工業通訊場景。若是 PLC / DDC / SCADA gateway，還要把 polling interval、timeout、retry、設備回應時間與 queue backlog 一起記錄。
+
 ## Profiling (效能分析)
 
 當程式變慢時，不要用猜的，用 `pprof` 來測量。

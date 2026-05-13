@@ -762,3 +762,15 @@ synctest.Test(t, func(t *testing.T) {
     }
 })
 ```
+
+---
+
+## 效能報告證據清單
+
+| 場景 | 指令 / 證據 | 注意事項 |
+|---|---|---|
+| Go benchmark | `go test -run='^$' -bench=. -benchmem -count=10 ./...` | 用 `benchstat` 比較，不用單次數字下結論 |
+| 跨語言比較 | `cd examples/performance-comparison && clang -O2 c/bench.c -o /tmp/bench-c && /tmp/bench-c && go test -bench=. -benchmem -count=10 ./go && python3 python/bench.py` | 記錄 CPU、OS、compiler flags、Go/Python 版本與 raw output |
+| CPU 熱點 | `go tool pprof http://localhost:6060/debug/pprof/profile?seconds=30` | 適合 CPU-bound，不適合直接判斷 I/O wait |
+| Runtime metrics | `/gc/*`、`/sched/*`、RSS、scrape payload | 升級 Go runtime / GC 前後要用同一組 dashboard threshold |
+| 工業通訊效能 | polling interval、timeout、retry、設備回應時間、queue backlog | PLC / DDC / SCADA 場景常被 I/O wait 主導，不能只看語言層 CPU |

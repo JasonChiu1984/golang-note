@@ -138,6 +138,11 @@
       border-radius: 8px;
       color: #1e3a8a;
     }
+    .figure-caption {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: .92rem;
+    }
     pre {
       overflow-x: auto;
       margin: 0;
@@ -182,6 +187,7 @@
       <a class="btn" href="#syscall">系統呼叫</a>
       <a class="btn" href="#cases">應用案例</a>
       <a class="btn" href="#verification">驗證方法</a>
+      <a class="btn" href="#report-template">測試報告模板</a>
       <a class="btn" href="#troubleshooting">排錯與最佳實務</a>
     </div>
   </nav>
@@ -270,6 +276,7 @@
           <text x="798" y="294" font-size="13" fill="#64748b">真正慢的常是 I/O 等待，不是語言本身。</text>
         </svg>
       </div>
+      <p class="figure-caption">圖解摘要：C 的 runtime 最薄、Python 需經 interpreter / C API、Go 則以 runtime scheduler 與 netpoller 平衡 native binary、GC 與大量連線服務。</p>
     </section>
 
     <section id="speed">
@@ -311,6 +318,7 @@
           <text x="870" y="356" font-size="13" fill="#64748b">高 overhead</text>
         </svg>
       </div>
+      <p class="figure-caption">圖解摘要：此圖是相對 overhead 概念圖，不代表固定倍率；正式結論必須搭配同機器、同演算法、同資料量與同 build mode 的 benchmark。</p>
       <div class="table-wrap" style="margin-top:12px">
         <table>
           <thead><tr><th>面向</th><th>C</th><th>Python</th><th>Golang</th><th>工程判斷</th></tr></thead>
@@ -370,6 +378,7 @@
           <text x="798" y="318" font-size="13" fill="#64748b">若設備回應是毫秒級，語言層微秒差異通常不是主瓶頸。</text>
         </svg>
       </div>
+      <p class="figure-caption">圖解摘要：system call 的成本來自 user/kernel boundary、排程、buffer copy、device wait 與網路/序列通訊延遲；高頻小 I/O 應優先 batch 化。</p>
       <div class="table-wrap" style="margin-top:12px">
         <table>
           <thead><tr><th>系統呼叫場景</th><th>C</th><th>Python</th><th>Go</th><th>效能重點</th></tr></thead>
@@ -463,6 +472,19 @@
           <text x="838" y="388" font-size="13" fill="#92400e">Python notebook / model pipeline</text>
         </svg>
       </div>
+      <p class="figure-caption">圖解摘要：工業自動化常採混合架構：C 負責低階 driver / SDK，Go 負責長駐 gateway 與 API，Python 負責分析、報表與快速整合。</p>
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead><tr><th>部署檢查項</th><th>工程要求</th><th>範例</th><th>風險控制</th></tr></thead>
+          <tbody>
+            <tr><td>IO mapping</td><td>明確列出設備點位、暫存器、物件與資料型別</td><td>Modbus `40001` / BACnet `analogInput:1` / MQTT `site/ahu01/temp`</td><td>避免點位搬移後程式仍讀舊地址</td></tr>
+            <tr><td>Signal flow</td><td>標示 sensor、gateway、queue、API、historian 與 dashboard 的流向</td><td>PLC -> Go gateway -> MQTT -> API -> PostgreSQL</td><td>incident 時可快速定位卡在設備、網路或服務</td></tr>
+            <tr><td>Alarm</td><td>區分 timeout、stale data、bad quality、queue backlog 與 device fault</td><td>`device_timeout`、`stale_value`、`queue_backlog_high`</td><td>避免把通訊問題誤判成控制邏輯錯誤</td></tr>
+            <tr><td>Fail-safe</td><td>失去通訊時不可直接使用過期值驅動控制輸出</td><td>超過 3 個 polling cycle 標為 invalid，輸出維持安全狀態</td><td>避免資料過期造成錯誤控制命令</td></tr>
+            <tr><td>Maintenance</td><td>保留版本、設備清單、polling interval、timeout、retry 與 firmware 記錄</td><td>`device_inventory.yaml`、`gateway_version`、`request_id`</td><td>升級或換設備後可追蹤行為差異</td></tr>
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <section id="verification">
@@ -475,15 +497,17 @@
       <div class="grid-2">
         <div class="panel">
           <h3>CPU-bound benchmark 範例流程</h3>
-          <pre><code># C
-clang -O2 bench.c -o bench-c
-time ./bench-c
+          <pre><code>cd examples/performance-comparison
+
+# C
+clang -O2 c/bench.c -o /tmp/bench-c
+/tmp/bench-c
 
 # Go
-go test -bench=. -benchmem -count=10 ./...
+go test -bench=. -benchmem -count=10 ./go
 
 # Python
-python3 -m timeit -s 'from bench import run' 'run()'</code></pre>
+python3 python/bench.py</code></pre>
         </div>
         <div class="panel">
           <h3>System call / I/O benchmark 範例流程</h3>
@@ -511,6 +535,59 @@ sudo dtruss ./your-program</code></pre>
             <tr><td>使用 production build</td><td>debug build 會低估 C / Go</td><td>C 用 `-O2` 或 `-O3`；Go 用正式 test benchmark；Python 標明 CPython / PyPy / native extension</td></tr>
           </tbody>
         </table>
+      </div>
+      <p class="note">可重跑範例已放在 <code>examples/performance-comparison/</code>。該資料夾提供同一個整數運算 workload 的 C、Python、Go 版本，用來示範 benchmark 方法，而不是作為跨平台固定結論。</p>
+    </section>
+
+    <section id="report-template">
+      <div class="section-head">
+        <div>
+          <h2>正式測試報告模板</h2>
+          <p>任何語言效能結論都應附上測試環境、build flags、資料量與原始結果。缺少這些欄位的比較，只能視為觀察，不能作為架構決策依據。</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>欄位</th><th>必填內容</th><th>範例</th><th>原因</th></tr></thead>
+          <tbody>
+            <tr><td>CPU</td><td>型號、核心數、是否固定頻率</td><td>Apple M-series / Intel Xeon / AMD EPYC</td><td>CPU cache、SIMD、turbo 會影響結果</td></tr>
+            <tr><td>OS</td><td>作業系統與版本</td><td>macOS 15.x、Ubuntu 24.04、Windows Server</td><td>scheduler、syscall、filesystem 行為不同</td></tr>
+            <tr><td>Compiler</td><td>C compiler 與 flags</td><td>`clang -O2`、`gcc -O3`</td><td>debug / release build 差距很大</td></tr>
+            <tr><td>Go version</td><td>`go version` 完整輸出</td><td>`go version go1.26.3 darwin/arm64`</td><td>runtime、GC、compiler optimization 會隨版本改變</td></tr>
+            <tr><td>Python version</td><td>CPython / PyPy 與版本</td><td>`Python 3.13.x CPython`</td><td>interpreter 與 JIT 差異會改變結果</td></tr>
+            <tr><td>C flags</td><td>最佳化、連結與安全選項</td><td>`-O2 -march=native`、是否啟用 ASAN</td><td>flags 直接影響 CPU hot path 與安全檢查成本</td></tr>
+            <tr><td>資料量</td><td>迴圈次數、檔案大小、payload、連線數</td><td>`n=50,000,000`、`256MiB`、`128 connections`</td><td>小資料容易被啟動與 cache effect 主導</td></tr>
+            <tr><td>原始結果</td><td>完整 stdout、benchmark output、time output</td><td>`bench.txt`、`go test -bench` 原文</td><td>保留可追溯證據，避免只留下結論</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel" style="margin-top:12px">
+        <h3>報告 Markdown 範本</h3>
+        <pre><code>## Performance Test Report
+
+| Field | Value |
+|---|---|
+| CPU |  |
+| OS |  |
+| C compiler / flags |  |
+| Go version |  |
+| Python version |  |
+| Data size |  |
+| Workload | CPU-bound / file I/O / TCP / protocol polling |
+| Raw result file |  |
+
+### Commands
+
+```bash
+clang -O2 c/bench.c -o /tmp/bench-c
+/tmp/bench-c
+go test -bench=. -benchmem -count=10 ./go
+python3 python/bench.py
+```
+
+### Conclusion
+
+說明瓶頸是在 CPU、allocation、system call、I/O wait、device timeout，還是跨語言 FFI 邊界。</code></pre>
       </div>
     </section>
 

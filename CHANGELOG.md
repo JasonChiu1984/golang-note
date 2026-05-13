@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.23 - 2026-05-13
+
+- 新增 2026-05-13 19:13 資深工程師審查報告，確認 Go 1.1-1.26 ReleaseNote 與補充教材入口已成形，但 C/Python/Go 效能補充頁仍需要可重跑 benchmark、正式報告模板與教材驗證 gate。
+- `docs/c-python-go-performance-supplement.html` 補上圖解說明、部署檢查表、可重跑 benchmark 指令與正式測試報告模板，避免跨語言比較停留在概念倍率。
+- 新增 `examples/performance-comparison/`，提供同一個整數運算 workload 的 C、Go、Python 版本與 README，作為效能比較方法示範。
+- README、第 10 章、進階 Cheat Sheet 與康乃爾筆記補上跨語言效能範例、raw output、compiler flags、語言版本與工業通訊 I/O wait 風險。
+- `圖解筆記3-4整合/golang-complete-visual-course.html` 主導覽新增語法應用圖解與效能補充頁入口；`docs/index.html` 重新由整合課程複製產生並修正 Pages 相對連結。
+- `.gitignore` 新增 Python bytecode 規則，避免效能範例執行後把 `__pycache__` / `*.pyc` 納入版本。
+
 ## v1.0.22 - 2026-05-13
 
 - 新增 2026-05-13 18:03 資深工程師審查報告，確認 v1.0.21 已補齊 Go 1.2-1.26 官方段落覆蓋，但 ReleaseNote 索引仍缺 Go 1.1 起點、支援狀態視覺化與補充教材入口整理。
