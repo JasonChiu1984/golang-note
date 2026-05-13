@@ -100,6 +100,19 @@
       white-space: nowrap;
     }
     .btn:hover, .btn.active { border-color: var(--blue); color: var(--blue); background: #eff6ff; }
+    .shortcut-key {
+      display: inline-flex;
+      align-items: center;
+      min-height: 20px;
+      margin-left: 6px;
+      padding: 0 6px;
+      border: 1px solid #bfdbfe;
+      border-radius: 5px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: .78rem;
+      line-height: 1;
+    }
     main { max-width: 1220px; margin: 0 auto; padding: 22px 20px 64px; }
     section { margin: 26px 0; scroll-margin-top: 82px; }
     .section-head { display: flex; justify-content: space-between; gap: 16px; align-items: end; margin-bottom: 14px; }
@@ -295,6 +308,7 @@
       <a class="btn" href="#examples-200">200 語法範例</a>
       <a class="btn" href="#production-advanced">Production Advanced</a>
       <a class="btn" href="#production-walkthrough">Production Walkthrough</a>
+      <a class="btn" id="releaseNotesShortcut" href="../ReleaseNote/index.html" accesskey="r" title="開啟 Release Notes（Alt+R）">Release Notes <span class="shortcut-key">Alt+R</span></a>
     </div>
   </nav>
 
@@ -1702,6 +1716,14 @@ docker compose up --build</code></pre>
 
     function bindGlobalActions() {
       document.getElementById("backToTop").addEventListener("click", () => scrollToId("top"));
+      document.addEventListener("keydown", event => {
+        if (!event.altKey || event.key.toLowerCase() !== "r") return;
+        const active = document.activeElement;
+        const isTyping = active && ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName);
+        if (isTyping) return;
+        event.preventDefault();
+        window.location.href = document.getElementById("releaseNotesShortcut").href;
+      });
     }
 
     renderUnifiedIndex();

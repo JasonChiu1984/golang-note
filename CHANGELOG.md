@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.17 - 2026-05-13
+
+- 新增 2026-05-13 13:02 資深工程師審查報告，確認教程已具備 API / timeout / shutdown / retry 合約，但啟動設定仍會 silent fallback。
+- `production-api-worker` 新增 `internal/config`，集中讀取 `PORT`、`QUEUE_SIZE`、`WORKERS`、`DATABASE_URL` 與 `OTEL_EXPORTER_OTLP_ENDPOINT`。
+- `cmd/api-worker` 啟動時會驗證 port 範圍與正整數容量設定；錯誤設定直接 fail fast，不再悄悄套用預設值。
+- 新增 config unit tests，固定預設值、合法 env、非法 port、非法 queue size 與非法 worker count。
+- README、第 7 / 11 章、進階 Cheat Sheet、康乃爾筆記與 `production-api-worker` 文件補上 startup configuration contract 與 release gate。
+- `docs/index.html` 同步由 `圖解筆記3-4整合/golang-complete-visual-course.html` 複製產生，供 GitHub Pages / docs 入口使用。
+
 ## v1.0.16 - 2026-05-13
 
 - 新增 2026-05-13 12:02 資深工程師審查報告，確認教程已補齊 retry cancellation，但 HTTP handler 對 `context.DeadlineExceeded` 尚未形成 timeout 合約。

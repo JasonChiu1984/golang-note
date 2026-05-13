@@ -10,11 +10,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"time"
 
 	"golang-learning-notes/production-api-worker/internal/api"
 	"golang-learning-notes/production-api-worker/internal/app"
+	"golang-learning-notes/production-api-worker/internal/config"
 	"golang-learning-notes/production-api-worker/internal/lifecycle"
 	"golang-learning-notes/production-api-worker/internal/observability"
 	"golang-learning-notes/production-api-worker/internal/repository"
@@ -25,9 +25,14 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("load config: %v", err)
+	}
+
 	obs, err := observability.NewWithConfig(ctx, observability.Config{
 		ServiceName:  "production-api-worker",
-		OTLPEndpoint: os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"),
+		OTLPEndpoint: cfg.OTLPEndpoint,
 		TraceOut:     os.Stdout,
 	})
 	if err != nil {
@@ -35,7 +40,7 @@ func main() {
 	}
 	defer obs.Shutdown(context.Background())
 
-	store, cleanup, err := openStore(ctx)
+	store, cleanup, err := openStore(ctx, cfg.DatabaseURL)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -46,15 +51,15 @@ func main() {
 	defer cancelWorkers()
 
 	var service *app.Service
-	queue := worker.New(envInt("QUEUE_SIZE", 64), func(ctx context.Context, task worker.Task) error {
+	queue := worker.New(cfg.QueueSize, func(ctx context.Context, task worker.Task) error {
 		return service.ProcessJob(ctx, task)
 	}, obs)
 	service = app.NewService(store, queue, obs, newID)
-	queue.Start(workerCtx, envInt("WORKERS", 4))
+	queue.Start(workerCtx, cfg.Workers)
 	defer queue.Shutdown()
 
 	server := &http.Server{
-		Addr:              ":" + envString("PORT", "8080"),
+		Addr:              ":" + cfg.Port,
 		Handler:           api.NewHandler(service, obs, api.WithReadiness(readiness.Ready)).Routes(),
 		ReadHeaderTimeout: 3 * time.Second,
 	}
@@ -90,8 +95,7 @@ func main() {
 	}
 }
 
-func openStore(ctx context.Context) (repository.Store, func(), error) {
-	dsn := os.Getenv("DATABASE_URL")
+func openStore(ctx context.Context, dsn string) (repository.Store, func(), error) {
 	if dsn == "" {
 		return repository.NewMemoryStore(), func() {}, nil
 	}
@@ -100,26 +104,6 @@ func openStore(ctx context.Context) (repository.Store, func(), error) {
 		return nil, nil, fmt.Errorf("open postgres: %w", err)
 	}
 	return store, func() { _ = store.Close() }, nil
-}
-
-func envString(name, fallback string) string {
-	value := os.Getenv(name)
-	if value == "" {
-		return fallback
-	}
-	return value
-}
-
-func envInt(name string, fallback int) int {
-	value := os.Getenv(name)
-	if value == "" {
-		return fallback
-	}
-	parsed, err := strconv.Atoi(value)
-	if err != nil || parsed <= 0 {
-		return fallback
-	}
-	return parsed
 }
 
 func newID() string {

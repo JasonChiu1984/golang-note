@@ -100,6 +100,19 @@
       white-space: nowrap;
     }
     .btn:hover, .btn.active { border-color: var(--blue); color: var(--blue); background: #eff6ff; }
+    .shortcut-key {
+      display: inline-flex;
+      align-items: center;
+      min-height: 20px;
+      margin-left: 6px;
+      padding: 0 6px;
+      border: 1px solid #bfdbfe;
+      border-radius: 5px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: .78rem;
+      line-height: 1;
+    }
     main { max-width: 1220px; margin: 0 auto; padding: 22px 20px 64px; }
     section { margin: 26px 0; scroll-margin-top: 82px; }
     .section-head { display: flex; justify-content: space-between; gap: 16px; align-items: end; margin-bottom: 14px; }
@@ -274,7 +287,7 @@
       <div>
         <p class="eyebrow">圖解筆記 3 + 4 / 單一完整 HTML</p>
         <h1>Golang 從語法到 Production 的完整圖解課</h1>
-        <p>把 Go 語法、併發、測試、200 語法範例、Go 1.21/1.22/1.23 標準庫版本邊界、database/sql、Observability 與 Production API Flow 合併成同一份可搜尋、可跳轉、可校閱的資深工程教材。</p>
+        <p>把圖解筆記3的語法、併發、任務系統、200 語法範例、200 常用案例，和圖解筆記4的 Go 1.21-1.26、database/sql、Observability、Production API Flow 合併成同一份可搜尋、可跳轉、可校閱的資深工程教材。</p>
       </div>
       <div class="hero-stats" aria-label="課程摘要">
         <a class="stat" href="#syntax-from-note3"><strong>40</strong><span>單一語法卡</span></a>
@@ -295,6 +308,7 @@
       <a class="btn" href="#examples-200">200 語法範例</a>
       <a class="btn" href="#production-advanced">Production Advanced</a>
       <a class="btn" href="#production-walkthrough">Production Walkthrough</a>
+      <a class="btn" id="releaseNotesShortcut" href="../ReleaseNote/index.html" accesskey="r" title="開啟 Release Notes（Alt+R）">Release Notes <span class="shortcut-key">Alt+R</span></a>
     </div>
   </nav>
 
@@ -415,6 +429,18 @@
             </a>
           </g>
         </svg>
+      </div>
+      <div class="path-grid">
+        <article class="path-card">
+          <span class="badge">圖解筆記3</span>
+          <h3>語法到大型任務系統</h3>
+          <p class="muted">包含語法卡列表、40 張單一語法卡、並發爬蟲架構、工程決策、Production checklist、200 語法範例與 200 常用案例。</p>
+        </article>
+        <article class="path-card">
+          <span class="badge amber">圖解筆記4</span>
+          <h3>Production Advanced 補強</h3>
+          <p class="muted">補上 Go 1.21-1.26 slices/maps/ServeMux、runtime/testing、database/sql、transaction、connection pool、Observability 與 Production API Flow。</p>
+        </article>
       </div>
     </section>
 
@@ -645,6 +671,48 @@
 go test ./...
 go test -race ./...
 docker compose up --build</code></pre>
+      </div>
+      <div class="jump-grid">
+        <button class="jump-card" style="border-top-color:var(--blue)" data-src="../圖解筆記3/golang-visual-course.html#syntax-index">
+          <span class="badge">Note 3</span>
+          <strong>語法卡列表</strong>
+          <span>40 張 Go 語法卡快速索引。</span>
+        </button>
+        <button class="jump-card" style="border-top-color:var(--teal)" data-src="../圖解筆記3/golang-visual-course.html#project">
+          <span class="badge green">Note 3</span>
+          <strong>大型專案圖解</strong>
+          <span>並發爬蟲 / 任務系統。</span>
+        </button>
+        <button class="jump-card" style="border-top-color:var(--rose)" data-src="../圖解筆記3/golang-visual-course.html#engineering-decisions">
+          <span class="badge rose">Note 3</span>
+          <strong>工程決策</strong>
+          <span>queue、retry、panic、shutdown。</span>
+        </button>
+        <button class="jump-card" style="border-top-color:var(--amber)" data-src="../圖解筆記3/golang-visual-course.html#cases">
+          <span class="badge amber">Note 3</span>
+          <strong>200 常用案例</strong>
+          <span>含 40 個真實工程案例。</span>
+        </button>
+        <button class="jump-card" style="border-top-color:var(--violet)" data-src="../圖解筆記4/golang-production-advanced.html#syntax-index">
+          <span class="badge violet">Note 4</span>
+          <strong>Production 語法索引</strong>
+          <span>slices、maps、ServeMux、DB、Observability。</span>
+        </button>
+        <button class="jump-card" style="border-top-color:var(--green)" data-src="../圖解筆記4/golang-production-advanced.html#modern-stdlib">
+          <span class="badge green">Note 4</span>
+          <strong>Go 1.21-1.26</strong>
+          <span>slices / maps / ServeMux / runtime / testing。</span>
+        </button>
+        <button class="jump-card" style="border-top-color:var(--teal)" data-src="../圖解筆記4/golang-production-advanced.html#database-layer">
+          <span class="badge green">Note 4</span>
+          <strong>Database Layer</strong>
+          <span>database/sql、tx、pool。</span>
+        </button>
+        <button class="jump-card" style="border-top-color:var(--amber)" data-src="../圖解筆記4/golang-production-advanced.html#observability">
+          <span class="badge amber">Note 4</span>
+          <strong>Observability</strong>
+          <span>log、metrics、trace、health、pprof。</span>
+        </button>
       </div>
     </section>
 
@@ -1648,6 +1716,14 @@ docker compose up --build</code></pre>
 
     function bindGlobalActions() {
       document.getElementById("backToTop").addEventListener("click", () => scrollToId("top"));
+      document.addEventListener("keydown", event => {
+        if (!event.altKey || event.key.toLowerCase() !== "r") return;
+        const active = document.activeElement;
+        const isTyping = active && ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName);
+        if (isTyping) return;
+        event.preventDefault();
+        window.location.href = document.getElementById("releaseNotesShortcut").href;
+      });
     }
 
     renderUnifiedIndex();

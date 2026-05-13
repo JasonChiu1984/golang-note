@@ -210,6 +210,16 @@ func FetchUser(ctx context.Context, id int) (*User, error) {
 | Queue close/send | close 與 enqueue send 需共用 mutex 或單一 owner，避免送入已關閉 channel |
 | Timeout | drain deadline 到期才 cancel worker context |
 
+### Startup Config Contract
+
+| 設定 | Go 實作重點 |
+|---|---|
+| `PORT` | 啟動時 parse 成 1-65535；不要接受 `:8080` 或任意字串 |
+| `QUEUE_SIZE` | 必須是正整數；錯誤值 fail fast，不要 silent fallback |
+| `WORKERS` | 必須是正整數；容量規劃要能被測試固定 |
+| Optional endpoint | `DATABASE_URL` 空值時明確進 memory mode；OTLP endpoint 空值時明確使用 stdout exporter |
+| 測試 | `go test ./internal/config -count=1` 固定 default、valid env、invalid env |
+
 ---
 
 ## Error Wrapping

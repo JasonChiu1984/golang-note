@@ -1,6 +1,6 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.16 ｜ 基準日期：2026-05-13 ｜ 適用範圍：local memory mode、Postgres + OTLP mode
+> 版本：v1.0.17 ｜ 基準日期：2026-05-13 ｜ 適用範圍：local memory mode、Postgres + OTLP mode
 
 這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery、retry 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 cancellation 行為需要透過 contract test 保護。
 
@@ -16,6 +16,7 @@
 | Readiness lifecycle | draining 時 `/readyz` 必須回 `503`，讓外部導流系統停止送新 request |
 | Panic recovery | 未預期 panic 必須回 `500` 與穩定 `internal_error` JSON，不暴露 panic 細節 |
 | Request timeout | handler deadline exceeded 必須回 `504 request_timeout`，不得漂移成 `500 internal_error` |
+| Startup configuration | `PORT`、`QUEUE_SIZE`、`WORKERS` 必須先驗證；錯誤設定 fail fast，不可 silent fallback |
 | Worker shutdown | queue close 與 enqueue send 必須同步，shutdown 後新 enqueue 回穩定錯誤 |
 | Retry cancellation | deadlock retry 的 backoff 必須尊重 `context` cancellation / deadline |
 | Breaking change | 需新增版本路由或遷移期，不能直接覆蓋既有合約 |
@@ -138,6 +139,20 @@ Content-Type: application/json
 | `GET /readyz` | 503 | draining，停止接新流量並等待既有工作收斂 |
 | `GET /metrics` | 200 | Prometheus metrics |
 
+## Startup Configuration
+
+`api-worker` 啟動前會先驗證環境變數。這些設定雖然不是 HTTP response schema，但會直接影響操作合約、容量規劃與 incident 排查。
+
+| Env | 預設值 | 驗證 |
+|---|---:|---|
+| `PORT` | `8080` | TCP port `1-65535` |
+| `QUEUE_SIZE` | `64` | 正整數 |
+| `WORKERS` | `4` | 正整數 |
+| `DATABASE_URL` | 空字串 | 空字串時使用 memory store |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | 空字串 | 空字串時使用 stdout trace exporter |
+
+錯誤設定必須讓 process fail fast，例如 `PORT=http`、`QUEUE_SIZE=0`、`WORKERS=-1` 不應被靜默改成預設值。
+
 ## Panic Recovery
 
 若 handler、service 或 queue 發生未預期 panic，API 必須保留 request correlation 並回傳穩定錯誤格式。
@@ -181,6 +196,7 @@ X-Request-ID: request-from-client
 ```bash
 cd production-api-worker
 go test ./internal/api -run 'Test.*Contract' -count=1
+go test ./internal/config -count=1
 go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
 go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1
 ```
@@ -196,5 +212,6 @@ go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownD
 - draining 時 `/readyz` 需回 `503 Service Unavailable`，避免 shutdown 期間仍接收新流量。
 - handler panic 需回 `500 internal_error` JSON，並保留原 `X-Request-ID`。
 - request deadline exceeded 需回 `504 request_timeout`，並保留原 `X-Request-ID`。
+- 啟動設定需固定預設值、合法 env 與錯誤設定 fail-fast 行為。
 - deadlock retry backoff 遇到 context cancellation / deadline 時需停止，不得繼續重試或 enqueue。
 - queue shutdown 期間不可發生 `send on closed channel`；close 後新 enqueue 需回穩定錯誤。

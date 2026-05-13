@@ -6,6 +6,7 @@
 - API contract：穩定 request/response/error schema，文件在 `docs/api-contract.md`
 - Request decoding：拒絕 malformed JSON、unknown field、trailing JSON value 與空白 name
 - Service transaction boundary：`sql.TxOptions`、context-aware deadlock retry、queue enqueue
+- Startup configuration：集中驗證 `PORT`、`QUEUE_SIZE`、`WORKERS`，錯誤設定 fail fast
 - Repository：memory 與 Postgres `database/sql` 版本
 - Worker queue：bounded queue、worker pool、shutdown-safe enqueue / close
 - Service lifecycle：`/livez`、`/readyz`、draining、HTTP shutdown、queue drain
@@ -52,6 +53,7 @@ go mod tidy
 go mod verify
 go list -m -u all
 govulncheck ./...
+go test ./internal/config -count=1
 go test ./internal/api -run 'Test.*Contract|TestReadinessContract|TestPanicRecoveryContract|TestRequestDecodingContract' -count=1
 go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
 go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1
@@ -65,6 +67,7 @@ docker compose up --build
 | `go mod verify` | 確認 module cache 與 `go.sum` hash 一致 |
 | `go list -m -u all` | 發現可更新依賴並建立維護紀錄 |
 | `govulncheck ./...` | 掃描 API / worker 實際可達的已知漏洞 |
+| `go test ./internal/config -count=1` | 固定啟動設定預設值、合法 env 與錯誤設定 fail-fast 行為 |
 | `go test ./internal/api -run 'Test.*Contract' -count=1` | 固定 HTTP status、JSON shape、錯誤 code 與 response header |
 | `go test ./internal/api -run 'TestRequestDecodingContract' -count=1` | 固定 malformed JSON、unknown field、trailing JSON 與空白 name 的 `400 invalid_input` |
 | `go test ./internal/api -run 'TestReadinessContract' -count=1` | 固定 ready / draining 狀態與 `/readyz` status code |
@@ -88,6 +91,24 @@ docker compose up --build
 | Request timeout | `context.DeadlineExceeded` 對外回 `504 request_timeout`，避免被誤分類成 `internal_error` |
 | Status enum | `pending`、`processing`、`done`、`failed` 不任意改名 |
 | Breaking change | 新增版本路由或遷移期，不直接覆蓋既有合約 |
+
+## Startup Configuration Contract
+
+啟動設定也是 production 合約的一部分。`api-worker` 會先載入並驗證環境變數，設定錯誤時直接停止啟動，避免 staging / production 因 typo 或錯誤容量值而悄悄使用預設值。
+
+| Env | 預設值 | 驗證規則 | 用途 |
+|---|---:|---|---|
+| `PORT` | `8080` | TCP port `1-65535` | HTTP listen port |
+| `QUEUE_SIZE` | `64` | 正整數 | bounded queue 容量 |
+| `WORKERS` | `4` | 正整數 | worker goroutine 數量 |
+| `DATABASE_URL` | 空字串 | 空字串時使用 memory store | Postgres 連線字串 |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | 空字串 | 空字串時只用 stdout trace exporter | OTLP collector endpoint |
+
+```bash
+cd production-api-worker
+PORT=9090 QUEUE_SIZE=128 WORKERS=8 go run ./cmd/api-worker
+go test ./internal/config -count=1
+```
 
 ## Observability Correlation
 

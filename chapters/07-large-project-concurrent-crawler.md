@@ -113,6 +113,22 @@ func Load() Config {
 | 設定檔 | `configs/config.yaml` | 中 |
 | 環境變數 | `export DATABASE_URL=...` | 最高 |
 
+Production service 不應讓錯誤設定 silent fallback。像 `PORT=http`、`QUEUE_SIZE=0`、`WORKERS=-1` 這類部署錯誤應在啟動時 fail fast，而不是悄悄套用預設值。
+
+```go
+cfg, err := config.Load()
+if err != nil {
+	log.Fatalf("load config: %v", err)
+}
+```
+
+| 設定項 | 驗證重點 | 失敗策略 |
+|---|---|---|
+| `PORT` | 1-65535 的 TCP port | 啟動失敗 |
+| `QUEUE_SIZE` | 正整數 | 啟動失敗 |
+| `WORKERS` | 正整數 | 啟動失敗 |
+| `DATABASE_URL` | 空值時明確切換 memory mode | 不可誤判為 Postgres mode |
+
 ## Makefile 慣例
 
 ```makefile
@@ -258,6 +274,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Panic recovery | `500 internal_error` JSON、request id header | panic 造成連線中斷、非 JSON 錯誤或洩漏內部細節 |
 | Request timeout | `504 request_timeout` JSON、request id header | handler deadline exceeded 被誤分類成 `500 internal_error`，client 無法區分 timeout 與 bug |
 | Retry cancellation | deadlock backoff、request context、shutdown deadline | request 已取消後仍繼續重試 DB 交易或排入 queue |
+| Startup config | port、queue size、worker count、optional endpoint | 錯誤 env 被 silent fallback，容量與部署設定不一致 |
 | Queue shutdown | enqueue 與 close 的同步邊界 | shutdown 期間可能送入已關閉 channel，造成 panic |
 
 `production-api-worker/docs/api-contract.md` 示範了最小可維護合約：`POST /jobs`、`GET /jobs/{id}`、health endpoint、metrics endpoint、錯誤格式與 release gate。這不是要把文件寫成百科，而是讓每次 release 都能回答三個問題：
@@ -340,6 +357,20 @@ Production API 的 timeout 不是未知錯誤。若 handler 建立的 request de
 | Error code | `request_timeout` |
 | Request correlation | 原本的 `X-Request-ID` 仍回傳 |
 | 測試保護 | `TestRequestTimeoutContract` 固定 timeout 外部行為 |
+
+### Startup Configuration Contract
+
+設定錯誤是 deployment fault，不是可忽略的小問題。`production-api-worker/internal/config` 示範把 env 讀取集中到單一 package，先驗證再 wire service。
+
+| 設定 | 預設 | 合約 |
+|---|---:|---|
+| `PORT` | `8080` | 必須是 1-65535 |
+| `QUEUE_SIZE` | `64` | 必須是正整數 |
+| `WORKERS` | `4` | 必須是正整數 |
+| `DATABASE_URL` | 空 | 空值時使用 memory store |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | 空 | 空值時只輸出 stdout trace |
+
+這個案例適合放在第 7 章，因為它強調 `cmd/` 的職責不是堆業務邏輯，而是做 configuration、dependency wiring 與啟動失敗邊界。設定 loader 有自己的 unit test，避免部署環境變更時破壞啟動合約。
 
 ### Service Lifecycle：ready、draining、shutdown
 

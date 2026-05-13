@@ -222,6 +222,7 @@ func TestCreateJobContract(t *testing.T) {
 | Panic recovery | 未預期 panic 仍需回穩定 `500 internal_error` JSON |
 | Request timeout | handler deadline exceeded 應回 `504 request_timeout`，不可漂移成 `500 internal_error` |
 | Retry cancellation | retry backoff 遇到 `ctx.Done()` 時應停止，不再重試交易或 enqueue |
+| Startup config | 不合法 `PORT`、`QUEUE_SIZE`、`WORKERS` 應 fail fast，不可 silent fallback |
 
 對 `production-api-worker` 這類 service，建議把合約測試獨立命名，讓 release gate 可以聚焦執行：
 
@@ -348,6 +349,26 @@ func TestCreateJobStopsDeadlockRetryWhenContextCanceled(t *testing.T) {
 | 回傳 `context.Canceled` / deadline | 讓上層可正確分類 timeout / shutdown |
 | Queue 沒收到 task | 防止被取消的 request 仍產生背景副作用 |
 
+### Configuration Contract Test
+
+啟動設定也需要測試。Production 問題常常不是 handler 寫錯，而是部署時 `PORT`、queue size、worker count 或 endpoint 設錯。若 loader 遇到錯誤值直接 fallback，服務可能看似正常啟動，實際容量卻和部署宣告不一致。
+
+```go
+func TestLoadFromLookupRejectsInvalidRequiredConfig(t *testing.T) {
+	_, err := LoadFromLookup(mapLookup(map[string]string{"QUEUE_SIZE": "0"}))
+	if err == nil {
+		t.Fatal("want config error")
+	}
+}
+```
+
+| 測試項 | 為什麼重要 |
+|---|---|
+| 預設值 | local memory mode 可不帶 env 啟動 |
+| 合法 env | staging / production 可明確覆寫 port、queue、workers |
+| 不合法 port | 避免 `PORT=http` 延後到 listen 階段才失敗 |
+| 不合法 queue / workers | 避免容量設定錯誤被 silent fallback 掩蓋 |
+
 ## 常見陷阱
 
 | 陷阱 | 說明 | 解決方案 |
@@ -374,6 +395,7 @@ func TestCreateJobStopsDeadlockRetryWhenContextCanceled(t *testing.T) {
 | Panic recovery 合約 | `cd production-api-worker && go test ./internal/api -run 'TestPanicRecoveryContract' -count=1` | 固定 panic path 的 `500 internal_error` JSON 與 request id |
 | Request timeout 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestTimeoutContract' -count=1` | 固定 handler timeout 的 `504 request_timeout` JSON 與 request id |
 | Retry cancellation | `cd production-api-worker && go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1` | 固定 deadlock retry backoff 會尊重 context cancellation / deadline |
+| Startup config | `cd production-api-worker && go test ./internal/config -count=1` | 固定設定預設值、合法 env 與錯誤設定 fail-fast 行為 |
 | Module checksum | `go mod verify` | 確認 module cache 未被竄改 |
 | Dependency updates | `go list -m -u all` | 發現可更新版本，作為維護 PR 依據 |
 | Vulnerability scan | `govulncheck ./...` | 掃描實際可達的 Go 已知漏洞 |
