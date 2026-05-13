@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Golang 圖解筆記 3+4 整合版</title>
+  <title>Golang 圖解筆記 3+4 單一整合版</title>
   <style>
     :root {
       --bg: #f6f8fb;
@@ -30,47 +30,63 @@
       line-height: 1.6;
     }
     a { color: inherit; text-decoration: none; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
     .hero {
       background: #0f172a;
       color: #f8fafc;
-      padding: 34px 20px 28px;
-      border-bottom: 1px solid rgba(255, 255, 255, .12);
+      padding: 34px 20px 30px;
+      border-bottom: 1px solid rgba(255,255,255,.12);
     }
     .hero-inner {
-      max-width: 1180px;
+      max-width: 1220px;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(300px, .8fr);
+      grid-template-columns: minmax(0, 1.15fr) minmax(360px, .85fr);
       gap: 22px;
       align-items: center;
     }
     .eyebrow { margin: 0 0 10px; color: #93c5fd; font-weight: 800; }
     h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.6rem); line-height: 1.08; letter-spacing: 0; }
-    .hero p { margin: 16px 0 0; color: #cbd5e1; max-width: 780px; }
-    .hero-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    h2 { margin: 0; font-size: clamp(1.45rem, 2.6vw, 2.25rem); letter-spacing: 0; }
+    h3 { margin: 10px 0 8px; font-size: 1.16rem; letter-spacing: 0; }
+    .hero p { margin: 16px 0 0; color: #cbd5e1; max-width: 820px; }
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
     .stat {
-      border: 1px solid rgba(255, 255, 255, .14);
-      background: rgba(255, 255, 255, .06);
+      display: block;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
       border-radius: 8px;
       padding: 14px;
+      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
     }
-    .stat strong { display: block; font-size: 1.8rem; line-height: 1; }
-    .stat span { display: block; margin-top: 4px; color: #cbd5e1; font-size: .88rem; }
+    .stat:hover, .stat:focus-visible {
+      transform: translateY(-2px);
+      background: rgba(255,255,255,.1);
+      border-color: rgba(255,255,255,.32);
+      outline: none;
+    }
+    .stat strong { display: block; font-size: 1.85rem; line-height: 1; }
+    .stat span { display: block; margin-top: 5px; color: #cbd5e1; font-size: .88rem; }
     .toolbar {
       position: sticky;
       top: 0;
       z-index: 10;
-      background: rgba(246, 248, 251, .95);
+      background: rgba(246,248,251,.95);
       border-bottom: 1px solid var(--line);
       backdrop-filter: blur(10px);
     }
     .toolbar-inner {
-      max-width: 1180px;
+      max-width: 1220px;
       margin: 0 auto;
       padding: 10px 20px;
       display: flex;
+      flex-wrap: wrap;
       gap: 8px;
-      overflow-x: auto;
+      overflow-x: visible;
     }
     .btn {
       border: 1px solid var(--line);
@@ -84,26 +100,26 @@
       white-space: nowrap;
     }
     .btn:hover, .btn.active { border-color: var(--blue); color: var(--blue); background: #eff6ff; }
-    main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 64px; }
-    section { margin: 24px 0; scroll-margin-top: 82px; }
+    main { max-width: 1220px; margin: 0 auto; padding: 22px 20px 64px; }
+    section { margin: 26px 0; scroll-margin-top: 82px; }
     .section-head { display: flex; justify-content: space-between; gap: 16px; align-items: end; margin-bottom: 14px; }
-    h2 { margin: 0; font-size: clamp(1.45rem, 2.6vw, 2.25rem); letter-spacing: 0; }
-    h3 { margin: 10px 0 8px; font-size: 1.18rem; letter-spacing: 0; }
-    .muted, .section-head p { color: var(--muted); }
+    .section-head p, .muted { color: var(--muted); }
     .section-head p { margin: 6px 0 0; }
-    .panel, .path-card, .jump-card, .index-card, .scenario-card, .walk-card {
+    .panel, .card, .index-card, .syntax-card, .case-card, .topic-card, .review-card, .walk-card, .scenario-card {
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 8px;
       box-shadow: var(--shadow);
     }
-    .panel { padding: 18px; overflow: hidden; }
-    .path-grid, .scenario-grid {
+    .panel, .card, .syntax-card, .case-card, .topic-card, .review-card, .walk-card, .scenario-card { padding: 16px; }
+    .grid-2, .grid-3, .grid-4, .syntax-grid, .case-grid, .topic-grid, .review-grid, .walk-grid, .scenario-grid, .index-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
+      gap: 12px;
     }
-    .path-card, .scenario-card, .walk-card { padding: 16px; }
+    .grid-2, .walk-grid, .scenario-grid, .review-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3, .topic-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4, .index-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .syntax-grid, .case-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .badge {
       display: inline-flex;
       align-items: center;
@@ -119,18 +135,16 @@
     .badge.amber { background: #fef3c7; color: #92400e; }
     .badge.rose { background: #ffe4e6; color: #9f1239; }
     .badge.violet { background: #ede9fe; color: #5b21b6; }
-    .flow {
-      width: 100%;
-      min-width: 760px;
-      height: auto;
-      display: block;
-    }
+    .badge.slate { background: #e2e8f0; color: #334155; }
     .flow-wrap { overflow-x: auto; }
-    .search-panel {
-      display: grid;
-      gap: 12px;
-      margin-bottom: 14px;
-    }
+    .flow { width: 100%; min-width: 780px; height: auto; display: block; }
+    .flow-bg { fill: #f8fafc; }
+    .flow-line { stroke: #52637a; stroke-width: 3.2; stroke-linecap: round; fill: none; }
+    .mind-link text { pointer-events: none; }
+    .mind-node { filter: drop-shadow(0 10px 18px rgba(15, 23, 42, .08)); transition: transform 160ms ease, stroke-width 160ms ease; }
+    .mind-link:hover .mind-node,
+    .mind-link:focus .mind-node { stroke-width: 3; }
+    .search-panel { display: grid; gap: 12px; margin-bottom: 14px; }
     .search-input {
       width: 100%;
       min-height: 46px;
@@ -142,14 +156,8 @@
       color: var(--ink);
     }
     .filter-row { display: flex; flex-wrap: wrap; gap: 8px; }
-    .index-grid, .jump-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-    }
-    .index-card, .jump-card {
-      display: block;
-      min-height: 104px;
+    .index-card {
+      min-height: 112px;
       padding: 12px;
       text-align: left;
       cursor: pointer;
@@ -157,12 +165,12 @@
       color: var(--ink);
       border-top: 4px solid var(--blue);
     }
-    .index-card:hover, .index-card:focus, .jump-card:hover, .jump-card:focus, .scenario-step:hover, .scenario-step:focus {
-      outline: 3px solid rgba(37, 99, 235, .16);
+    .index-card:hover, .index-card:focus, .scenario-step:hover, .scenario-step:focus {
+      outline: 3px solid rgba(37,99,235,.16);
       border-color: var(--blue);
     }
-    .index-card strong, .jump-card strong { display: block; margin: 7px 0 4px; line-height: 1.25; }
-    .index-card span:last-child, .jump-card span:last-child { display: block; color: var(--muted); font-size: .86rem; line-height: 1.45; }
+    .index-card strong { display: block; margin: 7px 0 4px; line-height: 1.25; }
+    .index-card span:last-child { display: block; color: var(--muted); font-size: .86rem; line-height: 1.45; }
     .scenario-steps { display: grid; gap: 8px; margin-top: 12px; }
     .scenario-step {
       width: 100%;
@@ -176,13 +184,7 @@
     }
     .scenario-step strong { display: block; }
     .scenario-step span { color: var(--muted); font-size: .9rem; }
-    .walk-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-    }
-    .walk-card { border-top: 4px solid var(--teal); }
-    .walk-card pre {
+    pre {
       overflow-x: auto;
       background: #0f172a;
       color: #e2e8f0;
@@ -190,6 +192,9 @@
       padding: 12px;
       font-size: .88rem;
     }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    th, td { border: 1px solid var(--line); padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f8fafc; }
     details {
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -206,40 +211,60 @@
       margin-top: 10px;
     }
     .anti { border-left-color: var(--rose); background: #fff1f2; }
-    .reader-shell {
-      display: grid;
-      grid-template-columns: 280px minmax(0, 1fr);
-      gap: 14px;
-      align-items: start;
-    }
-    .reader-menu {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      box-shadow: var(--shadow);
-      padding: 12px;
-      position: sticky;
-      top: 72px;
-    }
-    .reader-menu .btn { display: block; width: 100%; margin: 6px 0; text-align: left; }
-    .reader-frame {
-      width: 100%;
-      min-height: 76vh;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #ffffff;
-      box-shadow: var(--shadow);
+    .score {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: #ecfeff;
+      color: #0f766e;
+      border: 2px solid #99f6e4;
+      font-weight: 900;
+      font-size: 1.05rem;
+      float: right;
+      margin-left: 12px;
     }
     .direct-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-    @media (max-width: 940px) {
-      .hero-inner, .path-grid, .scenario-grid, .walk-grid, .reader-shell { grid-template-columns: 1fr; }
-      .reader-menu { position: static; }
-      .index-grid, .jump-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .top-button {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 20;
+      border: 1px solid rgba(255,255,255,.18);
+      background: #0f172a;
+      color: #f8fafc;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 900;
+      box-shadow: 0 14px 30px rgba(15, 23, 42, .22);
+      cursor: pointer;
     }
-    @media (max-width: 620px) {
+    .top-button:hover,
+    .top-button:focus-visible {
+      background: #1d4ed8;
+      outline: 3px solid rgba(37,99,235,.2);
+    }
+    .hidden { display: none !important; }
+    @media (max-width: 980px) {
+      .hero-inner, .grid-2, .grid-3, .grid-4, .syntax-grid, .case-grid, .topic-grid, .review-grid, .walk-grid, .scenario-grid, .index-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    @media (max-width: 640px) {
       .hero, main, .toolbar-inner { padding-left: 12px; padding-right: 12px; }
-      .hero-stats, .index-grid, .jump-grid { grid-template-columns: 1fr; }
-      .flow { min-width: 680px; }
+      .hero-inner, .hero-stats, .grid-2, .grid-3, .grid-4, .syntax-grid, .case-grid, .topic-grid, .review-grid, .walk-grid, .scenario-grid, .index-grid {
+        grid-template-columns: 1fr;
+      }
+      .flow { min-width: 720px; }
+      th, td { font-size: .88rem; }
+      .top-button {
+        right: 12px;
+        bottom: 12px;
+        padding: 9px 12px;
+      }
     }
   </style>
 </head>
@@ -247,15 +272,15 @@
   <header class="hero">
     <div class="hero-inner">
       <div>
-        <p class="eyebrow">圖解筆記 3 + 4 / 整合總索引</p>
+        <p class="eyebrow">圖解筆記 3 + 4 / 單一完整 HTML</p>
         <h1>Golang 從語法到 Production 的完整圖解課</h1>
-        <p>把圖解筆記3的語法、併發、任務系統、200 語法範例、200 常用案例，和圖解筆記4的 Go 1.21-1.26、database/sql、Observability、Production API Flow 合併成同一個可搜尋、可依場景跳轉的工程學習入口。</p>
+        <p>把 Go 語法、併發、測試、200 語法範例、Go 1.21/1.22/1.23 標準庫版本邊界、database/sql、Observability 與 Production API Flow 合併成同一份可搜尋、可跳轉、可校閱的資深工程教材。</p>
       </div>
-      <div class="hero-stats">
-        <div class="stat"><strong>40</strong><span>單一語法卡</span></div>
-        <div class="stat"><strong>200</strong><span>常用語法例</span></div>
-        <div class="stat"><strong>200</strong><span>常用案例說明</span></div>
-        <div class="stat"><strong>40</strong><span>真實工程案例</span></div>
+      <div class="hero-stats" aria-label="課程摘要">
+        <a class="stat" href="#syntax-from-note3"><strong>40</strong><span>單一語法卡</span></a>
+        <a class="stat" href="#examples-200"><strong>200</strong><span>常用語法範例</span></a>
+        <a class="stat" href="#production-advanced"><strong>3</strong><span>Production Advanced 主軸</span></a>
+        <a class="stat" href="#executable-project"><strong>1</strong><span>可執行 production 專案</span></a>
       </div>
     </div>
   </header>
@@ -263,13 +288,13 @@
   <nav class="toolbar" aria-label="整合版導覽">
     <div class="toolbar-inner">
       <a class="btn" href="#roadmap">整合路線</a>
+      <a class="btn" href="#syntax-mindmap">語法心智圖</a>
       <a class="btn" href="#unified-index">統一搜尋</a>
       <a class="btn" href="#scenario-paths">場景索引</a>
-      <a class="btn" href="#walkthrough">Production Walkthrough</a>
-      <a class="btn" href="#quick-jump">快速跳轉</a>
-      <a class="btn" href="#reader">內嵌閱讀器</a>
-      <a class="btn" href="../圖解筆記3/golang-visual-course.html">開啟圖解筆記3</a>
-      <a class="btn" href="../圖解筆記4/golang-production-advanced.html">開啟圖解筆記4</a>
+      <a class="btn" href="#syntax-from-note3">語法卡</a>
+      <a class="btn" href="#examples-200">200 語法範例</a>
+      <a class="btn" href="#production-advanced">Production Advanced</a>
+      <a class="btn" href="#production-walkthrough">Production Walkthrough</a>
     </div>
   </nav>
 
@@ -278,54 +303,118 @@
       <div class="section-head">
         <div>
           <h2>整合學習路線</h2>
-          <p>先用圖解筆記3建立 Go 語法與專案骨架，再用圖解筆記4補上 production 級工程能力。</p>
+          <p>Note 3 負責語法到專案整合；Note 4 補上 production advanced。整合版把兩條線收斂成可驗收路徑。</p>
         </div>
       </div>
       <div class="panel flow-wrap">
-        <svg class="flow" viewBox="0 0 1040 300" role="img" aria-label="圖解筆記3與4整合路線">
-          <rect width="1040" height="300" rx="14" fill="#f8fafc"></rect>
-          <g stroke="#52637a" stroke-width="3.2" stroke-linecap="round" fill="none">
-            <path d="M150 130 H278"></path>
-            <path d="M388 130 H516"></path>
-            <path d="M626 130 H754"></path>
-            <path d="M864 130 H930"></path>
+        <svg class="flow" viewBox="0 0 1120 330" role="img" aria-label="圖解筆記3與4單一整合路線">
+          <defs>
+            <marker id="arrow" viewBox="0 0 12 12" refX="12" refY="6" markerWidth="14" markerHeight="14" markerUnits="userSpaceOnUse" orient="auto">
+              <path d="M 0 0 L 12 6 L 0 12 z" fill="#52637a"></path>
+            </marker>
+          </defs>
+          <rect class="flow-bg" width="1120" height="330" rx="14"></rect>
+          <g class="flow-line" marker-end="url(#arrow)">
+            <path d="M145 120 H258"></path>
+            <path d="M383 120 H496"></path>
+            <path d="M621 120 H734"></path>
+            <path d="M859 120 H972"></path>
+            <path d="M560 160 V235"></path>
           </g>
-          <g fill="#52637a">
-            <polygon points="278,120 278,140 296,130"></polygon>
-            <polygon points="516,120 516,140 534,130"></polygon>
-            <polygon points="754,120 754,140 772,130"></polygon>
-            <polygon points="930,120 930,140 948,130"></polygon>
-          </g>
-          <g font-weight="800" text-anchor="middle">
-            <rect x="40" y="86" width="110" height="88" rx="10" fill="#dbeafe" stroke="#2563eb"></rect>
-            <text x="95" y="124" fill="#111827" font-size="17">語法卡</text>
-            <text x="95" y="150" fill="#475569" font-size="13">Note 3</text>
-            <rect x="296" y="86" width="92" height="88" rx="10" fill="#dcfce7" stroke="#16a34a"></rect>
-            <text x="342" y="124" fill="#111827" font-size="17">專案</text>
-            <text x="342" y="150" fill="#475569" font-size="13">Crawler</text>
-            <rect x="534" y="86" width="92" height="88" rx="10" fill="#fef3c7" stroke="#d97706"></rect>
-            <text x="580" y="124" fill="#111827" font-size="17">案例</text>
-            <text x="580" y="150" fill="#475569" font-size="13">200 cases</text>
-            <rect x="772" y="86" width="92" height="88" rx="10" fill="#ede9fe" stroke="#7c3aed"></rect>
-            <text x="818" y="124" fill="#111827" font-size="17">標準庫</text>
-            <text x="818" y="150" fill="#475569" font-size="13">Go 1.21+</text>
-            <rect x="948" y="86" width="72" height="88" rx="10" fill="#ffe4e6" stroke="#be123c"></rect>
-            <text x="984" y="124" fill="#111827" font-size="17">上線</text>
-            <text x="984" y="150" fill="#475569" font-size="13">Prod</text>
+          <g text-anchor="middle" font-weight="800">
+            <rect x="35" y="76" width="110" height="88" rx="10" fill="#dbeafe" stroke="#2563eb"></rect>
+            <text x="90" y="114" font-size="17">語法</text>
+            <text x="90" y="140" fill="#475569" font-size="13">40 cards</text>
+            <rect x="276" y="76" width="107" height="88" rx="10" fill="#dcfce7" stroke="#16a34a"></rect>
+            <text x="329" y="114" font-size="17">併發</text>
+            <text x="329" y="140" fill="#475569" font-size="13">worker</text>
+            <rect x="514" y="76" width="107" height="88" rx="10" fill="#fef3c7" stroke="#d97706"></rect>
+            <text x="567" y="114" font-size="17">200</text>
+            <text x="567" y="140" fill="#475569" font-size="13">語法範例</text>
+            <rect x="752" y="76" width="107" height="88" rx="10" fill="#ede9fe" stroke="#7c3aed"></rect>
+            <text x="805" y="114" font-size="17">DB/Obs</text>
+            <text x="805" y="140" fill="#475569" font-size="13">Note 4</text>
+            <rect x="990" y="76" width="107" height="88" rx="10" fill="#ffe4e6" stroke="#be123c"></rect>
+            <text x="1043" y="114" font-size="17">上線</text>
+            <text x="1043" y="140" fill="#475569" font-size="13">CI/CD</text>
+            <rect x="350" y="235" width="420" height="66" rx="10" fill="#ecfeff" stroke="#0f766e"></rect>
+            <text x="560" y="262" font-size="17">Production API + Worker</text>
+            <text x="560" y="286" fill="#475569" font-size="13">cmd / internal / service / repository / worker</text>
           </g>
         </svg>
       </div>
-      <div class="path-grid">
-        <article class="path-card">
-          <span class="badge">圖解筆記3</span>
-          <h3>語法到大型任務系統</h3>
-          <p class="muted">包含語法卡列表、40 張單一語法卡、並發爬蟲架構、工程決策、Production checklist、200 語法範例與 200 常用案例。</p>
-        </article>
-        <article class="path-card">
-          <span class="badge amber">圖解筆記4</span>
-          <h3>Production Advanced 補強</h3>
-          <p class="muted">補上 Go 1.21-1.26 slices/maps/ServeMux、runtime/testing、database/sql、transaction、connection pool、Observability 與 Production API Flow。</p>
-        </article>
+    </section>
+
+    <section id="syntax-mindmap">
+      <div class="section-head">
+        <div>
+          <h2>Golang 語法心智圖</h2>
+          <p>從語法核心往外看：資料、行為、抽象、併發、標準庫、測試與 production 落點如何連成一張專案地圖。</p>
+        </div>
+      </div>
+      <div class="panel flow-wrap">
+        <svg class="flow" viewBox="0 0 1120 520" role="img" aria-label="Golang 語法心智圖">
+          <rect class="flow-bg" width="1120" height="520" rx="14"></rect>
+          <g stroke="#52637a" stroke-width="2.6" fill="none" stroke-linecap="round">
+            <path d="M560 260 C420 230 300 170 190 96"></path>
+            <path d="M560 260 C420 250 300 250 190 250"></path>
+            <path d="M560 260 C420 290 300 350 190 424"></path>
+            <path d="M560 260 C500 150 500 96 560 76"></path>
+            <path d="M560 260 C620 150 620 96 560 76"></path>
+            <path d="M560 260 C700 230 820 170 930 96"></path>
+            <path d="M560 260 C700 250 820 250 930 250"></path>
+            <path d="M560 260 C700 290 820 350 930 424"></path>
+          </g>
+          <g text-anchor="middle" font-weight="800">
+            <rect x="420" y="210" width="280" height="100" rx="14" fill="#0f172a" stroke="#0f172a"></rect>
+            <text x="560" y="250" fill="#f8fafc" font-size="24">Golang 語法地圖</text>
+            <text x="560" y="282" fill="#cbd5e1" font-size="14">syntax -> project -> production</text>
+
+            <a class="mind-link" href="#syntax-from-note3">
+              <rect class="mind-node" x="70" y="50" width="240" height="92" rx="12" fill="#dbeafe" stroke="#2563eb"></rect>
+              <text x="190" y="86" font-size="18">基礎語法</text>
+              <text x="190" y="114" fill="#475569" font-size="13">go mod / var / const / if / for</text>
+            </a>
+            <a class="mind-link" href="#examples-200">
+              <rect class="mind-node" x="70" y="204" width="240" height="92" rx="12" fill="#dcfce7" stroke="#16a34a"></rect>
+              <text x="190" y="240" font-size="18">資料結構</text>
+              <text x="190" y="268" fill="#475569" font-size="13">array / slice / map / string / struct</text>
+            </a>
+            <a class="mind-link" href="#syntax-from-note3">
+              <rect class="mind-node" x="70" y="378" width="240" height="92" rx="12" fill="#ffe4e6" stroke="#e11d48"></rect>
+              <text x="190" y="414" font-size="18">函式與錯誤</text>
+              <text x="190" y="442" fill="#475569" font-size="13">func / returns / error / wrapping</text>
+            </a>
+
+            <a class="mind-link" href="#syntax-from-note3">
+              <rect class="mind-node" x="405" y="38" width="310" height="76" rx="12" fill="#ede9fe" stroke="#7c3aed"></rect>
+              <text x="560" y="70" font-size="18">抽象與泛型</text>
+              <text x="560" y="96" fill="#475569" font-size="13">method / interface / duck typing / generics</text>
+            </a>
+
+            <a class="mind-link" href="#syntax-from-note3">
+              <rect class="mind-node" x="810" y="50" width="240" height="92" rx="12" fill="#fef3c7" stroke="#d97706"></rect>
+              <text x="930" y="86" font-size="18">併發模型</text>
+              <text x="930" y="114" fill="#475569" font-size="13">goroutine / channel / select / context</text>
+            </a>
+            <a class="mind-link" href="#modern-stdlib">
+              <rect class="mind-node" x="810" y="204" width="240" height="92" rx="12" fill="#ecfeff" stroke="#0f766e"></rect>
+              <text x="930" y="240" font-size="18">標準庫實務</text>
+              <text x="930" y="268" fill="#475569" font-size="13">http / json / file / slices / maps</text>
+            </a>
+            <a class="mind-link" href="#syntax-from-note3">
+              <rect class="mind-node" x="810" y="378" width="240" height="92" rx="12" fill="#e2e8f0" stroke="#475569"></rect>
+              <text x="930" y="414" font-size="18">測試與驗收</text>
+              <text x="930" y="442" fill="#475569" font-size="13">testing / benchmark / fuzz / httptest</text>
+            </a>
+
+            <a class="mind-link" href="#production-flow">
+              <rect class="mind-node" x="395" y="390" width="330" height="78" rx="12" fill="#fff7ed" stroke="#b45309"></rect>
+              <text x="560" y="423" font-size="18">Production 串接</text>
+              <text x="560" y="448" fill="#475569" font-size="13">API / DB transaction / observability / worker</text>
+            </a>
+          </g>
+        </svg>
       </div>
     </section>
 
@@ -333,7 +422,7 @@
       <div class="section-head">
         <div>
           <h2>統一搜尋 / 總索引</h2>
-          <p>搜尋語法、工程場景、案例與 production 主題；點選結果會在閱讀器打開對應章節。</p>
+          <p>搜尋語法、工程場景、語法範例與 production 主題；結果會直接跳到本頁章節，不再載入外部 iframe。</p>
         </div>
       </div>
       <div class="panel search-panel">
@@ -347,293 +436,1071 @@
       <div class="section-head">
         <div>
           <h2>場景索引</h2>
-          <p>用資深工程師的工作場景切入，而不是只按章節線性閱讀。</p>
+          <p>用資深工程師實際工作場景切入，而不是只按章節線性閱讀。</p>
         </div>
       </div>
       <div class="scenario-grid" id="scenarioGrid"></div>
     </section>
 
-    <section id="walkthrough">
+    <section id="syntax-from-note3">
       <div class="section-head">
         <div>
-          <h2>Production Project Walkthrough</h2>
-          <p>一條完整 API + 任務系統路徑，把圖解筆記3的語法、併發與圖解筆記4的 DB、觀測、驗收串起來。</p>
+          <h2>Note 3 合併：40 張單一語法卡</h2>
+          <p>每張卡對應一個 Go 語法或標準用法，包含用途、語法、範例、實務提醒與反例。</p>
+        </div>
+      </div>
+      <div class="filter-row" id="syntaxFilters"></div>
+      <div class="syntax-grid" id="syntaxGrid"></div>
+    </section>
+
+    <section id="examples-200">
+      <div class="section-head">
+        <div>
+          <h2>Note 3 合併：200 個常用語法範例</h2>
+          <p>日常查用的 Go snippet library，保留分類、情境、程式碼、重點、常見錯誤、專案級用法與反例。</p>
+        </div>
+      </div>
+      <div class="panel search-panel">
+        <input id="exampleSearch" class="search-input" type="search" placeholder="搜尋 200 語法範例：slice、context、testing、HTTP、map">
+        <div class="filter-row" id="exampleFilters"></div>
+      </div>
+      <div class="case-grid" id="exampleGrid"></div>
+    </section>
+
+    <section id="project-from-note3">
+      <div class="section-head">
+        <div>
+          <h2>Note 3 合併：大型專案與工程決策</h2>
+          <p>並發爬蟲 / 任務系統把 struct、interface、error、context、channel、worker pool 串成可驗收流程。</p>
         </div>
       </div>
       <div class="panel flow-wrap">
-        <svg class="flow" viewBox="0 0 1120 360" role="img" aria-label="Production project walkthrough">
-          <rect width="1120" height="360" rx="14" fill="#f8fafc"></rect>
-          <g stroke="#52637a" stroke-width="3.2" stroke-linecap="round" fill="none">
-            <path d="M140 96 H212"></path>
-            <path d="M322 96 H394"></path>
-            <path d="M504 96 H576"></path>
-            <path d="M686 96 H758"></path>
-            <path d="M868 96 H940"></path>
-            <path d="M486 136 C486 190 300 204 300 250"></path>
-            <path d="M668 136 C668 198 560 206 560 250"></path>
-            <path d="M850 136 C850 198 820 206 820 250"></path>
-          </g>
-          <g fill="#52637a">
-            <polygon points="212,86 212,106 230,96"></polygon>
-            <polygon points="394,86 394,106 412,96"></polygon>
-            <polygon points="576,86 576,106 594,96"></polygon>
-            <polygon points="758,86 758,106 776,96"></polygon>
-            <polygon points="940,86 940,106 958,96"></polygon>
-            <polygon points="290,250 310,250 300,268"></polygon>
-            <polygon points="550,250 570,250 560,268"></polygon>
-            <polygon points="810,250 830,250 820,268"></polygon>
+        <svg class="flow" viewBox="0 0 1120 420" role="img" aria-label="並發爬蟲任務系統">
+          <defs>
+            <marker id="projectArrow" viewBox="0 0 12 12" refX="12" refY="6" markerWidth="14" markerHeight="14" markerUnits="userSpaceOnUse" orient="auto">
+              <path d="M 0 0 L 12 6 L 0 12 z" fill="#475569"></path>
+            </marker>
+          </defs>
+          <rect class="flow-bg" width="1120" height="420" rx="14"></rect>
+          <g stroke="#475569" stroke-width="3.5" fill="none" marker-end="url(#projectArrow)">
+            <path d="M170 108 H298"></path>
+            <path d="M430 108 H558"></path>
+            <path d="M704 108 H812"></path>
+            <path d="M887 150 V280 H734"></path>
+            <path d="M631 174 V205 H648 V238"></path>
+            <path d="M562 280 H416"></path>
+            <path d="M242 280 H192"></path>
+            <path d="M648 322 V368 H886"></path>
           </g>
           <g text-anchor="middle" font-weight="800">
-            <rect x="30" y="58" width="110" height="76" rx="10" fill="#dbeafe" stroke="#2563eb"></rect>
-            <text x="85" y="89" font-size="16">HTTP</text>
-            <text x="85" y="113" fill="#475569" font-size="12">validate</text>
-            <rect x="230" y="58" width="92" height="76" rx="10" fill="#ecfeff" stroke="#0f766e"></rect>
-            <text x="276" y="89" font-size="16">Service</text>
-            <text x="276" y="113" fill="#475569" font-size="12">rules</text>
-            <rect x="412" y="58" width="92" height="76" rx="10" fill="#f0fdf4" stroke="#15803d"></rect>
-            <text x="458" y="89" font-size="16">Tx</text>
-            <text x="458" y="113" fill="#475569" font-size="12">boundary</text>
-            <rect x="594" y="58" width="92" height="76" rx="10" fill="#fff7ed" stroke="#b45309"></rect>
-            <text x="640" y="89" font-size="16">Repo</text>
-            <text x="640" y="113" fill="#475569" font-size="12">SQL</text>
-            <rect x="776" y="58" width="92" height="76" rx="10" fill="#fee2e2" stroke="#be123c"></rect>
-            <text x="822" y="89" font-size="16">Queue</text>
-            <text x="822" y="113" fill="#475569" font-size="12">bounded</text>
-            <rect x="958" y="58" width="130" height="76" rx="10" fill="#ede9fe" stroke="#7c3aed"></rect>
-            <text x="1023" y="89" font-size="16">Worker</text>
-            <text x="1023" y="113" fill="#475569" font-size="12">goroutine</text>
-            <rect x="200" y="270" width="200" height="58" rx="10" fill="#ffe4e6" stroke="#be123c"></rect>
-            <text x="300" y="294" font-size="16">Error Flow</text>
-            <text x="300" y="313" fill="#475569" font-size="12">wrap / classify / response</text>
-            <rect x="460" y="270" width="200" height="58" rx="10" fill="#dcfce7" stroke="#15803d"></rect>
-            <text x="560" y="294" font-size="16">Data Flow</text>
-            <text x="560" y="313" fill="#475569" font-size="12">request / tx / result</text>
-            <rect x="720" y="270" width="200" height="58" rx="10" fill="#fef3c7" stroke="#b45309"></rect>
-            <text x="820" y="294" font-size="16">Observability</text>
-            <text x="820" y="313" fill="#475569" font-size="12">log / metric / trace</text>
+            <rect x="40" y="66" width="130" height="84" rx="10" fill="#dbeafe" stroke="#2563eb"></rect>
+            <text x="105" y="101" font-size="18">Seed</text><text x="105" y="126" fill="#475569" font-size="13">URL / depth</text>
+            <rect x="298" y="66" width="132" height="84" rx="10" fill="#dcfce7" stroke="#16a34a"></rect>
+            <text x="364" y="101" font-size="18">Queue</text><text x="364" y="126" fill="#475569" font-size="13">bounded jobs</text>
+            <rect x="558" y="42" width="146" height="132" rx="10" fill="#fef3c7" stroke="#d97706"></rect>
+            <text x="631" y="85" font-size="18">Worker Pool</text><text x="631" y="112" fill="#475569" font-size="13">goroutine x N</text><text x="631" y="138" fill="#475569" font-size="13">ctx.Done()</text>
+            <rect x="812" y="66" width="150" height="84" rx="10" fill="#ede9fe" stroke="#7c3aed"></rect>
+            <text x="887" y="101" font-size="18">Fetcher</text><text x="887" y="126" fill="#475569" font-size="13">HTTP / fake</text>
+            <rect x="562" y="238" width="172" height="84" rx="10" fill="#ccfbf1" stroke="#0f766e"></rect>
+            <text x="648" y="273" font-size="18">Parser</text><text x="648" y="298" fill="#475569" font-size="13">Title / Links</text>
+            <rect x="242" y="238" width="174" height="84" rx="10" fill="#ffe4e6" stroke="#e11d48"></rect>
+            <text x="329" y="273" font-size="18">Dedup + Depth</text><text x="329" y="298" fill="#475569" font-size="13">seen / max depth</text>
+            <rect x="40" y="238" width="152" height="84" rx="10" fill="#e2e8f0" stroke="#475569"></rect>
+            <text x="116" y="273" font-size="18">Retry</text><text x="116" y="298" fill="#475569" font-size="13">attempt limit</text>
+            <rect x="886" y="336" width="178" height="64" rx="10" fill="#ecfccb" stroke="#65a30d"></rect>
+            <text x="975" y="363" font-size="18">Store</text><text x="975" y="385" fill="#475569" font-size="13">mutex / result</text>
           </g>
         </svg>
+      </div>
+      <div class="grid-3" id="decisionGrid"></div>
+    </section>
+
+    <section id="production-advanced">
+      <div class="section-head">
+        <div>
+          <h2>Note 4 合併：Production Advanced 三大主軸</h2>
+          <p>補上語法教材通常缺少的 Go 新標準庫、資料庫層與可觀察性。</p>
+        </div>
+      </div>
+      <div class="topic-grid" id="advancedGrid"></div>
+    </section>
+
+    <section id="modern-stdlib">
+      <div class="section-head">
+        <div>
+          <h2>Modern Stdlib：Go 1.21 / 1.22 / 1.23 版本邊界</h2>
+          <p>把常見手寫工具函式收斂回標準庫，同時明確標示哪些 API 屬於 Go 1.21、Go 1.22 或 Go 1.23+。</p>
+        </div>
+      </div>
+      <div class="panel">
+        <table>
+          <thead><tr><th>版本</th><th>本教材使用的重點</th><th>專案判斷</th></tr></thead>
+          <tbody>
+            <tr><td>Go 1.21</td><td><code>slices</code> / <code>maps</code> 基礎集合工具，例如 <code>slices.Clone</code>、<code>slices.Sort</code>、<code>maps.Clone</code>、<code>maps.Equal</code>。</td><td>可用於降低自寫 helper 數量，但要注意 clone 是 shallow copy。</td></tr>
+            <tr><td>Go 1.22</td><td><code>net/http.ServeMux</code> 支援 method pattern、path wildcard 與 <code>Request.PathValue</code>。</td><td>中小型 API 可優先用標準庫 router，複雜 middleware/auth 需求再評估框架。</td></tr>
+            <tr><td>Go 1.23+</td><td><code>maps.Keys</code> / <code>maps.Values</code> 回傳 iterator，常搭配 <code>slices.Sorted</code> 或 <code>slices.Collect</code>。</td><td>若專案固定 Go 1.21/1.22，不應直接使用 Go 1.23 iterator API。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="topic-grid" id="stdlibGrid"></div>
+    </section>
+
+    <section id="database-layer">
+      <div class="section-head">
+        <div>
+          <h2>Database Layer：database/sql、transaction、connection pool</h2>
+          <p>production DB 章節重點不是會查資料，而是能處理 timeout、tx 邊界、pool 飽和與 rollback。</p>
+        </div>
+      </div>
+      <div class="topic-grid" id="databaseGrid"></div>
+    </section>
+
+    <section id="observability">
+      <div class="section-head">
+        <div>
+          <h2>Observability：log、metric、trace、health、pprof</h2>
+          <p>先用 metrics 判斷系統狀態，再用 trace 定位單次請求，最後才用 pprof 做受控 debug。</p>
+        </div>
+      </div>
+      <div class="topic-grid" id="observabilityGrid"></div>
+    </section>
+
+    <section id="production-flow">
+      <div class="section-head">
+        <div>
+          <h2>Production API Flow：資料流、錯誤流、觀測流</h2>
+          <p>整合 API、context timeout、DB transaction、worker enqueue、log/metric/trace 與 response 邊界。</p>
+        </div>
+      </div>
+      <div class="panel flow-wrap">
+        <svg class="flow" viewBox="0 0 1120 360" role="img" aria-label="Production API flow">
+          <defs>
+            <marker id="prodArrow" viewBox="0 0 12 12" refX="12" refY="6" markerWidth="14" markerHeight="14" markerUnits="userSpaceOnUse" orient="auto">
+              <path d="M 0 0 L 12 6 L 0 12 z" fill="#52637a"></path>
+            </marker>
+          </defs>
+          <rect class="flow-bg" width="1120" height="360" rx="14"></rect>
+          <g class="flow-line" marker-end="url(#prodArrow)">
+            <path d="M145 100 H235"></path>
+            <path d="M355 100 H445"></path>
+            <path d="M565 100 H655"></path>
+            <path d="M775 100 H865"></path>
+            <path d="M505 138 C505 198 330 210 330 260"></path>
+            <path d="M715 138 C715 198 600 210 600 260"></path>
+            <path d="M925 138 C925 198 870 210 870 260"></path>
+          </g>
+          <g text-anchor="middle" font-weight="800">
+            <rect x="35" y="62" width="110" height="76" rx="10" fill="#dbeafe" stroke="#2563eb"></rect>
+            <text x="90" y="94" font-size="16">HTTP</text><text x="90" y="118" fill="#475569" font-size="12">request</text>
+            <rect x="235" y="62" width="120" height="76" rx="10" fill="#ecfeff" stroke="#0f766e"></rect>
+            <text x="295" y="94" font-size="16">Context</text><text x="295" y="118" fill="#475569" font-size="12">timeout</text>
+            <rect x="445" y="62" width="120" height="76" rx="10" fill="#f0fdf4" stroke="#15803d"></rect>
+            <text x="505" y="94" font-size="16">Service</text><text x="505" y="118" fill="#475569" font-size="12">tx boundary</text>
+            <rect x="655" y="62" width="120" height="76" rx="10" fill="#fff7ed" stroke="#b45309"></rect>
+            <text x="715" y="94" font-size="16">Repository</text><text x="715" y="118" fill="#475569" font-size="12">SQL</text>
+            <rect x="865" y="62" width="120" height="76" rx="10" fill="#fee2e2" stroke="#be123c"></rect>
+            <text x="925" y="94" font-size="16">Worker</text><text x="925" y="118" fill="#475569" font-size="12">queue</text>
+            <rect x="220" y="260" width="220" height="58" rx="10" fill="#ffe4e6" stroke="#be123c"></rect>
+            <text x="330" y="284" font-size="16">Error Flow</text><text x="330" y="303" fill="#475569" font-size="12">wrap / classify / response</text>
+            <rect x="490" y="260" width="220" height="58" rx="10" fill="#dcfce7" stroke="#15803d"></rect>
+            <text x="600" y="284" font-size="16">Data Flow</text><text x="600" y="303" fill="#475569" font-size="12">validation / tx / enqueue</text>
+            <rect x="760" y="260" width="220" height="58" rx="10" fill="#fef3c7" stroke="#b45309"></rect>
+            <text x="870" y="284" font-size="16">Observability Flow</text><text x="870" y="303" fill="#475569" font-size="12">log / metric / trace</text>
+          </g>
+        </svg>
+      </div>
+      <div class="walk-grid" id="productionFlowGrid"></div>
+    </section>
+
+    <section id="production-walkthrough">
+      <div class="section-head">
+        <div>
+          <h2>Production Project Walkthrough</h2>
+          <p>以 production API + worker 任務系統，把 Note 3 的語法與 Note 4 的 production 能力串成可驗收流程。</p>
+        </div>
       </div>
       <div class="walk-grid" id="walkthroughGrid"></div>
     </section>
 
-    <section id="quick-jump">
+    <section id="executable-project">
       <div class="section-head">
         <div>
-          <h2>快速跳轉</h2>
-          <p>點選後會在下方閱讀器開啟對應章節。</p>
+          <h2>可執行 production-api-worker 專案</h2>
+          <p>整合頁直接連到已存在的可執行範例專案，讓讀者從圖解回到 cmd/internal/service/repository/worker 實作。</p>
         </div>
       </div>
-      <div class="jump-grid">
-        <button class="jump-card" style="border-top-color:var(--blue)" data-src="../圖解筆記3/golang-visual-course.html#syntax-index">
-          <span class="badge">Note 3</span>
-          <strong>語法卡列表</strong>
-          <span>40 張 Go 語法卡快速索引。</span>
-        </button>
-        <button class="jump-card" style="border-top-color:var(--teal)" data-src="../圖解筆記3/golang-visual-course.html#project">
-          <span class="badge green">Note 3</span>
-          <strong>大型專案圖解</strong>
-          <span>並發爬蟲 / 任務系統。</span>
-        </button>
-        <button class="jump-card" style="border-top-color:var(--rose)" data-src="../圖解筆記3/golang-visual-course.html#engineering-decisions">
-          <span class="badge rose">Note 3</span>
-          <strong>工程決策</strong>
-          <span>queue、retry、panic、shutdown。</span>
-        </button>
-        <button class="jump-card" style="border-top-color:var(--amber)" data-src="../圖解筆記3/golang-visual-course.html#cases">
-          <span class="badge amber">Note 3</span>
-          <strong>200 常用案例</strong>
-          <span>含 40 個真實工程案例。</span>
-        </button>
-        <button class="jump-card" style="border-top-color:var(--violet)" data-src="../圖解筆記4/golang-production-advanced.html#syntax-index">
-          <span class="badge violet">Note 4</span>
-          <strong>Production 語法索引</strong>
-          <span>slices、maps、ServeMux、DB、Observability。</span>
-        </button>
-        <button class="jump-card" style="border-top-color:var(--green)" data-src="../圖解筆記4/golang-production-advanced.html#modern-stdlib">
-          <span class="badge green">Note 4</span>
-          <strong>Go 1.21-1.26</strong>
-          <span>slices / maps / ServeMux / runtime / testing。</span>
-        </button>
-        <button class="jump-card" style="border-top-color:var(--teal)" data-src="../圖解筆記4/golang-production-advanced.html#database-layer">
-          <span class="badge green">Note 4</span>
-          <strong>Database Layer</strong>
-          <span>database/sql、tx、pool。</span>
-        </button>
-        <button class="jump-card" style="border-top-color:var(--amber)" data-src="../圖解筆記4/golang-production-advanced.html#observability">
-          <span class="badge amber">Note 4</span>
-          <strong>Observability</strong>
-          <span>log、metrics、trace、health、pprof。</span>
-        </button>
+      <div class="panel">
+        <table>
+          <thead><tr><th>路徑</th><th>用途</th><th>閱讀重點</th></tr></thead>
+          <tbody>
+            <tr><td><a href="../production-api-worker/cmd/api-worker/main.go"><code>cmd/api-worker/main.go</code></a></td><td>入口</td><td>組裝 HTTP、service、repository、worker、observability。</td></tr>
+            <tr><td><a href="../production-api-worker/internal/app/service.go"><code>internal/app/service.go</code></a></td><td>Service</td><td>validation、transaction boundary、deadlock retry、enqueue。</td></tr>
+            <tr><td><a href="../production-api-worker/internal/repository/postgres.go"><code>internal/repository/postgres.go</code></a></td><td>Postgres</td><td>pgx/stdlib、database/sql、PingContext、pool、deadlock 分類。</td></tr>
+            <tr><td><a href="../production-api-worker/internal/observability/observability.go"><code>internal/observability/observability.go</code></a></td><td>Observability</td><td>Prometheus registry、OTel stdout/OTLP exporter、slog。</td></tr>
+            <tr><td><a href="../production-api-worker/docker-compose.yml"><code>docker-compose.yml</code></a></td><td>Runtime</td><td>Postgres、OTel collector、migration、API 串接。</td></tr>
+            <tr><td><a href="../production-api-worker/.github/workflows/production-api-worker.yml"><code>GitHub Actions</code></a></td><td>CI</td><td>go test、race test、build api、build migrate。</td></tr>
+          </tbody>
+        </table>
+        <pre><code class="language-bash">cd production-api-worker
+go test ./...
+go test -race ./...
+docker compose up --build</code></pre>
       </div>
     </section>
 
-    <section id="reader">
+    <section id="senior-review">
       <div class="section-head">
         <div>
-          <h2>內嵌閱讀器</h2>
-          <p>在同一頁閱讀圖解筆記3與4；需要獨立視窗時可使用下方直接連結。</p>
+          <h2>資深工程師深度 / 廣度校閱</h2>
+          <p>從 production 專案使用角度評估整合版是否足夠，而不是只看語法是否齊全。</p>
         </div>
       </div>
-      <div class="reader-shell">
-        <aside class="reader-menu" aria-label="閱讀器章節">
-          <h3>章節切換</h3>
-          <button class="btn active" data-src="../圖解筆記3/golang-visual-course.html#top">圖解筆記3：首頁</button>
-          <button class="btn" data-src="../圖解筆記3/golang-visual-course.html#syntax">圖解筆記3：語法卡</button>
-          <button class="btn" data-src="../圖解筆記3/golang-visual-course.html#syntax-examples-200">圖解筆記3：200 語法範例</button>
-          <button class="btn" data-src="../圖解筆記3/golang-visual-course.html#cases">圖解筆記3：200 常用案例</button>
-          <button class="btn" data-src="../圖解筆記4/golang-production-advanced.html#top">圖解筆記4：首頁</button>
-          <button class="btn" data-src="../圖解筆記4/golang-production-advanced.html#production-flow">圖解筆記4：Production Flow</button>
-          <div class="direct-links">
-            <a class="btn" href="../圖解筆記3/golang-visual-course.html">新頁開 3</a>
-            <a class="btn" href="../圖解筆記4/golang-production-advanced.html">新頁開 4</a>
-          </div>
-        </aside>
-        <iframe class="reader-frame" id="readerFrame" title="圖解筆記整合閱讀器" src="../圖解筆記3/golang-visual-course.html#top"></iframe>
+      <div class="review-grid" id="reviewGrid"></div>
+      <div class="panel">
+        <h3>最終判斷</h3>
+        <p><strong>整合版已符合「Go 語法到資深工程 production 專案實戰主教材」定位。</strong> 它同時覆蓋語法、併發、worker、API、DB transaction、Observability、testing、CI/CD 與可執行專案 walkthrough。</p>
+        <div class="acceptance"><strong>評分邊界：</strong>下方 8/10、9/10 評分代表「教材深度與專案設計討論深度」，不是完整 production runbook、SRE playbook 或企業級部署手冊的完成度。</div>
+        <div class="acceptance"><strong>適合作為：</strong>有程式基礎的新手進階到能參與 Go production 專案設計、code review 與常見 production 問題討論的主教材。</div>
+        <div class="anti"><strong>剩餘提升項：</strong>若要再升級為 production expert handbook / runbook，可再加 DB isolation/deadlock/migration 深講、OTel/Prometheus 真實部署與告警規則、更多完整 production incident 題型。</div>
       </div>
     </section>
   </main>
 
+  <button class="top-button" type="button" id="backToTop" aria-label="回到頁面最上方">Top</button>
+
   <script>
-    const frame = document.getElementById("readerFrame");
+    const syntaxSeed = [
+      ["基礎", "go mod", "模組初始化與相依管理", "go mod init app\ngo mod tidy"],
+      ["基礎", "package", "封裝邊界與 import", "package service\n\nimport \"context\""],
+      ["基礎", "var", "可變狀態宣告", "var count int\nname := \"go\""],
+      ["基礎", "const", "不可變常數與 iota", "const Timeout = 3 * time.Second"],
+      ["基礎", "zero value", "零值設計讓型別可立即使用", "var buf bytes.Buffer"],
+      ["基礎", "type conversion", "Go 需要顯式轉型", "ratio := float64(total) / float64(count)"],
+      ["流程", "if", "短宣告與錯誤處理", "if err := run(); err != nil { return err }"],
+      ["流程", "switch", "狀態分支", "switch status { case \"done\": archive() }"],
+      ["流程", "for", "唯一迴圈語法", "for i := 0; i < n; i++ { sum += i }"],
+      ["流程", "range", "走訪 slice/map/channel", "for i, item := range items { _ = i; use(item) }"],
+      ["流程", "defer", "資源釋放與 rollback 保險", "defer file.Close()"],
+      ["函式", "func", "明確輸入輸出", "func Add(a, b int) int { return a + b }"],
+      ["函式", "multiple returns", "值與錯誤一起回傳", "value, err := load(ctx)"],
+      ["函式", "closure", "封裝狀態或測試 fake", "next := func() int { id++; return id }"],
+      ["錯誤", "error", "錯誤即值", "if err != nil { return fmt.Errorf(\"load: %w\", err) }"],
+      ["錯誤", "errors.Is", "錯誤分類判斷", "if errors.Is(err, context.DeadlineExceeded) { return err }"],
+      ["資料", "array", "固定長度資料", "var ports [3]int"],
+      ["資料", "slice", "動態列表", "items = append(items, item)"],
+      ["資料", "map", "key/value 查找", "seen[id] = true"],
+      ["資料", "string / rune", "文字與 Unicode", "for _, r := range text { fmt.Println(r) }"],
+      ["資料", "struct", "資料模型", "type Job struct { ID string; Status string }"],
+      ["資料", "pointer", "共享與修改狀態", "func Rename(u *User, name string) { u.Name = name }"],
+      ["物件", "method", "型別行為", "func (s *Store) Get(id string) (Job, error) { return Job{}, nil }"],
+      ["物件", "receiver", "value vs pointer", "func (c *Counter) Inc() { c.N++ }"],
+      ["介面", "interface", "使用端定義最小能力", "type Store interface { Save(context.Context, Job) error }"],
+      ["介面", "duck typing", "隱式實作", "var _ io.Reader = (*bytes.Buffer)(nil)"],
+      ["泛型", "generics", "型別安全的共用邏輯", "func First[T any](items []T) (T, bool) { return items[0], true }"],
+      ["標準庫", "json", "API payload 序列化", "json.NewEncoder(w).Encode(resp)"],
+      ["標準庫", "file", "檔案讀寫", "body, err := os.ReadFile(path)"],
+      ["標準庫", "http client", "外部 API 呼叫", "req, _ := http.NewRequestWithContext(ctx, \"GET\", url, nil)"],
+      ["標準庫", "http server", "API handler", "mux.HandleFunc(\"GET /health\", health)"],
+      ["測試", "testing", "單元測試", "func TestCreate(t *testing.T) { t.Fatal(\"todo\") }"],
+      ["測試", "table-driven test", "多案例驗收", "for _, tc := range tests { t.Run(tc.name, func(t *testing.T){}) }"],
+      ["測試", "benchmark", "效能回歸", "func BenchmarkParse(b *testing.B) { for i:=0;i<b.N;i++{} }"],
+      ["測試", "fuzz", "未知輸入邊界", "func FuzzParse(f *testing.F) { f.Fuzz(func(t *testing.T, s string){}) }"],
+      ["併發", "goroutine", "輕量並發", "go worker(ctx, jobs)"],
+      ["併發", "channel", "資料流與同步", "jobs <- task\nresult := <-results"],
+      ["併發", "select", "多路等待與取消", "select { case <-ctx.Done(): return ctx.Err() }"],
+      ["併發", "sync", "WaitGroup / Mutex / Atomic", "var wg sync.WaitGroup"],
+      ["併發", "worker pool", "固定併發與 bounded queue", "for i := 0; i < workers; i++ { go worker() }"]
+    ];
+
+    const syntaxExampleGroups = [
+      {
+        category: "專案與工具鏈",
+        color: "#2563eb",
+        titles: ["初始化 module", "整理 go.mod", "檢查 Go 版本", "執行單一 package", "執行全部測試", "格式化程式碼", "查看 package 文件", "列出依賴", "建立執行檔", "用 cmd 目錄放入口"]
+      },
+      {
+        category: "宣告與型別",
+        color: "#16a34a",
+        titles: ["var 宣告零值", "短變數宣告", "const 常數", "iota 狀態列舉", "int 轉 float64", "字串轉整數", "整數轉字串", "bool 條件值", "byte 處理位元組", "rune 處理字元", "type alias", "自訂型別", "nil pointer 判斷", "零值 struct", "多變數宣告", "交換兩個變數", "typed constant", "複數 complex", "時間 duration 型別", "any 接任意值"]
+      },
+      {
+        category: "流程控制",
+        color: "#d97706",
+        titles: ["if 基本判斷", "if 短宣告", "if error 優先返回", "switch 字串狀態", "switch 無條件式", "type switch", "for 計數迴圈", "for while 風格", "for 無限迴圈", "range slice", "range map", "range string rune", "break 跳出迴圈", "continue 略過本輪", "defer 關閉資源", "多個 defer 順序", "label break", "select timeout", "default 非阻塞", "early return 減少巢狀"]
+      },
+      {
+        category: "函式與閉包",
+        color: "#0f766e",
+        titles: ["具名函式", "多參數同型別", "多回傳值", "回傳 error", "命名回傳值", "variadic 參數", "函式當參數", "函式當回傳值", "匿名函式立即執行", "閉包保存狀態", "defer 包裝耗時", "遞迴函式", "method value", "method expression", "helper 函式", "建構函式 New", "選項函式模式", "泛用 map 函式", "middleware 函式鏈", "用 context 當第一參數"]
+      },
+      {
+        category: "錯誤處理",
+        color: "#be123c",
+        titles: ["errors.New", "fmt.Errorf 包裝", "errors.Is 判斷", "errors.As 取型別", "自訂錯誤型別", "哨兵錯誤", "validation error", "多錯誤 join", "忽略錯誤的風險", "panic recover 邊界", "HTTP 錯誤映射", "重試暫時錯誤", "錯誤加操作情境", "避免重複 log", "EOF 正常結束", "context canceled 判斷", "deadline exceeded 判斷", "錯誤轉使用者訊息", "錯誤測試案例", "錯誤 wrapping 測試"]
+      },
+      {
+        category: "array / slice / map / string / rune",
+        color: "#0f766e",
+        titles: ["array 固定長度", "slice literal", "slice append", "slice copy", "slice 預配置", "slice 截取", "刪除 slice 元素", "反轉 slice", "去重 slice", "排序 slice", "map 建立", "map 讀取 ok", "map 刪除", "map 統計次數", "map 當 set", "map keys 轉 slice", "string len byte", "range string rune", "strings.Builder", "strings.Split", "strings.Join", "strings.Contains", "strconv.Atoi", "strconv.Itoa", "[]byte 與 string", "rune slice 反轉文字", "unicode 判斷字母", "map 巢狀結構", "slice of struct", "穩定輸出 map"]
+      },
+      {
+        category: "struct / method / interface / generics",
+        color: "#7c3aed",
+        titles: ["struct literal", "匿名 struct", "struct tag", "嵌入 struct", "pointer receiver", "value receiver", "method chaining", "interface 定義", "小 interface", "interface fake", "type assertion", "type switch", "empty interface any", "generic First", "generic Contains", "generic Set", "generic Queue", "comparable 約束", "自訂約束", "composition 取代繼承", "依賴注入", "Repository interface", "Reader interface", "Writer interface", "Stringer interface", "JSON DTO struct", "domain model struct", "不可變值物件", "建構函式驗證", "options pattern struct"]
+      },
+      {
+        category: "標準庫實務",
+        color: "#65a30d",
+        titles: ["json.Marshal", "json.Unmarshal", "json.Decoder", "os.ReadFile", "os.WriteFile", "bufio.Scanner", "filepath.Join", "time.Now", "time.Parse", "time.Ticker", "http.Client timeout", "http.NewRequestWithContext", "http.HandlerFunc", "httptest.ResponseRecorder", "url.Parse", "regexp.MatchString", "log/slog 基本用法", "flag 解析參數", "embed 檔案", "io.Copy"]
+      },
+      {
+        category: "併發與 context",
+        color: "#e11d48",
+        titles: ["go 啟動 goroutine", "WaitGroup 等待", "Mutex 保護計數", "RWMutex 多讀少寫", "channel 送收", "buffered channel", "channel close", "range channel", "select 等多事件", "context timeout", "context cancel", "worker pool", "fan-out", "fan-in", "rate limit ticker", "semaphore channel", "sync.Once", "atomic counter", "避免 goroutine leak", "pipeline 取消"]
+      },
+      {
+        category: "testing / benchmark / fuzz",
+        color: "#0ea5e9",
+        titles: ["TestX 基本測試", "table-driven test", "t.Run 子測試", "t.Helper", "測錯誤分支", "fake dependency", "BenchmarkX", "b.ReportAllocs", "FuzzX", "httptest handler"]
+      }
+    ];
+    const caseCategories = [
+      "錯誤處理與 API 邊界", "interface 與依賴反轉", "generics 實務", "context 與取消控制",
+      "channel 與 select", "worker pool 與 rate limit", "HTTP client/server 實務",
+      "testing、mock、benchmark、fuzz", "效能、記憶體、pprof", "專案架構、部署、版本管理"
+    ];
+
+    const caseTitles = [
+      ["哨兵錯誤 sentinel error", "錯誤包裝保留根因", "API 邊界錯誤轉換", "validation error 聚合", "錯誤碼與 HTTP 狀態映射", "typed error 給上層判斷", "避免吞錯的 logging 策略", "重試只處理暫時性錯誤", "錯誤訊息不洩漏內部細節", "panic recover 邊界處理", "errors.Join 批次錯誤", "context canceled 不當成失敗", "deadline exceeded 回傳 504", "EOF 作為正常結束", "錯誤訊息本地化", "domain error 轉 API error", "錯誤碼對照表", "避免重複包裝錯誤", "背景任務錯誤回報", "錯誤測試表格"],
+      ["小 interface 設計", "使用端定義 interface", "Repository 依賴反轉", "HTTP client adapter", "Store fake 測試替身", "避免 interface 汙染 domain", "組合取代繼承", "功能旗標用 interface 隔離", "多實作切換策略", "plugin-like handler registry", "Clock interface 注入時間", "UUID generator interface", "Cache interface 邊界", "Message publisher interface", "FileSystem interface 測試", "Reader/Writer 抽象", "Notifier adapter", "Payment gateway adapter", "Interface 命名策略", "編譯期 interface 檢查"],
+      ["泛型 First/Last 工具", "泛型 Set 實作", "泛型 Queue 實作", "泛型 Result 型別", "comparable 約束查找", "排序 helper 約束", "Map/Filter/Reduce 取捨", "泛型 cache key/value", "型別參數與 method 限制", "避免過度泛型化", "泛型 Stack 實作", "泛型 Pair 型別", "泛型 Optional 型別", "泛型 pagination response", "泛型 validation helper", "泛型 retry wrapper 取捨", "泛型 repository base 風險", "constraints.Ordered 排序", "泛型 zero value 處理", "泛型 API 文件命名"],
+      ["HTTP request timeout", "worker context cancellation", "多階段 pipeline 取消", "context value 使用邊界", "deadline 傳遞策略", "graceful shutdown", "背景任務停止訊號", "外部 API 呼叫取消", "DB 查詢取消模型", "避免 context 存在 struct", "signal.NotifyContext", "context.WithCancelCause", "父子 context 傳遞", "request scope metadata", "context value key 型別", "取消後清理資源", "timeout 分層設定", "長任務 progress 回報", "批次任務局部取消", "避免忘記 defer cancel"],
+      ["fan-out 工作分派", "fan-in 結果合併", "select timeout", "channel close 所有權", "buffered channel 背壓", "nil channel 控制 select", "done channel 模式", "錯誤 channel 收斂", "避免 goroutine leak", "用 channel 串 pipeline", "單向 channel API", "channel 當 semaphore", "broadcast close 訊號", "多 producer 單 consumer", "單 producer 多 consumer", "select default 取捨", "ticker channel 停止", "結果排序收斂", "錯誤優先返回", "pipeline drain 策略"],
+      ["固定 worker pool", "rate limiter ticker", "retry with backoff", "bounded queue", "優先級任務設計", "批次處理 batch worker", "semaphore 限制併發", "worker panic 隔離", "metrics 統計 worker 狀態", "動態調整 worker 數", "queue 滿載 drop 策略", "queue 滿載 block 策略", "backpressure 回傳 429", "job timeout 包裝", "每任務 retry budget", "dead-letter queue", "worker warmup", "批次 flush 條件", "任務去重 key", "worker graceful drain"],
+      ["HTTP client timeout", "自訂 transport", "middleware 洋蔥模型", "JSON decode limit", "health check handler", "request id logging", "錯誤回應格式統一", "Graceful HTTP server", "避免 body 未關閉", "httptest handler 驗證", "ServeMux method route", "path variable 解析", "CORS middleware", "request body size limit", "response content type", "HTTP client retry 邊界", "TLS client 設定", "reverse proxy header", "streaming response", "API versioning route"],
+      ["table-driven test", "fake dependency", "golden file test", "benchmark allocs", "fuzz parser", "race detector 思維", "integration test 隔離", "測試 clock 注入", "mock 行為驗證界線", "測試資料 builder", "subtest 並行測試", "t.Cleanup 資源清理", "temp dir 測試檔案", "httptest server", "test main 初始化", "coverage 門檻", "snapshot 更新策略", "benchmark reset timer", "fuzz seed corpus", "flaky test 排查"],
+      ["escape analysis", "減少 allocation", "sync.Pool 使用邊界", "pprof CPU profile", "pprof heap profile", "字串組合策略", "slice 預配置", "map 容量預估", "避免過早優化", "GC 壓力觀察", "避免 interface boxing", "大 struct 傳值取捨", "bytes.Buffer 重用", "bufio 提升 IO", "hot path log 降載", "鎖競爭分析", "atomic 計數器", "cache line false sharing", "pprof goroutine profile", "效能回歸基準"],
+      ["cmd/internal/pkg 取捨", "config 載入順序", "SemVer 發版策略", "ldflags 注入版本", "embed 靜態資源", "Docker multi-stage", "CI 測試矩陣", "module replace 風險", "private module 設定", "release note 驗收表", "目錄邊界設計", "migration 發布流程", "feature flag 發布", "rollback checklist", "Makefile 任務入口", "環境變數命名", "secret 管理邊界", "blue-green 部署", "canary release", "operational runbook"]
+    ];
+
+    const deepIncidents = [
+      ["API 500 暴增", "handler 直接輸出底層 SQL 錯誤。", "建立 AppError 分類，統一映射 status 與安全訊息。"],
+      ["Interface 變巨大", "提供端定義 10 個方法的大 interface。", "在使用端定義最小 role interface。"],
+      ["泛型過度抽象", "為了 DRY 把不同 domain 型別塞進一個泛型框架。", "只在資料結構或演算法穩定時使用泛型。"],
+      ["Request 取消無效", "DB query 沒用 request context。", "全鏈路傳遞 ctx 並設定 timeout。"],
+      ["Channel 永遠阻塞", "sender/receiver 生命週期不一致。", "明確 close 規則，select 監聽 ctx.Done。"],
+      ["Worker 滿載失控", "每個 request 直接 go process。", "bounded queue + backpressure/drop 策略。"],
+      ["HTTP client 無 timeout", "預設 client 造成 goroutine 卡住。", "使用 context timeout 與自訂 Transport。"],
+      ["測試只測 happy path", "沒有 fake 與錯誤注入。", "table-driven test 覆蓋 timeout、queue full、rollback。"],
+      ["Latency 無法定位", "只有 log，沒有 metric/trace。", "先建 SLI，再串 trace_id、histogram、pprof 邊界。"],
+      ["Release 無法回滾", "migration、版本與 rollback 沒寫入流程。", "CI gate、release note、migration strategy、rollback runbook。"]
+    ];
+
+    function escapeHtml(value) {
+      return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+    }
+
+    function slug(value) {
+      return String(value).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    }
+
+    function scrollToId(id) {
+      const target = document.getElementById(id);
+      if (!target) return;
+      history.replaceState(null, "", `#${id}`);
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      target.classList.add("highlight");
+      window.setTimeout(() => target.classList.remove("highlight"), 1200);
+    }
+
+    const syntaxCards = syntaxSeed.map((item, index) => ({
+      id: `syntax-${slug(item[1]) || index + 1}`,
+      category: item[0],
+      title: item[1],
+      summary: item[2],
+      code: item[3],
+      usage: "專案中用來建立清楚邊界、可測試行為與可維護資料流。",
+      pitfall: "常見錯誤是只記語法，不思考生命週期、錯誤路徑與測試方式。"
+    }));
+
+    function buildSyntaxExamples() {
+      const examples = [];
+      syntaxExampleGroups.forEach((group, groupIndex) => {
+        group.titles.forEach((title, titleIndex) => {
+          examples.push({
+            no: examples.length + 1,
+            category: group.category,
+            color: group.color,
+            title,
+            scene: syntaxExampleScene(group.category, title),
+            code: syntaxExampleCode(groupIndex, titleIndex),
+            point: syntaxExamplePoint(group.category, title),
+            pitfall: syntaxExamplePitfall(group.category),
+            projectUsage: syntaxExampleProjectUsage(group.category, title),
+            antiPattern: syntaxExampleAntiPattern(group.category, title)
+          });
+        });
+      });
+      return examples;
+    }
+
+    function syntaxExampleScene(category, title) {
+      return `${category} 常用情境：${title}。`;
+    }
+
+    function syntaxExamplePoint(category, title) {
+      return `先看 ${title} 的資料流與錯誤路徑，再放進 ${category} 的實務場景。`;
+    }
+
+    function syntaxExamplePitfall(category) {
+      const map = {
+        "專案與工具鏈": "工具指令要在正確 module 根目錄執行，避免 import path 混亂。",
+        "宣告與型別": "不要依賴隱式轉型；Go 需要明確型別與顯式轉換。",
+        "流程控制": "流程控制要讓錯誤與退出條件清楚，避免過深巢狀。",
+        "函式與閉包": "閉包會捕捉外部變數，迴圈中使用時要留意變數生命週期。",
+        "錯誤處理": "不要吞錯或只 log 不回傳，否則上層無法決策。",
+        "array / slice / map / string / rune": "slice 與 map 都有底層共享或非 thread-safe 的細節，要明確處理。",
+        "struct / method / interface / generics": "先用具體型別，有替換需求時再抽小 interface 或泛型。",
+        "標準庫實務": "外部 I/O 要處理錯誤、關閉資源，並設定 timeout 或大小限制。",
+        "併發與 context": "每個 goroutine 都要能因 channel close 或 context cancel 結束。",
+        "testing / benchmark / fuzz": "測試要可重現；benchmark 與 fuzz 不要依賴不穩定外部資源。"
+      };
+      return map[category];
+    }
+
+    function syntaxExampleProjectUsage(category, title) {
+      const map = {
+        "專案與工具鏈": "放進 CI、release script 或新人 onboarding 文件，讓專案操作可重現。",
+        "宣告與型別": "用明確型別表達 domain 語意，例如 UserID、TaskStatus、RetryCount。",
+        "流程控制": "用 early return、switch 與 context 分支讓錯誤路徑可讀。",
+        "函式與閉包": "把 handler、middleware、worker、service 拆成可測的小函式。",
+        "錯誤處理": "跨 package 回傳時補上操作情境，邊界層再決定 log 與 response。",
+        "array / slice / map / string / rune": "用在 DTO、快取、去重、批次查詢與輸出排序；注意共享底層資料。",
+        "struct / method / interface / generics": "用 struct 建 domain，用小 interface 隔離外部依賴，用泛型處理純資料結構。",
+        "標準庫實務": "標準庫是 production 基座；HTTP、JSON、檔案、時間與 log 都要有錯誤與資源邊界。",
+        "併發與 context": "把 worker pool、pipeline 與外部 I/O 全部接上取消訊號與資源上限。",
+        "testing / benchmark / fuzz": "把重要 use case 變成 table test，熱路徑用 benchmark，解析器用 fuzz 找邊界。"
+      };
+      return `${map[category]}本例「${title}」應搭配驗收測試或 code review checklist 使用。`;
+    }
+
+    function syntaxExampleAntiPattern(category, title) {
+      const map = {
+        "專案與工具鏈": "只在本機手動執行，沒有寫進 README、Makefile 或 CI，導致交接不可重現。",
+        "宣告與型別": "所有值都用 string/int 傳來傳去，讓狀態與 ID 語意消失。",
+        "流程控制": "把正常路徑與錯誤路徑塞在多層巢狀 if 裡，review 很難看出退出條件。",
+        "函式與閉包": "單一函式同時做解析、業務、I/O、log 與 response，最後無法單元測試。",
+        "錯誤處理": "只回傳 errors.New(\"failed\") 或只 log 不 return，讓上層無法決策。",
+        "array / slice / map / string / rune": "忽略 slice aliasing、map 非 thread-safe、string byte/rune 差異，留下隱性 bug。",
+        "struct / method / interface / generics": "提前抽巨大 interface 或過度泛型化，讓呼叫端負擔比收益更大。",
+        "標準庫實務": "I/O 沒 timeout、body 沒 close、讀檔無大小限制，壓力一來就出事。",
+        "併發與 context": "沒有退出條件的 goroutine、無界 queue、持鎖做慢 I/O。",
+        "testing / benchmark / fuzz": "測試依賴真網路與現在時間，benchmark 把 setup 成本算進熱路徑。"
+      };
+      return `${map[category]}檢查「${title}」時要特別避免這種寫法。`;
+    }
+
+    function syntaxExampleCode(groupIndex, titleIndex) {
+      const templates = [
+        [
+          `go mod init example.com/app`,
+          `go mod tidy`,
+          `go version`,
+          `go run ./cmd/app`,
+          `go test ./...`,
+          `gofmt -w .`,
+          `go doc net/http.Client`,
+          `go list -m all`,
+          `go build -o bin/app ./cmd/app`,
+          `// cmd/app/main.go\npackage main\n\nfunc main() {\n\trun()\n}`
+        ],
+        [
+          `var count int\nfmt.Println(count)`,
+          `name := "Gopher"\nfmt.Println(name)`,
+          `const MaxRetry = 3`,
+          `const (\n\tStatusNew = iota\n\tStatusDone\n)`,
+          `ratio := float64(10) / 3.0`,
+          `n, err := strconv.Atoi("42")\nif err != nil { return err }\nfmt.Println(n)`,
+          `s := strconv.Itoa(42)`,
+          `ok := len(items) > 0`,
+          `var b byte = 'A'`,
+          `var r rune = '台'`,
+          `type UserID = string`,
+          `type UserID string\nvar id UserID = "u1"`,
+          `if user == nil {\n\treturn errors.New("nil user")\n}`,
+          `var user User\nfmt.Println(user.ID)`,
+          `var x, y = 1, 2`,
+          `x, y = y, x`,
+          `const timeout time.Duration = 3 * time.Second`,
+          `z := complex(2, 3)`,
+          `d := 1500 * time.Millisecond`,
+          `var value any = "text"`
+        ],
+        [
+          `if score >= 60 {\n\treturn "pass"\n}`,
+          `if v, ok := cache[key]; ok {\n\treturn v\n}`,
+          `if err != nil {\n\treturn err\n}`,
+          `switch status {\ncase "new":\n\tcreate()\ndefault:\n\tignore()\n}`,
+          `switch {\ncase score >= 90:\n\treturn "A"\ndefault:\n\treturn "B"\n}`,
+          `switch v := value.(type) {\ncase string:\n\tfmt.Println(v)\n}`,
+          `for i := 0; i < 3; i++ {\n\tfmt.Println(i)\n}`,
+          `for running {\n\tpoll()\n}`,
+          `for {\n\tbreak\n}`,
+          `for i, v := range items {\n\tfmt.Println(i, v)\n}`,
+          `for key, value := range scores {\n\tfmt.Println(key, value)\n}`,
+          `for _, r := range "台灣Go" {\n\tfmt.Println(r)\n}`,
+          `for _, v := range items {\n\tif v == target { break }\n}`,
+          `for _, v := range items {\n\tif v == "" { continue }\n}`,
+          `file, err := os.Open(name)\nif err != nil { return err }\ndefer file.Close()`,
+          `defer fmt.Println("last")\ndefer fmt.Println("first")`,
+          `outer:\nfor _, row := range rows {\n\tfor _, v := range row {\n\t\tif v == target { break outer }\n\t}\n}`,
+          `select {\ncase <-time.After(time.Second):\n\treturn errors.New("timeout")\n}`,
+          `select {\ncase v := <-ch:\n\tfmt.Println(v)\ndefault:\n\tfmt.Println("not ready")\n}`,
+          `if err != nil { return err }\nreturn nil`
+        ],
+        [
+          `func Add(a, b int) int {\n\treturn a + b\n}`,
+          `func Move(x, y int) Point {\n\treturn Point{X: x, Y: y}\n}`,
+          `func Find(id string) (User, bool) {\n\treturn User{}, false\n}`,
+          `func Load() ([]byte, error) {\n\treturn os.ReadFile("data.txt")\n}`,
+          `func Parse() (value int, err error) {\n\treturn 1, nil\n}`,
+          `func Sum(nums ...int) int {\n\ttotal := 0\n\tfor _, n := range nums { total += n }\n\treturn total\n}`,
+          `func Apply(v int, fn func(int) int) int {\n\treturn fn(v)\n}`,
+          `func Multiplier(n int) func(int) int {\n\treturn func(v int) int { return n * v }\n}`,
+          `func() {\n\tfmt.Println("run now")\n}()`,
+          `next := func() int {\n\tcount := 0\n\treturn func() int { count++; return count }\n}()`,
+          `defer func(start time.Time) {\n\tfmt.Println(time.Since(start))\n}(time.Now())`,
+          `func Fact(n int) int {\n\tif n <= 1 { return 1 }\n\treturn n * Fact(n-1)\n}`,
+          `rename := user.Rename\nrename("Ada")`,
+          `fn := (*User).Rename\nfn(&user, "Ada")`,
+          `func must(t *testing.T, err error) {\n\tt.Helper()\n\tif err != nil { t.Fatal(err) }\n}`,
+          `func NewService(store Store) *Service {\n\treturn &Service{store: store}\n}`,
+          `type Option func(*Config)\nfunc WithTimeout(d time.Duration) Option {\n\treturn func(c *Config) { c.Timeout = d }\n}`,
+          `func Map[T any](items []T, fn func(T) T) []T {\n\tout := make([]T, len(items))\n\tfor i, item := range items { out[i] = fn(item) }\n\treturn out\n}`,
+          `func Chain(next http.Handler) http.Handler {\n\treturn http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { next.ServeHTTP(w, r) })\n}`,
+          `func Load(ctx context.Context, id string) error {\n\treturn ctx.Err()\n}`
+        ],
+        [
+          `return errors.New("not found")`,
+          `return fmt.Errorf("load user: %w", err)`,
+          `if errors.Is(err, ErrNotFound) {\n\treturn nil\n}`,
+          `var target *PathError\nif errors.As(err, &target) {\n\tfmt.Println(target.Path)\n}`,
+          `type ValidationError struct { Field string }\nfunc (e ValidationError) Error() string { return e.Field + " invalid" }`,
+          `var ErrNotFound = errors.New("not found")`,
+          `if name == "" {\n\treturn ValidationError{Field: "name"}\n}`,
+          `return errors.Join(errA, errB)`,
+          `_ = os.WriteFile(name, data, 0644) // bad: error ignored`,
+          `defer func() {\n\tif r := recover(); r != nil { log.Println(r) }\n}()`,
+          `if errors.Is(err, ErrNotFound) {\n\thttp.Error(w, "not found", http.StatusNotFound)\n}`,
+          `type temporary interface {\n\tTemporary() bool\n}\n\nfunc RetryTemporary(ctx context.Context, max int, run func(context.Context) error) error {\n\tvar last error\n\tfor attempt := 1; attempt <= max; attempt++ {\n\t\tif err := run(ctx); err != nil {\n\t\t\tlast = err\n\t\t\tvar te temporary\n\t\t\tif !errors.As(err, &te) || !te.Temporary() {\n\t\t\t\treturn err // permanent error: do not retry\n\t\t\t}\n\t\t\tselect {\n\t\t\tcase <-time.After(time.Duration(attempt) * 100 * time.Millisecond):\n\t\t\tcase <-ctx.Done():\n\t\t\t\treturn ctx.Err()\n\t\t\t}\n\t\t\tcontinue\n\t\t}\n\t\treturn nil\n\t}\n\treturn fmt.Errorf("retry exhausted: %w", last)\n}`,
+          `return fmt.Errorf("decode config file %s: %w", name, err)`,
+          `// log once at boundary\nreturn fmt.Errorf("service failed: %w", err)`,
+          `if errors.Is(err, io.EOF) {\n\treturn nil\n}`,
+          `if errors.Is(err, context.Canceled) {\n\treturn err\n}`,
+          `if errors.Is(err, context.DeadlineExceeded) {\n\treturn err\n}`,
+          `message := "資料讀取失敗，請稍後再試"`,
+          `if err == nil {\n\tt.Fatal("expected error")\n}`,
+          `if !errors.Is(err, ErrNotFound) {\n\tt.Fatalf("got %v", err)\n}`
+        ],
+        [
+          `nums := [3]int{1, 2, 3}`,
+          `items := []string{"a", "b"}`,
+          `items = append(items, "c")`,
+          `dst := append([]string(nil), src...)`,
+          `items := make([]int, 0, 100)`,
+          `head := items[:2]`,
+          `items = append(items[:i], items[i+1:]...)`,
+          `for i, j := 0, len(items)-1; i < j; i, j = i+1, j-1 {\n\titems[i], items[j] = items[j], items[i]\n}`,
+          `seen := map[string]struct{}{}\nfor _, v := range items { seen[v] = struct{}{} }`,
+          `sort.Strings(items)`,
+          `scores := map[string]int{}`,
+          `score, ok := scores["amy"]`,
+          `delete(scores, "amy")`,
+          `counts := map[string]int{}\ncounts[name]++`,
+          `set := map[string]struct{}{"go": {}}`,
+          `keys := make([]string, 0, len(m))\nfor k := range m { keys = append(keys, k) }`,
+          `fmt.Println(len("台灣"))`,
+          `for _, r := range "台灣" { fmt.Println(r) }`,
+          `var b strings.Builder\nb.WriteString("go")`,
+          `parts := strings.Split("a,b", ",")`,
+          `text := strings.Join(parts, ",")`,
+          `ok := strings.Contains(text, "go")`,
+          `n, err := strconv.Atoi("42")`,
+          `s := strconv.Itoa(42)`,
+          `b := []byte("go")\ns := string(b)`,
+          `runes := []rune("台灣")`,
+          `if unicode.IsLetter(r) { count++ }`,
+          `users := map[string]map[string]int{}`,
+          `users := []User{{ID: 1}}`,
+          `sort.Strings(keys)\nfor _, k := range keys { fmt.Println(k, m[k]) }`
+        ],
+        [
+          `user := User{ID: 1, Name: "Amy"}`,
+          `cfg := struct{ Port int }{Port: 8080}`,
+          `type User struct { Name string ` + "`json:\"name\"`" + ` }`,
+          `type Order struct {\n\tAudit\n\tID string\n}`,
+          `func (u *User) Rename(name string) { u.Name = name }`,
+          `func (u User) DisplayName() string { return u.Name }`,
+          `func (b *Builder) SetName(name string) *Builder { b.name = name; return b }`,
+          `type Store interface { Save(User) error }`,
+          `type Reader interface { Read([]byte) (int, error) }`,
+          `type FakeStore struct{}\nfunc (FakeStore) Save(User) error { return nil }`,
+          `value, ok := input.(string)`,
+          `switch v := input.(type) {\ncase string:\n\tfmt.Println(v)\n}`,
+          `var value any = User{}`,
+          `func First[T any](items []T) (T, bool) { var zero T; if len(items)==0 { return zero, false }; return items[0], true }`,
+          `func Contains[T comparable](items []T, target T) bool { for _, item := range items { if item == target { return true } }; return false }`,
+          `type Set[T comparable] map[T]struct{}`,
+          `type Queue[T any] struct { items []T }`,
+          `func Index[T comparable](items []T, target T) int { return -1 }`,
+          `type Number interface { ~int | ~float64 }`,
+          `type Admin struct { User }`,
+          `svc := NewService(store)`,
+          `type Repository interface { Find(id string) (User, error) }`,
+          `func CopyAll(r io.Reader) ([]byte, error) { return io.ReadAll(r) }`,
+          `func WriteAll(w io.Writer, data []byte) error { _, err := w.Write(data); return err }`,
+          `func (u User) String() string { return u.Name }`,
+          `type UserDTO struct { Name string ` + "`json:\"name\"`" + ` }`,
+          `type User struct { ID UserID }`,
+          `type Money struct { cents int }`,
+          `func NewUser(name string) (User, error) { if name=="" { return User{}, errors.New("name required") }; return User{Name:name}, nil }`,
+          `cfg := NewConfig(WithTimeout(time.Second))`
+        ],
+        [
+          `body, err := json.Marshal(user)`,
+          `err := json.Unmarshal(body, &user)`,
+          `dec := json.NewDecoder(r)\nerr := dec.Decode(&payload)`,
+          `data, err := os.ReadFile("config.json")`,
+          `err := os.WriteFile("out.txt", data, 0644)`,
+          `scanner := bufio.NewScanner(r)\nfor scanner.Scan() { fmt.Println(scanner.Text()) }`,
+          `path := filepath.Join(dir, "config.json")`,
+          `now := time.Now()`,
+          `t, err := time.Parse(time.RFC3339, raw)`,
+          `ticker := time.NewTicker(time.Second)\ndefer ticker.Stop()`,
+          `client := &http.Client{Timeout: 3 * time.Second}`,
+          `req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)`,
+          `http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) })`,
+          `rr := httptest.NewRecorder()\nhandler.ServeHTTP(rr, req)`,
+          `u, err := url.Parse(rawURL)`,
+          `ok, err := regexp.MatchString(` + "`^[a-z]+$`" + `, text)`,
+          `logger := slog.Default()\nlogger.Info("started")`,
+          `port := flag.Int("port", 8080, "listen port")\nflag.Parse()`,
+          `//go:embed static/index.html\nvar indexHTML string`,
+          `_, err := io.Copy(dst, src)`
+        ],
+        [
+          `go work()`,
+          `var wg sync.WaitGroup\nwg.Add(1)\ngo func(){ defer wg.Done(); work() }()\nwg.Wait()`,
+          `mu.Lock()\ncount++\nmu.Unlock()`,
+          `rw.RLock()\nvalue := cache[key]\nrw.RUnlock()`,
+          `ch := make(chan int)\ngo func(){ ch <- 1 }()\nfmt.Println(<-ch)`,
+          `jobs := make(chan Job, 10)`,
+          `close(ch)`,
+          `for v := range ch { fmt.Println(v) }`,
+          `select {\ncase v := <-ch:\n\tfmt.Println(v)\ncase <-ctx.Done():\n\treturn\n}`,
+          `ctx, cancel := context.WithTimeout(context.Background(), time.Second)\ndefer cancel()`,
+          `ctx, cancel := context.WithCancel(context.Background())\ncancel()`,
+          `for i := 0; i < workers; i++ { go worker(jobs) }`,
+          `for i := 0; i < n; i++ { go worker(i) }`,
+          `for v := range in { out <- v }`,
+          `ticker := time.NewTicker(100 * time.Millisecond)\ndefer ticker.Stop()`,
+          `sem := make(chan struct{}, 5)\nsem <- struct{}{}\ndefer func(){ <-sem }()`,
+          `once.Do(func(){ initConfig() })`,
+          `atomic.AddInt64(&count, 1)`,
+          `select { case <-done: return }`,
+          `select {\ncase out <- value:\ncase <-ctx.Done(): return\n}`
+        ],
+        [
+          `func TestAdd(t *testing.T) { if Add(1,2)!=3 { t.Fatal("bad") } }`,
+          `tests := []struct{ name string; in int; want int }{{"one",1,2}}`,
+          `t.Run("case", func(t *testing.T) { t.Parallel() })`,
+          `func must(t *testing.T, err error) { t.Helper(); if err != nil { t.Fatal(err) } }`,
+          `if err == nil { t.Fatal("expected error") }`,
+          `fake := FakeStore{}\nsvc := NewService(fake)`,
+          `func BenchmarkAdd(b *testing.B) { for i:=0; i<b.N; i++ { Add(1,2) } }`,
+          `b.ReportAllocs()`,
+          `func FuzzParse(f *testing.F) { f.Add("1"); f.Fuzz(func(t *testing.T, s string){ _, _ = Parse(s) }) }`,
+          `rr := httptest.NewRecorder()\nhandler.ServeHTTP(rr, req)`
+        ]
+      ];
+      return templates[groupIndex][titleIndex % templates[groupIndex].length];
+    }
+
+    function buildCases() {
+      let no = 1;
+      return caseCategories.flatMap((category, categoryIndex) => Array.from({ length: 20 }, (_, index) => {
+        const currentNo = no++;
+        const caseID = String(currentNo).padStart(3, "0");
+        const title = caseTitles[categoryIndex][index];
+        const deep = index === 0;
+        const real = index < 4;
+        const incident = deepIncidents[categoryIndex];
+        return {
+          no: currentNo,
+          category,
+          title,
+          scene: `用於 code review、設計討論或 production 問題排查。`,
+          code: caseCode(caseID, title, category, categoryIndex, index),
+          steps: ["先界定使用場景。", "找出錯誤路徑與資源生命週期。", "補上測試與 production 指標。"],
+          tradeoff: "簡潔度、可測試性與 production 可觀測性之間需要平衡。",
+          acceptance: "能用測試驗證成功、失敗、timeout 或滿載路徑。",
+          pitfall: "只處理 happy path，缺少錯誤分類、取消控制或指標。",
+          real,
+          deep,
+          problem: real ? `${category} 在真實專案常見問題：需求一開始很小，但很快會遇到錯誤分類、測試、觀測與維護邊界。` : "",
+          wrongCode: real ? "func Handler(w http.ResponseWriter, r *http.Request) {\n\tgo doWork()\n\tw.WriteHeader(http.StatusOK)\n}" : "",
+          fixedCode: real ? "func Handler(w http.ResponseWriter, r *http.Request) {\n\tctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)\n\tdefer cancel()\n\tif err := svc.Do(ctx); err != nil { writeError(w, err); return }\n\tw.WriteHeader(http.StatusAccepted)\n}" : "",
+          metric: real ? "request_duration_seconds、errors_total{kind}、queue_depth 或 retry_total。" : "",
+          incident: deep ? { symptom: incident[0], cause: incident[1], fix: incident[2], review: "復盤時把錯誤版本、修正版、驗收測試與 production 指標寫進 checklist。" } : null
+        };
+      }));
+    }
+
+    function caseCode(caseID, title, category, categoryIndex, index) {
+      if (title === "API 邊界錯誤轉換") {
+        return `// Case #${caseID}: ${title}\nvar ErrCase${caseID}InvalidInput = errors.New("invalid input")\nvar ErrCase${caseID}NotFound = errors.New("not found")\n\ntype Case${caseID}Service interface {\n\tCreate(ctx context.Context) error\n}\n\ntype Case${caseID}APIError struct {\n\tCode    string ` + "`json:\"code\"`" + `\n\tMessage string ` + "`json:\"message\"`" + `\n}\n\nfunc RunCase${caseID}(w http.ResponseWriter, r *http.Request, svc Case${caseID}Service) {\n\tif err := svc.Create(r.Context()); err != nil {\n\t\tstatus, body := Case${caseID}MapError(err)\n\t\tCase${caseID}WriteJSON(w, status, body)\n\t\treturn\n\t}\n\tw.WriteHeader(http.StatusCreated)\n}\n\nfunc Case${caseID}MapError(err error) (int, Case${caseID}APIError) {\n\tswitch {\n\tcase errors.Is(err, ErrCase${caseID}InvalidInput):\n\t\treturn http.StatusBadRequest, Case${caseID}APIError{\n\t\t\tCode: "invalid_input",\n\t\t\tMessage: "request payload is invalid",\n\t\t}\n\tcase errors.Is(err, ErrCase${caseID}NotFound):\n\t\treturn http.StatusNotFound, Case${caseID}APIError{\n\t\t\tCode: "not_found",\n\t\t\tMessage: "resource not found",\n\t\t}\n\tdefault:\n\t\treturn http.StatusInternalServerError, Case${caseID}APIError{\n\t\t\tCode: "internal_error",\n\t\t\tMessage: "service temporarily unavailable",\n\t\t}\n\t}\n}\n\nfunc Case${caseID}WriteJSON(w http.ResponseWriter, status int, body Case${caseID}APIError) {\n\tw.Header().Set("Content-Type", "application/json")\n\tw.WriteHeader(status)\n\t_ = json.NewEncoder(w).Encode(body)\n}`;
+      }
+      if (categoryIndex === 5) {
+        return workerPoolRateLimitCode(caseID, title, index);
+      }
+      const specific = specificCaseCode(caseID, title, categoryIndex, index);
+      if (specific) return specific;
+      const caseTitle = JSON.stringify(title);
+      const examples = [
+        `// Case #${caseID}: ${title}\nvar ErrCase${caseID}Temporary = errors.New("temporary failure")\nvar ErrCase${caseID}Permanent = errors.New("permanent failure")\n\nfunc RunCase${caseID}(ctx context.Context, run func(context.Context) error) error {\n\tcaseTitle := ${caseTitle}\n\tif err := run(ctx); err != nil {\n\t\tswitch {\n\t\tcase errors.Is(err, ErrCase${caseID}Temporary):\n\t\t\treturn fmt.Errorf("%s retry later: %w", caseTitle, err)\n\t\tcase errors.Is(err, ErrCase${caseID}Permanent):\n\t\t\treturn fmt.Errorf("%s stop immediately: %w", caseTitle, err)\n\t\tdefault:\n\t\t\treturn fmt.Errorf("%s unknown error: %w", caseTitle, err)\n\t\t}\n\t}\n\treturn nil\n}`,
+        `// Case #${caseID}: ${title}\ntype Case${caseID}Store interface {\n\tSave(ctx context.Context, value string) error\n}\n\ntype Case${caseID}Service struct {\n\tstore Case${caseID}Store\n}\n\nfunc RunCase${caseID}(ctx context.Context, svc Case${caseID}Service, value string) error {\n\tcaseTitle := ${caseTitle}\n\tif err := svc.store.Save(ctx, value); err != nil {\n\t\treturn fmt.Errorf("%s save through interface: %w", caseTitle, err)\n\t}\n\treturn nil\n}`,
+        `// Case #${caseID}: ${title}\ntype Case${caseID}Set[T comparable] map[T]struct{}\n\nfunc NewCase${caseID}Set[T comparable](items []T) Case${caseID}Set[T] {\n\tset := make(Case${caseID}Set[T], len(items))\n\tfor _, item := range items {\n\t\tset[item] = struct{}{}\n\t}\n\treturn set\n}\n\nfunc (s Case${caseID}Set[T]) Has(item T) bool {\n\t_, ok := s[item]\n\treturn ok\n}`,
+        `// Case #${caseID}: ${title}\nfunc RunCase${caseID}(parent context.Context, query func(context.Context) error) error {\n\tcaseTitle := ${caseTitle}\n\tctx, cancel := context.WithTimeout(parent, 2*time.Second)\n\tdefer cancel()\n\tif err := query(ctx); err != nil {\n\t\treturn fmt.Errorf("%s context boundary: %w", caseTitle, err)\n\t}\n\treturn nil\n}`,
+        `// Case #${caseID}: ${title}\nfunc RunCase${caseID}(ctx context.Context, in <-chan Job, out chan<- Result) error {\n\tcaseTitle := ${caseTitle}\n\tfor {\n\t\tselect {\n\t\tcase job, ok := <-in:\n\t\t\tif !ok { return nil }\n\t\t\tout <- handleJob(job)\n\t\tcase <-ctx.Done():\n\t\t\treturn fmt.Errorf("%s canceled: %w", caseTitle, ctx.Err())\n\t\t}\n\t}\n}`,
+        `// Case #${caseID}: ${title}\nfunc RunCase${caseID}(ctx context.Context, jobs <-chan Job, workers int) error {\n\tcaseTitle := ${caseTitle}\n\tvar wg sync.WaitGroup\n\tfor i := 0; i < workers; i++ {\n\t\twg.Add(1)\n\t\tgo func(workerID int) {\n\t\t\tdefer wg.Done()\n\t\t\tfor job := range jobs {\n\t\t\t\t_ = processWithRateLimit(ctx, workerID, job)\n\t\t\t}\n\t\t}(i)\n\t}\n\twg.Wait()\n\treturn fmt.Errorf("%s workers drained", caseTitle)\n}`,
+        `// Case #${caseID}: ${title}\nfunc RunCase${caseID}(ctx context.Context, client *http.Client, url string) error {\n\tcaseTitle := ${caseTitle}\n\tif client.Timeout == 0 {\n\t\tclient.Timeout = 3 * time.Second\n\t}\n\treq, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)\n\tif err != nil { return fmt.Errorf("%s request: %w", caseTitle, err) }\n\tresp, err := client.Do(req)\n\tif err != nil { return fmt.Errorf("%s call: %w", caseTitle, err) }\n\tdefer resp.Body.Close()\n\tif resp.StatusCode >= 500 {\n\t\treturn fmt.Errorf("%s upstream status %d", caseTitle, resp.StatusCode)\n\t}\n\treturn nil\n}`,
+        `// Case #${caseID}: ${title}\nfunc TestRunCase${caseID}(t *testing.T) {\n\ttests := []struct{\n\t\tname string\n\t\tinput string\n\t\twantErr bool\n\t}{\n\t\t{${caseTitle}, "ok", false},\n\t\t{${JSON.stringify(title + " error path")}, "", true},\n\t}\n\tfor _, tt := range tests {\n\t\tt.Run(tt.name, func(t *testing.T) {\n\t\t\terr := validateInput(tt.input)\n\t\t\tif (err != nil) != tt.wantErr { t.Fatalf("err=%v", err) }\n\t\t})\n\t}\n}`,
+        `// Case #${caseID}: ${title}\nfunc RunCase${caseID}(items []string) string {\n\tcaseTitle := ${caseTitle}\n\t_ = caseTitle\n\tvar b strings.Builder\n\tb.Grow(len(items) * 8)\n\tfor _, item := range items {\n\t\tb.WriteString(item)\n\t}\n\treturn b.String()\n}\n\nfunc BenchmarkRunCase${caseID}(b *testing.B) {\n\tb.ReportAllocs()\n\tfor i := 0; i < b.N; i++ { _ = RunCase${caseID}([]string{"go", "api"}) }\n}`,
+        `// Case #${caseID}: ${title}\ntype Case${caseID}Config struct {\n\tVersion string\n\tPort    int\n}\n\nfunc RunCase${caseID}(cfg Case${caseID}Config) error {\n\tcaseTitle := ${caseTitle}\n\tif cfg.Version == "" || cfg.Port == 0 {\n\t\treturn fmt.Errorf("%s invalid release config", caseTitle)\n\t}\n\treturn nil\n}`
+      ];
+      return examples[categoryIndex] || examples[0];
+    }
+
+    function specificCaseCode(caseID, title, categoryIndex, index) {
+      const caseTitle = JSON.stringify(title);
+      const blocks = [
+        [
+          `var ErrCase${caseID}NotFound = errors.New("not found")\n\nfunc RunCase${caseID}(id string) error {\n\tif id == "" { return ErrCase${caseID}NotFound }\n\treturn nil\n}`,
+          `func RunCase${caseID}(path string, err error) error {\n\tif err == nil { return nil }\n\treturn fmt.Errorf(${JSON.stringify(title + " %s: %w")}, path, err)\n}`,
+          "",
+          `type Case${caseID}ValidationError struct { Fields []string }\nfunc (e Case${caseID}ValidationError) Error() string { return strings.Join(e.Fields, ",") }\n\nfunc RunCase${caseID}(fields []string) error {\n\tif len(fields) == 0 { return nil }\n\treturn Case${caseID}ValidationError{Fields: fields}\n}`,
+          `func RunCase${caseID}(err error) int {\n\tswitch {\n\tcase errors.Is(err, context.DeadlineExceeded): return http.StatusGatewayTimeout\n\tcase errors.Is(err, ErrCase${caseID}NotFound): return http.StatusNotFound\n\tdefault: return http.StatusInternalServerError\n\t}\n}`,
+          `type Case${caseID}PermissionError struct { Action string }\nfunc (e Case${caseID}PermissionError) Error() string { return "permission denied: " + e.Action }\n\nfunc RunCase${caseID}(err error) bool {\n\tvar target Case${caseID}PermissionError\n\treturn errors.As(err, &target)\n}`,
+          `func RunCase${caseID}(logger *slog.Logger, err error) error {\n\tif err == nil { return nil }\n\tlogger.Error(${caseTitle}, "error", err)\n\treturn err\n}`,
+          `type Case${caseID}Temporary interface { Temporary() bool }\nfunc RunCase${caseID}(err error) bool {\n\tvar te Case${caseID}Temporary\n\treturn errors.As(err, &te) && te.Temporary()\n}`,
+          `func RunCase${caseID}(err error) string {\n\tif err == nil { return "" }\n\treturn "service temporarily unavailable"\n}`,
+          `func RunCase${caseID}(fn func()) (err error) {\n\tdefer func() { if r := recover(); r != nil { err = fmt.Errorf(${JSON.stringify(title + ": %v")}, r) } }()\n\tfn()\n\treturn nil\n}`,
+          `func RunCase${caseID}(errs ...error) error {\n\treturn errors.Join(errs...)\n}`,
+          `func RunCase${caseID}(err error) error {\n\tif errors.Is(err, context.Canceled) { return nil }\n\treturn err\n}`,
+          `func RunCase${caseID}(err error) int {\n\tif errors.Is(err, context.DeadlineExceeded) { return http.StatusGatewayTimeout }\n\treturn http.StatusInternalServerError\n}`,
+          `func RunCase${caseID}(err error) error {\n\tif errors.Is(err, io.EOF) { return nil }\n\treturn err\n}`,
+          `func RunCase${caseID}(code string) string {\n\tmessages := map[string]string{"not_found": "找不到資料", "internal": "系統暫時不可用"}\n\treturn messages[code]\n}`,
+          `func RunCase${caseID}(err error) Case${caseID}APIError {\n\tif errors.Is(err, ErrCase${caseID}NotFound) { return Case${caseID}APIError{Code: "not_found"} }\n\treturn Case${caseID}APIError{Code: "internal_error"}\n}`,
+          `func RunCase${caseID}() map[string]int {\n\treturn map[string]int{"invalid_input": 400, "not_found": 404, "internal_error": 500}\n}`,
+          `func RunCase${caseID}(err error) error {\n\tif err == nil { return nil }\n\tif strings.Contains(err.Error(), ${caseTitle}) { return err }\n\treturn fmt.Errorf(${JSON.stringify(title + ": %w")}, err)\n}`,
+          `func RunCase${caseID}(ctx context.Context, errs chan<- error, run func(context.Context) error) {\n\tgo func() { if err := run(ctx); err != nil { errs <- fmt.Errorf(${JSON.stringify(title + ": %w")}, err) } }()\n}`,
+          `func TestRunCase${caseID}(t *testing.T) {\n\terr := RunCase${caseID}("")\n\tif !errors.Is(err, ErrCase${caseID}NotFound) { t.Fatalf("want not found, got %v", err) }\n}`
+        ],
+        [
+          `type Case${caseID}Saver interface { Save(context.Context, User) error }\nfunc RunCase${caseID}(ctx context.Context, s Case${caseID}Saver, user User) error { return s.Save(ctx, user) }`,
+          `type Case${caseID}Finder interface { Find(context.Context, string) (User, error) }\nfunc RunCase${caseID}(ctx context.Context, repo Case${caseID}Finder, id string) (User, error) { return repo.Find(ctx, id) }`,
+          `type Case${caseID}Repository interface { Save(context.Context, User) error; Find(context.Context, string) (User, error) }\ntype Case${caseID}Service struct { repo Case${caseID}Repository }`,
+          `type Case${caseID}HTTPDoer interface { Do(*http.Request) (*http.Response, error) }\nfunc RunCase${caseID}(ctx context.Context, c Case${caseID}HTTPDoer, req *http.Request) (*http.Response, error) { return c.Do(req.WithContext(ctx)) }`,
+          `type Case${caseID}FakeStore struct { Saved []User }\nfunc (f *Case${caseID}FakeStore) Save(ctx context.Context, u User) error { f.Saved = append(f.Saved, u); return nil }`,
+          `func RunCase${caseID}(store interface{ Save(context.Context, User) error }) error { return store.Save(context.Background(), User{}) }`,
+          `type Case${caseID}AuditedStore struct { Store Case${caseID}Saver }\nfunc (s Case${caseID}AuditedStore) Save(ctx context.Context, u User) error { return s.Store.Save(ctx, u) }`,
+          `type Case${caseID}FlagReader interface { Enabled(context.Context, string) bool }\nfunc RunCase${caseID}(ctx context.Context, flags Case${caseID}FlagReader) bool { return flags.Enabled(ctx, "new-worker") }`,
+          `type Case${caseID}Strategy interface { Run(context.Context, Job) error }\nfunc RunCase${caseID}(ctx context.Context, s Case${caseID}Strategy, job Job) error { return s.Run(ctx, job) }`,
+          `type Case${caseID}Handler interface { Handle(context.Context, Event) error }\nfunc RunCase${caseID}(handlers map[string]Case${caseID}Handler, name string) Case${caseID}Handler { return handlers[name] }`,
+          `type Case${caseID}Clock interface { Now() time.Time }\nfunc RunCase${caseID}(clock Case${caseID}Clock) time.Time { return clock.Now() }`,
+          `type Case${caseID}IDGenerator interface { NewID() string }\nfunc RunCase${caseID}(gen Case${caseID}IDGenerator) string { return gen.NewID() }`,
+          `type Case${caseID}Cache interface { Get(string) (User, bool); Set(string, User) }\nfunc RunCase${caseID}(cache Case${caseID}Cache, key string, user User) { cache.Set(key, user) }`,
+          `type Case${caseID}Publisher interface { Publish(context.Context, Event) error }\nfunc RunCase${caseID}(ctx context.Context, p Case${caseID}Publisher, e Event) error { return p.Publish(ctx, e) }`,
+          `type Case${caseID}FS interface { ReadFile(string) ([]byte, error) }\nfunc RunCase${caseID}(fs Case${caseID}FS, name string) ([]byte, error) { return fs.ReadFile(name) }`,
+          `func RunCase${caseID}(r io.Reader, w io.Writer) error { _, err := io.Copy(w, r); return err }`,
+          `type Case${caseID}Notifier interface { Notify(context.Context, string) error }\nfunc RunCase${caseID}(ctx context.Context, n Case${caseID}Notifier) error { return n.Notify(ctx, "done") }`,
+          `type Case${caseID}Gateway interface { Charge(context.Context, Money) error }\nfunc RunCase${caseID}(ctx context.Context, g Case${caseID}Gateway, m Money) error { return g.Charge(ctx, m) }`,
+          `type Case${caseID}UserReader interface { ReadUser(context.Context, string) (User, error) }\nfunc RunCase${caseID}() string { return "Reader/Writer suffix names behavior clearly" }`,
+          `var _ Case${caseID}Saver = (*Case${caseID}FakeStore)(nil)`
+        ],
+        [
+          `func RunCase${caseID}[T any](items []T) (T, bool) { var zero T; if len(items)==0 { return zero, false }; return items[0], true }`,
+          `type Case${caseID}Set[T comparable] map[T]struct{}\nfunc (s Case${caseID}Set[T]) Add(v T) { s[v] = struct{}{} }`,
+          `type Case${caseID}Queue[T any] struct { items []T }\nfunc (q *Case${caseID}Queue[T]) Push(v T) { q.items = append(q.items, v) }`,
+          `type Case${caseID}Result[T any] struct { Value T; Err error }\nfunc RunCase${caseID}[T any](v T, err error) Case${caseID}Result[T] { return Case${caseID}Result[T]{v, err} }`,
+          `func RunCase${caseID}[T comparable](items []T, target T) bool { for _, item := range items { if item == target { return true } }; return false }`,
+          `func RunCase${caseID}[T ~int | ~float64](items []T) { slices.Sort(items) }`,
+          `func RunCase${caseID}[T any, R any](items []T, fn func(T) R) []R { out := make([]R, 0, len(items)); for _, item := range items { out = append(out, fn(item)) }; return out }`,
+          `type Case${caseID}Cache[K comparable, V any] map[K]V\nfunc (c Case${caseID}Cache[K,V]) Get(k K) (V, bool) { v, ok := c[k]; return v, ok }`,
+          `type Case${caseID}Box[T any] struct { Value T }\nfunc (b Case${caseID}Box[T]) Get() T { return b.Value }`,
+          `func RunCase${caseID}(items []User) []User { return items } // avoid generic when domain type is clearer`,
+          `type Case${caseID}Stack[T any] []T\nfunc (s *Case${caseID}Stack[T]) Push(v T) { *s = append(*s, v) }`,
+          `type Case${caseID}Pair[A, B any] struct { A A; B B }`,
+          `type Case${caseID}Optional[T any] struct { Value T; OK bool }`,
+          `type Case${caseID}Page[T any] struct { Items []T; Next string }`,
+          `func RunCase${caseID}[T any](v T, valid func(T) bool) error { if !valid(v) { return errors.New(${caseTitle}) }; return nil }`,
+          `func RunCase${caseID}[T any](ctx context.Context, fn func(context.Context) (T, error)) (T, error) { return fn(ctx) }`,
+          `type Case${caseID}Repo[T any] interface { Save(context.Context, T) error }`,
+          `func RunCase${caseID}[T ~int | ~string](items []T) { slices.Sort(items) }`,
+          `func RunCase${caseID}[T any]() T { var zero T; return zero }`,
+          `func RunCase${caseID}[T any]() string { return "name generic helpers by behavior, not T" }`
+        ],
+        [
+          `func RunCase${caseID}(r *http.Request) (context.Context, context.CancelFunc) { return context.WithTimeout(r.Context(), 2*time.Second) }`,
+          `func RunCase${caseID}(ctx context.Context, stop func()) { go func(){ <-ctx.Done(); stop() }() }`,
+          `func RunCase${caseID}(ctx context.Context, stages ...func(context.Context) error) error { for _, stage := range stages { if err := stage(ctx); err != nil { return err } }; return nil }`,
+          `type Case${caseID}Key struct{}\nfunc RunCase${caseID}(ctx context.Context, requestID string) context.Context { return context.WithValue(ctx, Case${caseID}Key{}, requestID) }`,
+          `func RunCase${caseID}(parent context.Context, d time.Duration) (context.Context, context.CancelFunc) { return context.WithTimeout(parent, d) }`,
+          `func RunCase${caseID}(srv *http.Server) error { ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second); defer cancel(); return srv.Shutdown(ctx) }`,
+          `func RunCase${caseID}(ctx context.Context, stop chan<- struct{}) { select { case stop <- struct{}{}: case <-ctx.Done(): } }`,
+          `func RunCase${caseID}(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error) { return client.Do(req.WithContext(ctx)) }`,
+          `func RunCase${caseID}(ctx context.Context, db *sql.DB, query string) (*sql.Rows, error) { return db.QueryContext(ctx, query) }`,
+          `type Case${caseID}Worker struct { Timeout time.Duration }\nfunc RunCase${caseID}(w Case${caseID}Worker, ctx context.Context) error { _, cancel := context.WithTimeout(ctx, w.Timeout); defer cancel(); return nil }`,
+          `func RunCase${caseID}() (context.Context, context.CancelFunc) { return signal.NotifyContext(context.Background(), os.Interrupt) }`,
+          `func RunCase${caseID}(ctx context.Context, cause error) context.Context { child, cancel := context.WithCancelCause(ctx); cancel(cause); return child }`,
+          `func RunCase${caseID}(parent context.Context) context.Context { ctx, _ := context.WithCancel(parent); return ctx }`,
+          `func RunCase${caseID}(ctx context.Context, id string) context.Context { return context.WithValue(ctx, Case${caseID}Key{}, id) }`,
+          `type Case${caseID}ContextKey string\nconst Case${caseID}RequestID Case${caseID}ContextKey = "request_id"`,
+          `func RunCase${caseID}(cancel context.CancelFunc, cleanup func()) { defer cleanup(); cancel() }`,
+          `func RunCase${caseID}(ctx context.Context, fast, slow time.Duration) (context.Context, context.CancelFunc) { if fast < slow { return context.WithTimeout(ctx, fast) }; return context.WithTimeout(ctx, slow) }`,
+          `func RunCase${caseID}(ctx context.Context, progress chan<- int) { select { case progress <- 50: case <-ctx.Done(): } }`,
+          `func RunCase${caseID}(ctx context.Context, jobs []Job, stopAt int) []Job { if stopAt < len(jobs) { return jobs[:stopAt] }; return jobs }`,
+          `func RunCase${caseID}() { ctx, cancel := context.WithTimeout(context.Background(), time.Second); defer cancel(); _ = ctx }`
+        ],
+        [
+          `func RunCase${caseID}(ctx context.Context, jobs []Job, out chan<- Job) { for _, job := range jobs { select { case out <- job: case <-ctx.Done(): return } } }`,
+          `func RunCase${caseID}(inputs ...<-chan Result) <-chan Result { out := make(chan Result); go func(){ defer close(out); for _, in := range inputs { for v := range in { out <- v } } }(); return out }`,
+          `func RunCase${caseID}(ctx context.Context, ch <-chan Job) error { select { case <-ch: return nil; case <-time.After(time.Second): return errors.New("timeout"); case <-ctx.Done(): return ctx.Err() } }`,
+          `func RunCase${caseID}(ch chan Job) { close(ch) } // sender owns close`,
+          `func RunCase${caseID}(queue chan<- Job, job Job) bool { select { case queue <- job: return true; default: return false } }`,
+          `func RunCase${caseID}(enabled bool, ch <-chan Job) <-chan Job { if !enabled { return nil }; return ch }`,
+          `func RunCase${caseID}(done <-chan struct{}) bool { select { case <-done: return true; default: return false } }`,
+          `func RunCase${caseID}(errs <-chan error) error { for err := range errs { if err != nil { return err } }; return nil }`,
+          `func RunCase${caseID}(ctx context.Context, ch <-chan Job) error { select { case <-ch: return nil; case <-ctx.Done(): return ctx.Err() } }`,
+          `func RunCase${caseID}(ctx context.Context, in <-chan Job, out chan<- Result) { for job := range in { select { case out <- handleJob(job): case <-ctx.Done(): return } } }`,
+          `func RunCase${caseID}(out chan<- Job) chan<- Job { return out }`,
+          `func RunCase${caseID}(ctx context.Context, sem chan struct{}) error { select { case sem <- struct{}{}: defer func(){<-sem}(); return nil; case <-ctx.Done(): return ctx.Err() } }`,
+          `func RunCase${caseID}(done chan struct{}) { close(done) }`,
+          `func RunCase${caseID}(ctx context.Context, producers []<-chan Job, out chan<- Job) { for _, p := range producers { for job := range p { select { case out <- job: case <-ctx.Done(): return } } } }`,
+          `func RunCase${caseID}(in <-chan Job, workers int) []<-chan Job { outs := make([]<-chan Job, 0, workers); _ = in; return outs }`,
+          `func RunCase${caseID}(ch <-chan Job) (Job, bool) { select { case job := <-ch: return job, true; default: return Job{}, false } }`,
+          `func RunCase${caseID}(ticker *time.Ticker) { ticker.Stop() }`,
+          `func RunCase${caseID}(in <-chan Result) []Result { out := []Result{}; for v := range in { out = append(out, v) }; slices.SortFunc(out, func(a,b Result) int { return strings.Compare(a.ID,b.ID) }); return out }`,
+          `func RunCase${caseID}(results <-chan Result, errs <-chan error) error { select { case err := <-errs: return err; case <-results: return nil } }`,
+          `func RunCase${caseID}(in <-chan Job) { for range in {} } // drain before shutdown`
+        ],
+        [],
+        [
+          `func RunCase${caseID}(ctx context.Context, client *http.Client, url string) error { client.Timeout = 3*time.Second; req,_ := http.NewRequestWithContext(ctx,http.MethodGet,url,nil); resp,err:=client.Do(req); if resp!=nil { defer resp.Body.Close() }; return err }`,
+          `func RunCase${caseID}() *http.Transport { return &http.Transport{MaxIdleConns: 100, IdleConnTimeout: 90*time.Second} }`,
+          `func RunCase${caseID}(next http.Handler) http.Handler { return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){ next.ServeHTTP(w,r) }) }`,
+          `func RunCase${caseID}(r io.Reader) (Payload, error) { var p Payload; dec := json.NewDecoder(io.LimitReader(r, 1<<20)); return p, dec.Decode(&p) }`,
+          `func RunCase${caseID}(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }`,
+          `func RunCase${caseID}(logger *slog.Logger, r *http.Request) { logger.Info("request", "request_id", r.Header.Get("X-Request-Id")) }`,
+          `func RunCase${caseID}(w http.ResponseWriter, status int, code string) { w.WriteHeader(status); _ = json.NewEncoder(w).Encode(map[string]string{"code": code}) }`,
+          `func RunCase${caseID}(srv *http.Server) error { ctx,cancel := context.WithTimeout(context.Background(),5*time.Second); defer cancel(); return srv.Shutdown(ctx) }`,
+          `func RunCase${caseID}(resp *http.Response) { if resp != nil && resp.Body != nil { resp.Body.Close() } }`,
+          `func RunCase${caseID}(h http.Handler, req *http.Request) *httptest.ResponseRecorder { rr := httptest.NewRecorder(); h.ServeHTTP(rr, req); return rr }`,
+          `func RunCase${caseID}() *http.ServeMux { mux := http.NewServeMux(); mux.HandleFunc("GET /jobs/{id}", func(w http.ResponseWriter, r *http.Request){ _, _ = w.Write([]byte(r.PathValue("id"))) }); return mux }`,
+          `func RunCase${caseID}(r *http.Request) string { return r.PathValue("id") }`,
+          `func RunCase${caseID}(next http.Handler) http.Handler { return http.HandlerFunc(func(w http.ResponseWriter,r *http.Request){ w.Header().Set("Access-Control-Allow-Origin","*"); next.ServeHTTP(w,r) }) }`,
+          `func RunCase${caseID}(w http.ResponseWriter, r *http.Request) { r.Body = http.MaxBytesReader(w, r.Body, 1<<20) }`,
+          `func RunCase${caseID}(w http.ResponseWriter) { w.Header().Set("Content-Type", "application/json") }`,
+          `func RunCase${caseID}(ctx context.Context, fn func(context.Context) error) error { return RetryTemporary(ctx, 3, fn) }`,
+          `func RunCase${caseID}() *tls.Config { return &tls.Config{MinVersion: tls.VersionTLS12} }`,
+          `func RunCase${caseID}(r *http.Request) string { return r.Header.Get("X-Forwarded-For") }`,
+          `func RunCase${caseID}(w http.ResponseWriter, flusher http.Flusher) { _, _ = w.Write([]byte("data\\n")); flusher.Flush() }`,
+          `func RunCase${caseID}(mux *http.ServeMux) { mux.HandleFunc("GET /v1/jobs", func(w http.ResponseWriter, r *http.Request){}) }`
+        ],
+        [
+          `func TestRunCase${caseID}(t *testing.T) { tests := []struct{name string; in int; want int}{{${caseTitle},1,2}}; _ = tests }`,
+          `type Case${caseID}FakeStore struct{}; func (Case${caseID}FakeStore) Save(context.Context, User) error { return nil }`,
+          `func TestRunCase${caseID}(t *testing.T) { got := goldenLoad("testdata/result.golden"); _ = got }`,
+          `func BenchmarkRunCase${caseID}(b *testing.B) { b.ReportAllocs(); for i:=0; i<b.N; i++ { _ = strings.Builder{} } }`,
+          `func FuzzRunCase${caseID}(f *testing.F) { f.Add("seed"); f.Fuzz(func(t *testing.T, s string){ _, _ = url.Parse(s) }) }`,
+          `func TestRunCase${caseID}(t *testing.T) { t.Parallel(); var n atomic.Int64; n.Add(1) }`,
+          `func TestRunCase${caseID}(t *testing.T) { if testing.Short() { t.Skip("integration") } }`,
+          `type Case${caseID}Clock struct { NowValue time.Time }; func (c Case${caseID}Clock) Now() time.Time { return c.NowValue }`,
+          `func TestRunCase${caseID}(t *testing.T) { fake := Case${caseID}FakeStore{}; _ = fake }`,
+          `func RunCase${caseID}(name string) User { return User{Name: name} }`,
+          `func TestRunCase${caseID}(t *testing.T) { t.Run(${caseTitle}, func(t *testing.T){ t.Parallel() }) }`,
+          `func TestRunCase${caseID}(t *testing.T) { t.Cleanup(func(){}) }`,
+          `func TestRunCase${caseID}(t *testing.T) { dir := t.TempDir(); _ = dir }`,
+          `func TestRunCase${caseID}(t *testing.T) { srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter,r *http.Request){})); defer srv.Close() }`,
+          `func TestMain(m *testing.M) { os.Exit(m.Run()) }`,
+          `func TestRunCase${caseID}(t *testing.T) { t.Log("coverage protects " + ${caseTitle}) }`,
+          `func TestRunCase${caseID}(t *testing.T) { if os.Getenv("UPDATE_SNAPSHOT") == "1" { t.Log("update") } }`,
+          `func BenchmarkRunCase${caseID}(b *testing.B) { setup := []byte("x"); b.ResetTimer(); for i:=0; i<b.N; i++ { _ = setup } }`,
+          `func FuzzRunCase${caseID}(f *testing.F) { f.Add([]byte("seed")); f.Fuzz(func(t *testing.T, b []byte){ _ = b }) }`,
+          `func TestRunCase${caseID}(t *testing.T) { t.Setenv("TZ", "UTC") }`
+        ],
+        [
+          `func RunCase${caseID}(p *int) int { return *p }`,
+          `func RunCase${caseID}(items []string) []string { out := make([]string, 0, len(items)); return append(out, items...) }`,
+          `var case${caseID}Pool = sync.Pool{New: func() any { return new(bytes.Buffer) }}`,
+          `func RunCase${caseID}() { _ = pprof.Lookup("goroutine") }`,
+          `func RunCase${caseID}(w io.Writer) error { return pprof.WriteHeapProfile(w) }`,
+          `func RunCase${caseID}(items []string) string { var b strings.Builder; for _, item := range items { b.WriteString(item) }; return b.String() }`,
+          `func RunCase${caseID}(n int) []Result { return make([]Result, 0, n) }`,
+          `func RunCase${caseID}(n int) map[string]int { return make(map[string]int, n) }`,
+          `func RunCase${caseID}(fastEnough bool) bool { return fastEnough }`,
+          `func RunCase${caseID}(stats runtime.MemStats) uint64 { return stats.Alloc }`,
+          `func RunCase${caseID}(v any) any { return v }`,
+          `func RunCase${caseID}(v LargeStruct) *LargeStruct { return &v }`,
+          `func RunCase${caseID}(buf *bytes.Buffer) { buf.Reset(); buf.WriteString("reuse") }`,
+          `func RunCase${caseID}(r io.Reader) *bufio.Reader { return bufio.NewReaderSize(r, 32*1024) }`,
+          `func RunCase${caseID}(logger *slog.Logger, hot bool) { if !hot { logger.Info(${caseTitle}) } }`,
+          `func RunCase${caseID}(mu *sync.Mutex, fn func()) { mu.Lock(); defer mu.Unlock(); fn() }`,
+          `func RunCase${caseID}(n *atomic.Int64) { n.Add(1) }`,
+          `type Case${caseID}Padded struct { Count atomic.Int64; _ [56]byte }`,
+          `func RunCase${caseID}() *pprof.Profile { return pprof.Lookup("goroutine") }`,
+          `func BenchmarkRunCase${caseID}(b *testing.B) { for i:=0; i<b.N; i++ { _ = RunCase${caseID}Name() } }`
+        ],
+        [
+          `func RunCase${caseID}() []string { return []string{"cmd/api", "internal/service", "internal/repository"} }`,
+          `func RunCase${caseID}(env map[string]string) Config { return Config{Port: env["PORT"]} }`,
+          `func RunCase${caseID}(major, minor, patch int) string { return fmt.Sprintf("%d.%d.%d", major, minor, patch) }`,
+          `var Case${caseID}Version = "dev" // go build -ldflags "-X main.Case${caseID}Version=v1.0.0"`,
+          `//go:embed static/index.html\nvar Case${caseID}IndexHTML string`,
+          `func RunCase${caseID}() []string { return []string{"FROM golang:1.22 AS build", "FROM gcr.io/distroless/base"} }`,
+          `func RunCase${caseID}() []string { return []string{"go test ./...", "go test -race ./...", "go build ./cmd/api"} }`,
+          `func RunCase${caseID}(module string) bool { return strings.Contains(module, "replace ") }`,
+          `func RunCase${caseID}() string { return "GONOSUMDB=github.com/acme/*" }`,
+          `func RunCase${caseID}(version string) string { return "release " + version + ": tests, risk, rollback" }`,
+          `func RunCase${caseID}() map[string]string { return map[string]string{"cmd": "entrypoint", "internal": "private app code"} }`,
+          `func RunCase${caseID}() []string { return []string{"expand schema", "deploy app", "contract old column"} }`,
+          `func RunCase${caseID}(flags map[string]bool) bool { return flags["new-worker"] }`,
+          `func RunCase${caseID}() []string { return []string{"stop traffic", "restore previous image", "verify health"} }`,
+          `func RunCase${caseID}() []string { return []string{"test", "race", "build", "lint"} }`,
+          `func RunCase${caseID}(prefix string) string { return strings.ToUpper(prefix) + "_DATABASE_URL" }`,
+          `func RunCase${caseID}(secret string) string { if secret != "" { return "***" }; return "" }`,
+          `func RunCase${caseID}() []string { return []string{"deploy green", "switch traffic", "keep blue warm"} }`,
+          `func RunCase${caseID}(percent int) bool { return percent > 0 && percent <= 10 }`,
+          `func RunCase${caseID}() []string { return []string{"symptom", "dashboard", "rollback", "postmortem"} }`
+        ]
+      ];
+      return `// Case #${caseID}: ${title}\n` + (blocks[categoryIndex]?.[index] || "");
+    }
+
+    function workerPoolRateLimitCode(caseID, title, index) {
+      const caseTitle = JSON.stringify(title);
+      const examples = [
+        `// Case #${caseID}: ${title}\nfunc RunCase${caseID}(ctx context.Context, jobs <-chan Job, workers int) error {\n\tcaseTitle := ${caseTitle}\n\tvar wg sync.WaitGroup\n\tfor i := 0; i < workers; i++ {\n\t\twg.Add(1)\n\t\tgo func(workerID int) {\n\t\t\tdefer wg.Done()\n\t\t\tfor job := range jobs {\n\t\t\t\t_ = handleWorkerJob(ctx, workerID, job)\n\t\t\t}\n\t\t}(i)\n\t}\n\twg.Wait()\n\treturn fmt.Errorf("%s drained", caseTitle)\n}`,
+        `// Case #${caseID}: ${title}\nfunc RunCase${caseID}(ctx context.Context, jobs <-chan Job, interval time.Duration) error {\n\tcaseTitle := ${caseTitle}\n\tlimiter := time.NewTicker(interval)\n\tdefer limiter.Stop()\n\tfor job := range jobs {\n\t\tselect {\n\t\tcase <-limiter.C:\n\t\t\tif err := handleJob(ctx, job); err != nil { return fmt.Errorf("%s: %w", caseTitle, err) }\n\t\tcase <-ctx.Done():\n\t\t\treturn ctx.Err()\n\t\t}\n\t}\n\treturn nil\n}`,
+        `// Case #${caseID}: ${title}\nfunc RunCase${caseID}(ctx context.Context, job Job, maxRetry int) error {\n\tcaseTitle := ${caseTitle}\n\tvar last error\n\tfor attempt := 1; attempt <= maxRetry; attempt++ {\n\t\tif err := handleJob(ctx, job); err != nil {\n\t\t\tlast = err\n\t\t\tbackoff := time.Duration(attempt) * 100 * time.Millisecond\n\t\t\tselect {\n\t\t\tcase <-time.After(backoff):\n\t\t\tcase <-ctx.Done(): return ctx.Err()\n\t\t\t}\n\t\t\tcontinue\n\t\t}\n\t\treturn nil\n\t}\n\treturn fmt.Errorf("%s retry exhausted: %w", caseTitle, last)\n}`,
+        `// Case #${caseID}: ${title}\nfunc RunCase${caseID}(ctx context.Context, queue chan<- Job, job Job) error {\n\tcaseTitle := ${caseTitle}\n\tselect {\n\tcase queue <- job:\n\t\treturn nil\n\tcase <-ctx.Done():\n\t\treturn ctx.Err()\n\tdefault:\n\t\treturn fmt.Errorf("%s queue full", caseTitle)\n\t}\n}`,
+        `// Case #${caseID}: ${title}\ntype Case${caseID}PriorityJob struct {\n\tPriority int\n\tJob      Job\n}\n\nfunc RunCase${caseID}(jobs []Case${caseID}PriorityJob) []Case${caseID}PriorityJob {\n\tcaseTitle := ${caseTitle}\n\t_ = caseTitle\n\tslices.SortFunc(jobs, func(a, b Case${caseID}PriorityJob) int {\n\t\treturn b.Priority - a.Priority\n\t})\n\treturn jobs\n}`,
+        `// Case #${caseID}: ${title}\nfunc RunCase${caseID}(ctx context.Context, jobs <-chan Job, batchSize int) error {\n\tcaseTitle := ${caseTitle}\n\tbatch := make([]Job, 0, batchSize)\n\tfor job := range jobs {\n\t\tbatch = append(batch, job)\n\t\tif len(batch) >= batchSize {\n\t\t\tif err := flushBatch(ctx, batch); err != nil { return fmt.Errorf("%s: %w", caseTitle, err) }\n\t\t\tbatch = batch[:0]\n\t\t}\n\t}\n\tif len(batch) > 0 { return flushBatch(ctx, batch) }\n\treturn nil\n}`,
+        `// Case #${caseID}: ${title}\nfunc RunCase${caseID}(ctx context.Context, jobs []Job, limit int) error {\n\tcaseTitle := ${caseTitle}\n\tsem := make(chan struct{}, limit)\n\tvar wg sync.WaitGroup\n\tfor _, job := range jobs {\n\t\tsem <- struct{}{}\n\t\twg.Add(1)\n\t\tgo func(job Job) {\n\t\t\tdefer wg.Done()\n\t\t\tdefer func() { <-sem }()\n\t\t\t_ = handleJob(ctx, job)\n\t\t}(job)\n\t}\n\twg.Wait()\n\treturn fmt.Errorf("%s done", caseTitle)\n}`,
+        `// Case #${caseID}: ${title}\nfunc RunCase${caseID}(ctx context.Context, job Job) (err error) {\n\tcaseTitle := ${caseTitle}\n\tdefer func() {\n\t\tif r := recover(); r != nil {\n\t\t\terr = fmt.Errorf("%s worker panic: %v", caseTitle, r)\n\t\t}\n\t}()\n\treturn handleJob(ctx, job)\n}`,
+        `// Case #${caseID}: ${title}\ntype Case${caseID}Stats struct {\n\tQueued   int64\n\tInflight int64\n\tFailed   int64\n}\n\nfunc RunCase${caseID}(stats *Case${caseID}Stats, ok bool) {\n\tatomic.AddInt64(&stats.Inflight, -1)\n\tif !ok { atomic.AddInt64(&stats.Failed, 1) }\n}`,
+        `// Case #${caseID}: ${title}\nfunc RunCase${caseID}(queueDepth int) int {\n\tcaseTitle := ${caseTitle}\n\t_ = caseTitle\n\tswitch {\n\tcase queueDepth > 1000:\n\t\treturn 16\n\tcase queueDepth > 100:\n\t\treturn 8\n\tdefault:\n\t\treturn 4\n\t}\n}`,
+        `// Case #${caseID}: ${title}\nfunc RunCase${caseID}(queue chan<- Job, job Job) error {\n\tcaseTitle := ${caseTitle}\n\tselect {\n\tcase queue <- job:\n\t\treturn nil\n\tdefault:\n\t\treturn fmt.Errorf("%s dropped job: queue full", caseTitle)\n\t}\n}`,
+        `// Case #${caseID}: ${title}\nfunc RunCase${caseID}(ctx context.Context, queue chan<- Job, job Job) error {\n\tcaseTitle := ${caseTitle}\n\tselect {\n\tcase queue <- job:\n\t\treturn nil\n\tcase <-ctx.Done():\n\t\treturn fmt.Errorf("%s block canceled: %w", caseTitle, ctx.Err())\n\t}\n}`,
+        `// Case #${caseID}: ${title}\nfunc RunCase${caseID}(w http.ResponseWriter, queue chan<- Job, job Job) {\n\tcaseTitle := ${caseTitle}\n\tselect {\n\tcase queue <- job:\n\t\tw.WriteHeader(http.StatusAccepted)\n\tdefault:\n\t\thttp.Error(w, caseTitle+\": queue full\", http.StatusTooManyRequests)\n\t}\n}`,
+        `// Case #${caseID}: ${title}\nfunc RunCase${caseID}(parent context.Context, job Job, timeout time.Duration) error {\n\tcaseTitle := ${caseTitle}\n\tctx, cancel := context.WithTimeout(parent, timeout)\n\tdefer cancel()\n\tif err := handleJob(ctx, job); err != nil {\n\t\treturn fmt.Errorf("%s timeout boundary: %w", caseTitle, err)\n\t}\n\treturn nil\n}`,
+        `// Case #${caseID}: ${title}\ntype Case${caseID}Job struct {\n\tJob\n\tAttemptsLeft int\n}\n\nfunc RunCase${caseID}(ctx context.Context, job Case${caseID}Job) error {\n\tcaseTitle := ${caseTitle}\n\tif job.AttemptsLeft <= 0 { return fmt.Errorf("%s retry budget exhausted", caseTitle) }\n\tif err := handleJob(ctx, job.Job); err != nil {\n\t\tjob.AttemptsLeft--\n\t\treturn fmt.Errorf("%s retry later: %w", caseTitle, err)\n\t}\n\treturn nil\n}`,
+        `// Case #${caseID}: ${title}\nfunc RunCase${caseID}(ctx context.Context, job Job, deadLetter chan<- Job) error {\n\tcaseTitle := ${caseTitle}\n\tif err := handleJob(ctx, job); err != nil {\n\t\tselect {\n\t\tcase deadLetter <- job:\n\t\t\treturn fmt.Errorf("%s moved to dead-letter: %w", caseTitle, err)\n\t\tcase <-ctx.Done():\n\t\t\treturn ctx.Err()\n\t\t}\n\t}\n\treturn nil\n}`,
+        `// Case #${caseID}: ${title}\nfunc RunCase${caseID}(ctx context.Context, workers int, warm func(context.Context, int) error) error {\n\tcaseTitle := ${caseTitle}\n\tfor id := 0; id < workers; id++ {\n\t\tif err := warm(ctx, id); err != nil {\n\t\t\treturn fmt.Errorf("%s worker %d warmup: %w", caseTitle, id, err)\n\t\t}\n\t}\n\treturn nil\n}`,
+        `// Case #${caseID}: ${title}\nfunc RunCase${caseID}(ctx context.Context, in <-chan Job, flushEvery int, maxWait time.Duration) error {\n\tcaseTitle := ${caseTitle}\n\ttimer := time.NewTimer(maxWait)\n\tdefer timer.Stop()\n\tbatch := make([]Job, 0, flushEvery)\n\tfor {\n\t\tselect {\n\t\tcase job, ok := <-in:\n\t\t\tif !ok { return flushBatch(ctx, batch) }\n\t\t\tbatch = append(batch, job)\n\t\t\tif len(batch) >= flushEvery { return flushBatch(ctx, batch) }\n\t\tcase <-timer.C:\n\t\t\treturn fmt.Errorf("%s flush by time", caseTitle)\n\t\tcase <-ctx.Done():\n\t\t\treturn ctx.Err()\n\t\t}\n\t}\n}`,
+        `// Case #${caseID}: ${title}\nfunc RunCase${caseID}(jobs []Job) []Job {\n\tcaseTitle := ${caseTitle}\n\t_ = caseTitle\n\tseen := map[string]struct{}{}\n\tout := make([]Job, 0, len(jobs))\n\tfor _, job := range jobs {\n\t\tif _, ok := seen[job.ID]; ok { continue }\n\t\tseen[job.ID] = struct{}{}\n\t\tout = append(out, job)\n\t}\n\treturn out\n}`,
+        `// Case #${caseID}: ${title}\nfunc RunCase${caseID}(ctx context.Context, stop func(), done <-chan struct{}) error {\n\tcaseTitle := ${caseTitle}\n\tstop()\n\tselect {\n\tcase <-done:\n\t\treturn nil\n\tcase <-ctx.Done():\n\t\treturn fmt.Errorf("%s drain timeout: %w", caseTitle, ctx.Err())\n\t}\n}`
+      ];
+      return examples[index] || examples[0];
+    }
+
+    const examples200 = buildSyntaxExamples();
 
     const courseIndexItems = [
-      ["Go 語法", "語法卡列表", "40 張單一語法卡：go mod、var、slice、interface、goroutine。", "../圖解筆記3/golang-visual-course.html#syntax-index", "syntax var slice map interface goroutine channel select testing"],
-      ["Go 語法", "200 常用語法範例", "日常查用的 Go snippet library，可依分類與關鍵字搜尋。", "../圖解筆記3/golang-visual-course.html#syntax-examples-200", "example snippet defer error context http json test"],
-      ["併發/Worker", "大型並發爬蟲 / 任務系統", "Seed、Queue、Worker Pool、Fetcher、Parser、Store 的完整資料流。", "../圖解筆記3/golang-visual-course.html#project", "crawler worker pool queue fetcher parser store retry"],
-      ["併發/Worker", "工程決策", "bounded queue、retry、panic isolation、Store failure、graceful shutdown。", "../圖解筆記3/golang-visual-course.html#engineering-decisions", "backpressure drop block panic shutdown retry temporary permanent"],
-      ["API", "http.HandlerFunc", "API handler 寫法、錯誤格式、標準庫 HTTP server。", "../圖解筆記3/golang-visual-course.html#syntax-http-handler", "handler api http response request"],
-      ["API", "Go 1.22 ServeMux", "Method route、path variable、routing precedence 與標準 router 取捨。", "../圖解筆記4/golang-production-advanced.html#servemux-card", "ServeMux method route path variable GET POST"],
-      ["DB Transaction", "Database Layer", "database/sql、PingContext、pool、transaction、repository pattern。", "../圖解筆記4/golang-production-advanced.html#database-layer", "database sql transaction repository pool PingContext"],
-      ["DB Transaction", "defer Rollback 模式", "Service 決定交易邊界，repository 封裝 SQL 與資料映射。", "../圖解筆記4/golang-production-advanced.html#db-transaction-card", "transaction rollback commit BeginTx ExecContext"],
-      ["Observability", "Observability", "log/slog、metrics、trace、health check、pprof debug 邊界。", "../圖解筆記4/golang-production-advanced.html#observability", "observability slog metrics trace prometheus opentelemetry health pprof"],
-      ["Production Debug", "Production API Flow", "資料流、錯誤流、觀測流與 response 邊界。", "../圖解筆記4/golang-production-advanced.html#production-flow", "latency error flow data flow correlation request id"],
-      ["Testing", "testing / benchmark / fuzz", "單元測試、table-driven test、benchmark allocation、fuzz 邊界。", "../圖解筆記3/golang-visual-course.html#syntax-test", "testing benchmark fuzz table-driven fake race"],
-      ["Testing", "40 真實工程案例", "40 個案例補上錯誤版本、修正版、驗收測試與 production 指標。", "../圖解筆記3/golang-visual-course.html#cases", "real engineering cases wrong fixed test metric"]
-    ].map(([category, title, summary, src, keywords]) => ({ category, title, summary, src, keywords }));
+      ["Go 語法", "Golang 語法心智圖", "用一張圖串起基礎、資料結構、錯誤、抽象、併發、標準庫與測試。", "syntax-mindmap", "mindmap syntax golang map interface generics concurrency testing"],
+      ["Go 語法", "40 張單一語法卡", "從 go mod、var、slice、interface 到 goroutine、testing。", "syntax-from-note3", "syntax var slice map interface goroutine channel select testing"],
+      ["Go 語法", "200 常用語法範例", "日常查用的 Go snippet library。", "examples-200", "example snippet defer error context http json test"],
+      ["併發/Worker", "大型並發爬蟲 / 任務系統", "Seed、Queue、Worker Pool、Fetcher、Parser、Store 的完整資料流。", "project-from-note3", "crawler worker pool queue fetcher parser store retry"],
+      ["併發/Worker", "工程決策", "bounded queue、retry、panic isolation、Store failure、graceful shutdown。", "project-from-note3", "backpressure drop block panic shutdown retry"],
+      ["API", "Production API Flow", "資料流、錯誤流、觀測流與 response 邊界。", "production-flow", "api handler response context timeout"],
+      ["DB Transaction", "Database Layer", "database/sql、PingContext、pool、transaction、repository pattern。", "database-layer", "database sql transaction repository pool PingContext"],
+      ["Observability", "Observability", "log/slog、metrics、trace、health check、pprof debug 邊界。", "observability", "slog metrics trace prometheus opentelemetry health pprof"],
+      ["Testing", "testing / benchmark / fuzz", "單元測試、table-driven test、benchmark allocation、fuzz 邊界。", "syntax-testing", "testing benchmark fuzz table-driven fake race"],
+      ["Production Debug", "資深工程師校閱", "深度廣度評分、結論、缺口與下一步建議。", "senior-review", "senior review production readiness"]
+    ].map(([category, title, summary, target, keywords]) => ({ category, title, summary, target, keywords }));
 
     const scenarioPaths = [
-      {
-        title: "我要做 API",
-        summary: "從 handler、ServeMux、錯誤回應到測試驗收。",
-        color: "var(--blue)",
-        steps: [
-          ["設計 handler 邊界", "request parse / response format", "../圖解筆記3/golang-visual-course.html#syntax-http-handler"],
-          ["選擇路由方式", "Go 1.22 ServeMux method route", "../圖解筆記4/golang-production-advanced.html#servemux-card"],
-          ["錯誤分類與 response", "domain error 轉 API status", "../圖解筆記4/golang-production-advanced.html#production-error-card"],
-          ["用 httptest 驗收", "成功、錯誤、timeout 都測", "../圖解筆記3/golang-visual-course.html#cases"]
-        ]
-      },
-      {
-        title: "我要做 worker",
-        summary: "從 goroutine、channel、queue、retry 到 graceful shutdown。",
-        color: "var(--rose)",
-        steps: [
-          ["掌握 goroutine / channel", "啟動、傳遞資料、退出條件", "../圖解筆記3/golang-visual-course.html#syntax-goroutine"],
-          ["建立 worker pool", "固定併發、bounded queue", "../圖解筆記3/golang-visual-course.html#syntax-worker-pool"],
-          ["決定滿載策略", "block / drop / backpressure", "../圖解筆記3/golang-visual-course.html#engineering-decisions"],
-          ["觀測 worker 狀態", "queue depth、retry、failed", "../圖解筆記3/golang-visual-course.html#project"]
-        ]
-      },
-      {
-        title: "我要做 DB transaction",
-        summary: "從 database/sql、pool、service 交易邊界到 rollback 驗收。",
-        color: "var(--green)",
-        steps: [
-          ["設定連線池", "sql.Open + PingContext + pool 邊界", "../圖解筆記4/golang-production-advanced.html#db-pool-card"],
-          ["定義交易邊界", "service 控制 BeginTx / Commit", "../圖解筆記4/golang-production-advanced.html#db-transaction-card"],
-          ["Repository 分層", "SQL 與資料映射責任", "../圖解筆記4/golang-production-advanced.html#repository-card"],
-          ["測試失敗路徑", "rollback、timeout、N+1 query", "../圖解筆記3/golang-visual-course.html#cases"]
-        ]
-      },
-      {
-        title: "我要除錯 production latency",
-        summary: "從 metrics 找異常，再用 trace/log/pprof 定位。",
-        color: "var(--amber)",
-        steps: [
-          ["先看 SLI", "error rate、p95/p99、queue depth", "../圖解筆記4/golang-production-advanced.html#otel-card"],
-          ["串 log 與 trace", "request_id / trace_id correlation", "../圖解筆記4/golang-production-advanced.html#slog-card"],
-          ["判斷 debug 邊界", "health、readiness、pprof 權限", "../圖解筆記4/golang-production-advanced.html#health-card"],
-          ["回到錯誤流", "wrap / classify / response", "../圖解筆記4/golang-production-advanced.html#production-flow"]
-        ]
-      }
+      { title: "我要做 API", summary: "handler、ServeMux、錯誤回應、httptest。", color: "var(--blue)", steps: [["設計 handler 邊界", "request parse / response format", "syntax-http-server"], ["選擇 routing", "Go 1.22 ServeMux", "modern-stdlib"], ["錯誤分類", "domain error 轉 API status", "production-flow"], ["測試驗收", "httptest + table-driven", "syntax-testing"]] },
+      { title: "我要做 worker", summary: "goroutine、channel、queue、retry、shutdown。", color: "var(--rose)", steps: [["掌握 goroutine", "啟動與退出條件", "syntax-goroutine"], ["建立 worker pool", "固定併發與 bounded queue", "syntax-worker-pool"], ["決定滿載策略", "block / drop / backpressure", "project-from-note3"], ["觀測 worker", "queue depth、retry、failed", "observability"]] },
+      { title: "我要做 DB transaction", summary: "database/sql、pool、service transaction、rollback。", color: "var(--green)", steps: [["設定連線池", "Open + PingContext + pool", "database-layer"], ["定義交易邊界", "service 控制 BeginTx / Commit", "database-layer"], ["Repository 分層", "SQL 與資料映射責任", "executable-project"], ["測 rollback", "timeout、deadlock、N+1", "production-flow"]] },
+      { title: "我要除錯 production latency", summary: "從 metrics 找異常，再用 trace/log/pprof 定位。", color: "var(--amber)", steps: [["先看 SLI", "error rate、p95/p99、queue depth", "observability"], ["串 log trace", "request_id / trace_id", "observability"], ["判斷 debug 邊界", "health、readiness、pprof", "observability"], ["回到錯誤流", "wrap / classify / response", "production-flow"]] }
+    ];
+
+    const decisions = [
+      ["Queue 滿載策略", "block / drop / backpressure 必須先決定。", "select + default 可立即 drop；block 適合內部批次，不適合外部 API 無限等待。"],
+      ["Retry 策略", "只 retry temporary error。", "deadlock、timeout 可有限 retry；validation、permission、not found 不該 retry。"],
+      ["Worker panic 隔離", "單一 worker panic 不能拖垮整個 pool。", "recover 後記錄 stack、metric +1，必要時重啟 worker。"],
+      ["Store 失敗處理", "commit 前後語義不同。", "transaction 內錯誤 rollback；commit 後失敗需補償或狀態修復。"],
+      ["Graceful shutdown", "先停入口，再 drain queue。", "HTTP shutdown、close job input、wait workers、timeout 強制結束。"],
+      ["Production Checklist", "config、logging、metrics、health、timeout、CI gate。", "每一項都要有驗收標準，而不是 README 口號。"]
+    ];
+
+    const advancedCards = [
+      ["Modern Stdlib", "Go 1.21 / 1.22 / 1.23", "Go 1.21 的 slices/maps、Go 1.22 的 ServeMux routing、Go 1.23+ 的 iterator API 分開判斷。", "modern-stdlib"],
+      ["Database Layer", "database/sql / transaction / pool", "控制 DB 連線、timeout、transaction 邊界與 repository 分層。", "database-layer"],
+      ["Observability", "log / metric / trace / pprof", "用可觀測資料回答是否異常、慢在哪裡、如何安全 debug。", "observability"]
+    ];
+
+    const stdlibCards = [
+      ["Go 1.21 slices", [["Clone", "避免污染呼叫端底層 array"], ["Sort", "標準排序"], ["Compact", "移除連續重複"], ["BinarySearch", "回傳 (index, found)"]], "items := slices.Clone(input)\nslices.Sort(items)\nitems = slices.Compact(items)"],
+      ["Go 1.21 maps", [["Clone", "避免外部修改內部 map"], ["Equal", "設定 diff / 測試"], ["DeleteFunc", "依條件清理"], ["版本邊界", "Keys/Values 屬於 Go 1.23+ iterator API"]], "copy := maps.Clone(config)\nmaps.DeleteFunc(copy, func(k, v string) bool { return v == \"\" })"],
+      ["Go 1.22 ServeMux", [["method route", "GET /jobs/{id}"], ["PathValue", "取得 path variable"], ["precedence", "更具體規則優先"], ["標準庫優先", "小型 API 可少依賴 router"]], "mux := http.NewServeMux()\nmux.HandleFunc(\"GET /jobs/{id}\", func(w http.ResponseWriter, r *http.Request) {\n\tid := r.PathValue(\"id\")\n\t_ = id\n})"],
+      ["Go 1.23+ maps iterators", [["Keys", "回傳 key iterator"], ["Values", "回傳 value iterator"], ["搭配 slices", "常用 slices.Sorted / slices.Collect"], ["版本限制", "Go 1.21/1.22 專案不可直接使用"]], "keys := slices.Sorted(maps.Keys(config))\nvalues := slices.Collect(maps.Values(config))"]
+    ];
+
+    const dbCards = [
+      ["sql.Open vs PingContext", [["sql.Open", "建立 handle，不代表連線成功"], ["PingContext", "啟動與 readiness 檢查"], ["timeout", "避免啟動卡死"]], "db, err := sql.Open(\"pgx\", dsn)\npingCtx, cancel := context.WithTimeout(ctx, 3*time.Second)\ndefer cancel()\nerr = db.PingContext(pingCtx)"],
+      ["Connection Pool", [["SetMaxOpenConns", "限制最大連線"], ["SetMaxIdleConns", "控制閒置連線"], ["SetConnMaxLifetime", "配合 DB/LB 生命週期"]], "db.SetMaxOpenConns(25)\ndb.SetMaxIdleConns(10)\ndb.SetConnMaxLifetime(30 * time.Minute)"],
+      ["Transaction Pattern", [["BeginTx", "service 決定交易邊界"], ["defer Rollback", "錯誤路徑保險"], ["Commit", "只在全部成功後執行"]], "tx, err := db.BeginTx(ctx, nil)\nif err != nil { return err }\ndefer tx.Rollback()\nif err := repo.Save(ctx, tx, job); err != nil { return err }\nreturn tx.Commit()"]
+    ];
+
+    const obsCards = [
+      ["Structured Logging", [["slog", "欄位化 log"], ["request_id", "跨 log 追蹤"], ["error_kind", "可聚合錯誤分類"]], "logger.InfoContext(ctx, \"job processed\", \"job_id\", id, \"trace_id\", traceID)"],
+      ["Prometheus Metrics", [["Counter", "累計事件"], ["Gauge", "瞬時狀態"], ["Histogram", "延遲分布"]], "requests := prometheus.NewCounterVec(opts, []string{\"route\", \"status\"})\nregistry.MustRegister(requests)"],
+      ["OpenTelemetry + pprof", [["trace", "單次請求路徑"], ["span", "HTTP/service/repository/worker"], ["pprof", "受控環境 debug"]], "ctx, span := tracer.Start(ctx, \"Service.CreateJob\")\ndefer span.End()"]
+    ];
+
+    const flowCards = [
+      ["資料流", "HTTP request -> validation -> service -> transaction -> repository -> queue -> response。", "驗收：任一資料狀態轉換都能在測試中重現。"],
+      ["錯誤流", "wrap root cause，classify app error，再映射 API response。", "驗收：不把 SQL 內部錯誤字串洩漏給 client。"],
+      ["觀測流", "request_id / trace_id 穿過 API、service、repository、worker。", "驗收：慢請求可從 metric 找 trace，再用 trace 找 log。"]
     ];
 
     const walkthroughSteps = [
-      {
-        title: "1. HTTP request + validation",
-        category: "API",
-        src: "../圖解筆記4/golang-production-advanced.html#servemux-card",
-        code: `mux.HandleFunc("POST /jobs", func(w http.ResponseWriter, r *http.Request) {\n\tctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)\n\tdefer cancel()\n\tjob, err := decodeJob(r.Body)\n\tif err != nil { writeError(w, err); return }\n\tid, err := svc.CreateJob(ctx, job)\n\twriteJSON(w, http.StatusAccepted, map[string]string{"id": id})\n})`,
-        steps: ["限制 body size 並驗證欄位。", "request context 下切 timeout。", "錯誤交給統一 writeError。"],
-        anti: "handler 直接寫 DB、直接開 goroutine，讓 transport、business、worker 邊界混在一起。",
-        acceptance: "httptest 覆蓋 202、400、timeout，且 response 格式一致。"
-      },
-      {
-        title: "2. Service + transaction boundary",
-        category: "DB Transaction",
-        src: "../圖解筆記4/golang-production-advanced.html#db-transaction-card",
-        code: `func (s *Service) CreateJob(ctx context.Context, input JobInput) (string, error) {\n\ttx, err := s.db.BeginTx(ctx, nil)\n\tif err != nil { return "", err }\n\tdefer tx.Rollback()\n\tid, err := s.repo.InsertJob(ctx, tx, input)\n\tif err != nil { return "", fmt.Errorf("insert job: %w", err) }\n\tif err := tx.Commit(); err != nil { return "", err }\n\treturn id, nil\n}`,
-        steps: ["service 決定交易範圍。", "repository 接 tx，不自己偷偷開交易。", "commit 成功才回傳 job id。"],
-        anti: "每個 repository 方法自己開 tx，導致一個 use case 無法保證原子性。",
-        acceptance: "注入 repository error 時 rollback 被呼叫，沒有半成品 job。"
-      },
-      {
-        title: "3. Bounded queue + worker enqueue",
-        category: "併發/Worker",
-        src: "../圖解筆記3/golang-visual-course.html#engineering-decisions",
-        code: `select {\ncase s.jobs <- JobTask{ID: id}:\n\tmetrics.JobQueued.Add(ctx, 1)\ncase <-ctx.Done():\n\treturn ctx.Err()\ndefault:\n\tmetrics.JobDropped.Add(ctx, 1)\n\treturn ErrQueueFull\n}`,
-        steps: ["queue 必須有容量上限。", "滿載策略明確選 block/drop/backpressure。", "所有 drop 都有 metric。"],
-        anti: "每個 request 都直接 go process(job)，流量尖峰時 goroutine 無上限成長。",
-        acceptance: "queue 滿載測試會得到 ErrQueueFull，且 dropped counter +1。"
-      },
-      {
-        title: "4. Worker processing + retry policy",
-        category: "併發/Worker",
-        src: "../圖解筆記3/golang-visual-course.html#syntax-worker-pool",
-        code: `for task := range jobs {\n\tif err := worker.Handle(ctx, task); err != nil {\n\t\tif IsTemporary(err) && task.Attempts < 3 { retry(task); continue }\n\t\tdeadLetter.Save(ctx, task, err)\n\t}\n}`,
-        steps: ["temporary error 才 retry。", "retry 有次數與 backoff 上限。", "永久錯誤進 dead-letter 或明確失敗表。"],
-        anti: "所有錯誤無限 retry，讓外部服務故障被放大成 retry storm。",
-        acceptance: "測試 temporary retry 三次、permanent 不重試、dead-letter 可查。"
-      },
-      {
-        title: "5. Observability + production debug",
-        category: "Observability",
-        src: "../圖解筆記4/golang-production-advanced.html#observability",
-        code: `logger.InfoContext(ctx, "job processed",\n\t"job_id", task.ID,\n\t"attempt", task.Attempts,\n\t"trace_id", TraceID(ctx),\n\t"duration_ms", elapsed.Milliseconds(),\n)`,
-        steps: ["log 帶 job_id、trace_id、attempt。", "metrics 記 success、failure、latency。", "高延遲時從 metric 進 trace，再回查 log。"],
-        anti: "只 log 一句 failed，沒有 trace id、沒有錯誤分類，事故時無法定位。",
-        acceptance: "任一失敗 job 可從 metric 找 trace，再從 trace 找 log 與錯誤鏈。"
-      },
-      {
-        title: "6. Testing gate",
-        category: "Testing",
-        src: "../圖解筆記3/golang-visual-course.html#syntax-test",
-        code: `func TestCreateJobQueueFull(t *testing.T) {\n\tsvc := newServiceWithFullQueue()\n\t_, err := svc.CreateJob(context.Background(), validJob())\n\tif !errors.Is(err, ErrQueueFull) { t.Fatalf("want queue full, got %v", err) }\n}`,
-        steps: ["unit test 驗證 service 行為。", "httptest 驗證 HTTP response。", "race test 覆蓋 worker/store shared state。"],
-        anti: "只手動打 API，沒有失敗注入、沒有 race test、沒有 queue 滿載測試。",
-        acceptance: "CI 至少執行 go test ./...、go test -race、核心 handler 測試。"
-      }
+      ["HTTP request + validation", "API", "mux.HandleFunc(\"POST /jobs\", handler)\nctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)\ndefer cancel()", ["限制 body size", "驗證 payload", "統一錯誤 response"], "httptest 覆蓋 202、400、timeout。"],
+      ["Service + transaction", "DB Transaction", "tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted})\ndefer tx.Rollback()", ["service 定義 use case 邊界", "repository 接 tx", "commit 成功後才回應"], "注入 repository error 時 rollback。"],
+      ["Bounded queue", "併發/Worker", "select {\ncase jobs <- task:\ncase <-ctx.Done(): return ctx.Err()\ndefault: return ErrQueueFull\n}", ["queue 有容量", "滿載策略明確", "drop/backpressure 有 metric"], "queue 滿載得到 ErrQueueFull。"],
+      ["Worker retry", "併發/Worker", "if IsTemporary(err) && attempts < 3 { retry(task) }", ["temporary 才 retry", "永久錯誤進 failed/dead-letter", "retry 有上限"], "temporary retry 三次，permanent 不重試。"],
+      ["Observability", "Observability", "logger.InfoContext(ctx, \"job processed\", \"job_id\", id, \"trace_id\", traceID)", ["log 帶 trace_id", "metrics 記 latency", "trace 跨 service/repo/worker"], "任一失敗 job 可從 metric 找到 log。"],
+      ["Testing gate", "Testing", "go test ./...\ngo test -race ./...\ngo build ./cmd/api-worker", ["unit test", "httptest", "race test", "build gate"], "CI gate 全部通過才合併。"]
     ];
 
-    function openInReader(src, sourceButton) {
-      frame.src = src;
-      document.querySelectorAll(".reader-menu .btn").forEach((button) => button.classList.remove("active"));
-      if (sourceButton && sourceButton.closest(".reader-menu")) {
-        sourceButton.classList.add("active");
-      }
-      document.getElementById("reader").scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-
-    function escapeHtml(value) {
-      return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-    }
+    const reviewItems = [
+      ["語法完整度", "9/10", "以教材深度評估：40 張單一語法卡 + 200 語法範例，足以支撐日常 Go 開發。", "若作為 runbook，仍可補 unsafe/cgo/build tag 與版本升級策略。"],
+      ["併發深度", "9/10", "以教材深度評估：goroutine、channel、select、context、worker pool、shutdown 都有專案化說明。", "若作為 runbook，需再補 leak detection、壓測腳本與事故操作流程。"],
+      ["API 工程化", "8/10", "以教材深度評估：handler、ServeMux、錯誤分類、httptest 與 production flow 已串起。", "若作為 runbook，需再補 middleware chain、auth、idempotency、灰度發布。"],
+      ["DB Transaction", "8/10", "以教材深度評估：database/sql、pool、transaction、repository 與 Postgres 範例已具備。", "若作為 runbook，需再補 isolation level、deadlock retry、migration rollback 操作手冊。"],
+      ["Observability", "8/10", "以教材深度評估：slog、Prometheus、OpenTelemetry、health、pprof 概念完整。", "若作為 runbook，需再補 Prometheus alert rules、OTLP backend、值班排障流程。"],
+      ["Testing", "9/10", "以教材深度評估：testing、table-driven、benchmark、fuzz、race、httptest 都已納入。", "若作為 runbook，需再補 contract test、integration test、測試資料治理。"],
+      ["CI/CD", "8/10", "以教材深度評估：有 Docker、migration、GitHub Actions gate 與可執行 production-api-worker。", "若作為 runbook，需再補 release promotion、rollback drill、SBOM、簽章與供應鏈掃描。"],
+      ["可執行專案", "9/10", "以教材深度評估：production-api-worker 已有 cmd/internal/service/repository/worker/observability。", "若作為 runbook，需再補 DB integration test、load test、容量規劃與部署拓撲。"]
+    ];
 
     function badgeClass(category) {
-      if (category.includes("Worker")) return "rose";
+      if (category.includes("Worker") || category.includes("併發")) return "rose";
       if (category.includes("DB")) return "green";
       if (category.includes("Observability") || category.includes("Debug")) return "amber";
-      if (category.includes("Testing")) return "";
+      if (category.includes("Testing")) return "slate";
       return "violet";
     }
 
@@ -643,30 +1510,28 @@
       const grid = document.getElementById("courseIndexGrid");
       const categories = ["全部", "Go 語法", "併發/Worker", "API", "DB Transaction", "Production Debug", "Observability", "Testing"];
       filters.innerHTML = categories.map((category, index) => `<button class="btn ${index === 0 ? "active" : ""}" type="button" data-index-category="${category}">${category}</button>`).join("");
-
       const render = () => {
         const active = filters.querySelector(".active")?.dataset.indexCategory || "全部";
         const keyword = search.value.trim().toLowerCase();
-        const shown = courseIndexItems.filter((item) => {
+        const shown = courseIndexItems.filter(item => {
           const categoryMatched = active === "全部" || item.category === active;
           const haystack = `${item.category} ${item.title} ${item.summary} ${item.keywords}`.toLowerCase();
           return categoryMatched && (!keyword || haystack.includes(keyword));
         });
-        grid.innerHTML = shown.map((item) => `
-          <button class="index-card" type="button" data-src="${item.src}" style="border-top-color:${item.category.includes("DB") ? "var(--green)" : item.category.includes("Worker") ? "var(--rose)" : item.category.includes("Observability") ? "var(--amber)" : "var(--blue)"}">
+        grid.innerHTML = shown.map(item => `
+          <button class="index-card" type="button" data-target="${item.target}">
             <span class="badge ${badgeClass(item.category)}">${item.category}</span>
             <strong>${item.title}</strong>
             <span>${item.summary}</span>
           </button>
         `).join("");
-        grid.querySelectorAll("[data-src]").forEach((button) => button.addEventListener("click", () => openInReader(button.dataset.src, button)));
+        grid.querySelectorAll("[data-target]").forEach(btn => btn.addEventListener("click", () => scrollToId(btn.dataset.target)));
       };
-
-      filters.addEventListener("click", (event) => {
-        const button = event.target.closest("button[data-index-category]");
-        if (!button) return;
-        filters.querySelectorAll("button").forEach((item) => item.classList.remove("active"));
-        button.classList.add("active");
+      filters.addEventListener("click", event => {
+        const btn = event.target.closest("button[data-index-category]");
+        if (!btn) return;
+        filters.querySelectorAll("button").forEach(item => item.classList.remove("active"));
+        btn.classList.add("active");
         render();
       });
       search.addEventListener("input", render);
@@ -675,14 +1540,14 @@
 
     function renderScenarioPaths() {
       const grid = document.getElementById("scenarioGrid");
-      grid.innerHTML = scenarioPaths.map((path) => `
+      grid.innerHTML = scenarioPaths.map(path => `
         <article class="scenario-card" style="border-top:4px solid ${path.color}">
           <span class="badge">${path.title}</span>
           <h3>${path.title}</h3>
           <p class="muted">${path.summary}</p>
           <div class="scenario-steps">
             ${path.steps.map((step, index) => `
-              <button class="scenario-step" type="button" data-src="${step[2]}">
+              <button class="scenario-step" type="button" data-target="${step[2]}">
                 <strong>${index + 1}. ${step[0]}</strong>
                 <span>${step[1]}</span>
               </button>
@@ -690,34 +1555,113 @@
           </div>
         </article>
       `).join("");
-      grid.querySelectorAll("[data-src]").forEach((button) => button.addEventListener("click", () => openInReader(button.dataset.src, button)));
+      grid.querySelectorAll("[data-target]").forEach(btn => btn.addEventListener("click", () => scrollToId(btn.dataset.target)));
     }
 
-    function renderProductionWalkthrough() {
-      const grid = document.getElementById("walkthroughGrid");
-      grid.innerHTML = walkthroughSteps.map((step) => `
-        <article class="walk-card">
-          <span class="badge ${badgeClass(step.category)}">${step.category}</span>
-          <h3>${step.title}</h3>
-          <pre><code class="language-go">${escapeHtml(step.code)}</code></pre>
-          <details>
-            <summary>Step-by-step</summary>
-            <ol>${step.steps.map((item) => `<li>${item}</li>`).join("")}</ol>
-          </details>
-          <div class="anti"><strong>反例：</strong>${step.anti}</div>
-          <div class="acceptance"><strong>驗收標準：</strong>${step.acceptance}</div>
-          <button class="btn" type="button" data-src="${step.src}">跳到對應教學章節</button>
+    function renderSyntaxCards() {
+      const filters = document.getElementById("syntaxFilters");
+      const grid = document.getElementById("syntaxGrid");
+      const categories = ["全部", ...new Set(syntaxCards.map(item => item.category))];
+      filters.innerHTML = categories.map((category, index) => `<button class="btn ${index === 0 ? "active" : ""}" type="button" data-syntax-category="${category}">${category}</button>`).join("");
+      grid.innerHTML = syntaxCards.map(item => `
+        <article class="syntax-card" id="${item.id}" data-category="${item.category}">
+          <span class="badge">${item.category}</span>
+          <h3>${item.title}</h3>
+          <p class="muted">${item.summary}</p>
+          <table><tbody><tr><th>用法</th><td>${item.usage}</td></tr><tr><th>反例</th><td>${item.pitfall}</td></tr></tbody></table>
+          <pre><code class="language-go">${escapeHtml(item.code)}</code></pre>
         </article>
       `).join("");
-      grid.querySelectorAll("[data-src]").forEach((button) => button.addEventListener("click", () => openInReader(button.dataset.src, button)));
+      filters.addEventListener("click", event => {
+        const btn = event.target.closest("[data-syntax-category]");
+        if (!btn) return;
+        filters.querySelectorAll("button").forEach(item => item.classList.remove("active"));
+        btn.classList.add("active");
+        document.querySelectorAll("#syntaxGrid .syntax-card").forEach(card => {
+          card.hidden = btn.dataset.syntaxCategory !== "全部" && card.dataset.category !== btn.dataset.syntaxCategory;
+        });
+      });
     }
 
-    document.querySelectorAll("[data-src]").forEach((button) => {
-      button.addEventListener("click", () => openInReader(button.dataset.src, button));
-    });
+    function renderExamples() {
+      const filters = document.getElementById("exampleFilters");
+      const search = document.getElementById("exampleSearch");
+      const grid = document.getElementById("exampleGrid");
+      const categories = ["全部", ...new Set(examples200.map(item => item.category))];
+      filters.innerHTML = categories.map((category, index) => `<button class="btn ${index === 0 ? "active" : ""}" type="button" data-example-category="${category}">${category}</button>`).join("");
+      grid.innerHTML = examples200.map(item => `
+        <article class="case-card" data-category="${item.category}" data-search="${escapeHtml(`${item.category} ${item.title} ${item.scene} ${item.code} ${item.point} ${item.projectUsage} ${item.antiPattern} ${item.pitfall}`.toLowerCase())}">
+          <span class="badge">#${String(item.no).padStart(3, "0")}</span>
+          <h3>${item.title}</h3>
+          <div class="filter-row"><span class="badge">${item.category}</span></div>
+          <p class="muted"><strong>適用情境：</strong>${item.scene}</p>
+          <pre><code class="language-go">${escapeHtml(item.code)}</code></pre>
+          <details><summary>重點說明</summary><p>${item.point}</p></details>
+          <details><summary>專案級用法</summary><p>${item.projectUsage}</p></details>
+          <details><summary>反例</summary><p>${item.antiPattern}</p></details>
+          <div class="anti"><strong>常見錯誤：</strong>${item.pitfall}</div>
+        </article>
+      `).join("");
+      const apply = () => {
+        const active = filters.querySelector(".active")?.dataset.exampleCategory || "全部";
+        const keyword = search.value.trim().toLowerCase();
+        document.querySelectorAll("#exampleGrid .case-card").forEach(card => {
+          const categoryMatched = active === "全部" || card.dataset.category === active;
+          const keywordMatched = !keyword || card.dataset.search.includes(keyword);
+          card.hidden = !(categoryMatched && keywordMatched);
+        });
+      };
+      filters.addEventListener("click", event => {
+        const btn = event.target.closest("[data-example-category]");
+        if (!btn) return;
+        filters.querySelectorAll("button").forEach(item => item.classList.remove("active"));
+        btn.classList.add("active");
+        apply();
+      });
+      search.addEventListener("input", apply);
+    }
+
+    function renderSimpleCards(rootId, items, type) {
+      const root = document.getElementById(rootId);
+      root.innerHTML = items.map(item => {
+        if (type === "table") {
+          return `<article class="topic-card"><span class="badge">${item[0]}</span><h3>${item[0]}</h3><table><tbody>${item[1].map(row => `<tr><th>${row[0]}</th><td>${row[1]}</td></tr>`).join("")}</tbody></table><pre><code class="language-go">${escapeHtml(item[2])}</code></pre></article>`;
+        }
+        return `<article class="topic-card"><span class="badge">${item[0]}</span><h3>${item[1]}</h3><p class="muted">${item[2]}</p><button class="btn" type="button" data-target="${item[3]}">跳到章節</button></article>`;
+      }).join("");
+      root.querySelectorAll("[data-target]").forEach(btn => btn.addEventListener("click", () => scrollToId(btn.dataset.target)));
+    }
+
+    function renderDecisionGrid() {
+      const root = document.getElementById("decisionGrid");
+      root.innerHTML = decisions.map(item => `<article class="card"><span class="badge rose">決策</span><h3>${item[0]}</h3><p>${item[1]}</p><div class="acceptance">${item[2]}</div></article>`).join("");
+    }
+
+    function renderProductionFlow() {
+      document.getElementById("productionFlowGrid").innerHTML = flowCards.map(item => `<article class="walk-card"><span class="badge amber">${item[0]}</span><h3>${item[0]}</h3><p>${item[1]}</p><div class="acceptance">${item[2]}</div></article>`).join("");
+      document.getElementById("walkthroughGrid").innerHTML = walkthroughSteps.map(step => `<article class="walk-card"><span class="badge ${badgeClass(step[1])}">${step[1]}</span><h3>${step[0]}</h3><pre><code class="language-go">${escapeHtml(step[2])}</code></pre><details open><summary>Step-by-step</summary><ol>${step[3].map(item => `<li>${item}</li>`).join("")}</ol></details><div class="acceptance"><strong>驗收標準：</strong>${step[4]}</div></article>`).join("");
+    }
+
+    function renderReview() {
+      document.getElementById("reviewGrid").innerHTML = reviewItems.map(item => `<article class="review-card"><span class="score">${item[1]}</span><span class="badge green">${item[0]}</span><h3>${item[0]}</h3><p>${item[2]}</p><div class="anti"><strong>可再提升：</strong>${item[3]}</div></article>`).join("");
+    }
+
+    function bindGlobalActions() {
+      document.getElementById("backToTop").addEventListener("click", () => scrollToId("top"));
+    }
+
     renderUnifiedIndex();
     renderScenarioPaths();
-    renderProductionWalkthrough();
+    renderSyntaxCards();
+    renderExamples();
+    renderDecisionGrid();
+    renderSimpleCards("advancedGrid", advancedCards);
+    renderSimpleCards("stdlibGrid", stdlibCards, "table");
+    renderSimpleCards("databaseGrid", dbCards, "table");
+    renderSimpleCards("observabilityGrid", obsCards, "table");
+    renderProductionFlow();
+    renderReview();
+    bindGlobalActions();
   </script>
 </body>
 </html>
