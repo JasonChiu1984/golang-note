@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -188,6 +189,10 @@ func (h *Handler) writeError(w http.ResponseWriter, r *http.Request, err error) 
 		status = http.StatusNotFound
 		code = "not_found"
 		message = "not found"
+	case errors.Is(err, context.DeadlineExceeded):
+		status = http.StatusGatewayTimeout
+		code = "request_timeout"
+		message = "request timeout"
 	}
 	loggerFromContext(r.Context(), h.obs.Logger).WarnContext(
 		r.Context(),

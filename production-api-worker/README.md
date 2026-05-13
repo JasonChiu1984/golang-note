@@ -10,6 +10,7 @@
 - Worker queue：bounded queue、worker pool、shutdown-safe enqueue / close
 - Service lifecycle：`/livez`、`/readyz`、draining、HTTP shutdown、queue drain
 - Panic recovery：handler 未預期 panic 時回穩定 `internal_error` JSON
+- Request timeout：handler deadline exceeded 時回穩定 `request_timeout` JSON
 - Observability：Prometheus client、OpenTelemetry OTLP/stdout exporter、slog、`X-Request-ID`
 - Pipeline：migration CLI、Docker Compose、GitHub Actions
 
@@ -68,6 +69,7 @@ docker compose up --build
 | `go test ./internal/api -run 'TestRequestDecodingContract' -count=1` | 固定 malformed JSON、unknown field、trailing JSON 與空白 name 的 `400 invalid_input` |
 | `go test ./internal/api -run 'TestReadinessContract' -count=1` | 固定 ready / draining 狀態與 `/readyz` status code |
 | `go test ./internal/api -run 'TestPanicRecoveryContract' -count=1` | 固定 handler panic 時的 `500 internal_error` JSON 與 request id 行為 |
+| `go test ./internal/api -run 'TestRequestTimeoutContract' -count=1` | 固定 handler timeout 時的 `504 request_timeout` JSON 與 request id 行為 |
 | `go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1` | 固定 deadlock retry backoff 會尊重 request cancellation / shutdown deadline |
 | `go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1` | 固定 queue close/enqueue 同步邊界，避免 shutdown race panic |
 | `go test -race -cover ./...` | 驗證 service、handler、queue 與併發安全 |
@@ -83,6 +85,7 @@ docker compose up --build
 | Success response | 保持 `id`、`name`、`payload`、`status` 欄位向後相容 |
 | Request decoding | 只接受單一 JSON object；unknown field、trailing JSON value 與空白 `name` 都回 `invalid_input` |
 | Error response | 統一使用 `{"error":{"code":"...","message":"..."}}` |
+| Request timeout | `context.DeadlineExceeded` 對外回 `504 request_timeout`，避免被誤分類成 `internal_error` |
 | Status enum | `pending`、`processing`、`done`、`failed` 不任意改名 |
 | Breaking change | 新增版本路由或遷移期，不直接覆蓋既有合約 |
 
@@ -108,6 +111,17 @@ Production API 不能讓未預期 panic 直接中斷連線或回傳非 JSON 錯�
 | Request ID | client 提供的 `X-Request-ID` 仍會原樣回傳 |
 | Metrics | 仍可記錄 `/jobs`、method 與 `Internal Server Error` status label |
 | Contract test | `TestPanicRecoveryContract` 固定 panic recovery 行為 |
+
+## Request Timeout Contract
+
+Handler 內部會用 request-scoped timeout 保護 service 呼叫。若 deadline exceeded，對外應回穩定 timeout 合約，而不是落到未分類 `500 internal_error`。
+
+| 項目 | 行為 |
+|---|---|
+| HTTP status | `504 Gateway Timeout` |
+| Error envelope | `{"error":{"code":"request_timeout","message":"request timeout"}}` |
+| Request ID | client 提供的 `X-Request-ID` 仍會原樣回傳 |
+| Contract test | `TestRequestTimeoutContract` 固定 timeout 外部行為 |
 
 ## Service Lifecycle
 

@@ -341,6 +341,7 @@ ENTRYPOINT ["/app"]
 | Observability label | route label、span name、metrics label、`request.id` 是否會破壞 dashboard |
 | Worker shutdown | concurrent enqueue + shutdown 是否不 panic，close 後是否回穩定錯誤 |
 | Panic recovery | 未預期 panic 是否仍回 `500 internal_error` JSON 與原 request id |
+| Request timeout | `context.DeadlineExceeded` 是否回 `504 request_timeout`，而不是漂移成 `500 internal_error` |
 | Retry cancellation | deadlock backoff 是否尊重 `ctx.Done()`，取消後是否停止交易與 enqueue |
 
 ```bash
@@ -350,6 +351,7 @@ go test ./internal/api -run 'TestRequestDecodingContract' -count=1
 go test ./internal/api -run 'TestRequestIDContract|TestCreateJobContract' -count=1
 go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1
 go test ./internal/api -run 'TestPanicRecoveryContract' -count=1
+go test ./internal/api -run 'TestRequestTimeoutContract' -count=1
 go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
 ```
 
@@ -376,6 +378,8 @@ go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled'
 ```
 
 > Panic recovery 是 HTTP 邊界保護：記錄 panic，但 client 只看到穩定 `internal_error`，並保留 `X-Request-ID` 方便排障。
+
+> Request timeout 是 HTTP 合約保護：handler deadline exceeded 要回 `504 request_timeout`，讓 client 能把 timeout 與未知伺服器錯誤分開處理。
 
 > Retry cancellation 是 service 邊界保護：deadlock backoff 要用 `select` 監聽 `ctx.Done()`，request 已取消後不得繼續重試 DB 或 enqueue job。
 

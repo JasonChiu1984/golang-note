@@ -239,7 +239,7 @@ production-api-worker/
 
 | 對比面向 | `project-concurrent-crawler` | `production-api-worker` |
 |---|---|---|
-| 學習重點 | worker pool、parser、retry | API、transaction、context-aware retry、queue shutdown safety、observability、部署 |
+| 學習重點 | worker pool、parser、retry | API、transaction、context-aware retry、request timeout contract、queue shutdown safety、observability、部署 |
 | 外部依賴 | 幾乎沒有 | Postgres、OTLP、Docker Compose |
 | 驗證方式 | `go test` 為主 | `go test` + `docker compose up --build` |
 | 專案階段 | 教學型大型專案 | 接近 production 的服務骨架 |
@@ -256,6 +256,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Error envelope | `error.code`、`error.message` | client 無法用穩定 code 做分支 |
 | Observability | route label、trace span name、metrics label、`X-Request-ID` | dashboard、alert 與 incident log 無法對照 |
 | Panic recovery | `500 internal_error` JSON、request id header | panic 造成連線中斷、非 JSON 錯誤或洩漏內部細節 |
+| Request timeout | `504 request_timeout` JSON、request id header | handler deadline exceeded 被誤分類成 `500 internal_error`，client 無法區分 timeout 與 bug |
 | Retry cancellation | deadlock backoff、request context、shutdown deadline | request 已取消後仍繼續重試 DB 交易或排入 queue |
 | Queue shutdown | enqueue 與 close 的同步邊界 | shutdown 期間可能送入已關閉 channel，造成 panic |
 
@@ -295,6 +296,7 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 | Queue full | `503 Service Unavailable`、`error.code=queue_full` |
 | Request ID | client header 原樣回傳；未提供時產生 `req-*` |
 | Panic recovery | handler panic 仍回 `500`、`error.code=internal_error` 與原 `X-Request-ID` |
+| Request timeout | handler deadline exceeded 仍回 `504`、`error.code=request_timeout` 與原 `X-Request-ID` |
 
 > 工程經驗：內部重構可以自由，但外部合約要保守。若需要破壞性變更，先新增新路由或新欄位，讓舊 client 有遷移窗口。
 
@@ -325,6 +327,19 @@ Go 的 `panic/recover` 不應拿來取代一般錯誤處理，但 production HTT
 | Client response | 固定 `500 Internal Server Error` 與 `error.code=internal_error` |
 | Request correlation | 原本的 `X-Request-ID` 仍回傳，方便排障 |
 | 測試保護 | `TestPanicRecoveryContract` 固定外部錯誤格式 |
+
+### Request Timeout 與錯誤分類
+
+Production API 的 timeout 不是未知錯誤。若 handler 建立的 request deadline 到期，上層 client 需要知道這是 timeout path，才能決定是否 retry、降級或回報使用者。因此 `context.DeadlineExceeded` 不應落到 `500 internal_error`。
+
+`production-api-worker/internal/api.Handler.writeError` 會把 deadline exceeded 分類成穩定合約：
+
+| 邊界 | 做法 |
+|---|---|
+| Handler timeout | 回 `504 Gateway Timeout` |
+| Error code | `request_timeout` |
+| Request correlation | 原本的 `X-Request-ID` 仍回傳 |
+| 測試保護 | `TestRequestTimeoutContract` 固定 timeout 外部行為 |
 
 ### Service Lifecycle：ready、draining、shutdown
 

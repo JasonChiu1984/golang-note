@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.16 - 2026-05-13
+
+- 新增 2026-05-13 12:02 資深工程師審查報告，確認教程已補齊 retry cancellation，但 HTTP handler 對 `context.DeadlineExceeded` 尚未形成 timeout 合約。
+- `production-api-worker/internal/api.Handler.writeError` 現在會把 request deadline exceeded 分類為 `504 Gateway Timeout` 與 `error.code=request_timeout`。
+- 新增 `TestRequestTimeoutContract`，固定 request timeout path 保留 `X-Request-ID` 並回穩定 JSON envelope。
+- README、第 7 / 11 章、進階 Cheat Sheet、康乃爾筆記與 `production-api-worker` 文件補上 request timeout contract 與 release gate。
+- `docs/index.html` 同步由 `圖解筆記3-4整合/golang-complete-visual-course.html` 複製產生，供 GitHub Pages / docs 入口使用。
+
 ## v1.0.15 - 2026-05-13
 
 - 新增 2026-05-13 11:51 資深工程師審查報告，確認教程已具備 API contract、lifecycle、panic recovery 與 queue shutdown safety，但 service deadlock retry 尚未固定 context cancellation 行為。

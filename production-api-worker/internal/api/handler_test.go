@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"golang-learning-notes/production-api-worker/internal/app"
 	"golang-learning-notes/production-api-worker/internal/domain"
@@ -188,6 +189,36 @@ func TestRequestDecodingContract(t *testing.T) {
 				t.Fatalf("error code = %q, want invalid_input", response.Error.Code)
 			}
 		})
+	}
+}
+
+func TestRequestTimeoutContract(t *testing.T) {
+	original := contextWithTimeout
+	t.Cleanup(func() { contextWithTimeout = original })
+	contextWithTimeout = func(parent context.Context, timeout time.Duration) (context.Context, context.CancelFunc) {
+		return context.WithDeadline(parent, time.Now().Add(-time.Second))
+	}
+
+	handler := newContractHandler(t, nil)
+	req := httptest.NewRequest(http.MethodPost, "/jobs", strings.NewReader(`{"name":"resize","payload":"image"}`))
+	req.Header.Set(requestIDHeader, "timeout-request")
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusGatewayTimeout {
+		t.Fatalf("status = %d, want %d: %s", rec.Code, http.StatusGatewayTimeout, rec.Body.String())
+	}
+	if got := rec.Header().Get(requestIDHeader); got != "timeout-request" {
+		t.Fatalf("request id header = %q, want timeout-request", got)
+	}
+
+	var response errorResponse
+	if err := json.NewDecoder(rec.Body).Decode(&response); err != nil {
+		t.Fatal(err)
+	}
+	if response.Error.Code != "request_timeout" {
+		t.Fatalf("error code = %q, want request_timeout", response.Error.Code)
 	}
 }
 

@@ -220,6 +220,7 @@ func TestCreateJobContract(t *testing.T) {
 | Readiness | draining 時 `/readyz=503` 是部署系統依賴的操作合約 |
 | Worker shutdown | queue 關閉後 enqueue 應回穩定錯誤，concurrent enqueue + shutdown 不應 panic |
 | Panic recovery | 未預期 panic 仍需回穩定 `500 internal_error` JSON |
+| Request timeout | handler deadline exceeded 應回 `504 request_timeout`，不可漂移成 `500 internal_error` |
 | Retry cancellation | retry backoff 遇到 `ctx.Done()` 時應停止，不再重試交易或 enqueue |
 
 對 `production-api-worker` 這類 service，建議把合約測試獨立命名，讓 release gate 可以聚焦執行：
@@ -291,6 +292,36 @@ func TestPanicRecoveryContract(t *testing.T) {
 | `X-Request-ID` | panic path 仍能對照 log、trace 與 metrics |
 | Contract test | 防止 middleware 順序調整時破壞 recovery 行為 |
 
+### Request Timeout Contract
+
+Timeout contract 測試要固定 handler deadline exceeded 時 client 看到的外部行為。這不是測 `time.Sleep`，而是測錯誤分類：`context.DeadlineExceeded` 不能被統一錯誤處理層誤判為 `500 internal_error`。
+
+```go
+func TestRequestTimeoutContract(t *testing.T) {
+	original := contextWithTimeout
+	t.Cleanup(func() { contextWithTimeout = original })
+	contextWithTimeout = func(parent context.Context, timeout time.Duration) (context.Context, context.CancelFunc) {
+		return context.WithDeadline(parent, time.Now().Add(-time.Second))
+	}
+
+	req := httptest.NewRequest(http.MethodPost, "/jobs", strings.NewReader(`{"name":"resize"}`))
+	req.Header.Set("X-Request-ID", "timeout-request")
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusGatewayTimeout {
+		t.Fatalf("status = %d, want 504", rec.Code)
+	}
+}
+```
+
+| 測試項 | 為什麼重要 |
+|---|---|
+| `504 Gateway Timeout` | client 可把 timeout 與 unknown server fault 分開處理 |
+| `error.code=request_timeout` | release 後仍能用穩定 code 做 retry / 告警分支 |
+| `X-Request-ID` | timeout path 仍可對照 log、trace 與 metrics |
+
 ### Retry Cancellation Test
 
 重試測試不能只檢查「最後成功」。Production service 也要測取消路徑：request timeout、client disconnect 或 shutdown context 觸發後，deadlock backoff 應立即停止，避免已取消的 request 繼續消耗 DB connection 或把 job 排入 queue。
@@ -341,6 +372,7 @@ func TestCreateJobStopsDeadlockRetryWhenContextCanceled(t *testing.T) {
 | Readiness 合約 | `cd production-api-worker && go test ./internal/api -run 'TestReadinessContract' -count=1` | 固定 ready / draining 對 `/readyz` 的 status code |
 | Worker shutdown 安全 | `cd production-api-worker && go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1` | 固定 queue close/enqueue 同步邊界，避免 shutdown race |
 | Panic recovery 合約 | `cd production-api-worker && go test ./internal/api -run 'TestPanicRecoveryContract' -count=1` | 固定 panic path 的 `500 internal_error` JSON 與 request id |
+| Request timeout 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestTimeoutContract' -count=1` | 固定 handler timeout 的 `504 request_timeout` JSON 與 request id |
 | Retry cancellation | `cd production-api-worker && go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1` | 固定 deadlock retry backoff 會尊重 context cancellation / deadline |
 | Module checksum | `go mod verify` | 確認 module cache 未被竄改 |
 | Dependency updates | `go list -m -u all` | 發現可更新版本，作為維護 PR 依據 |

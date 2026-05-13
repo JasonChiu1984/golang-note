@@ -1,6 +1,6 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.15 ｜ 基準日期：2026-05-13 ｜ 適用範圍：local memory mode、Postgres + OTLP mode
+> 版本：v1.0.16 ｜ 基準日期：2026-05-13 ｜ 適用範圍：local memory mode、Postgres + OTLP mode
 
 這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery、retry 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 cancellation 行為需要透過 contract test 保護。
 
@@ -15,6 +15,7 @@
 | Request correlation | server 必須回傳 `X-Request-ID`；client 提供時需原樣保留 |
 | Readiness lifecycle | draining 時 `/readyz` 必須回 `503`，讓外部導流系統停止送新 request |
 | Panic recovery | 未預期 panic 必須回 `500` 與穩定 `internal_error` JSON，不暴露 panic 細節 |
+| Request timeout | handler deadline exceeded 必須回 `504 request_timeout`，不得漂移成 `500 internal_error` |
 | Worker shutdown | queue close 與 enqueue send 必須同步，shutdown 後新 enqueue 回穩定錯誤 |
 | Retry cancellation | deadlock retry 的 backoff 必須尊重 `context` cancellation / deadline |
 | Breaking change | 需新增版本路由或遷移期，不能直接覆蓋既有合約 |
@@ -50,6 +51,7 @@ X-Request-ID: request-from-client
 | `invalid_input` | 400 | JSON 無法解析、unknown field、trailing JSON value、缺少/空白 `name`、payload 超過限制 |
 | `not_found` | 404 | 查詢不存在的 job |
 | `queue_full` | 503 | bounded queue 無法接受新工作 |
+| `request_timeout` | 504 | request context deadline exceeded |
 | `internal_error` | 500 | 未分類的伺服器錯誤或 handler panic recovery |
 
 ## POST /jobs
@@ -155,6 +157,25 @@ X-Request-ID: request-from-client
 }
 ```
 
+## Request Timeout
+
+若 handler 內部 request deadline 到期，API 必須明確回 timeout 合約，避免使用端把 timeout 當成未知伺服器錯誤處理。
+
+```http
+504 Gateway Timeout
+Content-Type: application/json
+X-Request-ID: request-from-client
+```
+
+```json
+{
+  "error": {
+    "code": "request_timeout",
+    "message": "request timeout"
+  }
+}
+```
+
 ## Contract Test Gate
 
 ```bash
@@ -174,5 +195,6 @@ go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownD
 - client 提供的 `X-Request-ID` 需原樣回傳；未提供時需自動產生 `req-*`。
 - draining 時 `/readyz` 需回 `503 Service Unavailable`，避免 shutdown 期間仍接收新流量。
 - handler panic 需回 `500 internal_error` JSON，並保留原 `X-Request-ID`。
+- request deadline exceeded 需回 `504 request_timeout`，並保留原 `X-Request-ID`。
 - deadlock retry backoff 遇到 context cancellation / deadline 時需停止，不得繼續重試或 enqueue。
 - queue shutdown 期間不可發生 `send on closed channel`；close 後新 enqueue 需回穩定錯誤。
