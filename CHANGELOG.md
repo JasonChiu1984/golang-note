@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.22 - 2026-05-13
+
+- 新增 2026-05-13 18:03 資深工程師審查報告，確認 v1.0.21 已補齊 Go 1.2-1.26 官方段落覆蓋，但 ReleaseNote 索引仍缺 Go 1.1 起點、支援狀態視覺化與補充教材入口整理。
+- `scripts/generate-go-release-notes.mjs` 納入 Go 1.1 release data，擴充 Roadmap 分期、官方支援政策資料與支援狀態 SVG 圖表產生邏輯。
+- `ReleaseNote/go1.1-release-note.html` 與 `docs/ReleaseNote/go1.1-release-note.html` 新增 Go 1.1 專業整理報告，覆蓋 method values、`-race`、`go1.1` build tag、performance 30%-40%、`bufio.Scanner` 與相容性風險。
+- `ReleaseNote/index.html` 與 `docs/ReleaseNote/index.html` 擴充為 Go 1.1-1.26，新增 Roadmap 圖表、目前支援版本 SVG 圖表與 Go 1.25 / Go 1.26 支援窗口註記。
+- 新增 `docs/golang-syntax-application-svg.html`、`docs/golang-third-party-modules.html`、`docs/c-python-go-performance-supplement.html` 三個補充頁，並由主整合課程入口連結。
+- README 與 VERSION 更新到 `v1.0.22`，新增 Release Note 支援狀態與補充教材頁驗證 gate。
+- `docs/index.html` 已重新由 `圖解筆記3-4整合/golang-complete-visual-course.html` 複製產生，並保留 GitHub Pages 可用的相對連結。
+
 ## v1.0.21 - 2026-05-13
 
 - 新增 2026-05-13 17:03 資深工程師審查報告，確認 Go 1.20 效能矩陣已補齊，但 Go 1.2-1.26 Release Note 仍需要把官方段落細節重寫成果正式發布並同步到 Pages。

@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>C、Python、Golang 執行速度與系統呼叫效能補充頁</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --ink: #17202a;
+      --muted: #5b6675;
+      --line: #d7e0ea;
+      --blue: #2563eb;
+      --teal: #0f766e;
+      --green: #15803d;
+      --amber: #b45309;
+      --rose: #be123c;
+      --slate: #475569;
+      --shadow: 0 16px 32px rgba(15, 23, 42, .08);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.62;
+    }
+    a { color: inherit; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .hero {
+      background: #111827;
+      color: #f8fafc;
+      padding: 34px 20px 30px;
+      border-bottom: 1px solid rgba(255, 255, 255, .12);
+    }
+    .hero-inner {
+      max-width: 1220px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(340px, .9fr);
+      gap: 22px;
+      align-items: center;
+    }
+    .eyebrow { margin: 0 0 10px; color: #93c5fd; font-weight: 800; }
+    h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.55rem); line-height: 1.08; letter-spacing: 0; }
+    h2 { margin: 0; font-size: clamp(1.45rem, 2.5vw, 2.2rem); letter-spacing: 0; }
+    h3 { margin: 10px 0 8px; font-size: 1.14rem; letter-spacing: 0; }
+    .hero p { margin: 16px 0 0; color: #cbd5e1; max-width: 820px; }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .hero-card {
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .hero-card strong { display: block; font-size: 1.75rem; line-height: 1; }
+    .hero-card span { display: block; margin-top: 7px; color: #dbeafe; font-size: .88rem; }
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(246, 248, 251, .96);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px);
+    }
+    .toolbar-inner {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 10px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      padding: 8px 11px;
+      border-radius: 8px;
+      font-weight: 800;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn:hover { border-color: var(--blue); color: var(--blue); background: #eff6ff; }
+    main { max-width: 1220px; margin: 0 auto; padding: 22px 20px 64px; }
+    section { margin: 28px 0; scroll-margin-top: 82px; }
+    .section-head { display: flex; justify-content: space-between; gap: 16px; align-items: end; margin-bottom: 14px; }
+    .section-head p, .muted { color: var(--muted); }
+    .section-head p { margin: 6px 0 0; }
+    .panel, .card, .case-card, .metric-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    .panel, .card, .case-card, .metric-card { padding: 16px; }
+    .grid-2, .grid-3, .case-grid, .metric-grid {
+      display: grid;
+      gap: 12px;
+    }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3, .case-grid, .metric-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #e0f2fe;
+      color: #075985;
+      font-weight: 800;
+      font-size: .78rem;
+    }
+    .badge.green { background: #dcfce7; color: #166534; }
+    .badge.amber { background: #fef3c7; color: #92400e; }
+    .badge.rose { background: #ffe4e6; color: #9f1239; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+    table { width: 100%; min-width: 880px; border-collapse: collapse; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { background: #eef4fb; color: #243244; font-size: .9rem; }
+    tr:last-child td { border-bottom: 0; }
+    .flow-wrap { overflow-x: auto; }
+    .diagram { width: 100%; min-width: 860px; height: auto; display: block; background: #fff; border: 1px solid var(--line); border-radius: 8px; }
+    .note {
+      border-left: 4px solid var(--blue);
+      background: #eff6ff;
+      padding: 12px 14px;
+      border-radius: 8px;
+      color: #1e3a8a;
+    }
+    pre {
+      overflow-x: auto;
+      margin: 0;
+      padding: 14px;
+      background: #0f172a;
+      color: #e5e7eb;
+      border-radius: 8px;
+      font-size: .9rem;
+    }
+    .case-card ul { margin: 8px 0 0; padding-left: 20px; }
+    .metric-card strong { display: block; font-size: 1.55rem; line-height: 1; }
+    .metric-card span { display: block; margin-top: 7px; color: var(--muted); }
+    @media (max-width: 860px) {
+      .hero-inner, .grid-2, .grid-3, .case-grid, .metric-grid { grid-template-columns: 1fr; }
+      .hero-grid { grid-template-columns: 1fr; }
+      .section-head { display: block; }
+      table { min-width: 760px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div>
+        <p class="eyebrow">補充教材｜效能、系統呼叫、應用選型</p>
+        <h1>C、Python、Golang 執行速度與系統呼叫效能比較</h1>
+        <p>本頁不修改原始主教材，作為獨立補充頁說明三種語言在 CPU-bound、I/O-bound、system call、部署維運與工業自動化服務中的實務取捨。</p>
+      </div>
+      <div class="hero-grid" aria-label="language summary">
+        <div class="hero-card"><strong>C</strong><span>最低抽象、最高控制，接近硬體與 kernel 邊界。</span></div>
+        <div class="hero-card"><strong>Python</strong><span>開發最快，CPU 熱路徑需靠 C extension 或外部服務。</span></div>
+        <div class="hero-card"><strong>Go</strong><span>接近 native，併發、部署與網路服務成本平衡。</span></div>
+      </div>
+    </div>
+  </header>
+
+  <nav class="toolbar" aria-label="page navigation">
+    <div class="toolbar-inner">
+      <a class="btn" href="#overview">總覽</a>
+      <a class="btn" href="#architecture">執行模型</a>
+      <a class="btn" href="#speed">執行速度</a>
+      <a class="btn" href="#syscall">系統呼叫</a>
+      <a class="btn" href="#cases">應用案例</a>
+      <a class="btn" href="#verification">驗證方法</a>
+      <a class="btn" href="#troubleshooting">排錯與最佳實務</a>
+    </div>
+  </nav>
+
+  <main>
+    <section id="overview">
+      <div class="section-head">
+        <div>
+          <h2>Overview</h2>
+          <p>速度比較不能只看語言名稱，必須拆成編譯模型、runtime、memory model、system call 邊界與部署情境。</p>
+        </div>
+      </div>
+      <div class="grid-3">
+        <article class="card">
+          <span class="badge green">C</span>
+          <h3>最佳控制能力</h3>
+          <p>C 編譯成 native machine code，runtime 極薄，適合 driver、embedded、PLC gateway、protocol stack、資料面 hot path。</p>
+        </article>
+        <article class="card">
+          <span class="badge amber">Python</span>
+          <h3>最佳開發效率</h3>
+          <p>CPython interpreter 與 GIL 讓 CPU-bound 熱路徑較慢，但資料分析、AI glue、測試腳本與自動化整合效率高。</p>
+        </article>
+        <article class="card">
+          <span class="badge">Go</span>
+          <h3>最佳服務平衡點</h3>
+          <p>Go 編譯成單一執行檔，goroutine、netpoller、GC 與標準庫讓 API、edge gateway、資料擷取服務容易維運。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="architecture">
+      <div class="section-head">
+        <div>
+          <h2>Architecture</h2>
+          <p>三種語言從原始碼到作業系統的路徑不同，這會直接影響啟動時間、CPU 熱路徑、記憶體與 I/O 行為。</p>
+        </div>
+      </div>
+      <div class="flow-wrap">
+        <svg class="diagram" viewBox="0 0 1080 430" role="img" aria-labelledby="execution-model-title execution-model-desc">
+          <title id="execution-model-title">C、Python、Go 執行模型圖解</title>
+          <desc id="execution-model-desc">比較三種語言從 source code 到 runtime、native binary、interpreter、kernel 與 device 的執行路徑。</desc>
+          <defs>
+            <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L9,3 L0,6 Z" fill="#52637a"></path>
+            </marker>
+          </defs>
+          <rect x="0" y="0" width="1080" height="430" fill="#ffffff"></rect>
+          <text x="40" y="42" font-size="22" font-weight="800" fill="#17202a">執行模型圖解</text>
+          <g>
+            <rect x="40" y="82" width="280" height="70" rx="8" fill="#dcfce7" stroke="#86efac"></rect>
+            <text x="64" y="112" font-size="18" font-weight="800" fill="#166534">C Source</text>
+            <text x="64" y="136" font-size="13" fill="#166534">手動記憶體、明確 syscall / libc</text>
+            <line x1="320" y1="117" x2="408" y2="117" stroke="#52637a" stroke-width="3" marker-end="url(#arrow)"></line>
+            <rect x="420" y="82" width="250" height="70" rx="8" fill="#f0fdf4" stroke="#86efac"></rect>
+            <text x="444" y="112" font-size="18" font-weight="800" fill="#166534">Native Binary</text>
+            <text x="444" y="136" font-size="13" fill="#166534">最低 runtime overhead</text>
+            <line x1="670" y1="117" x2="758" y2="117" stroke="#52637a" stroke-width="3" marker-end="url(#arrow)"></line>
+          </g>
+          <g>
+            <rect x="40" y="182" width="280" height="70" rx="8" fill="#fef3c7" stroke="#fbbf24"></rect>
+            <text x="64" y="212" font-size="18" font-weight="800" fill="#92400e">Python Source</text>
+            <text x="64" y="236" font-size="13" fill="#92400e">bytecode + interpreter + dynamic typing</text>
+            <line x1="320" y1="217" x2="408" y2="217" stroke="#52637a" stroke-width="3" marker-end="url(#arrow)"></line>
+            <rect x="420" y="182" width="250" height="70" rx="8" fill="#fffbeb" stroke="#fbbf24"></rect>
+            <text x="444" y="212" font-size="18" font-weight="800" fill="#92400e">CPython VM</text>
+            <text x="444" y="236" font-size="13" fill="#92400e">GIL、物件配置、C extension 邊界</text>
+            <line x1="670" y1="217" x2="758" y2="217" stroke="#52637a" stroke-width="3" marker-end="url(#arrow)"></line>
+          </g>
+          <g>
+            <rect x="40" y="282" width="280" height="70" rx="8" fill="#dbeafe" stroke="#93c5fd"></rect>
+            <text x="64" y="312" font-size="18" font-weight="800" fill="#1d4ed8">Go Source</text>
+            <text x="64" y="336" font-size="13" fill="#1d4ed8">static binary、goroutine、GC、netpoller</text>
+            <line x1="320" y1="317" x2="408" y2="317" stroke="#52637a" stroke-width="3" marker-end="url(#arrow)"></line>
+            <rect x="420" y="282" width="250" height="70" rx="8" fill="#eff6ff" stroke="#93c5fd"></rect>
+            <text x="444" y="312" font-size="18" font-weight="800" fill="#1d4ed8">Go Binary + Runtime</text>
+            <text x="444" y="336" font-size="13" fill="#1d4ed8">scheduler 將 goroutine multiplex 到 OS thread</text>
+            <line x1="670" y1="317" x2="758" y2="317" stroke="#52637a" stroke-width="3" marker-end="url(#arrow)"></line>
+          </g>
+          <rect x="770" y="96" width="250" height="238" rx="8" fill="#f8fafc" stroke="#cbd5e1"></rect>
+          <text x="798" y="135" font-size="20" font-weight="800" fill="#334155">Operating System</text>
+          <text x="798" y="168" font-size="14" fill="#475569">Kernel scheduler</text>
+          <text x="798" y="196" font-size="14" fill="#475569">System call table</text>
+          <text x="798" y="224" font-size="14" fill="#475569">File / socket / timer</text>
+          <text x="798" y="252" font-size="14" fill="#475569">NIC / disk / PLC gateway</text>
+          <text x="798" y="294" font-size="13" fill="#64748b">真正慢的常是 I/O 等待，不是語言本身。</text>
+        </svg>
+      </div>
+    </section>
+
+    <section id="speed">
+      <div class="section-head">
+        <div>
+          <h2>執行速度比較</h2>
+          <p>以下是工程選型用的相對判斷，不是固定 benchmark 數字。實際結果會受 CPU、compiler、資料結構、I/O、GC、C extension 與演算法影響。</p>
+        </div>
+      </div>
+      <div class="metric-grid">
+        <article class="metric-card"><span class="badge green">CPU-bound</span><strong>C / Go native class</strong><span>C 與 Go 都是 native code；實測差異依演算法、資料 layout、GC 與 compiler flags 決定。Python 純迴圈通常輸在 interpreter overhead。</span></article>
+        <article class="metric-card"><span class="badge">I/O-bound</span><strong>差距縮小</strong><span>當瓶頸在 disk、network、PLC response time，語言 overhead 會被等待時間稀釋。</span></article>
+        <article class="metric-card"><span class="badge amber">開發效率</span><strong>Python &gt; Go &gt; C</strong><span>越靠近硬體越要付出更多記憶體、錯誤處理與建置維護成本。</span></article>
+      </div>
+      <div class="flow-wrap" style="margin-top:12px">
+        <svg class="diagram" viewBox="0 0 1080 410" role="img" aria-labelledby="relative-speed-title relative-speed-desc">
+          <title id="relative-speed-title">C、Python、Go 相對速度概念圖</title>
+          <desc id="relative-speed-desc">以 CPU-bound 純計算情境說明 C、Go、Python 的相對 overhead；圖形為概念比較，不代表固定倍率。</desc>
+          <rect x="0" y="0" width="1080" height="410" fill="#fff"></rect>
+          <text x="40" y="42" font-size="22" font-weight="800" fill="#17202a">相對速度圖解：越短越快</text>
+          <text x="40" y="68" font-size="13" fill="#5b6675">以同等演算法的 CPU-bound 純計算作概念圖，不代表固定倍率；實測請依本頁驗證方法重跑。</text>
+          <g transform="translate(80 110)">
+            <text x="0" y="24" font-size="16" font-weight="800" fill="#166534">C</text>
+            <rect x="110" y="0" width="150" height="36" rx="8" fill="#22c55e"></rect>
+            <text x="280" y="24" font-size="14" fill="#334155">1.0x baseline，手動控制記憶體與資料 layout</text>
+          </g>
+          <g transform="translate(80 180)">
+            <text x="0" y="24" font-size="16" font-weight="800" fill="#1d4ed8">Go</text>
+            <rect x="110" y="0" width="190" height="36" rx="8" fill="#3b82f6"></rect>
+            <text x="320" y="24" font-size="14" fill="#334155">通常接近 C；GC、bounds check、escape 會影響熱路徑</text>
+          </g>
+          <g transform="translate(80 250)">
+            <text x="0" y="24" font-size="16" font-weight="800" fill="#92400e">Python</text>
+            <rect x="110" y="0" width="770" height="36" rx="8" fill="#f59e0b"></rect>
+            <text x="900" y="24" font-size="14" fill="#334155">純 Python CPU loop 慢很多；NumPy/C extension 可改變結果</text>
+          </g>
+          <line x1="190" y1="330" x2="950" y2="330" stroke="#cbd5e1"></line>
+          <text x="190" y="356" font-size="13" fill="#64748b">低 latency</text>
+          <text x="870" y="356" font-size="13" fill="#64748b">高 overhead</text>
+        </svg>
+      </div>
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead><tr><th>面向</th><th>C</th><th>Python</th><th>Golang</th><th>工程判斷</th></tr></thead>
+          <tbody>
+            <tr><td>CPU 密集計算</td><td>最快，資料 layout 可完全控制</td><td>純 Python 慢；NumPy / C extension 快</td><td>接近 C，寫法安全性與維護性較高</td><td>影像核心、DSP、控制迴圈選 C；服務端常選 Go；分析腳本選 Python</td></tr>
+            <tr><td>啟動時間</td><td>快</td><td>需載入 interpreter 與 module</td><td>快，單一 binary</td><td>短命 CLI、edge agent、container cold start 常偏 Go / C</td></tr>
+            <tr><td>記憶體控制</td><td>手動配置與釋放</td><td>物件 overhead 高</td><td>GC 管理，需看 allocation profile</td><td>硬即時或極低記憶體設備偏 C；一般 service 用 Go 成本較低</td></tr>
+            <tr><td>併發服務</td><td>需自行管理 thread / event loop</td><td>asyncio 可行，CPU parallel 受 GIL 限制</td><td>goroutine + netpoller 是強項</td><td>大量連線、API gateway、protocol bridge 常偏 Go</td></tr>
+            <tr><td>可維護性</td><td>高風險高控制</td><td>語法快、團隊上手快</td><td>語法小、編譯期檢查好</td><td>長期服務通常要把速度與維護成本一起評估</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="syscall">
+      <div class="section-head">
+        <div>
+          <h2>系統呼叫效能分析</h2>
+          <p>System call 是使用者空間進入 kernel 的邊界，例如 file read/write、socket send/recv、timer、process、epoll/kqueue。語言差異存在，但 I/O 等待、buffer 策略與 context switch 通常更關鍵。</p>
+        </div>
+      </div>
+      <div class="flow-wrap">
+        <svg class="diagram" viewBox="0 0 1080 440" role="img" aria-labelledby="syscall-path-title syscall-path-desc">
+          <title id="syscall-path-title">System Call Path 圖解</title>
+          <desc id="syscall-path-desc">說明 C、Python、Go 經由 libc、interpreter、runtime、netpoller 或 cgo 進入 kernel syscall 與 I/O device 的路徑。</desc>
+          <defs>
+            <marker id="sysarrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L9,3 L0,6 Z" fill="#52637a"></path>
+            </marker>
+          </defs>
+          <rect x="0" y="0" width="1080" height="440" fill="#fff"></rect>
+          <text x="40" y="42" font-size="22" font-weight="800" fill="#17202a">System Call Path</text>
+          <rect x="52" y="86" width="250" height="86" rx="8" fill="#f0fdf4" stroke="#86efac"></rect>
+          <text x="76" y="120" font-size="17" font-weight="800" fill="#166534">C</text>
+          <text x="76" y="146" font-size="13" fill="#166534">libc / syscall wrapper</text>
+          <rect x="52" y="196" width="250" height="86" rx="8" fill="#fffbeb" stroke="#fbbf24"></rect>
+          <text x="76" y="230" font-size="17" font-weight="800" fill="#92400e">Python</text>
+          <text x="76" y="256" font-size="13" fill="#92400e">Python object → C API → libc</text>
+          <rect x="52" y="306" width="250" height="86" rx="8" fill="#eff6ff" stroke="#93c5fd"></rect>
+          <text x="76" y="340" font-size="17" font-weight="800" fill="#1d4ed8">Go</text>
+          <text x="76" y="366" font-size="13" fill="#1d4ed8">runtime poller → syscall.RawSyscall</text>
+          <line x1="302" y1="129" x2="408" y2="220" stroke="#52637a" stroke-width="3" marker-end="url(#sysarrow)"></line>
+          <line x1="302" y1="239" x2="408" y2="239" stroke="#52637a" stroke-width="3" marker-end="url(#sysarrow)"></line>
+          <line x1="302" y1="349" x2="408" y2="258" stroke="#52637a" stroke-width="3" marker-end="url(#sysarrow)"></line>
+          <rect x="420" y="166" width="230" height="140" rx="8" fill="#f8fafc" stroke="#cbd5e1"></rect>
+          <text x="448" y="206" font-size="18" font-weight="800" fill="#334155">Kernel Boundary</text>
+          <text x="448" y="236" font-size="14" fill="#475569">mode switch</text>
+          <text x="448" y="262" font-size="14" fill="#475569">scheduler / wait queue</text>
+          <text x="448" y="288" font-size="14" fill="#475569">copy buffer / DMA / driver</text>
+          <line x1="650" y1="236" x2="758" y2="236" stroke="#52637a" stroke-width="3" marker-end="url(#sysarrow)"></line>
+          <rect x="770" y="120" width="250" height="232" rx="8" fill="#f1f5f9" stroke="#cbd5e1"></rect>
+          <text x="798" y="164" font-size="18" font-weight="800" fill="#334155">I/O Device / Network</text>
+          <text x="798" y="196" font-size="14" fill="#475569">Disk / file system</text>
+          <text x="798" y="224" font-size="14" fill="#475569">TCP socket / NIC</text>
+          <text x="798" y="252" font-size="14" fill="#475569">Serial / Modbus RTU</text>
+          <text x="798" y="280" font-size="14" fill="#475569">PLC / DDC / SCADA endpoint</text>
+          <text x="798" y="318" font-size="13" fill="#64748b">若設備回應是毫秒級，語言層微秒差異通常不是主瓶頸。</text>
+        </svg>
+      </div>
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead><tr><th>系統呼叫場景</th><th>C</th><th>Python</th><th>Go</th><th>效能重點</th></tr></thead>
+          <tbody>
+            <tr><td>大量小檔案讀寫</td><td>可精細控制 buffer 與 syscall 次數</td><td>高層 API 易寫，但 object / interpreter overhead 明顯</td><td>buffered I/O、goroutine pipeline 容易維護</td><td>減少 syscall 次數比換語言更重要；使用 batch、buffer、mmap 時要測風險</td></tr>
+            <tr><td>TCP socket server</td><td>可用 epoll/kqueue 手寫高效 event loop</td><td>asyncio / uvloop 可改善；CPU handler 仍需注意</td><td>標準庫 net/http 與 runtime netpoller 成熟</td><td>大量連線服務常用 Go 取得效能與維運平衡</td></tr>
+            <tr><td>Process spawn</td><td>fork/exec 控制最細</td><td>subprocess 方便但啟動與序列化成本高</td><td>os/exec 清楚，單一 binary 易部署</td><td>避免在高頻路徑反覆 spawn；改用長駐 worker 或 IPC</td></tr>
+            <tr><td>工業協議 polling</td><td>最適合極低 latency driver / embedded loop</td><td>適合測試、資料轉換、排程腳本</td><td>適合 Modbus TCP、OPC UA client、MQTT gateway 服務</td><td>timeout、retry、connection pool、批次讀取通常比單次 syscall overhead 更關鍵</td></tr>
+            <tr><td>FFI / native extension</td><td>本身就是 native target</td><td>可靠 C extension 將 hot path 移出 Python</td><td>cgo 有邊界成本，熱路徑需謹慎</td><td>跨語言邊界不應逐筆呼叫；要 batch 化</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="cases">
+      <div class="section-head">
+        <div>
+          <h2>應用案例分析與圖解</h2>
+          <p>選型應以場景為中心：控制迴圈、資料服務、分析腳本、邊緣閘道、雲端 API 的瓶頸完全不同。</p>
+        </div>
+      </div>
+      <div class="case-grid">
+        <article class="case-card">
+          <span class="badge green">案例 A</span>
+          <h3>PLC / DDC 邊緣資料採集</h3>
+          <p>需求：Modbus TCP / BACnet/IP polling、MQTT 上送、timeout 與 retry。</p>
+          <ul>
+            <li><strong>Go：</strong>推薦作長駐 gateway，goroutine 管理多設備連線。</li>
+            <li><strong>C：</strong>用於硬體 SDK、serial driver、極低階 protocol。</li>
+            <li><strong>Python：</strong>適合測試腳本與資料清洗。</li>
+          </ul>
+        </article>
+        <article class="case-card">
+          <span class="badge amber">案例 B</span>
+          <h3>資料分析與 AI 前處理</h3>
+          <p>需求：CSV / database / API 整合、快速驗證模型與圖表。</p>
+          <ul>
+            <li><strong>Python：</strong>推薦，pandas / NumPy 把熱路徑交給 native library。</li>
+            <li><strong>Go：</strong>適合把穩定流程做成 CLI 或 service。</li>
+            <li><strong>C：</strong>適合少數極高效能 native module。</li>
+          </ul>
+        </article>
+        <article class="case-card">
+          <span class="badge">案例 C</span>
+          <h3>SCADA / API 後端服務</h3>
+          <p>需求：大量連線、JSON API、metrics、trace、部署簡單。</p>
+          <ul>
+            <li><strong>Go：</strong>推薦作 API / worker / telemetry service。</li>
+            <li><strong>Python：</strong>適合管理後台、低吞吐 API、automation。</li>
+            <li><strong>C：</strong>不建議作一般業務 API，除非有特殊硬體或 latency 需求。</li>
+          </ul>
+        </article>
+      </div>
+      <div class="flow-wrap" style="margin-top:12px">
+        <svg class="diagram" viewBox="0 0 1080 450" role="img" aria-labelledby="application-selection-title application-selection-desc">
+          <title id="application-selection-title">工業自動化應用選型圖</title>
+          <desc id="application-selection-desc">以硬體 driver、edge gateway、資料匯流、API dashboard、historian 與 data science 分層呈現 C、Go、Python 的建議位置。</desc>
+          <defs>
+            <marker id="casearrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L9,3 L0,6 Z" fill="#52637a"></path>
+            </marker>
+          </defs>
+          <rect x="0" y="0" width="1080" height="450" fill="#fff"></rect>
+          <text x="40" y="42" font-size="22" font-weight="800" fill="#17202a">工業自動化應用選型圖</text>
+          <rect x="52" y="90" width="210" height="82" rx="8" fill="#f0fdf4" stroke="#86efac"></rect>
+          <text x="78" y="124" font-size="17" font-weight="800" fill="#166534">硬體 / Driver</text>
+          <text x="78" y="150" font-size="13" fill="#166534">C：低階控制、SDK、RTU</text>
+          <rect x="52" y="220" width="210" height="82" rx="8" fill="#eff6ff" stroke="#93c5fd"></rect>
+          <text x="78" y="254" font-size="17" font-weight="800" fill="#1d4ed8">Edge Gateway</text>
+          <text x="78" y="280" font-size="13" fill="#1d4ed8">Go：polling、buffer、MQTT</text>
+          <rect x="52" y="350" width="210" height="60" rx="8" fill="#fffbeb" stroke="#fbbf24"></rect>
+          <text x="78" y="384" font-size="17" font-weight="800" fill="#92400e">分析 / 報表</text>
+          <text x="78" y="404" font-size="13" fill="#92400e">Python：ETL、AI、快速圖表</text>
+          <line x1="262" y1="131" x2="390" y2="214" stroke="#52637a" stroke-width="3" marker-end="url(#casearrow)"></line>
+          <line x1="262" y1="261" x2="390" y2="246" stroke="#52637a" stroke-width="3" marker-end="url(#casearrow)"></line>
+          <line x1="262" y1="380" x2="390" y2="286" stroke="#52637a" stroke-width="3" marker-end="url(#casearrow)"></line>
+          <rect x="402" y="160" width="270" height="150" rx="8" fill="#f8fafc" stroke="#cbd5e1"></rect>
+          <text x="434" y="200" font-size="18" font-weight="800" fill="#334155">資料匯流層</text>
+          <text x="434" y="230" font-size="14" fill="#475569">timeout / retry / batch read</text>
+          <text x="434" y="258" font-size="14" fill="#475569">queue / backpressure</text>
+          <text x="434" y="286" font-size="14" fill="#475569">metrics / trace / log correlation</text>
+          <line x1="672" y1="235" x2="800" y2="235" stroke="#52637a" stroke-width="3" marker-end="url(#casearrow)"></line>
+          <rect x="812" y="92" width="220" height="82" rx="8" fill="#eff6ff" stroke="#93c5fd"></rect>
+          <text x="838" y="126" font-size="17" font-weight="800" fill="#1d4ed8">API / Dashboard</text>
+          <text x="838" y="152" font-size="13" fill="#1d4ed8">Go / Python：依吞吐量選</text>
+          <rect x="812" y="210" width="220" height="82" rx="8" fill="#f0fdf4" stroke="#86efac"></rect>
+          <text x="838" y="244" font-size="17" font-weight="800" fill="#166534">Historian / DB</text>
+          <text x="838" y="270" font-size="13" fill="#166534">批次寫入比逐筆 syscall 重要</text>
+          <rect x="812" y="328" width="220" height="82" rx="8" fill="#fffbeb" stroke="#fbbf24"></rect>
+          <text x="838" y="362" font-size="17" font-weight="800" fill="#92400e">Data Science</text>
+          <text x="838" y="388" font-size="13" fill="#92400e">Python notebook / model pipeline</text>
+        </svg>
+      </div>
+    </section>
+
+    <section id="verification">
+      <div class="section-head">
+        <div>
+          <h2>Verification</h2>
+          <p>正式比較應在同一台機器、同一資料量、同一演算法、同一 I/O 條件下重跑。不要拿不同 library 或不同資料結構的結果直接比較語言。</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <h3>CPU-bound benchmark 範例流程</h3>
+          <pre><code># C
+clang -O2 bench.c -o bench-c
+time ./bench-c
+
+# Go
+go test -bench=. -benchmem -count=10 ./...
+
+# Python
+python3 -m timeit -s 'from bench import run' 'run()'</code></pre>
+        </div>
+        <div class="panel">
+          <h3>System call / I/O benchmark 範例流程</h3>
+          <pre><code># 檔案 I/O：固定 buffer size 與檔案大小
+dd if=/dev/zero of=/tmp/test.bin bs=1m count=256
+
+# 網路 I/O：固定 payload、concurrency、keep-alive
+wrk -t4 -c128 -d30s http://127.0.0.1:8080/health
+
+# 觀測 syscall
+# Linux: strace
+strace -c ./your-program
+
+# macOS: dtruss，可能需要 sudo，且可能受 SIP 限制
+sudo dtruss ./your-program</code></pre>
+        </div>
+      </div>
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead><tr><th>控制變因</th><th>原因</th><th>建議</th></tr></thead>
+          <tbody>
+            <tr><td>演算法相同</td><td>不同演算法會掩蓋語言差異</td><td>先寫 reference，再移植到三種語言</td></tr>
+            <tr><td>資料量相同</td><td>小資料容易被啟動時間或 cache effect 影響</td><td>至少測 warm-up、短任務、長任務三種情境</td></tr>
+            <tr><td>I/O 條件相同</td><td>disk、network、PLC response time 會主導結果</td><td>固定 timeout、buffer size、payload、連線數</td></tr>
+            <tr><td>使用 production build</td><td>debug build 會低估 C / Go</td><td>C 用 `-O2` 或 `-O3`；Go 用正式 test benchmark；Python 標明 CPython / PyPy / native extension</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="troubleshooting">
+      <div class="section-head">
+        <div>
+          <h2>Troubleshooting 與 Best Practices</h2>
+          <p>效能問題要先定位瓶頸，再選語言或重構。直接重寫通常不是第一步。</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <h3>常見誤判</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>症狀</th><th>可能原因</th><th>處理</th></tr></thead>
+              <tbody>
+                <tr><td>Python 很慢</td><td>純 Python 逐筆 loop</td><td>改成 batch、NumPy、C extension，或把服務化部分改 Go</td></tr>
+                <tr><td>Go latency 抖動</td><td>allocation / GC / blocking syscall</td><td>看 pprof、runtime metrics、trace，不先猜 GC</td></tr>
+                <tr><td>C 服務不穩</td><td>memory safety、thread race、錯誤處理不足</td><td>加 ASAN、TSAN、valgrind、明確 ownership</td></tr>
+                <tr><td>I/O 仍慢</td><td>設備或網路 timeout，不是語言</td><td>調整 polling interval、batch read、connection reuse、backpressure</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Best Practices</h3>
+          <ul>
+            <li>CPU hot path：先 profile，再用 C / Go / native extension 精準優化。</li>
+            <li>I/O service：優先減少 syscall 次數、重用連線、增加 batch、設定 timeout。</li>
+            <li>工業通訊：明確定義 polling interval、retry、timeout、fail-safe 與 alarm 行為。</li>
+            <li>混合架構：Python 做分析與 orchestration，Go 做長駐服務，C 做 driver / protocol hot path。</li>
+            <li>正式報告：保留 benchmark command、硬體資訊、OS、compiler/interpreter version 與原始結果。</li>
+          </ul>
+          <p class="note">結論：C 是控制能力上限，Python 是開發效率上限，Go 是 production service 的平衡點。實務上常用混合架構，而不是強迫所有場景只用一種語言。</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

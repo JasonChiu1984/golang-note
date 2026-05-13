@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Golang 全語法應用 SVG 圖解補充頁</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --ink: #17202a;
+      --muted: #5b6675;
+      --line: #d8e0eb;
+      --blue: #2563eb;
+      --teal: #0f766e;
+      --green: #15803d;
+      --amber: #b45309;
+      --rose: #be123c;
+      --violet: #7c3aed;
+      --slate: #475569;
+      --shadow: 0 16px 36px rgba(15, 23, 42, .08);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      line-height: 1.62;
+    }
+    a { color: inherit; text-decoration: none; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+    .hero {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 34px 20px 30px;
+      border-bottom: 1px solid rgba(255, 255, 255, .12);
+    }
+    .hero-inner {
+      max-width: 1220px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(330px, .9fr);
+      gap: 22px;
+      align-items: center;
+    }
+    .eyebrow { margin: 0 0 10px; color: #93c5fd; font-weight: 800; }
+    h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.5rem); line-height: 1.08; letter-spacing: 0; }
+    h2 { margin: 0; font-size: clamp(1.45rem, 2.6vw, 2.2rem); letter-spacing: 0; }
+    h3 { margin: 10px 0 8px; font-size: 1.15rem; letter-spacing: 0; }
+    .hero p { margin: 16px 0 0; color: #cbd5e1; max-width: 820px; }
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .stat {
+      display: block;
+      border: 1px solid rgba(255, 255, 255, .14);
+      background: rgba(255, 255, 255, .06);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .stat strong { display: block; font-size: 1.82rem; line-height: 1; }
+    .stat span { display: block; margin-top: 5px; color: #cbd5e1; font-size: .88rem; }
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(246, 248, 251, .95);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px);
+    }
+    .toolbar-inner {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 10px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .btn {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      padding: 8px 11px;
+      border-radius: 8px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .btn:hover, .btn:focus-visible { border-color: var(--blue); color: var(--blue); background: #eff6ff; outline: none; }
+    main { max-width: 1220px; margin: 0 auto; padding: 22px 20px 64px; }
+    section { margin: 26px 0; scroll-margin-top: 82px; }
+    .section-head { display: flex; justify-content: space-between; gap: 16px; align-items: end; margin-bottom: 14px; }
+    .section-head p, .muted { color: var(--muted); }
+    .section-head p { margin: 6px 0 0; }
+    .panel, .card, details {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .panel { padding: 16px; }
+    .grid-2, .grid-3 {
+      display: grid;
+      gap: 14px;
+    }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+    table { width: 100%; min-width: 920px; border-collapse: collapse; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { background: #eef3f8; color: #334155; font-size: .86rem; text-transform: uppercase; letter-spacing: .03em; }
+    td { color: #2f3a48; }
+    .svg-shell {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      box-shadow: var(--shadow);
+      padding: 12px;
+      overflow-x: auto;
+    }
+    svg {
+      display: block;
+      width: 100%;
+      min-width: 900px;
+      height: auto;
+      font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", ui-sans-serif, system-ui, sans-serif;
+    }
+    .svg-title { font-weight: 900; fill: #17202a; }
+    .svg-muted { fill: #64748b; }
+    .svg-code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .node { fill: #fff; stroke: #cbd5e1; stroke-width: 2; rx: 8; }
+    .node-blue { fill: #eff6ff; stroke: #bfdbfe; }
+    .node-teal { fill: #ecfdf5; stroke: #99f6e4; }
+    .node-amber { fill: #fffbeb; stroke: #fde68a; }
+    .node-rose { fill: #fff1f2; stroke: #fecdd3; }
+    .node-violet { fill: #f5f3ff; stroke: #ddd6fe; }
+    .line { fill: none; stroke: #94a3b8; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .line-blue { stroke: #2563eb; }
+    .line-teal { stroke: #0f766e; }
+    .line-amber { stroke: #b45309; }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 2px 8px;
+      border-radius: 5px;
+      background: #e6f3f1;
+      color: var(--teal);
+      font-size: .82rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .card { padding: 16px; }
+    .card p { margin: 6px 0 0; color: var(--muted); }
+    details { margin: 10px 0; }
+    summary {
+      cursor: pointer;
+      padding: 13px 16px;
+      font-weight: 900;
+      color: #1f2937;
+      background: #f8fafc;
+    }
+    details .detail-body { padding: 0 16px 16px; }
+    pre {
+      margin: 10px 0 0;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #0f172a;
+      color: #e2e8f0;
+      overflow-x: auto;
+    }
+    .note {
+      border-left: 4px solid var(--teal);
+      padding: 12px 14px;
+      background: #ecfdf5;
+      color: #164e45;
+      border-radius: 0 8px 8px 0;
+    }
+    @media (max-width: 860px) {
+      .hero-inner, .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .hero, main, .toolbar-inner { padding-left: 12px; padding-right: 12px; }
+      .section-head { display: block; }
+      svg { min-width: 760px; }
+    }
+  </style>
+</head>
+<body id="top">
+  <header class="hero">
+    <div class="hero-inner">
+      <div>
+        <p class="eyebrow">Supplement Page / SVG Syntax Application Map</p>
+        <h1>Golang 全語法應用 SVG 圖解補充頁</h1>
+        <p>此頁是獨立補充頁，不修改原始整合課程內容。目標是把 Go 語法從「記憶語法」轉成「知道在專案哪裡使用」：每個語法類別都用 SVG 顯示用途、流向與工程落點。</p>
+      </div>
+      <div class="hero-stats" aria-label="頁面摘要">
+        <a class="stat" href="#keyword-map"><strong>25</strong><span>Go keywords 全覆蓋</span></a>
+        <a class="stat" href="#syntax-flow"><strong>12</strong><span>語法應用域</span></a>
+        <a class="stat" href="#application-panels"><strong>8</strong><span>專案應用 SVG 場景</span></a>
+        <a class="stat" href="#coverage-matrix"><strong>1</strong><span>完整驗收矩陣</span></a>
+      </div>
+    </div>
+  </header>
+
+  <nav class="toolbar" aria-label="補充頁導覽">
+    <div class="toolbar-inner">
+      <a class="btn" href="#syntax-flow">語法到專案</a>
+      <a class="btn" href="#keyword-map">Keyword 圖</a>
+      <a class="btn" href="#application-panels">應用場景</a>
+      <a class="btn" href="#coverage-matrix">覆蓋矩陣</a>
+      <a class="btn" href="#examples">範例</a>
+      <a class="btn" href="#verification">驗證</a>
+    </div>
+  </nav>
+
+  <main>
+    <section id="syntax-flow">
+      <div class="section-head">
+        <div>
+          <h2>語法如何落到專案結構</h2>
+          <p>Go 語法不是孤立知識。實務上會沿著 package、資料模型、行為、抽象、併發、測試與部署逐層落地。</p>
+        </div>
+        <span class="tag">Architecture SVG</span>
+      </div>
+      <div class="svg-shell">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" role="img" aria-labelledby="syntax-flow-title syntax-flow-desc">
+          <title id="syntax-flow-title">Go 語法到專案應用流程圖</title>
+          <desc id="syntax-flow-desc">從 package 宣告、資料結構、控制流程、函式方法、抽象與併發，連到測試與 production 專案。</desc>
+          <defs>
+            <marker id="arrow-blue" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+              <path d="M2 2 L10 6 L2 10 Z" fill="#2563eb"/>
+            </marker>
+            <marker id="arrow-teal" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+              <path d="M2 2 L10 6 L2 10 Z" fill="#0f766e"/>
+            </marker>
+          </defs>
+          <g id="background"></g>
+          <g id="connectors">
+            <path class="line line-blue" marker-end="url(#arrow-blue)" d="M210 150 H318"/>
+            <path class="line line-blue" marker-end="url(#arrow-blue)" d="M440 150 H548"/>
+            <path class="line line-blue" marker-end="url(#arrow-blue)" d="M670 150 H778"/>
+            <path class="line line-blue" marker-end="url(#arrow-blue)" d="M900 150 H1008"/>
+            <path class="line line-teal" marker-end="url(#arrow-teal)" d="M560 232 V302"/>
+            <path class="line line-teal" marker-end="url(#arrow-teal)" d="M560 386 V446"/>
+            <path class="line" d="M125 232 C125 300 230 302 318 302"/>
+            <path class="line" d="M1015 232 C1015 300 900 302 778 302"/>
+          </g>
+          <g id="nodes">
+            <rect class="node node-blue" x="30" y="90" width="180" height="120"/>
+            <text class="svg-title" x="120" y="124" text-anchor="middle" font-size="18">Package 邊界</text>
+            <text class="svg-code" x="120" y="154" text-anchor="middle" font-size="14">package / import</text>
+            <text class="svg-muted" x="120" y="182" text-anchor="middle" font-size="13">決定模組與依賴</text>
+
+            <rect class="node node-teal" x="320" y="90" width="180" height="120"/>
+            <text class="svg-title" x="410" y="124" text-anchor="middle" font-size="18">資料模型</text>
+            <text class="svg-code" x="410" y="154" text-anchor="middle" font-size="14">type / struct / map</text>
+            <text class="svg-muted" x="410" y="182" text-anchor="middle" font-size="13">描述 domain state</text>
+
+            <rect class="node node-amber" x="550" y="90" width="180" height="120"/>
+            <text class="svg-title" x="640" y="124" text-anchor="middle" font-size="18">流程控制</text>
+            <text class="svg-code" x="640" y="154" text-anchor="middle" font-size="14">if / for / switch</text>
+            <text class="svg-muted" x="640" y="182" text-anchor="middle" font-size="13">選擇、迭代、分派</text>
+
+            <rect class="node node-violet" x="780" y="90" width="180" height="120"/>
+            <text class="svg-title" x="870" y="124" text-anchor="middle" font-size="18">行為封裝</text>
+            <text class="svg-code" x="870" y="154" text-anchor="middle" font-size="14">func / method</text>
+            <text class="svg-muted" x="870" y="182" text-anchor="middle" font-size="13">將規則變成 API</text>
+
+            <rect class="node node-rose" x="1010" y="90" width="160" height="120"/>
+            <text class="svg-title" x="1090" y="124" text-anchor="middle" font-size="18">抽象邊界</text>
+            <text class="svg-code" x="1090" y="154" text-anchor="middle" font-size="14">interface</text>
+            <text class="svg-muted" x="1090" y="182" text-anchor="middle" font-size="13">替換實作與測試</text>
+
+            <rect class="node" x="320" y="302" width="180" height="100"/>
+            <text class="svg-title" x="410" y="335" text-anchor="middle" font-size="17">錯誤與資源</text>
+            <text class="svg-code" x="410" y="362" text-anchor="middle" font-size="14">error / defer</text>
+            <text class="svg-muted" x="410" y="385" text-anchor="middle" font-size="12">穩定失敗路徑</text>
+
+            <rect class="node" x="550" y="302" width="180" height="100"/>
+            <text class="svg-title" x="640" y="335" text-anchor="middle" font-size="17">併發協調</text>
+            <text class="svg-code" x="640" y="362" text-anchor="middle" font-size="14">go / chan / select</text>
+            <text class="svg-muted" x="640" y="385" text-anchor="middle" font-size="12">worker、timeout、fan-in</text>
+
+            <rect class="node" x="780" y="302" width="180" height="100"/>
+            <text class="svg-title" x="870" y="335" text-anchor="middle" font-size="17">泛型與組合</text>
+            <text class="svg-code" x="870" y="362" text-anchor="middle" font-size="14">[T any] / ~type</text>
+            <text class="svg-muted" x="870" y="385" text-anchor="middle" font-size="12">可重用資料處理</text>
+
+            <rect class="node node-blue" x="430" y="446" width="260" height="80"/>
+            <text class="svg-title" x="560" y="478" text-anchor="middle" font-size="18">測試與驗收</text>
+            <text class="svg-code" x="560" y="506" text-anchor="middle" font-size="14">testing / benchmark / fuzz</text>
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <section id="keyword-map">
+      <div class="section-head">
+        <div>
+          <h2>Go 25 個 Keyword 應用圖</h2>
+          <p>每個 keyword 都標出最常見的工程用途。這張圖適合作為語法複習與 code review 檢查表。</p>
+        </div>
+        <span class="tag">Keyword Coverage SVG</span>
+      </div>
+      <div class="svg-shell">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" role="img" aria-labelledby="keyword-title keyword-desc">
+          <title id="keyword-title">Go keyword 應用覆蓋圖</title>
+          <desc id="keyword-desc">列出 Go 25 個 keyword 及其專案應用用途。</desc>
+          <g id="background"></g>
+          <g id="labels">
+            <text class="svg-title" x="600" y="42" text-anchor="middle" font-size="28">Go Keywords -> Project Applications</text>
+            <text class="svg-muted" x="600" y="70" text-anchor="middle" font-size="14">宣告、流程、抽象、併發與套件邊界一次對照</text>
+          </g>
+          <g id="keyword-cards" font-size="12">
+            <rect class="node node-blue" x="30" y="96" width="190" height="82"/><text class="svg-code" x="48" y="124" font-size="18">package</text><text x="48" y="150">定義編譯單位</text><text x="48" y="168">建立模組邊界</text>
+            <rect class="node node-blue" x="260" y="96" width="190" height="82"/><text class="svg-code" x="278" y="124" font-size="18">import</text><text x="278" y="150">導入依賴</text><text x="278" y="168">控制耦合方向</text>
+            <rect class="node node-teal" x="490" y="96" width="190" height="82"/><text class="svg-code" x="508" y="124" font-size="18">const</text><text x="508" y="150">不可變設定</text><text x="508" y="168">搭配 iota enum</text>
+            <rect class="node node-teal" x="720" y="96" width="190" height="82"/><text class="svg-code" x="738" y="124" font-size="18">var</text><text x="738" y="150">狀態宣告</text><text x="738" y="168">零值可用設計</text>
+            <rect class="node node-teal" x="950" y="96" width="190" height="82"/><text class="svg-code" x="968" y="124" font-size="18">type</text><text x="968" y="150">命名 domain</text><text x="968" y="168">struct/interface/generic</text>
+
+            <rect class="node node-violet" x="30" y="206" width="190" height="82"/><text class="svg-code" x="48" y="234" font-size="18">func</text><text x="48" y="260">封裝行為</text><text x="48" y="278">API / method / closure</text>
+            <rect class="node node-amber" x="260" y="206" width="190" height="82"/><text class="svg-code" x="278" y="234" font-size="18">if</text><text x="278" y="260">防衛式檢查</text><text x="278" y="278">錯誤與分支</text>
+            <rect class="node node-amber" x="490" y="206" width="190" height="82"/><text class="svg-code" x="508" y="234" font-size="18">else</text><text x="508" y="260">替代分支</text><text x="508" y="278">簡化 decision path</text>
+            <rect class="node node-amber" x="720" y="206" width="190" height="82"/><text class="svg-code" x="738" y="234" font-size="18">switch</text><text x="738" y="260">狀態分派</text><text x="738" y="278">type switch / enum</text>
+            <rect class="node node-amber" x="950" y="206" width="190" height="82"/><text class="svg-code" x="968" y="234" font-size="18">case</text><text x="968" y="260">分派項目</text><text x="968" y="278">狀態與事件處理</text>
+
+            <rect class="node node-amber" x="30" y="316" width="190" height="82"/><text class="svg-code" x="48" y="344" font-size="18">default</text><text x="48" y="370">保底分支</text><text x="48" y="388">select 非阻塞</text>
+            <rect class="node node-amber" x="260" y="316" width="190" height="82"/><text class="svg-code" x="278" y="344" font-size="18">for</text><text x="278" y="370">唯一迴圈</text><text x="278" y="388">poll / retry / scan</text>
+            <rect class="node node-amber" x="490" y="316" width="190" height="82"/><text class="svg-code" x="508" y="344" font-size="18">range</text><text x="508" y="370">遍歷集合</text><text x="508" y="388">slice/map/channel</text>
+            <rect class="node node-rose" x="720" y="316" width="190" height="82"/><text class="svg-code" x="738" y="344" font-size="18">break</text><text x="738" y="370">離開流程</text><text x="738" y="388">loop/select/switch</text>
+            <rect class="node node-rose" x="950" y="316" width="190" height="82"/><text class="svg-code" x="968" y="344" font-size="18">continue</text><text x="968" y="370">跳過本輪</text><text x="968" y="388">資料清洗常用</text>
+
+            <rect class="node node-rose" x="30" y="426" width="190" height="82"/><text class="svg-code" x="48" y="454" font-size="18">fallthrough</text><text x="48" y="480">明確落下</text><text x="48" y="498">少用，需註解理由</text>
+            <rect class="node node-rose" x="260" y="426" width="190" height="82"/><text class="svg-code" x="278" y="454" font-size="18">goto</text><text x="278" y="480">跳到 label</text><text x="278" y="498">只用於罕見收斂清理</text>
+            <rect class="node node-violet" x="490" y="426" width="190" height="82"/><text class="svg-code" x="508" y="454" font-size="18">defer</text><text x="508" y="480">延後清理</text><text x="508" y="498">unlock / close / recover</text>
+            <rect class="node node-violet" x="720" y="426" width="190" height="82"/><text class="svg-code" x="738" y="454" font-size="18">return</text><text x="738" y="480">回傳結果</text><text x="738" y="498">多回傳含 error</text>
+            <rect class="node node-violet" x="950" y="426" width="190" height="82"/><text class="svg-code" x="968" y="454" font-size="18">interface</text><text x="968" y="480">抽象行為</text><text x="968" y="498">mock / adapter</text>
+
+            <rect class="node node-teal" x="30" y="536" width="190" height="82"/><text class="svg-code" x="48" y="564" font-size="18">struct</text><text x="48" y="590">資料聚合</text><text x="48" y="608">DTO / config / entity</text>
+            <rect class="node node-teal" x="260" y="536" width="190" height="82"/><text class="svg-code" x="278" y="564" font-size="18">map</text><text x="278" y="590">key-value index</text><text x="278" y="608">cache / lookup</text>
+            <rect class="node node-teal" x="490" y="536" width="190" height="82"/><text class="svg-code" x="508" y="564" font-size="18">chan</text><text x="508" y="590">goroutine 通訊</text><text x="508" y="608">queue / pipeline</text>
+            <rect class="node node-teal" x="720" y="536" width="190" height="82"/><text class="svg-code" x="738" y="564" font-size="18">go</text><text x="738" y="590">啟動 goroutine</text><text x="738" y="608">背景工作</text>
+            <rect class="node node-teal" x="950" y="536" width="190" height="82"/><text class="svg-code" x="968" y="564" font-size="18">select</text><text x="968" y="590">等待多路 channel</text><text x="968" y="608">timeout/cancel/fan-in</text>
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <section id="application-panels">
+      <div class="section-head">
+        <div>
+          <h2>語法應用場景 SVG</h2>
+          <p>把語法放回實務場景：資料如何被建模、流程如何分派、錯誤如何回傳、併發如何停止。</p>
+        </div>
+        <span class="tag">Application SVG</span>
+      </div>
+      <div class="svg-shell">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" role="img" aria-labelledby="app-title app-desc">
+          <title id="app-title">Go 語法應用場景圖</title>
+          <desc id="app-desc">使用八個應用場景說明 Go 語法在專案中的用途。</desc>
+          <defs>
+            <marker id="arrow-gray" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+              <path d="M2 2 L10 6 L2 10 Z" fill="#64748b"/>
+            </marker>
+          </defs>
+          <g id="background"></g>
+          <g id="connectors">
+            <path class="line" marker-end="url(#arrow-gray)" d="M280 140 H350"/>
+            <path class="line" marker-end="url(#arrow-gray)" d="M570 140 H640"/>
+            <path class="line" marker-end="url(#arrow-gray)" d="M860 140 H930"/>
+            <path class="line" marker-end="url(#arrow-gray)" d="M280 370 H350"/>
+            <path class="line" marker-end="url(#arrow-gray)" d="M570 370 H640"/>
+            <path class="line" marker-end="url(#arrow-gray)" d="M860 370 H930"/>
+          </g>
+          <g id="scenario-cards">
+            <rect class="node node-blue" x="40" y="70" width="240" height="150"/>
+            <text class="svg-title" x="160" y="106" text-anchor="middle" font-size="18">1. Package / Import</text>
+            <text class="svg-code" x="64" y="140" font-size="13">package api</text>
+            <text class="svg-code" x="64" y="164" font-size="13">import "context"</text>
+            <text class="svg-muted" x="64" y="194" font-size="12">用途：把 API、service、store 分層</text>
+
+            <rect class="node node-teal" x="350" y="70" width="220" height="150"/>
+            <text class="svg-title" x="460" y="106" text-anchor="middle" font-size="18">2. Type / Struct</text>
+            <text class="svg-code" x="374" y="140" font-size="13">type Job struct {</text>
+            <text class="svg-code" x="374" y="164" font-size="13">  ID string</text>
+            <text class="svg-code" x="374" y="188" font-size="13">}</text>
+
+            <rect class="node node-amber" x="640" y="70" width="220" height="150"/>
+            <text class="svg-title" x="750" y="106" text-anchor="middle" font-size="18">3. Control Flow</text>
+            <text class="svg-code" x="664" y="140" font-size="13">if err != nil {</text>
+            <text class="svg-code" x="664" y="164" font-size="13">  return err</text>
+            <text class="svg-code" x="664" y="188" font-size="13">}</text>
+
+            <rect class="node node-violet" x="930" y="70" width="220" height="150"/>
+            <text class="svg-title" x="1040" y="106" text-anchor="middle" font-size="18">4. Function / Method</text>
+            <text class="svg-code" x="954" y="140" font-size="13">func (s *Svc) Run()</text>
+            <text class="svg-code" x="954" y="164" font-size="13">func Validate(in Input)</text>
+            <text class="svg-muted" x="954" y="194" font-size="12">用途：封裝規則與副作用</text>
+
+            <rect class="node node-rose" x="40" y="300" width="240" height="150"/>
+            <text class="svg-title" x="160" y="336" text-anchor="middle" font-size="18">5. Interface</text>
+            <text class="svg-code" x="64" y="370" font-size="13">type Store interface {</text>
+            <text class="svg-code" x="64" y="394" font-size="13">  Save(context.Context, Job) error</text>
+            <text class="svg-code" x="64" y="418" font-size="13">}</text>
+
+            <rect class="node node-blue" x="350" y="300" width="220" height="150"/>
+            <text class="svg-title" x="460" y="336" text-anchor="middle" font-size="18">6. Generics</text>
+            <text class="svg-code" x="374" y="370" font-size="13">func Map[T, U any](</text>
+            <text class="svg-code" x="374" y="394" font-size="13">  []T, func(T) U) []U</text>
+            <text class="svg-muted" x="374" y="424" font-size="12">用途：重用資料轉換</text>
+
+            <rect class="node node-teal" x="640" y="300" width="220" height="150"/>
+            <text class="svg-title" x="750" y="336" text-anchor="middle" font-size="18">7. Concurrency</text>
+            <text class="svg-code" x="664" y="370" font-size="13">go worker(ctx, jobs)</text>
+            <text class="svg-code" x="664" y="394" font-size="13">select { case &lt;-ctx.Done(): }</text>
+            <text class="svg-muted" x="664" y="424" font-size="12">用途：可取消背景工作</text>
+
+            <rect class="node node-amber" x="930" y="300" width="220" height="150"/>
+            <text class="svg-title" x="1040" y="336" text-anchor="middle" font-size="18">8. Testing</text>
+            <text class="svg-code" x="954" y="370" font-size="13">func TestX(t *testing.T)</text>
+            <text class="svg-code" x="954" y="394" font-size="13">func BenchmarkX(b *testing.B)</text>
+            <text class="svg-muted" x="954" y="424" font-size="12">用途：固定合約與效能</text>
+          </g>
+          <g id="result-card">
+            <rect class="node" x="270" y="545" width="660" height="85"/>
+            <text class="svg-title" x="600" y="580" text-anchor="middle" font-size="20">專案落點：cmd / internal / pkg / tests / docs</text>
+            <text class="svg-muted" x="600" y="610" text-anchor="middle" font-size="14">語法不是背誦清單，而是 production service 的資料、行為、邊界、併發與驗收方式。</text>
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <section id="coverage-matrix">
+      <div class="section-head">
+        <div>
+          <h2>全語法覆蓋矩陣</h2>
+          <p>此矩陣用來確認頁面涵蓋 Go 語法主軸。細部語法如 selector、index、slice expression、type assertion 與 composite literal 也納入。</p>
+        </div>
+        <span class="tag">Coverage Matrix</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>語法域</th><th>涵蓋語法</th><th>應用場景</th><th>常見風險</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>套件與檔案</td><td><code>package</code>、<code>import</code>、exported identifier、blank import</td><td>拆分 API / service / repository，控制依賴方向</td><td>循環 import、過度使用 global init</td></tr>
+            <tr><td>宣告</td><td><code>const</code>、<code>var</code>、<code>type</code>、<code>func</code>、<code>iota</code>、短變數宣告</td><td>固定設定、狀態、domain type、行為入口</td><td>遮蔽變數、magic number、隱含零值誤用</td></tr>
+            <tr><td>基本型別與運算</td><td>bool、string、integer、float、complex、rune、byte、conversion、operators</td><td>資料轉換、數值計算、狀態判斷</td><td>整數溢位、型別轉換截斷、字串與 byte/rune 混淆</td></tr>
+            <tr><td>複合型別</td><td>array、slice、map、struct、pointer、composite literal、struct tag、embedded field</td><td>DTO、config、cache、buffer、entity</td><td>nil map、slice aliasing、pointer ownership 不清</td></tr>
+            <tr><td>表達式</td><td>selector、index、slice expression、call、type assertion、receive、send</td><td>資料存取、方法呼叫、interface 解包、channel 通訊</td><td>panic、blocking、nil pointer、interface type mismatch</td></tr>
+            <tr><td>控制流程</td><td><code>if</code>、<code>else</code>、<code>for</code>、<code>range</code>、<code>switch</code>、<code>case</code>、<code>default</code>、label、<code>break</code>、<code>continue</code>、<code>goto</code>、<code>fallthrough</code></td><td>validation、retry、parser、state machine、event dispatch</td><td>巢狀過深、fallthrough 語意不明、range 變數捕獲</td></tr>
+            <tr><td>函式與方法</td><td>parameter、return、named return、variadic、closure、method receiver、function value</td><td>封裝 use case、callback、middleware、strategy</td><td>named return 可讀性差、closure 捕獲錯誤、receiver 選擇不一致</td></tr>
+            <tr><td>介面與抽象</td><td><code>interface</code>、method set、type assertion、type switch、empty interface / <code>any</code></td><td>mock、adapter、repository boundary、plugin-like design</td><td>過大 interface、nil interface 陷阱、runtime cast 過多</td></tr>
+            <tr><td>泛型</td><td>type parameter、constraint、type set、<code>comparable</code>、<code>~T</code></td><td>可重用 collection helper、parser、validation、cache key</td><td>約束過度複雜、錯把泛型當繼承</td></tr>
+            <tr><td>錯誤與資源</td><td><code>error</code>、<code>defer</code>、<code>panic</code>、<code>recover</code>、wrapping</td><td>穩定失敗路徑、資源釋放、HTTP error envelope</td><td>吞錯、panic 當流程控制、defer 在迴圈中累積成本</td></tr>
+            <tr><td>併發</td><td><code>go</code>、<code>chan</code>、buffered channel、<code>select</code>、context、sync、atomic</td><td>worker pool、pipeline、timeout、cancel、fan-in/fan-out</td><td>goroutine leak、send on closed channel、data race</td></tr>
+            <tr><td>測試與建置</td><td><code>testing</code>、benchmark、fuzz、build tag、module、embed</td><td>contract test、performance gate、平台差異、靜態資源</td><td>只測 happy path、benchmark 次數不足、build tag 漏測</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="examples">
+      <div class="section-head">
+        <div>
+          <h2>語法應用範例</h2>
+          <p>下列範例對應上方 SVG：從型別、介面、泛型到併發取消，展示語法如何形成可測試的專案單元。</p>
+        </div>
+      </div>
+      <details open>
+        <summary>資料模型 + Interface + Context</summary>
+        <div class="detail-body">
+          <pre><code>type Job struct {
+    ID   string
+    Name string
+}
+
+type Store interface {
+    Save(ctx context.Context, job Job) error
+}
+
+func CreateJob(ctx context.Context, store Store, job Job) error {
+    if job.Name == "" {
+        return fmt.Errorf("name is required")
+    }
+    return store.Save(ctx, job)
+}</code></pre>
+        </div>
+      </details>
+      <details>
+        <summary>泛型資料轉換</summary>
+        <div class="detail-body">
+          <pre><code>func Map[T, U any](items []T, fn func(T) U) []U {
+    out := make([]U, 0, len(items))
+    for _, item := range items {
+        out = append(out, fn(item))
+    }
+    return out
+}</code></pre>
+        </div>
+      </details>
+      <details>
+        <summary>可取消併發與 select</summary>
+        <div class="detail-body">
+          <pre><code>func worker(ctx context.Context, jobs &lt;-chan Job) {
+    for {
+        select {
+        case &lt;-ctx.Done():
+            return
+        case job, ok := &lt;-jobs:
+            if !ok {
+                return
+            }
+            _ = process(job)
+        }
+    }
+}</code></pre>
+        </div>
+      </details>
+    </section>
+
+    <section id="verification">
+      <div class="section-head">
+        <div>
+          <h2>驗證與最佳實務</h2>
+          <p>此頁不取代原始教學內容，只提供圖解補充。維護時要檢查 SVG 可編輯、文字未溢出、語法覆蓋完整。</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h3>驗證指令</h3>
+          <pre><code>rg -n "Go 25 個 Keyword|全語法覆蓋矩陣|type parameter" \
+  圖解筆記3-4整合/golang-syntax-application-svg.html
+
+rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
+  圖解筆記3-4整合/golang-syntax-application-svg.html</code></pre>
+        </div>
+        <div class="card">
+          <h3>維護原則</h3>
+          <p>新增語法時先更新 SVG，再更新覆蓋矩陣與範例；不要把語法卡變成純文字索引。若要接回主頁，建議只新增導覽連結，不改既有章節內容。</p>
+        </div>
+      </div>
+      <p class="note">此補充頁使用透明背景 SVG、明確 viewBox、命名 group、CJK fallback fonts，便於後續在瀏覽器、Figma 或 Illustrator 中檢查與調整。</p>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Golang 常用第三方模組清單 | Golang 學習筆記</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --ink: #17202a;
+      --muted: #5b6675;
+      --line: #d8e0eb;
+      --blue: #2563eb;
+      --teal: #0f766e;
+      --green: #15803d;
+      --amber: #b45309;
+      --rose: #be123c;
+      --slate: #475569;
+      --shadow: 0 16px 36px rgba(15, 23, 42, .08);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+    }
+    a { color: inherit; text-decoration: none; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .hero {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 34px 20px 30px;
+      border-bottom: 1px solid rgba(255,255,255,.12);
+    }
+    .hero-inner {
+      max-width: 1220px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr);
+      gap: 22px;
+      align-items: center;
+    }
+    .eyebrow { margin: 0 0 10px; color: #93c5fd; font-weight: 800; }
+    h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.4rem); line-height: 1.08; letter-spacing: 0; }
+    h2 { margin: 0; font-size: clamp(1.45rem, 2.6vw, 2.1rem); letter-spacing: 0; }
+    h3 { margin: 10px 0 8px; font-size: 1.1rem; letter-spacing: 0; }
+    .hero p { margin: 16px 0 0; color: #cbd5e1; max-width: 820px; }
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .stat {
+      display: block;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .stat strong { display: block; font-size: 1.85rem; line-height: 1; }
+    .stat span { display: block; margin-top: 5px; color: #cbd5e1; font-size: .88rem; }
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(246,248,251,.95);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px);
+    }
+    .toolbar-inner {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 10px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .btn {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      padding: 8px 11px;
+      border-radius: 8px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .btn:hover, .btn.active { border-color: var(--blue); color: var(--blue); background: #eff6ff; }
+    main { max-width: 1220px; margin: 0 auto; padding: 22px 20px 64px; }
+    section { margin: 26px 0; scroll-margin-top: 82px; }
+    .section-head { display: flex; justify-content: space-between; gap: 16px; align-items: end; margin-bottom: 14px; }
+    .section-head p, .muted { color: var(--muted); }
+    .section-head p { margin: 6px 0 0; }
+    .panel, .module-card, .category-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    .panel, .module-card, .category-card { padding: 16px; }
+    .grid-2, .grid-3, .module-grid, .category-grid {
+      display: grid;
+      gap: 12px;
+    }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3, .category-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .module-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #e0f2fe;
+      color: #075985;
+      font-weight: 800;
+      font-size: .78rem;
+    }
+    .badge.green { background: #dcfce7; color: #166534; }
+    .badge.amber { background: #fef3c7; color: #92400e; }
+    .badge.rose { background: #ffe4e6; color: #9f1239; }
+    .badge.slate { background: #e2e8f0; color: #334155; }
+    .search-panel { display: grid; gap: 12px; margin-bottom: 14px; }
+    .search-input {
+      width: 100%;
+      min-height: 46px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+      background: #fff;
+      color: var(--ink);
+    }
+    .filter-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .module-card { border-top: 4px solid var(--blue); }
+    .module-card header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .module-card h3 { margin: 0; line-height: 1.25; }
+    .module-card p { margin: 8px 0; }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 10px 0;
+    }
+    .cmd {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      overflow-x: auto;
+    }
+    .cmd code { white-space: nowrap; }
+    .small-link {
+      display: inline-flex;
+      margin-right: 8px;
+      margin-top: 6px;
+      color: var(--blue);
+      font-weight: 800;
+    }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    th, td { border: 1px solid var(--line); padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f8fafc; }
+    pre {
+      overflow-x: auto;
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: .88rem;
+    }
+    .flow-wrap { overflow-x: auto; }
+    .flow { width: 100%; min-width: 860px; height: auto; display: block; }
+    .flow-bg { fill: #f8fafc; }
+    .flow-line { stroke: #52637a; stroke-width: 3; stroke-linecap: round; fill: none; }
+    .hidden { display: none !important; }
+    @media (max-width: 880px) {
+      .hero-inner, .grid-2, .grid-3, .category-grid, .module-grid { grid-template-columns: 1fr; }
+      .section-head { display: block; }
+      .toolbar { position: static; }
+      .hero { padding-top: 26px; }
+    }
+  </style>
+</head>
+<body id="top">
+  <header class="hero">
+    <div class="hero-inner">
+      <div>
+        <p class="eyebrow">Golang 學習筆記 / Third-party Module Catalog</p>
+        <h1>Golang 常用第三方模組清單</h1>
+        <p>以專案開發角度整理常見 Go module：Web API、資料庫、設定、日誌、觀測性、CLI、測試、訊息佇列、快取、安全與工業資料整合。每個模組都附上安裝指令、適用場景、導入風險與驗證方式。</p>
+      </div>
+      <div class="hero-stats" aria-label="模組清單摘要">
+        <a class="stat" href="#module-catalog"><strong>58</strong><span>常用 module</span></a>
+        <a class="stat" href="#category-map"><strong>11</strong><span>工程分類</span></a>
+        <a class="stat" href="#selection-flow"><strong>5</strong><span>選型步驟</span></a>
+        <a class="stat" href="#verification"><strong>8</strong><span>驗證 gate</span></a>
+      </div>
+    </div>
+  </header>
+
+  <nav class="toolbar" aria-label="第三方模組導覽">
+    <div class="toolbar-inner">
+      <a class="btn" href="index.html">回課程首頁</a>
+      <a class="btn" href="#category-map">分類地圖</a>
+      <a class="btn" href="#module-catalog">模組清單</a>
+      <a class="btn" href="#selection-flow">選型流程</a>
+      <a class="btn" href="#verification">驗證指令</a>
+      <a class="btn" href="#risk-notes">風險註記</a>
+    </div>
+  </nav>
+
+  <main>
+    <section id="category-map">
+      <div class="section-head">
+        <div>
+          <h2>分類地圖</h2>
+          <p>第三方模組不要一次全裝。先按 bounded context 選出必要能力，再用測試、依賴掃描與安全檢查驗收。</p>
+        </div>
+      </div>
+      <div class="category-grid">
+        <article class="category-card"><span class="badge">Web / API</span><h3>Router、middleware、RPC</h3><p class="muted">適合 REST、內部 API、gateway、microservice 通訊。</p></article>
+        <article class="category-card"><span class="badge green">Database</span><h3>SQL、ORM、migration</h3><p class="muted">以 `database/sql`、pgx、migration、transaction boundary 為核心。</p></article>
+        <article class="category-card"><span class="badge amber">Config / CLI</span><h3>設定、命令列、環境變數</h3><p class="muted">讓服務啟動設定可驗證、可覆寫、可文件化。</p></article>
+        <article class="category-card"><span class="badge">Observability</span><h3>log、metrics、trace</h3><p class="muted">production service 必須能對照 request id、error code 與 trace。</p></article>
+        <article class="category-card"><span class="badge green">Testing</span><h3>assert、mock、container test</h3><p class="muted">固定 API contract、資料庫整合、併發與錯誤路徑。</p></article>
+        <article class="category-card"><span class="badge rose">Security</span><h3>JWT、RBAC、crypto helper</h3><p class="muted">導入前要先定義 threat model，不以套件存在取代安全設計。</p></article>
+      </div>
+    </section>
+
+    <section id="selection-flow">
+      <div class="section-head">
+        <div>
+          <h2>選型流程</h2>
+          <p>用工程證據選 module，而不是只看 star 數或網路範例。</p>
+        </div>
+      </div>
+      <div class="panel flow-wrap">
+        <svg class="flow" viewBox="0 0 1120 270" role="img" aria-label="Go 第三方模組選型流程">
+          <defs>
+            <marker id="arrow" viewBox="0 0 12 12" refX="12" refY="6" markerWidth="13" markerHeight="13" markerUnits="userSpaceOnUse" orient="auto">
+              <path d="M 0 0 L 12 6 L 0 12 z" fill="#52637a"></path>
+            </marker>
+          </defs>
+          <rect class="flow-bg" width="1120" height="270" rx="14"></rect>
+          <g class="flow-line" marker-end="url(#arrow)">
+            <path d="M195 110 H282"></path>
+            <path d="M395 110 H482"></path>
+            <path d="M595 110 H682"></path>
+            <path d="M795 110 H882"></path>
+          </g>
+          <g text-anchor="middle" font-weight="800">
+            <rect x="38" y="64" width="158" height="92" rx="10" fill="#dbeafe" stroke="#2563eb"></rect>
+            <text x="117" y="101" font-size="16">需求邊界</text>
+            <text x="117" y="127" fill="#475569" font-size="13">API / DB / CLI</text>
+            <rect x="282" y="64" width="113" height="92" rx="10" fill="#dcfce7" stroke="#16a34a"></rect>
+            <text x="338" y="101" font-size="16">維護狀態</text>
+            <text x="338" y="127" fill="#475569" font-size="13">tag / issue</text>
+            <rect x="482" y="64" width="113" height="92" rx="10" fill="#fef3c7" stroke="#d97706"></rect>
+            <text x="538" y="101" font-size="16">API 穩定</text>
+            <text x="538" y="127" fill="#475569" font-size="13">v1 / semver</text>
+            <rect x="682" y="64" width="113" height="92" rx="10" fill="#ede9fe" stroke="#7c3aed"></rect>
+            <text x="738" y="101" font-size="16">驗證成本</text>
+            <text x="738" y="127" fill="#475569" font-size="13">test / race</text>
+            <rect x="882" y="64" width="180" height="92" rx="10" fill="#ecfeff" stroke="#0f766e"></rect>
+            <text x="972" y="101" font-size="16">導入治理</text>
+            <text x="972" y="127" fill="#475569" font-size="13">go.mod / vuln / docs</text>
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <section id="module-catalog">
+      <div class="section-head">
+        <div>
+          <h2>模組清單</h2>
+          <p>可用分類按鈕與搜尋框快速篩選。建議先從「標準庫能否滿足」開始判斷，再導入第三方 module。</p>
+        </div>
+      </div>
+      <div class="search-panel">
+        <input id="moduleSearch" class="search-input" type="search" placeholder="搜尋：gin、pgx、testing、jwt、modbus、observability...">
+        <div id="categoryFilters" class="filter-row"></div>
+      </div>
+      <div id="moduleGrid" class="module-grid" aria-live="polite"></div>
+    </section>
+
+    <section id="verification">
+      <div class="section-head">
+        <div>
+          <h2>導入驗證指令</h2>
+          <p>每次新增第三方模組都應留下可重複驗證紀錄。</p>
+        </div>
+      </div>
+      <div class="panel">
+        <table>
+          <thead><tr><th>目的</th><th>指令</th><th>驗收重點</th></tr></thead>
+          <tbody>
+            <tr><td>整理依賴</td><td><code>go mod tidy</code></td><td>`go.mod` / `go.sum` 只留下實際需要的 module。</td></tr>
+            <tr><td>校驗 module hash</td><td><code>go mod verify</code></td><td>確認 module cache 未被竄改。</td></tr>
+            <tr><td>列出可更新版本</td><td><code>go list -m -u all</code></td><td>知道導入時是否已落後 major/minor/patch。</td></tr>
+            <tr><td>漏洞掃描</td><td><code>govulncheck ./...</code></td><td>檢查可達漏洞，不只看 dependency tree。</td></tr>
+            <tr><td>全量測試</td><td><code>go test ./... -count=1</code></td><td>避免新依賴破壞既有 package。</td></tr>
+            <tr><td>Race test</td><td><code>go test -race ./...</code></td><td>對 cache、worker、HTTP middleware、DB pool 特別重要。</td></tr>
+            <tr><td>API contract</td><td><code>go test ./internal/api -run 'Test.*Contract' -count=1</code></td><td>第三方 router / encoder / validator 不應改變外部 schema。</td></tr>
+            <tr><td>效能基線</td><td><code>go test -run='^$' -bench=. -benchmem ./...</code></td><td>替換 logger、router、serializer、DB driver 前後要有 benchmark。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="risk-notes">
+      <div class="section-head">
+        <div>
+          <h2>風險註記</h2>
+          <p>第三方 module 是工程資產，也是維護負債。</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <article class="panel">
+          <h3>導入前</h3>
+          <ul>
+            <li>確認標準庫是否已足夠，例如 `net/http`、`database/sql`、`log/slog`、`flag`。</li>
+            <li>確認 module 是否有 tagged version、license、活躍維護、Go version policy。</li>
+            <li>評估 API 是否會滲透到 domain layer，避免未來替換成本過高。</li>
+          </ul>
+        </article>
+        <article class="panel">
+          <h3>導入後</h3>
+          <ul>
+            <li>把初始化與 adapter 放在邊界層，domain / application layer 不直接綁死套件型別。</li>
+            <li>把設定、timeout、retry、logger、metrics label 寫成合約與測試。</li>
+            <li>每次升級保留 changelog、test result、rollback plan。</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section id="source-notes">
+      <div class="section-head">
+        <div>
+          <h2>來源與更新方式</h2>
+          <p>清單以 `pkg.go.dev`、各專案文件與 Go 官方依賴治理流程為基準。實際導入前仍需重新確認版本、license、Go support policy 與 CVE 狀態。</p>
+        </div>
+      </div>
+      <div class="panel">
+        <pre><code>go env GOPROXY
+go list -m -versions &lt;module&gt;
+go list -m -u all
+govulncheck ./...</code></pre>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const modules = [
+      ["Web / API", "github.com/gin-gonic/gin", "Gin", "高生產力 HTTP web framework，適合 REST API、middleware、JSON binding。", "中大型 API、快速產品迭代", "注意 framework context 滲透，handler 外不要直接依賴 gin.Context。", "https://pkg.go.dev/github.com/gin-gonic/gin"],
+      ["Web / API", "github.com/go-chi/chi/v5", "chi", "輕量、idiomatic、相容 net/http 的 router。", "希望保持標準庫 handler 介面的 API service", "適合 production service；middleware chain 要固定順序與 timeout。", "https://pkg.go.dev/github.com/go-chi/chi/v5"],
+      ["Web / API", "github.com/labstack/echo/v4", "Echo", "高效能 web framework，包含 routing、middleware、binding。", "REST API、gateway、後台服務", "框架功能完整，但要控制 dependency boundary。", "https://pkg.go.dev/github.com/labstack/echo/v4"],
+      ["Web / API", "github.com/gofiber/fiber/v2", "Fiber", "Express-like web framework，基於 fasthttp。", "偏 Node/Express 心智模型的 API", "非 net/http 原生模型，導入前確認 middleware 生態與相容性。", "https://pkg.go.dev/github.com/gofiber/fiber/v2"],
+      ["Web / API", "github.com/gorilla/mux", "gorilla/mux", "經典 HTTP router，支援變數、method、host、scheme matching。", "既有專案維護、路由規則較複雜的服務", "新專案需評估維護節奏與替代 router。", "https://pkg.go.dev/github.com/gorilla/mux"],
+      ["Web / API", "google.golang.org/grpc", "gRPC Go", "官方 gRPC Go implementation。", "內部服務通訊、streaming、IDL-first API", "需要定義 timeout、deadline、status code、interceptor 與 proto versioning。", "https://pkg.go.dev/google.golang.org/grpc"],
+      ["Web / API", "connectrpc.com/connect", "Connect", "以 HTTP/1.1、HTTP/2、gRPC-compatible protocol 建 API。", "希望兼顧 browser/client/server RPC 的服務", "需治理 schema evolution、client generation 與 gateway policy。", "https://pkg.go.dev/connectrpc.com/connect"],
+
+      ["Database", "github.com/jackc/pgx/v5", "pgx", "PostgreSQL driver 與 toolkit，支援 pgxpool、copy、batch。", "Postgres-first production service", "設定 pool、statement timeout、context deadline 與 transaction boundary。", "https://pkg.go.dev/github.com/jackc/pgx/v5"],
+      ["Database", "gorm.io/gorm", "GORM", "完整 ORM，支援 association、hooks、preload、transactions、migration。", "CRUD 後台、domain model 與資料表接近的服務", "避免在複雜查詢過度依賴 magic；migration 仍需審核。", "https://pkg.go.dev/gorm.io/gorm"],
+      ["Database", "github.com/jmoiron/sqlx", "sqlx", "在 database/sql 上補強 struct scan、named query。", "想保留 SQL 控制權又減少樣板碼", "仍需自行治理 migration、SQL review、transaction。", "https://pkg.go.dev/github.com/jmoiron/sqlx"],
+      ["Database", "entgo.io/ent", "Ent", "schema-as-code entity framework。", "強型別 schema、GraphQL、複雜關聯模型", "生成碼需要納入 review；schema migration policy 要先定義。", "https://pkg.go.dev/entgo.io/ent"],
+      ["Database", "github.com/pressly/goose/v3", "goose", "SQL migration tool。", "需要版本化 migration 的 service", "migration 需具備 idempotency、rollback、lock 策略。", "https://pkg.go.dev/github.com/pressly/goose/v3"],
+      ["Database", "github.com/golang-migrate/migrate/v4", "golang-migrate", "支援多資料庫與多來源的 migration 工具。", "多環境 DB migration pipeline", "確認 migration source、dirty state、lock 與部署順序。", "https://pkg.go.dev/github.com/golang-migrate/migrate/v4"],
+
+      ["Config / CLI", "github.com/spf13/cobra", "Cobra", "CLI command framework。", "多子命令工具、migration CLI、ops 工具", "CLI flags 與 env config 要有清楚 precedence。", "https://pkg.go.dev/github.com/spf13/cobra"],
+      ["Config / CLI", "github.com/spf13/viper", "Viper", "讀取 env、config file、remote config。", "需要多來源設定的服務", "要避免 silent fallback；錯誤設定需 fail fast。", "https://pkg.go.dev/github.com/spf13/viper"],
+      ["Config / CLI", "github.com/urfave/cli/v2", "urfave/cli", "簡潔 CLI app framework。", "中小型命令列工具", "flag naming、exit code、stderr/stdout contract 要測試。", "https://pkg.go.dev/github.com/urfave/cli/v2"],
+      ["Config / CLI", "github.com/joho/godotenv", "godotenv", "載入 .env 檔。", "本機開發、教學範例", "production 不應依賴 .env 檔；secret 需交給部署平台管理。", "https://pkg.go.dev/github.com/joho/godotenv"],
+      ["Config / CLI", "github.com/caarlos0/env/v11", "caarlos0/env", "以 struct tag 解析 env。", "明確 schema 的服務啟動設定", "需補 validation，不要只靠 parse 成功。", "https://pkg.go.dev/github.com/caarlos0/env/v11"],
+      ["Config / CLI", "github.com/ilyakaznacheev/cleanenv", "cleanenv", "讀取 env 與 config file 到 struct。", "設定檔加環境變數覆寫", "要固定 required 欄位與錯誤訊息。", "https://pkg.go.dev/github.com/ilyakaznacheev/cleanenv"],
+
+      ["Logging / Observability", "go.uber.org/zap", "zap", "高效能 structured logging。", "高吞吐 API、worker、hot path logging", "欄位命名與 sampling policy 要固定；記得 Sync。", "https://pkg.go.dev/go.uber.org/zap"],
+      ["Logging / Observability", "github.com/rs/zerolog", "zerolog", "低 allocation JSON logger。", "高效能 structured log", "事件式 API 可讀性要靠 wrapper 與欄位規範補強。", "https://pkg.go.dev/github.com/rs/zerolog"],
+      ["Logging / Observability", "github.com/sirupsen/logrus", "logrus", "經典 structured logger。", "既有專案維護", "新專案可優先評估 slog、zap、zerolog。", "https://pkg.go.dev/github.com/sirupsen/logrus"],
+      ["Logging / Observability", "github.com/prometheus/client_golang", "Prometheus client_golang", "Prometheus metrics client。", "HTTP metrics、worker metrics、SLO 指標", "label cardinality 必須治理，避免高基數炸掉 TSDB。", "https://pkg.go.dev/github.com/prometheus/client_golang"],
+      ["Logging / Observability", "go.opentelemetry.io/otel", "OpenTelemetry Go", "trace、metrics、context propagation。", "分散式 tracing、跨服務觀測性", "propagator、resource attributes、exporter timeout 要標準化。", "https://pkg.go.dev/go.opentelemetry.io/otel"],
+      ["Logging / Observability", "github.com/getsentry/sentry-go", "Sentry Go", "error tracking 與 panic/reporting。", "API、worker、CLI 錯誤追蹤", "避免上傳敏感資料；flush timeout 要設定。", "https://pkg.go.dev/github.com/getsentry/sentry-go"],
+
+      ["Testing", "github.com/stretchr/testify", "testify", "assert、require、suite、mock。", "單元測試與 contract test", "mock 不應掩蓋 integration behavior；錯誤路徑仍要測。", "https://pkg.go.dev/github.com/stretchr/testify"],
+      ["Testing", "go.uber.org/mock", "uber/mock", "GoMock 維護分支，支援 mock generation。", "interface boundary testing", "只 mock 外部邊界，不 mock domain 規則。", "https://pkg.go.dev/go.uber.org/mock"],
+      ["Testing", "github.com/testcontainers/testcontainers-go", "testcontainers-go", "用 container 跑 integration tests。", "Postgres、Redis、Kafka 整合測試", "CI 需要 Docker runtime；測試時間與清理策略要控管。", "https://pkg.go.dev/github.com/testcontainers/testcontainers-go"],
+      ["Testing", "github.com/DATA-DOG/go-sqlmock", "go-sqlmock", "mock database/sql driver。", "repository unit test", "不要用它替代真 DB migration / query integration test。", "https://pkg.go.dev/github.com/DATA-DOG/go-sqlmock"],
+      ["Testing", "github.com/google/go-cmp", "go-cmp", "結構化 diff 比對。", "複雜 struct、golden tests", "比較選項要集中管理，避免忽略重要欄位。", "https://pkg.go.dev/github.com/google/go-cmp/cmp"],
+
+      ["Validation / Serialization", "github.com/go-playground/validator/v10", "validator", "struct tag validation。", "HTTP request validation、config validation", "錯誤訊息需轉成穩定 API error code，不直接外洩 tag。", "https://pkg.go.dev/github.com/go-playground/validator/v10"],
+      ["Validation / Serialization", "github.com/google/uuid", "uuid", "UUID generation/parsing。", "resource id、request id、correlation id", "確認 UUID version、排序需求與資料庫型別。", "https://pkg.go.dev/github.com/google/uuid"],
+      ["Validation / Serialization", "github.com/segmentio/encoding", "segmentio/encoding", "高效能 JSON/encoding 工具。", "效能敏感 serialization", "替換 encoding/json 前後要有 contract 與 benchmark。", "https://pkg.go.dev/github.com/segmentio/encoding"],
+      ["Validation / Serialization", "google.golang.org/protobuf", "protobuf", "Protocol Buffers Go runtime。", "gRPC、事件 schema、跨語言資料交換", "schema evolution、field number、unknown fields 要治理。", "https://pkg.go.dev/google.golang.org/protobuf"],
+
+      ["Cache / Queue", "github.com/redis/go-redis/v9", "go-redis", "Redis client。", "cache、distributed lock、stream、rate limit", "timeout、pool、retry、key naming 與 TTL 必須標準化。", "https://pkg.go.dev/github.com/redis/go-redis/v9"],
+      ["Cache / Queue", "github.com/segmentio/kafka-go", "kafka-go", "Kafka client。", "事件串流、worker pipeline", "consumer group、offset、retry、DLQ、schema 要先設計。", "https://pkg.go.dev/github.com/segmentio/kafka-go"],
+      ["Cache / Queue", "github.com/IBM/sarama", "Sarama", "成熟 Kafka client。", "既有 Kafka 生態、進階 consumer/producer 控制", "設定多，需固定 retry、acks、timeout 與 rebalance behavior。", "https://pkg.go.dev/github.com/IBM/sarama"],
+      ["Cache / Queue", "github.com/nats-io/nats.go", "NATS Go", "NATS messaging client。", "低延遲 pub/sub、JetStream", "需治理 reconnect、ack、durable consumer、backpressure。", "https://pkg.go.dev/github.com/nats-io/nats.go"],
+      ["Cache / Queue", "github.com/hibiken/asynq", "asynq", "Redis-backed background task queue。", "非同步任務、retry、排程", "任務 idempotency、retry policy、dead letter 要測試。", "https://pkg.go.dev/github.com/hibiken/asynq"],
+
+      ["Security", "github.com/golang-jwt/jwt/v5", "golang-jwt/jwt", "JWT parser/signing library。", "API auth、service token", "必須固定 alg allowlist、clock skew、issuer/audience。", "https://pkg.go.dev/github.com/golang-jwt/jwt/v5"],
+      ["Security", "github.com/casbin/casbin/v2", "Casbin", "RBAC/ABAC authorization library。", "後台權限、租戶權限、策略檔管理", "授權邏輯需有 policy tests；不可只測 happy path。", "https://pkg.go.dev/github.com/casbin/casbin/v2"],
+      ["Security", "golang.org/x/crypto", "x/crypto", "Go extra crypto packages。", "bcrypt、ssh、argon2、acme 等", "crypto 參數要跟 security policy；避免自行組協議。", "https://pkg.go.dev/golang.org/x/crypto"],
+      ["Security", "github.com/lestrrat-go/jwx/v2", "jwx", "JWK/JWS/JWE/JWT toolkit。", "需要完整 JOSE/JWK support 的 auth service", "key rotation、kid、JWKS cache 與演算法限制要測。", "https://pkg.go.dev/github.com/lestrrat-go/jwx/v2"],
+
+      ["HTTP Client / Integration", "github.com/go-resty/resty/v2", "resty", "高階 HTTP client。", "呼叫外部 API、retry、timeout", "要固定 retry 條件、timeout、idempotency 與 request logging。", "https://pkg.go.dev/github.com/go-resty/resty/v2"],
+      ["HTTP Client / Integration", "github.com/hashicorp/go-retryablehttp", "retryablehttp", "帶 retry 的 HTTP client。", "外部 API 不穩定時的 client layer", "retry 不可套在非 idempotent request，並需觀測 retry 次數。", "https://pkg.go.dev/github.com/hashicorp/go-retryablehttp"],
+      ["HTTP Client / Integration", "github.com/sony/gobreaker", "gobreaker", "Circuit breaker。", "外部服務保護、降級策略", "狀態轉換、fallback、metrics 要有測試。", "https://pkg.go.dev/github.com/sony/gobreaker"],
+      ["HTTP Client / Integration", "golang.org/x/sync", "x/sync", "errgroup、semaphore、singleflight。", "併發任務、fan-out、限流", "context cancellation 與 error aggregation 要固定。", "https://pkg.go.dev/golang.org/x/sync"],
+      ["HTTP Client / Integration", "golang.org/x/time", "x/time", "rate limiter。", "API rate limit、worker throttle", "burst、reservation、context deadline 需測試。", "https://pkg.go.dev/golang.org/x/time"],
+
+      ["Industrial / Data", "github.com/goburrow/modbus", "goburrow/modbus", "Modbus TCP/RTU client。", "PLC、DDC、gateway polling", "要定義 timeout、retry、register mapping、word order。", "https://pkg.go.dev/github.com/goburrow/modbus"],
+      ["Industrial / Data", "github.com/grid-x/modbus", "grid-x/modbus", "Modbus library。", "能源、儀表、工業設備整合", "資料型別、endian、polling interval 需文件化。", "https://pkg.go.dev/github.com/grid-x/modbus"],
+      ["Industrial / Data", "github.com/gopcua/opcua", "gopcua/opcua", "OPC UA client/server library。", "SCADA、PLC、設備資料採集", "endpoint、security mode、subscription、reconnect 要設計。", "https://pkg.go.dev/github.com/gopcua/opcua"],
+      ["Industrial / Data", "github.com/eclipse/paho.mqtt.golang", "paho.mqtt.golang", "MQTT client。", "Edge gateway、IoT telemetry", "QoS、retained message、reconnect、offline buffer 要測。", "https://pkg.go.dev/github.com/eclipse/paho.mqtt.golang"],
+      ["Industrial / Data", "github.com/tarm/serial", "tarm/serial", "Serial port access。", "RS-232/RS-485、Modbus RTU gateway", "baud/parity/stop bit/timeout 與 OS 權限要文件化。", "https://pkg.go.dev/github.com/tarm/serial"],
+
+      ["Tools / Build", "github.com/goreleaser/goreleaser/v2", "GoReleaser", "Release automation。", "多平台 binary、checksum、GitHub release", "release config 要 code review，簽章與 artifact policy 要固定。", "https://pkg.go.dev/github.com/goreleaser/goreleaser/v2"],
+      ["Tools / Build", "github.com/swaggo/swag", "swag", "由註解產生 Swagger/OpenAPI。", "REST API 文件", "註解與 contract test 要同步，避免文件漂移。", "https://pkg.go.dev/github.com/swaggo/swag"],
+      ["Tools / Build", "github.com/google/wire", "Wire", "compile-time dependency injection。", "大型 service 組裝", "生成碼要提交或在 CI 產生，provider set 要清楚分層。", "https://pkg.go.dev/github.com/google/wire"],
+      ["Tools / Build", "go.uber.org/fx", "Fx", "runtime dependency injection framework。", "大型 service lifecycle 管理", "生命周期 hook 與 module graph 要可觀測，不要隱藏啟動失敗。", "https://pkg.go.dev/go.uber.org/fx"],
+      ["Tools / Build", "github.com/magefile/mage", "Mage", "Go-based task runner。", "取代 Makefile 的跨平台任務", "task 名稱、env、輸出路徑要穩定。", "https://pkg.go.dev/github.com/magefile/mage"]
+    ];
+
+    const categoryNames = ["全部", ...Array.from(new Set(modules.map((item) => item[0])))];
+    const grid = document.getElementById("moduleGrid");
+    const filters = document.getElementById("categoryFilters");
+    const search = document.getElementById("moduleSearch");
+    let selectedCategory = "全部";
+
+    function renderFilters() {
+      filters.innerHTML = categoryNames.map((name, index) => `<button class="btn ${index === 0 ? "active" : ""}" type="button" data-category="${name}">${name}</button>`).join("");
+    }
+
+    function renderModules() {
+      const keyword = search.value.trim().toLowerCase();
+      const rows = modules.filter((item) => {
+        const haystack = item.join(" ").toLowerCase();
+        const matchCategory = selectedCategory === "全部" || item[0] === selectedCategory;
+        const matchKeyword = !keyword || haystack.includes(keyword);
+        return matchCategory && matchKeyword;
+      });
+      grid.innerHTML = rows.map((item) => {
+        const [category, modulePath, name, summary, useCase, risk, docUrl] = item;
+        return `<article class="module-card">
+          <header>
+            <div>
+              <span class="badge">${category}</span>
+              <h3>${name}</h3>
+            </div>
+            <a class="small-link" href="${docUrl}" target="_blank" rel="noreferrer">pkg.go.dev</a>
+          </header>
+          <p>${summary}</p>
+          <div class="meta">
+            <span class="badge green">適用：${useCase}</span>
+            <span class="badge amber">風險：${risk}</span>
+          </div>
+          <div class="cmd"><code>go get ${modulePath}</code></div>
+        </article>`;
+      }).join("");
+      if (!rows.length) {
+        grid.innerHTML = `<article class="panel"><h3>找不到符合條件的模組</h3><p class="muted">請換成較短的關鍵字，例如 API、Postgres、test、MQTT、Modbus。</p></article>`;
+      }
+    }
+
+    renderFilters();
+    renderModules();
+    filters.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-category]");
+      if (!button) return;
+      selectedCategory = button.dataset.category;
+      filters.querySelectorAll("button").forEach((btn) => btn.classList.toggle("active", btn === button));
+      renderModules();
+    });
+    search.addEventListener("input", renderModules);
+  </script>
+</body>
+</html>

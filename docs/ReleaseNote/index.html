@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Go 1.2-1.26 Release Note 專業整理報告索引 | Golang 學習筆記</title>
+  <title>Go 1.1-1.26 Release Note 專業整理報告索引 | Golang 學習筆記</title>
   <style>
     :root{--bg:#f5f7fa;--paper:#fff;--ink:#172033;--muted:#5f6d7e;--line:#d7e0ea;--head:#eaf0f6;--accent:#0f766e;--blue:#1d4ed8}
     *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.62}
@@ -13,6 +13,14 @@
     .meta-row,.nav{display:flex;flex-wrap:wrap;gap:8px}.meta,.nav a,.actions a{display:inline-flex;align-items:center;min-height:30px;padding:5px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;font-size:13px;font-weight:800}
     .nav{position:sticky;top:0;z-index:2;padding:10px 0;background:rgba(245,247,250,.95);border-bottom:1px solid var(--line)}
     section{margin:24px 0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .section-note{max-width:900px;color:var(--muted)}
+    .roadmap{overflow-x:auto;padding-bottom:4px}.roadmap-track{display:grid;grid-template-columns:repeat(4,minmax(250px,1fr));gap:12px;min-width:1040px}
+    .roadmap-stage{position:relative;min-width:0;border:1px solid var(--line);border-radius:8px;background:#fff;padding:14px}.roadmap-stage:before{content:"";position:absolute;left:18px;right:18px;top:54px;height:4px;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--blue));opacity:.78}
+    .roadmap-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.roadmap-index{display:inline-flex;align-items:center;justify-content:center;width:34px;height:28px;border-radius:999px;background:var(--ink);color:#fff;font-size:12px;font-weight:900;line-height:1}
+    .roadmap-stage h3{margin:24px 0 4px;font-size:19px;line-height:1.25}.roadmap-stage p{margin:8px 0;color:var(--muted)}.roadmap-years{font-size:13px;font-weight:800;color:var(--ink)}
+    .roadmap-versions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.roadmap-versions a{display:inline-flex;align-items:center;min-height:26px;padding:3px 8px;border:1px solid var(--line);border-radius:999px;background:#f8fafc;font-size:12px;font-weight:800}
+    .roadmap-points{margin:12px 0 0;padding-left:18px;color:var(--muted)}.roadmap-points li{margin:4px 0;overflow-wrap:anywhere}
+    .support-svg-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:#fff;padding:10px}.support-svg{display:block;width:100%;min-width:1040px;height:auto}.support-source{margin-top:8px;color:var(--muted);font-size:13px}
     .version-card{min-width:0;border:1px solid var(--line);border-radius:8px;background:#fff;padding:16px}.version-card h2{margin:6px 0 8px}.version-card p{color:var(--muted)}
     .phase{display:inline-flex;max-width:100%;padding:3px 8px;border-radius:999px;background:#e6f3f1;color:var(--accent);font-size:12px;font-weight:900;line-height:1.35;white-space:normal;overflow-wrap:anywhere}
     .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
@@ -24,15 +32,253 @@
 </head>
 <body>
   <header>
-    <h1>Go 1.2-1.26 Release Note 專業整理報告索引</h1>
-    <p class="lead">依官方 Go Release History 與各版本 Release Notes 建立 25 份 major-version 獨立專業整理報告。最新 major 版本為 Go 1.26，最新 patch 狀態記錄至 Go 1.26.3（2026-05-07）。</p>
-    <div class="meta-row"><span class="meta">範圍：Go 1.2 - Go 1.26</span><span class="meta">報告數：25</span><span class="meta">生成時間：2026-05-13 14:35:00 +0800</span><span class="meta">來源：go.dev 官方文件</span></div>
+    <h1>Go 1.1-1.26 Release Note 專業整理報告索引</h1>
+    <p class="lead">依官方 Go Release History 與各版本 Release Notes 建立 26 份 major-version 獨立專業整理報告。最新 major 版本為 Go 1.26，最新 patch 狀態記錄至 Go 1.26.3（2026-05-07）。</p>
+    <div class="meta-row"><span class="meta">範圍：Go 1.1 - Go 1.26</span><span class="meta">報告數：26</span><span class="meta">生成時間：2026-05-13 14:35:00 +0800</span><span class="meta">來源：go.dev 官方文件</span></div>
   </header>
   <main>
-    <nav class="nav" aria-label="Release versions"><a href="#go12">Go 1.2</a><a href="#go13">Go 1.3</a><a href="#go14">Go 1.4</a><a href="#go15">Go 1.5</a><a href="#go16">Go 1.6</a><a href="#go17">Go 1.7</a><a href="#go18">Go 1.8</a><a href="#go19">Go 1.9</a><a href="#go110">Go 1.10</a><a href="#go111">Go 1.11</a><a href="#go112">Go 1.12</a><a href="#go113">Go 1.13</a><a href="#go114">Go 1.14</a><a href="#go115">Go 1.15</a><a href="#go116">Go 1.16</a><a href="#go117">Go 1.17</a><a href="#go118">Go 1.18</a><a href="#go119">Go 1.19</a><a href="#go120">Go 1.20</a><a href="#go121">Go 1.21</a><a href="#go122">Go 1.22</a><a href="#go123">Go 1.23</a><a href="#go124">Go 1.24</a><a href="#go125">Go 1.25</a><a href="#go126">Go 1.26</a></nav>
+    <nav class="nav" aria-label="Release roadmap and versions"><a href="#roadmap">Roadmap</a><a href="#support-status">Support</a><a href="#go11">Go 1.1</a><a href="#go12">Go 1.2</a><a href="#go13">Go 1.3</a><a href="#go14">Go 1.4</a><a href="#go15">Go 1.5</a><a href="#go16">Go 1.6</a><a href="#go17">Go 1.7</a><a href="#go18">Go 1.8</a><a href="#go19">Go 1.9</a><a href="#go110">Go 1.10</a><a href="#go111">Go 1.11</a><a href="#go112">Go 1.12</a><a href="#go113">Go 1.13</a><a href="#go114">Go 1.14</a><a href="#go115">Go 1.15</a><a href="#go116">Go 1.16</a><a href="#go117">Go 1.17</a><a href="#go118">Go 1.18</a><a href="#go119">Go 1.19</a><a href="#go120">Go 1.20</a><a href="#go121">Go 1.21</a><a href="#go122">Go 1.22</a><a href="#go123">Go 1.23</a><a href="#go124">Go 1.24</a><a href="#go125">Go 1.25</a><a href="#go126">Go 1.26</a></nav>
+    <section id="roadmap">
+      <h2>Roadmap 圖表</h2>
+      <p class="section-note">以 Go 1.1 到 Go 1.26 的 release note 主題分期呈現，協助判斷教材、專案升級與 CI/CD 驗證的演進路線。</p>
+      <div class="roadmap"><div class="roadmap-track"><article class="roadmap-stage">
+          <div class="roadmap-top"><span class="roadmap-index">01</span><span class="phase">早期基礎期</span></div>
+          <h3>語言與 Runtime 基礎</h3>
+          <p class="roadmap-years">2013 - 2015 · 5 個 major release</p>
+          <p>以 Go 1 compatibility、Go 1.1 performance、race detector、slice capacity control、internal package、go generate 與 concurrent GC 建立大型專案基礎。</p>
+          <div class="roadmap-versions"><a href="#go11">Go 1.1</a><a href="#go12">Go 1.2</a><a href="#go13">Go 1.3</a><a href="#go14">Go 1.4</a><a href="#go15">Go 1.5</a></div>
+          <ul class="roadmap-points"><li>Go 1 相容承諾</li><li>`-race` / Go 1.1 performance</li><li>slice capacity control</li><li>`internal` / `go generate`</li></ul>
+        </article>
+<article class="roadmap-stage">
+          <div class="roadmap-top"><span class="roadmap-index">02</span><span class="phase">工具鏈成熟期</span></div>
+          <h3>工具鏈與服務端維運成熟</h3>
+          <p class="roadmap-years">2016 - 2018 · 5 個 major release</p>
+          <p>vendor default、HTTP/2、context、SSA、subtests、build/test cache 讓服務端工程流程更可控。</p>
+          <div class="roadmap-versions"><a href="#go16">Go 1.6</a><a href="#go17">Go 1.7</a><a href="#go18">Go 1.8</a><a href="#go19">Go 1.9</a><a href="#go110">Go 1.10</a></div>
+          <ul class="roadmap-points"><li>HTTP/2 與 graceful shutdown</li><li>`context` / subtests</li><li>SSA compiler</li><li>build cache / test cache</li></ul>
+        </article>
+<article class="roadmap-stage">
+          <div class="roadmap-top"><span class="roadmap-index">03</span><span class="phase">Module/泛型期</span></div>
+          <h3>Module、供應鏈與泛型能力</h3>
+          <p class="roadmap-years">2018 - 2022 · 8 個 major release</p>
+          <p>Go modules、GOPROXY、errors wrapping、embed、workspace、generics、fuzzing 與 net/netip 成為現代專案升級主軸。</p>
+          <div class="roadmap-versions"><a href="#go111">Go 1.11</a><a href="#go112">Go 1.12</a><a href="#go113">Go 1.13</a><a href="#go114">Go 1.14</a><a href="#go115">Go 1.15</a><a href="#go116">Go 1.16</a><a href="#go117">Go 1.17</a><a href="#go118">Go 1.18</a></div>
+          <ul class="roadmap-points"><li>Go modules / GOPROXY</li><li>errors wrapping</li><li>`embed` / `io/fs`</li><li>generics / fuzzing</li></ul>
+        </article>
+<article class="roadmap-stage">
+          <div class="roadmap-top"><span class="roadmap-index">04</span><span class="phase">Modern Toolchain and Standard Library Governance Era</span></div>
+          <h3>現代工具鏈、Runtime 與標準庫治理</h3>
+          <p class="roadmap-years">2022 - 2026 · 8 個 major release</p>
+          <p>GOMEMLIMIT、PGO、toolchain management、standard-library modernization、testing/synctest、modernizers 與 Green Tea GC 形成升級治理路線。</p>
+          <div class="roadmap-versions"><a href="#go119">Go 1.19</a><a href="#go120">Go 1.20</a><a href="#go121">Go 1.21</a><a href="#go122">Go 1.22</a><a href="#go123">Go 1.23</a><a href="#go124">Go 1.24</a><a href="#go125">Go 1.25</a><a href="#go126">Go 1.26</a></div>
+          <ul class="roadmap-points"><li>runtime governance / PGO</li><li>toolchain management</li><li>stdlib modernization</li><li>testing / GC / modernizers</li></ul>
+        </article></div></div>
+    </section>
+    <section id="support-status">
+      <h2>目前支援版本 SVG 圖表</h2>
+      <p class="section-note">依官方 Go Release Policy 與 Release History 判定；狀態日期：2026-05-13，最新 patch：Go 1.26.3。</p>
+      <div class="support-svg-wrap">
+        <svg id="support-status-chart" class="support-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 380" role="img" aria-labelledby="support-chart-title support-chart-desc">
+          <title id="support-chart-title">Go 1.1 到 Go 1.26 支援狀態圖表</title>
+          <desc id="support-chart-desc">Go 1.25 和 Go 1.26 為目前支援版本；Go 1.1 到 Go 1.24 為不支援版本。</desc>
+          <g id="legend">
+            <rect x="40" y="26" width="18" height="18" rx="4" fill="#16a34a" />
+            <text x="66" y="40" font-size="14" font-weight="800" fill="#172033">目前支援：Go 1.25 - Go 1.26</text>
+            <rect x="332" y="26" width="18" height="18" rx="4" fill="#fef2f2" stroke="#ef4444" />
+            <text x="358" y="40" font-size="14" font-weight="800" fill="#991b1b">不支援：Go 1.1 - Go 1.24</text>
+          </g>
+          <g id="summary">
+            <rect x="40" y="70" width="340" height="86" rx="8" fill="#ecfdf5" stroke="#bbf7d0" />
+            <text x="62" y="100" font-size="20" font-weight="900" fill="#0f766e">目前支援版本</text>
+            <text x="62" y="128" font-size="16" fill="#172033">Go 1.25、Go 1.26</text>
+            <text x="62" y="148" font-size="12" fill="#526173">仍接收必要的 minor revision 與安全修正</text>
+            <rect x="410" y="70" width="340" height="86" rx="8" fill="#fef2f2" stroke="#ef4444" />
+            <text x="432" y="100" font-size="20" font-weight="900" fill="#991b1b">不支援版本</text>
+            <text x="432" y="128" font-size="16" fill="#172033">Go 1.1 - Go 1.24</text>
+            <text x="432" y="148" font-size="12" fill="#526173">升級評估時應規劃跳版與相容性測試</text>
+            <rect x="780" y="70" width="380" height="86" rx="8" fill="#eff6ff" stroke="#bfdbfe" />
+            <text x="802" y="100" font-size="20" font-weight="900" fill="#1d4ed8">判定規則</text>
+            <text x="802" y="128" font-size="14" fill="#172033">major release 支援到已有兩個更新 major release 為止</text>
+            <text x="802" y="148" font-size="12" fill="#526173">來源：go.dev/doc/devel/release</text>
+          </g>
+          <g id="timeline">
+            <line x1="76" y1="237" x2="1101" y2="237" stroke="#ef4444" stroke-width="4" stroke-linecap="round" />
+            <line x1="1060" y1="237" x2="1101" y2="237" stroke="#16a34a" stroke-width="6" stroke-linecap="round" />
+            <text x="58" y="204" font-size="13" font-weight="900" fill="#991b1b">不支援版本</text>
+            <text x="1038" y="204" font-size="13" font-weight="900" fill="#0f766e">支援窗口</text>
+            <g id="version-nodes">
+              <a href="#go11" aria-label="Go 1.1 不支援">
+              <g id="support-go1-1">
+                <rect x="58" y="222" width="36" height="30" rx="8" fill="#fef2f2" stroke="#ef4444" />
+                <text x="76" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#991b1b">1.1</text>
+              </g>
+            </a>
+<a href="#go12" aria-label="Go 1.2 不支援">
+              <g id="support-go1-2">
+                <rect x="99" y="222" width="36" height="30" rx="8" fill="#fef2f2" stroke="#ef4444" />
+                <text x="117" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#991b1b">1.2</text>
+              </g>
+            </a>
+<a href="#go13" aria-label="Go 1.3 不支援">
+              <g id="support-go1-3">
+                <rect x="140" y="222" width="36" height="30" rx="8" fill="#fef2f2" stroke="#ef4444" />
+                <text x="158" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#991b1b">1.3</text>
+              </g>
+            </a>
+<a href="#go14" aria-label="Go 1.4 不支援">
+              <g id="support-go1-4">
+                <rect x="181" y="222" width="36" height="30" rx="8" fill="#fef2f2" stroke="#ef4444" />
+                <text x="199" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#991b1b">1.4</text>
+              </g>
+            </a>
+<a href="#go15" aria-label="Go 1.5 不支援">
+              <g id="support-go1-5">
+                <rect x="222" y="222" width="36" height="30" rx="8" fill="#fef2f2" stroke="#ef4444" />
+                <text x="240" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#991b1b">1.5</text>
+              </g>
+            </a>
+<a href="#go16" aria-label="Go 1.6 不支援">
+              <g id="support-go1-6">
+                <rect x="263" y="222" width="36" height="30" rx="8" fill="#fef2f2" stroke="#ef4444" />
+                <text x="281" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#991b1b">1.6</text>
+              </g>
+            </a>
+<a href="#go17" aria-label="Go 1.7 不支援">
+              <g id="support-go1-7">
+                <rect x="304" y="222" width="36" height="30" rx="8" fill="#fef2f2" stroke="#ef4444" />
+                <text x="322" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#991b1b">1.7</text>
+              </g>
+            </a>
+<a href="#go18" aria-label="Go 1.8 不支援">
+              <g id="support-go1-8">
+                <rect x="345" y="222" width="36" height="30" rx="8" fill="#fef2f2" stroke="#ef4444" />
+                <text x="363" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#991b1b">1.8</text>
+              </g>
+            </a>
+<a href="#go19" aria-label="Go 1.9 不支援">
+              <g id="support-go1-9">
+                <rect x="386" y="222" width="36" height="30" rx="8" fill="#fef2f2" stroke="#ef4444" />
+                <text x="404" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#991b1b">1.9</text>
+              </g>
+            </a>
+<a href="#go110" aria-label="Go 1.10 不支援">
+              <g id="support-go1-10">
+                <rect x="427" y="222" width="36" height="30" rx="8" fill="#fef2f2" stroke="#ef4444" />
+                <text x="445" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#991b1b">1.10</text>
+              </g>
+            </a>
+<a href="#go111" aria-label="Go 1.11 不支援">
+              <g id="support-go1-11">
+                <rect x="468" y="222" width="36" height="30" rx="8" fill="#fef2f2" stroke="#ef4444" />
+                <text x="486" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#991b1b">1.11</text>
+              </g>
+            </a>
+<a href="#go112" aria-label="Go 1.12 不支援">
+              <g id="support-go1-12">
+                <rect x="509" y="222" width="36" height="30" rx="8" fill="#fef2f2" stroke="#ef4444" />
+                <text x="527" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#991b1b">1.12</text>
+              </g>
+            </a>
+<a href="#go113" aria-label="Go 1.13 不支援">
+              <g id="support-go1-13">
+                <rect x="550" y="222" width="36" height="30" rx="8" fill="#fef2f2" stroke="#ef4444" />
+                <text x="568" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#991b1b">1.13</text>
+              </g>
+            </a>
+<a href="#go114" aria-label="Go 1.14 不支援">
+              <g id="support-go1-14">
+                <rect x="591" y="222" width="36" height="30" rx="8" fill="#fef2f2" stroke="#ef4444" />
+                <text x="609" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#991b1b">1.14</text>
+              </g>
+            </a>
+<a href="#go115" aria-label="Go 1.15 不支援">
+              <g id="support-go1-15">
+                <rect x="632" y="222" width="36" height="30" rx="8" fill="#fef2f2" stroke="#ef4444" />
+                <text x="650" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#991b1b">1.15</text>
+              </g>
+            </a>
+<a href="#go116" aria-label="Go 1.16 不支援">
+              <g id="support-go1-16">
+                <rect x="673" y="222" width="36" height="30" rx="8" fill="#fef2f2" stroke="#ef4444" />
+                <text x="691" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#991b1b">1.16</text>
+              </g>
+            </a>
+<a href="#go117" aria-label="Go 1.17 不支援">
+              <g id="support-go1-17">
+                <rect x="714" y="222" width="36" height="30" rx="8" fill="#fef2f2" stroke="#ef4444" />
+                <text x="732" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#991b1b">1.17</text>
+              </g>
+            </a>
+<a href="#go118" aria-label="Go 1.18 不支援">
+              <g id="support-go1-18">
+                <rect x="755" y="222" width="36" height="30" rx="8" fill="#fef2f2" stroke="#ef4444" />
+                <text x="773" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#991b1b">1.18</text>
+              </g>
+            </a>
+<a href="#go119" aria-label="Go 1.19 不支援">
+              <g id="support-go1-19">
+                <rect x="796" y="222" width="36" height="30" rx="8" fill="#fef2f2" stroke="#ef4444" />
+                <text x="814" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#991b1b">1.19</text>
+              </g>
+            </a>
+<a href="#go120" aria-label="Go 1.20 不支援">
+              <g id="support-go1-20">
+                <rect x="837" y="222" width="36" height="30" rx="8" fill="#fef2f2" stroke="#ef4444" />
+                <text x="855" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#991b1b">1.20</text>
+              </g>
+            </a>
+<a href="#go121" aria-label="Go 1.21 不支援">
+              <g id="support-go1-21">
+                <rect x="878" y="222" width="36" height="30" rx="8" fill="#fef2f2" stroke="#ef4444" />
+                <text x="896" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#991b1b">1.21</text>
+              </g>
+            </a>
+<a href="#go122" aria-label="Go 1.22 不支援">
+              <g id="support-go1-22">
+                <rect x="919" y="222" width="36" height="30" rx="8" fill="#fef2f2" stroke="#ef4444" />
+                <text x="937" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#991b1b">1.22</text>
+              </g>
+            </a>
+<a href="#go123" aria-label="Go 1.23 不支援">
+              <g id="support-go1-23">
+                <rect x="960" y="222" width="36" height="30" rx="8" fill="#fef2f2" stroke="#ef4444" />
+                <text x="978" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#991b1b">1.23</text>
+              </g>
+            </a>
+<a href="#go124" aria-label="Go 1.24 不支援">
+              <g id="support-go1-24">
+                <rect x="1001" y="222" width="36" height="30" rx="8" fill="#fef2f2" stroke="#ef4444" />
+                <text x="1019" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#991b1b">1.24</text>
+              </g>
+            </a>
+<a href="#go125" aria-label="Go 1.25 目前支援">
+              <g id="support-go1-25">
+                <rect x="1042" y="222" width="36" height="30" rx="8" fill="#16a34a" stroke="#0f766e" />
+                <text x="1060" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#ffffff">1.25</text>
+              </g>
+            </a>
+<a href="#go126" aria-label="Go 1.26 目前支援">
+              <g id="support-go1-26">
+                <rect x="1083" y="222" width="36" height="30" rx="8" fill="#0f766e" stroke="#0f766e" />
+                <text x="1101" y="242" text-anchor="middle" font-size="12" font-weight="800" fill="#ffffff">1.26</text>
+              </g>
+            </a>
+            </g>
+            <path d="M 1042 280 L 1119 280" stroke="#0f766e" stroke-width="3" stroke-linecap="round" />
+            <text x="1032" y="306" font-size="13" font-weight="900" fill="#0f766e">目前安全修正窗口</text>
+          </g>
+          <g id="risk-note">
+            <rect x="40" y="326" width="1120" height="36" rx="8" fill="#fff7ed" stroke="#fed7aa" />
+            <text x="60" y="349" font-size="14" fill="#9a3412">工程建議：生產專案若仍在 Go 1.24 或更早版本，應優先規劃升級至 Go 1.25/1.26，並用 build、test、vet、benchmark 與 rollback 計畫收斂風險。</text>
+          </g>
+        </svg>
+      </div>
+      <div class="support-source">官方來源：<a href="https://go.dev/doc/devel/release">Go Release History / Release Policy</a>。</div>
+    </section>
     <section>
       <h2>版本功能矩陣</h2>
-      <div class="table-wrap"><table><thead><tr><th>版本</th><th>日期</th><th>階段</th><th>導入重點</th><th>本地頁</th></tr></thead><tbody><tr><td>Go 1.2</td><td>2013-12-01</td><td>早期基礎期</td><td>以 Go 1 compatibility、slice capacity control、早期 runtime/network patch revisions 作為教材重點。</td><td><a href="go1.2-release-note.html">報告</a></td></tr>
+      <div class="table-wrap"><table><thead><tr><th>版本</th><th>日期</th><th>階段</th><th>導入重點</th><th>本地頁</th></tr></thead><tbody><tr><td>Go 1.1</td><td>2013-05-13</td><td>早期基礎期</td><td>Go 1.1 performance 30%-40%、method values、terminating statement、`-race`、`go1.1` build tag、`bufio.Scanner`、`net` / `time` / `reflect` 大量標準庫更新。</td><td><a href="go1.1-release-note.html">報告</a></td></tr>
+<tr><td>Go 1.2</td><td>2013-12-01</td><td>早期基礎期</td><td>以 Go 1 compatibility、slice capacity control、早期 runtime/network patch revisions 作為教材重點。</td><td><a href="go1.2-release-note.html">報告</a></td></tr>
 <tr><td>Go 1.3</td><td>2014-06-18</td><td>早期基礎期</td><td>用 `sync.Pool`、runtime stack/GC、cgo patch revisions 建立歷史脈絡。</td><td><a href="go1.3-release-note.html">報告</a></td></tr>
 <tr><td>Go 1.4</td><td>2014-12-10</td><td>早期基礎期</td><td>`internal` package、`go generate`、runtime/compiler/security patch。</td><td><a href="go1.4-release-note.html">報告</a></td></tr>
 <tr><td>Go 1.5</td><td>2015-08-19</td><td>早期基礎期</td><td>concurrent GC、toolchain in Go、vendor experiment、GO15VENDOREXPERIMENT。</td><td><a href="go1.5-release-note.html">報告</a></td></tr>
@@ -60,7 +306,16 @@
     </section>
     <section>
       <h2>獨立版本報告</h2>
-      <div class="grid"><article class="version-card" id="go12">
+      <div class="grid"><article class="version-card" id="go11">
+      <div><span class="phase">早期基礎期</span><h2>Go 1.1</h2><p>Go 1.1 是 Go 1 相容承諾後第一個大型版本，核心定位是效能、工具鏈可用性、race detector 與標準庫能力補強。</p></div>
+      <table><tbody>
+        <tr><th>Release date</th><td>2013-05-13</td></tr>
+        <tr><th>Patch revisions</th><td>2</td></tr>
+        <tr><th>導入重點</th><td>Go 1.1 performance 30%-40%、method values、terminating statement、`-race`、`go1.1` build tag、`bufio.Scanner`、`net` / `time` / `reflect` 大量標準庫更新。</td></tr>
+      </tbody></table>
+      <div class="actions"><a href="go1.1-release-note.html">本地專業報告</a><a href="https://go.dev/doc/go1.1">官方文件</a></div>
+    </article>
+<article class="version-card" id="go12">
       <div><span class="phase">早期基礎期</span><h2>Go 1.2</h2><p>Go 1.2 是 Go 1 穩定期早期的重要版本，重點在語言小幅擴充、runtime 穩定、測試與標準庫修正。</p></div>
       <table><tbody>
         <tr><th>Release date</th><td>2013-12-01</td></tr>
@@ -288,7 +543,7 @@
     </section>
     <section>
       <h2>分期說明</h2>
-      <div class="table-wrap"><table><thead><tr><th>分期</th><th>版本範圍</th><th>工程意義</th></tr></thead><tbody><tr><td>早期基礎期</td><td>Go 1.2 - Go 1.5</td><td>語言與 runtime 基礎能力成熟，工具鏈開始穩定化。</td></tr><tr><td>工具鏈成熟期</td><td>Go 1.6 - Go 1.10</td><td>HTTP/2、context、SSA、build/test cache 與標準庫可維運性提升。</td></tr><tr><td>Module/泛型期</td><td>Go 1.11 - Go 1.18</td><td>module、errors wrapping、embed、workspaces、generics 與 fuzzing 成為主軸。</td></tr><tr><td>Modern Toolchain and Standard Library Governance Era</td><td>Go 1.19 - Go 1.26</td><td>runtime governance、PGO、toolchain management、standard-library modernization、testing 與 supply-chain governance 成為主軸。</td></tr></tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th>分期</th><th>版本範圍</th><th>工程意義</th></tr></thead><tbody><tr><td>早期基礎期</td><td>Go 1.1 - Go 1.5</td><td>Go 1 相容承諾後，語言、runtime、工具鏈與標準庫基礎能力逐步成熟。</td></tr><tr><td>工具鏈成熟期</td><td>Go 1.6 - Go 1.10</td><td>HTTP/2、context、SSA、build/test cache 與標準庫可維運性提升。</td></tr><tr><td>Module/泛型期</td><td>Go 1.11 - Go 1.18</td><td>module、errors wrapping、embed、workspaces、generics 與 fuzzing 成為主軸。</td></tr><tr><td>Modern Toolchain and Standard Library Governance Era</td><td>Go 1.19 - Go 1.26</td><td>runtime governance、PGO、toolchain management、standard-library modernization、testing 與 supply-chain governance 成為主軸。</td></tr></tbody></table></div>
     </section>
   </main>
 </body>

@@ -94,7 +94,7 @@
           <table class="summary-table"><colgroup><col><col><col></colgroup><thead><tr><th>審查面向</th><th>結論</th><th>必要動作</th></tr></thead><tbody>
             <tr><td>專案價值</td><td>適合用來理解 Go 1 相容承諾下，語言如何以小步、安全方式演進。</td><td>以 Go 1 compatibility、slice capacity control、早期 runtime/network patch revisions 作為教材重點。</td></tr>
             <tr><td>主要風險</td><td>舊專案多半受 runtime、net、database/sql patch 修正影響，現代專案主要作歷史脈絡參考。</td><td>把風險項目轉成 CI、測試與部署 checklist。</td></tr>
-            <tr><td>版本階段</td><td>早期基礎期：語言與 runtime 基礎能力成熟，工具鏈開始穩定化。</td><td>用分期脈絡判斷是否需要回補歷史教材。</td></tr>
+            <tr><td>版本階段</td><td>早期基礎期：Go 1 相容承諾後，語言、runtime、工具鏈與標準庫基礎能力逐步成熟。</td><td>用分期脈絡判斷是否需要回補歷史教材。</td></tr>
             <tr><td>驗收標準</td><td>需通過 build、test、版本來源連結、patch revision 與本地 HTML 結構檢查。</td><td>在 release PR 或教學更新紀錄中列出證據。</td></tr>
           </tbody></table>
         </div>
@@ -104,7 +104,7 @@
       <div class="section-head"><h2>技術總覽</h2><p>Go 1.2 屬於 早期基礎期，下列主題是本頁的工程導入重點。</p></div>
       <div class="table-wrap"><table><thead><tr><th>主題</th><th>重點</th><th>工程意義</th></tr></thead><tbody>
         <tr><td><span class="tag">Version</span></td><td>Go 1.2 released 2013-12-01</td><td>以 major release note 為主，patch revisions 作為安全與 bugfix 補充。</td></tr>
-        <tr><td><span class="tag blue">Phase</span></td><td>早期基礎期</td><td>語言與 runtime 基礎能力成熟，工具鏈開始穩定化。</td></tr>
+        <tr><td><span class="tag blue">Phase</span></td><td>早期基礎期</td><td>Go 1 相容承諾後，語言、runtime、工具鏈與標準庫基礎能力逐步成熟。</td></tr>
         <tr><td><span class="tag warn">Adoption</span></td><td>以 Go 1 compatibility、slice capacity control、早期 runtime/network patch revisions 作為教材重點。</td><td>升級時應轉成測試、CI 與文件驗收項目。</td></tr>
       </tbody></table></div>
     </section>
