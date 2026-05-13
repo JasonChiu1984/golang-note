@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Golang 圖解筆記 3+4 整合版</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --ink: #17202a;
+      --muted: #5b6675;
+      --line: #d8e0eb;
+      --blue: #2563eb;
+      --teal: #0f766e;
+      --green: #15803d;
+      --amber: #b45309;
+      --rose: #be123c;
+      --violet: #7c3aed;
+      --slate: #475569;
+      --shadow: 0 16px 36px rgba(15, 23, 42, .08);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+    }
+    a { color: inherit; text-decoration: none; }
+    .hero {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 34px 20px 28px;
+      border-bottom: 1px solid rgba(255, 255, 255, .12);
+    }
+    .hero-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(300px, .8fr);
+      gap: 22px;
+      align-items: center;
+    }
+    .eyebrow { margin: 0 0 10px; color: #93c5fd; font-weight: 800; }
+    h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.6rem); line-height: 1.08; letter-spacing: 0; }
+    .hero p { margin: 16px 0 0; color: #cbd5e1; max-width: 780px; }
+    .hero-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .stat {
+      border: 1px solid rgba(255, 255, 255, .14);
+      background: rgba(255, 255, 255, .06);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .stat strong { display: block; font-size: 1.8rem; line-height: 1; }
+    .stat span { display: block; margin-top: 4px; color: #cbd5e1; font-size: .88rem; }
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(246, 248, 251, .95);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px);
+    }
+    .toolbar-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 10px 20px;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+    }
+    .btn {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      padding: 8px 11px;
+      border-radius: 8px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .btn:hover, .btn.active { border-color: var(--blue); color: var(--blue); background: #eff6ff; }
+    main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 64px; }
+    section { margin: 24px 0; scroll-margin-top: 82px; }
+    .section-head { display: flex; justify-content: space-between; gap: 16px; align-items: end; margin-bottom: 14px; }
+    h2 { margin: 0; font-size: clamp(1.45rem, 2.6vw, 2.25rem); letter-spacing: 0; }
+    h3 { margin: 10px 0 8px; font-size: 1.18rem; letter-spacing: 0; }
+    .muted, .section-head p { color: var(--muted); }
+    .section-head p { margin: 6px 0 0; }
+    .panel, .path-card, .jump-card, .index-card, .scenario-card, .walk-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    .panel { padding: 18px; overflow: hidden; }
+    .path-grid, .scenario-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .path-card, .scenario-card, .walk-card { padding: 16px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #e0f2fe;
+      color: #075985;
+      font-weight: 800;
+      font-size: .78rem;
+    }
+    .badge.green { background: #dcfce7; color: #166534; }
+    .badge.amber { background: #fef3c7; color: #92400e; }
+    .badge.rose { background: #ffe4e6; color: #9f1239; }
+    .badge.violet { background: #ede9fe; color: #5b21b6; }
+    .flow {
+      width: 100%;
+      min-width: 760px;
+      height: auto;
+      display: block;
+    }
+    .flow-wrap { overflow-x: auto; }
+    .search-panel {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .search-input {
+      width: 100%;
+      min-height: 46px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+      background: #fff;
+      color: var(--ink);
+    }
+    .filter-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .index-grid, .jump-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .index-card, .jump-card {
+      display: block;
+      min-height: 104px;
+      padding: 12px;
+      text-align: left;
+      cursor: pointer;
+      font: inherit;
+      color: var(--ink);
+      border-top: 4px solid var(--blue);
+    }
+    .index-card:hover, .index-card:focus, .jump-card:hover, .jump-card:focus, .scenario-step:hover, .scenario-step:focus {
+      outline: 3px solid rgba(37, 99, 235, .16);
+      border-color: var(--blue);
+    }
+    .index-card strong, .jump-card strong { display: block; margin: 7px 0 4px; line-height: 1.25; }
+    .index-card span:last-child, .jump-card span:last-child { display: block; color: var(--muted); font-size: .86rem; line-height: 1.45; }
+    .scenario-steps { display: grid; gap: 8px; margin-top: 12px; }
+    .scenario-step {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 10px;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+    .scenario-step strong { display: block; }
+    .scenario-step span { color: var(--muted); font-size: .9rem; }
+    .walk-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .walk-card { border-top: 4px solid var(--teal); }
+    .walk-card pre {
+      overflow-x: auto;
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: .88rem;
+    }
+    details {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #f8fafc;
+      margin-top: 10px;
+    }
+    summary { cursor: pointer; font-weight: 800; }
+    .acceptance, .anti {
+      border-left: 4px solid var(--green);
+      background: #f0fdf4;
+      padding: 10px 12px;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+    .anti { border-left-color: var(--rose); background: #fff1f2; }
+    .reader-shell {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+    }
+    .reader-menu {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 12px;
+      position: sticky;
+      top: 72px;
+    }
+    .reader-menu .btn { display: block; width: 100%; margin: 6px 0; text-align: left; }
+    .reader-frame {
+      width: 100%;
+      min-height: 76vh;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      box-shadow: var(--shadow);
+    }
+    .direct-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    @media (max-width: 940px) {
+      .hero-inner, .path-grid, .scenario-grid, .walk-grid, .reader-shell { grid-template-columns: 1fr; }
+      .reader-menu { position: static; }
+      .index-grid, .jump-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 620px) {
+      .hero, main, .toolbar-inner { padding-left: 12px; padding-right: 12px; }
+      .hero-stats, .index-grid, .jump-grid { grid-template-columns: 1fr; }
+      .flow { min-width: 680px; }
+    }
+  </style>
+</head>
+<body id="top">
+  <header class="hero">
+    <div class="hero-inner">
+      <div>
+        <p class="eyebrow">圖解筆記 3 + 4 / 整合總索引</p>
+        <h1>Golang 從語法到 Production 的完整圖解課</h1>
+        <p>把圖解筆記3的語法、併發、任務系統、200 語法範例、200 常用案例，和圖解筆記4的 Go 1.21-1.26、database/sql、Observability、Production API Flow 合併成同一個可搜尋、可依場景跳轉的工程學習入口。</p>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><strong>40</strong><span>單一語法卡</span></div>
+        <div class="stat"><strong>200</strong><span>常用語法例</span></div>
+        <div class="stat"><strong>200</strong><span>常用案例說明</span></div>
+        <div class="stat"><strong>40</strong><span>真實工程案例</span></div>
+      </div>
+    </div>
+  </header>
+
+  <nav class="toolbar" aria-label="整合版導覽">
+    <div class="toolbar-inner">
+      <a class="btn" href="#roadmap">整合路線</a>
+      <a class="btn" href="#unified-index">統一搜尋</a>
+      <a class="btn" href="#scenario-paths">場景索引</a>
+      <a class="btn" href="#walkthrough">Production Walkthrough</a>
+      <a class="btn" href="#quick-jump">快速跳轉</a>
+      <a class="btn" href="#reader">內嵌閱讀器</a>
+      <a class="btn" href="../圖解筆記3/golang-visual-course.html">開啟圖解筆記3</a>
+      <a class="btn" href="../圖解筆記4/golang-production-advanced.html">開啟圖解筆記4</a>
+    </div>
+  </nav>
+
+  <main>
+    <section id="roadmap">
+      <div class="section-head">
+        <div>
+          <h2>整合學習路線</h2>
+          <p>先用圖解筆記3建立 Go 語法與專案骨架，再用圖解筆記4補上 production 級工程能力。</p>
+        </div>
+      </div>
+      <div class="panel flow-wrap">
+        <svg class="flow" viewBox="0 0 1040 300" role="img" aria-label="圖解筆記3與4整合路線">
+          <rect width="1040" height="300" rx="14" fill="#f8fafc"></rect>
+          <g stroke="#52637a" stroke-width="3.2" stroke-linecap="round" fill="none">
+            <path d="M150 130 H278"></path>
+            <path d="M388 130 H516"></path>
+            <path d="M626 130 H754"></path>
+            <path d="M864 130 H930"></path>
+          </g>
+          <g fill="#52637a">
+            <polygon points="278,120 278,140 296,130"></polygon>
+            <polygon points="516,120 516,140 534,130"></polygon>
+            <polygon points="754,120 754,140 772,130"></polygon>
+            <polygon points="930,120 930,140 948,130"></polygon>
+          </g>
+          <g font-weight="800" text-anchor="middle">
+            <rect x="40" y="86" width="110" height="88" rx="10" fill="#dbeafe" stroke="#2563eb"></rect>
+            <text x="95" y="124" fill="#111827" font-size="17">語法卡</text>
+            <text x="95" y="150" fill="#475569" font-size="13">Note 3</text>
+            <rect x="296" y="86" width="92" height="88" rx="10" fill="#dcfce7" stroke="#16a34a"></rect>
+            <text x="342" y="124" fill="#111827" font-size="17">專案</text>
+            <text x="342" y="150" fill="#475569" font-size="13">Crawler</text>
+            <rect x="534" y="86" width="92" height="88" rx="10" fill="#fef3c7" stroke="#d97706"></rect>
+            <text x="580" y="124" fill="#111827" font-size="17">案例</text>
+            <text x="580" y="150" fill="#475569" font-size="13">200 cases</text>
+            <rect x="772" y="86" width="92" height="88" rx="10" fill="#ede9fe" stroke="#7c3aed"></rect>
+            <text x="818" y="124" fill="#111827" font-size="17">標準庫</text>
+            <text x="818" y="150" fill="#475569" font-size="13">Go 1.21+</text>
+            <rect x="948" y="86" width="72" height="88" rx="10" fill="#ffe4e6" stroke="#be123c"></rect>
+            <text x="984" y="124" fill="#111827" font-size="17">上線</text>
+            <text x="984" y="150" fill="#475569" font-size="13">Prod</text>
+          </g>
+        </svg>
+      </div>
+      <div class="path-grid">
+        <article class="path-card">
+          <span class="badge">圖解筆記3</span>
+          <h3>語法到大型任務系統</h3>
+          <p class="muted">包含語法卡列表、40 張單一語法卡、並發爬蟲架構、工程決策、Production checklist、200 語法範例與 200 常用案例。</p>
+        </article>
+        <article class="path-card">
+          <span class="badge amber">圖解筆記4</span>
+          <h3>Production Advanced 補強</h3>
+          <p class="muted">補上 Go 1.21-1.26 slices/maps/ServeMux、runtime/testing、database/sql、transaction、connection pool、Observability 與 Production API Flow。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="unified-index">
+      <div class="section-head">
+        <div>
+          <h2>統一搜尋 / 總索引</h2>
+          <p>搜尋語法、工程場景、案例與 production 主題；點選結果會在閱讀器打開對應章節。</p>
+        </div>
+      </div>
+      <div class="panel search-panel">
+        <input id="courseSearch" class="search-input" type="search" placeholder="搜尋：API、worker、DB transaction、latency、goroutine、pprof、testing">
+        <div class="filter-row" id="courseFilters"></div>
+      </div>
+      <div class="index-grid" id="courseIndexGrid"></div>
+    </section>
+
+    <section id="scenario-paths">
+      <div class="section-head">
+        <div>
+          <h2>場景索引</h2>
+          <p>用資深工程師的工作場景切入，而不是只按章節線性閱讀。</p>
+        </div>
+      </div>
+      <div class="scenario-grid" id="scenarioGrid"></div>
+    </section>
+
+    <section id="walkthrough">
+      <div class="section-head">
+        <div>
+          <h2>Production Project Walkthrough</h2>
+          <p>一條完整 API + 任務系統路徑，把圖解筆記3的語法、併發與圖解筆記4的 DB、觀測、驗收串起來。</p>
+        </div>
+      </div>
+      <div class="panel flow-wrap">
+        <svg class="flow" viewBox="0 0 1120 360" role="img" aria-label="Production project walkthrough">
+          <rect width="1120" height="360" rx="14" fill="#f8fafc"></rect>
+          <g stroke="#52637a" stroke-width="3.2" stroke-linecap="round" fill="none">
+            <path d="M140 96 H212"></path>
+            <path d="M322 96 H394"></path>
+            <path d="M504 96 H576"></path>
+            <path d="M686 96 H758"></path>
+            <path d="M868 96 H940"></path>
+            <path d="M486 136 C486 190 300 204 300 250"></path>
+            <path d="M668 136 C668 198 560 206 560 250"></path>
+            <path d="M850 136 C850 198 820 206 820 250"></path>
+          </g>
+          <g fill="#52637a">
+            <polygon points="212,86 212,106 230,96"></polygon>
+            <polygon points="394,86 394,106 412,96"></polygon>
+            <polygon points="576,86 576,106 594,96"></polygon>
+            <polygon points="758,86 758,106 776,96"></polygon>
+            <polygon points="940,86 940,106 958,96"></polygon>
+            <polygon points="290,250 310,250 300,268"></polygon>
+            <polygon points="550,250 570,250 560,268"></polygon>
+            <polygon points="810,250 830,250 820,268"></polygon>
+          </g>
+          <g text-anchor="middle" font-weight="800">
+            <rect x="30" y="58" width="110" height="76" rx="10" fill="#dbeafe" stroke="#2563eb"></rect>
+            <text x="85" y="89" font-size="16">HTTP</text>
+            <text x="85" y="113" fill="#475569" font-size="12">validate</text>
+            <rect x="230" y="58" width="92" height="76" rx="10" fill="#ecfeff" stroke="#0f766e"></rect>
+            <text x="276" y="89" font-size="16">Service</text>
+            <text x="276" y="113" fill="#475569" font-size="12">rules</text>
+            <rect x="412" y="58" width="92" height="76" rx="10" fill="#f0fdf4" stroke="#15803d"></rect>
+            <text x="458" y="89" font-size="16">Tx</text>
+            <text x="458" y="113" fill="#475569" font-size="12">boundary</text>
+            <rect x="594" y="58" width="92" height="76" rx="10" fill="#fff7ed" stroke="#b45309"></rect>
+            <text x="640" y="89" font-size="16">Repo</text>
+            <text x="640" y="113" fill="#475569" font-size="12">SQL</text>
+            <rect x="776" y="58" width="92" height="76" rx="10" fill="#fee2e2" stroke="#be123c"></rect>
+            <text x="822" y="89" font-size="16">Queue</text>
+            <text x="822" y="113" fill="#475569" font-size="12">bounded</text>
+            <rect x="958" y="58" width="130" height="76" rx="10" fill="#ede9fe" stroke="#7c3aed"></rect>
+            <text x="1023" y="89" font-size="16">Worker</text>
+            <text x="1023" y="113" fill="#475569" font-size="12">goroutine</text>
+            <rect x="200" y="270" width="200" height="58" rx="10" fill="#ffe4e6" stroke="#be123c"></rect>
+            <text x="300" y="294" font-size="16">Error Flow</text>
+            <text x="300" y="313" fill="#475569" font-size="12">wrap / classify / response</text>
+            <rect x="460" y="270" width="200" height="58" rx="10" fill="#dcfce7" stroke="#15803d"></rect>
+            <text x="560" y="294" font-size="16">Data Flow</text>
+            <text x="560" y="313" fill="#475569" font-size="12">request / tx / result</text>
+            <rect x="720" y="270" width="200" height="58" rx="10" fill="#fef3c7" stroke="#b45309"></rect>
+            <text x="820" y="294" font-size="16">Observability</text>
+            <text x="820" y="313" fill="#475569" font-size="12">log / metric / trace</text>
+          </g>
+        </svg>
+      </div>
+      <div class="walk-grid" id="walkthroughGrid"></div>
+    </section>
+
+    <section id="quick-jump">
+      <div class="section-head">
+        <div>
+          <h2>快速跳轉</h2>
+          <p>點選後會在下方閱讀器開啟對應章節。</p>
+        </div>
+      </div>
+      <div class="jump-grid">
+        <button class="jump-card" style="border-top-color:var(--blue)" data-src="../圖解筆記3/golang-visual-course.html#syntax-index">
+          <span class="badge">Note 3</span>
+          <strong>語法卡列表</strong>
+          <span>40 張 Go 語法卡快速索引。</span>
+        </button>
+        <button class="jump-card" style="border-top-color:var(--teal)" data-src="../圖解筆記3/golang-visual-course.html#project">
+          <span class="badge green">Note 3</span>
+          <strong>大型專案圖解</strong>
+          <span>並發爬蟲 / 任務系統。</span>
+        </button>
+        <button class="jump-card" style="border-top-color:var(--rose)" data-src="../圖解筆記3/golang-visual-course.html#engineering-decisions">
+          <span class="badge rose">Note 3</span>
+          <strong>工程決策</strong>
+          <span>queue、retry、panic、shutdown。</span>
+        </button>
+        <button class="jump-card" style="border-top-color:var(--amber)" data-src="../圖解筆記3/golang-visual-course.html#cases">
+          <span class="badge amber">Note 3</span>
+          <strong>200 常用案例</strong>
+          <span>含 40 個真實工程案例。</span>
+        </button>
+        <button class="jump-card" style="border-top-color:var(--violet)" data-src="../圖解筆記4/golang-production-advanced.html#syntax-index">
+          <span class="badge violet">Note 4</span>
+          <strong>Production 語法索引</strong>
+          <span>slices、maps、ServeMux、DB、Observability。</span>
+        </button>
+        <button class="jump-card" style="border-top-color:var(--green)" data-src="../圖解筆記4/golang-production-advanced.html#modern-stdlib">
+          <span class="badge green">Note 4</span>
+          <strong>Go 1.21-1.26</strong>
+          <span>slices / maps / ServeMux / runtime / testing。</span>
+        </button>
+        <button class="jump-card" style="border-top-color:var(--teal)" data-src="../圖解筆記4/golang-production-advanced.html#database-layer">
+          <span class="badge green">Note 4</span>
+          <strong>Database Layer</strong>
+          <span>database/sql、tx、pool。</span>
+        </button>
+        <button class="jump-card" style="border-top-color:var(--amber)" data-src="../圖解筆記4/golang-production-advanced.html#observability">
+          <span class="badge amber">Note 4</span>
+          <strong>Observability</strong>
+          <span>log、metrics、trace、health、pprof。</span>
+        </button>
+      </div>
+    </section>
+
+    <section id="reader">
+      <div class="section-head">
+        <div>
+          <h2>內嵌閱讀器</h2>
+          <p>在同一頁閱讀圖解筆記3與4；需要獨立視窗時可使用下方直接連結。</p>
+        </div>
+      </div>
+      <div class="reader-shell">
+        <aside class="reader-menu" aria-label="閱讀器章節">
+          <h3>章節切換</h3>
+          <button class="btn active" data-src="../圖解筆記3/golang-visual-course.html#top">圖解筆記3：首頁</button>
+          <button class="btn" data-src="../圖解筆記3/golang-visual-course.html#syntax">圖解筆記3：語法卡</button>
+          <button class="btn" data-src="../圖解筆記3/golang-visual-course.html#syntax-examples-200">圖解筆記3：200 語法範例</button>
+          <button class="btn" data-src="../圖解筆記3/golang-visual-course.html#cases">圖解筆記3：200 常用案例</button>
+          <button class="btn" data-src="../圖解筆記4/golang-production-advanced.html#top">圖解筆記4：首頁</button>
+          <button class="btn" data-src="../圖解筆記4/golang-production-advanced.html#production-flow">圖解筆記4：Production Flow</button>
+          <div class="direct-links">
+            <a class="btn" href="../圖解筆記3/golang-visual-course.html">新頁開 3</a>
+            <a class="btn" href="../圖解筆記4/golang-production-advanced.html">新頁開 4</a>
+          </div>
+        </aside>
+        <iframe class="reader-frame" id="readerFrame" title="圖解筆記整合閱讀器" src="../圖解筆記3/golang-visual-course.html#top"></iframe>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const frame = document.getElementById("readerFrame");
+
+    const courseIndexItems = [
+      ["Go 語法", "語法卡列表", "40 張單一語法卡：go mod、var、slice、interface、goroutine。", "../圖解筆記3/golang-visual-course.html#syntax-index", "syntax var slice map interface goroutine channel select testing"],
+      ["Go 語法", "200 常用語法範例", "日常查用的 Go snippet library，可依分類與關鍵字搜尋。", "../圖解筆記3/golang-visual-course.html#syntax-examples-200", "example snippet defer error context http json test"],
+      ["併發/Worker", "大型並發爬蟲 / 任務系統", "Seed、Queue、Worker Pool、Fetcher、Parser、Store 的完整資料流。", "../圖解筆記3/golang-visual-course.html#project", "crawler worker pool queue fetcher parser store retry"],
+      ["併發/Worker", "工程決策", "bounded queue、retry、panic isolation、Store failure、graceful shutdown。", "../圖解筆記3/golang-visual-course.html#engineering-decisions", "backpressure drop block panic shutdown retry temporary permanent"],
+      ["API", "http.HandlerFunc", "API handler 寫法、錯誤格式、標準庫 HTTP server。", "../圖解筆記3/golang-visual-course.html#syntax-http-handler", "handler api http response request"],
+      ["API", "Go 1.22 ServeMux", "Method route、path variable、routing precedence 與標準 router 取捨。", "../圖解筆記4/golang-production-advanced.html#servemux-card", "ServeMux method route path variable GET POST"],
+      ["DB Transaction", "Database Layer", "database/sql、PingContext、pool、transaction、repository pattern。", "../圖解筆記4/golang-production-advanced.html#database-layer", "database sql transaction repository pool PingContext"],
+      ["DB Transaction", "defer Rollback 模式", "Service 決定交易邊界，repository 封裝 SQL 與資料映射。", "../圖解筆記4/golang-production-advanced.html#db-transaction-card", "transaction rollback commit BeginTx ExecContext"],
+      ["Observability", "Observability", "log/slog、metrics、trace、health check、pprof debug 邊界。", "../圖解筆記4/golang-production-advanced.html#observability", "observability slog metrics trace prometheus opentelemetry health pprof"],
+      ["Production Debug", "Production API Flow", "資料流、錯誤流、觀測流與 response 邊界。", "../圖解筆記4/golang-production-advanced.html#production-flow", "latency error flow data flow correlation request id"],
+      ["Testing", "testing / benchmark / fuzz", "單元測試、table-driven test、benchmark allocation、fuzz 邊界。", "../圖解筆記3/golang-visual-course.html#syntax-test", "testing benchmark fuzz table-driven fake race"],
+      ["Testing", "40 真實工程案例", "40 個案例補上錯誤版本、修正版、驗收測試與 production 指標。", "../圖解筆記3/golang-visual-course.html#cases", "real engineering cases wrong fixed test metric"]
+    ].map(([category, title, summary, src, keywords]) => ({ category, title, summary, src, keywords }));
+
+    const scenarioPaths = [
+      {
+        title: "我要做 API",
+        summary: "從 handler、ServeMux、錯誤回應到測試驗收。",
+        color: "var(--blue)",
+        steps: [
+          ["設計 handler 邊界", "request parse / response format", "../圖解筆記3/golang-visual-course.html#syntax-http-handler"],
+          ["選擇路由方式", "Go 1.22 ServeMux method route", "../圖解筆記4/golang-production-advanced.html#servemux-card"],
+          ["錯誤分類與 response", "domain error 轉 API status", "../圖解筆記4/golang-production-advanced.html#production-error-card"],
+          ["用 httptest 驗收", "成功、錯誤、timeout 都測", "../圖解筆記3/golang-visual-course.html#cases"]
+        ]
+      },
+      {
+        title: "我要做 worker",
+        summary: "從 goroutine、channel、queue、retry 到 graceful shutdown。",
+        color: "var(--rose)",
+        steps: [
+          ["掌握 goroutine / channel", "啟動、傳遞資料、退出條件", "../圖解筆記3/golang-visual-course.html#syntax-goroutine"],
+          ["建立 worker pool", "固定併發、bounded queue", "../圖解筆記3/golang-visual-course.html#syntax-worker-pool"],
+          ["決定滿載策略", "block / drop / backpressure", "../圖解筆記3/golang-visual-course.html#engineering-decisions"],
+          ["觀測 worker 狀態", "queue depth、retry、failed", "../圖解筆記3/golang-visual-course.html#project"]
+        ]
+      },
+      {
+        title: "我要做 DB transaction",
+        summary: "從 database/sql、pool、service 交易邊界到 rollback 驗收。",
+        color: "var(--green)",
+        steps: [
+          ["設定連線池", "sql.Open + PingContext + pool 邊界", "../圖解筆記4/golang-production-advanced.html#db-pool-card"],
+          ["定義交易邊界", "service 控制 BeginTx / Commit", "../圖解筆記4/golang-production-advanced.html#db-transaction-card"],
+          ["Repository 分層", "SQL 與資料映射責任", "../圖解筆記4/golang-production-advanced.html#repository-card"],
+          ["測試失敗路徑", "rollback、timeout、N+1 query", "../圖解筆記3/golang-visual-course.html#cases"]
+        ]
+      },
+      {
+        title: "我要除錯 production latency",
+        summary: "從 metrics 找異常，再用 trace/log/pprof 定位。",
+        color: "var(--amber)",
+        steps: [
+          ["先看 SLI", "error rate、p95/p99、queue depth", "../圖解筆記4/golang-production-advanced.html#otel-card"],
+          ["串 log 與 trace", "request_id / trace_id correlation", "../圖解筆記4/golang-production-advanced.html#slog-card"],
+          ["判斷 debug 邊界", "health、readiness、pprof 權限", "../圖解筆記4/golang-production-advanced.html#health-card"],
+          ["回到錯誤流", "wrap / classify / response", "../圖解筆記4/golang-production-advanced.html#production-flow"]
+        ]
+      }
+    ];
+
+    const walkthroughSteps = [
+      {
+        title: "1. HTTP request + validation",
+        category: "API",
+        src: "../圖解筆記4/golang-production-advanced.html#servemux-card",
+        code: `mux.HandleFunc("POST /jobs", func(w http.ResponseWriter, r *http.Request) {\n\tctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)\n\tdefer cancel()\n\tjob, err := decodeJob(r.Body)\n\tif err != nil { writeError(w, err); return }\n\tid, err := svc.CreateJob(ctx, job)\n\twriteJSON(w, http.StatusAccepted, map[string]string{"id": id})\n})`,
+        steps: ["限制 body size 並驗證欄位。", "request context 下切 timeout。", "錯誤交給統一 writeError。"],
+        anti: "handler 直接寫 DB、直接開 goroutine，讓 transport、business、worker 邊界混在一起。",
+        acceptance: "httptest 覆蓋 202、400、timeout，且 response 格式一致。"
+      },
+      {
+        title: "2. Service + transaction boundary",
+        category: "DB Transaction",
+        src: "../圖解筆記4/golang-production-advanced.html#db-transaction-card",
+        code: `func (s *Service) CreateJob(ctx context.Context, input JobInput) (string, error) {\n\ttx, err := s.db.BeginTx(ctx, nil)\n\tif err != nil { return "", err }\n\tdefer tx.Rollback()\n\tid, err := s.repo.InsertJob(ctx, tx, input)\n\tif err != nil { return "", fmt.Errorf("insert job: %w", err) }\n\tif err := tx.Commit(); err != nil { return "", err }\n\treturn id, nil\n}`,
+        steps: ["service 決定交易範圍。", "repository 接 tx，不自己偷偷開交易。", "commit 成功才回傳 job id。"],
+        anti: "每個 repository 方法自己開 tx，導致一個 use case 無法保證原子性。",
+        acceptance: "注入 repository error 時 rollback 被呼叫，沒有半成品 job。"
+      },
+      {
+        title: "3. Bounded queue + worker enqueue",
+        category: "併發/Worker",
+        src: "../圖解筆記3/golang-visual-course.html#engineering-decisions",
+        code: `select {\ncase s.jobs <- JobTask{ID: id}:\n\tmetrics.JobQueued.Add(ctx, 1)\ncase <-ctx.Done():\n\treturn ctx.Err()\ndefault:\n\tmetrics.JobDropped.Add(ctx, 1)\n\treturn ErrQueueFull\n}`,
+        steps: ["queue 必須有容量上限。", "滿載策略明確選 block/drop/backpressure。", "所有 drop 都有 metric。"],
+        anti: "每個 request 都直接 go process(job)，流量尖峰時 goroutine 無上限成長。",
+        acceptance: "queue 滿載測試會得到 ErrQueueFull，且 dropped counter +1。"
+      },
+      {
+        title: "4. Worker processing + retry policy",
+        category: "併發/Worker",
+        src: "../圖解筆記3/golang-visual-course.html#syntax-worker-pool",
+        code: `for task := range jobs {\n\tif err := worker.Handle(ctx, task); err != nil {\n\t\tif IsTemporary(err) && task.Attempts < 3 { retry(task); continue }\n\t\tdeadLetter.Save(ctx, task, err)\n\t}\n}`,
+        steps: ["temporary error 才 retry。", "retry 有次數與 backoff 上限。", "永久錯誤進 dead-letter 或明確失敗表。"],
+        anti: "所有錯誤無限 retry，讓外部服務故障被放大成 retry storm。",
+        acceptance: "測試 temporary retry 三次、permanent 不重試、dead-letter 可查。"
+      },
+      {
+        title: "5. Observability + production debug",
+        category: "Observability",
+        src: "../圖解筆記4/golang-production-advanced.html#observability",
+        code: `logger.InfoContext(ctx, "job processed",\n\t"job_id", task.ID,\n\t"attempt", task.Attempts,\n\t"trace_id", TraceID(ctx),\n\t"duration_ms", elapsed.Milliseconds(),\n)`,
+        steps: ["log 帶 job_id、trace_id、attempt。", "metrics 記 success、failure、latency。", "高延遲時從 metric 進 trace，再回查 log。"],
+        anti: "只 log 一句 failed，沒有 trace id、沒有錯誤分類，事故時無法定位。",
+        acceptance: "任一失敗 job 可從 metric 找 trace，再從 trace 找 log 與錯誤鏈。"
+      },
+      {
+        title: "6. Testing gate",
+        category: "Testing",
+        src: "../圖解筆記3/golang-visual-course.html#syntax-test",
+        code: `func TestCreateJobQueueFull(t *testing.T) {\n\tsvc := newServiceWithFullQueue()\n\t_, err := svc.CreateJob(context.Background(), validJob())\n\tif !errors.Is(err, ErrQueueFull) { t.Fatalf("want queue full, got %v", err) }\n}`,
+        steps: ["unit test 驗證 service 行為。", "httptest 驗證 HTTP response。", "race test 覆蓋 worker/store shared state。"],
+        anti: "只手動打 API，沒有失敗注入、沒有 race test、沒有 queue 滿載測試。",
+        acceptance: "CI 至少執行 go test ./...、go test -race、核心 handler 測試。"
+      }
+    ];
+
+    function openInReader(src, sourceButton) {
+      frame.src = src;
+      document.querySelectorAll(".reader-menu .btn").forEach((button) => button.classList.remove("active"));
+      if (sourceButton && sourceButton.closest(".reader-menu")) {
+        sourceButton.classList.add("active");
+      }
+      document.getElementById("reader").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function escapeHtml(value) {
+      return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+    }
+
+    function badgeClass(category) {
+      if (category.includes("Worker")) return "rose";
+      if (category.includes("DB")) return "green";
+      if (category.includes("Observability") || category.includes("Debug")) return "amber";
+      if (category.includes("Testing")) return "";
+      return "violet";
+    }
+
+    function renderUnifiedIndex() {
+      const filters = document.getElementById("courseFilters");
+      const search = document.getElementById("courseSearch");
+      const grid = document.getElementById("courseIndexGrid");
+      const categories = ["全部", "Go 語法", "併發/Worker", "API", "DB Transaction", "Production Debug", "Observability", "Testing"];
+      filters.innerHTML = categories.map((category, index) => `<button class="btn ${index === 0 ? "active" : ""}" type="button" data-index-category="${category}">${category}</button>`).join("");
+
+      const render = () => {
+        const active = filters.querySelector(".active")?.dataset.indexCategory || "全部";
+        const keyword = search.value.trim().toLowerCase();
+        const shown = courseIndexItems.filter((item) => {
+          const categoryMatched = active === "全部" || item.category === active;
+          const haystack = `${item.category} ${item.title} ${item.summary} ${item.keywords}`.toLowerCase();
+          return categoryMatched && (!keyword || haystack.includes(keyword));
+        });
+        grid.innerHTML = shown.map((item) => `
+          <button class="index-card" type="button" data-src="${item.src}" style="border-top-color:${item.category.includes("DB") ? "var(--green)" : item.category.includes("Worker") ? "var(--rose)" : item.category.includes("Observability") ? "var(--amber)" : "var(--blue)"}">
+            <span class="badge ${badgeClass(item.category)}">${item.category}</span>
+            <strong>${item.title}</strong>
+            <span>${item.summary}</span>
+          </button>
+        `).join("");
+        grid.querySelectorAll("[data-src]").forEach((button) => button.addEventListener("click", () => openInReader(button.dataset.src, button)));
+      };
+
+      filters.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-index-category]");
+        if (!button) return;
+        filters.querySelectorAll("button").forEach((item) => item.classList.remove("active"));
+        button.classList.add("active");
+        render();
+      });
+      search.addEventListener("input", render);
+      render();
+    }
+
+    function renderScenarioPaths() {
+      const grid = document.getElementById("scenarioGrid");
+      grid.innerHTML = scenarioPaths.map((path) => `
+        <article class="scenario-card" style="border-top:4px solid ${path.color}">
+          <span class="badge">${path.title}</span>
+          <h3>${path.title}</h3>
+          <p class="muted">${path.summary}</p>
+          <div class="scenario-steps">
+            ${path.steps.map((step, index) => `
+              <button class="scenario-step" type="button" data-src="${step[2]}">
+                <strong>${index + 1}. ${step[0]}</strong>
+                <span>${step[1]}</span>
+              </button>
+            `).join("")}
+          </div>
+        </article>
+      `).join("");
+      grid.querySelectorAll("[data-src]").forEach((button) => button.addEventListener("click", () => openInReader(button.dataset.src, button)));
+    }
+
+    function renderProductionWalkthrough() {
+      const grid = document.getElementById("walkthroughGrid");
+      grid.innerHTML = walkthroughSteps.map((step) => `
+        <article class="walk-card">
+          <span class="badge ${badgeClass(step.category)}">${step.category}</span>
+          <h3>${step.title}</h3>
+          <pre><code class="language-go">${escapeHtml(step.code)}</code></pre>
+          <details>
+            <summary>Step-by-step</summary>
+            <ol>${step.steps.map((item) => `<li>${item}</li>`).join("")}</ol>
+          </details>
+          <div class="anti"><strong>反例：</strong>${step.anti}</div>
+          <div class="acceptance"><strong>驗收標準：</strong>${step.acceptance}</div>
+          <button class="btn" type="button" data-src="${step.src}">跳到對應教學章節</button>
+        </article>
+      `).join("");
+      grid.querySelectorAll("[data-src]").forEach((button) => button.addEventListener("click", () => openInReader(button.dataset.src, button)));
+    }
+
+    document.querySelectorAll("[data-src]").forEach((button) => {
+      button.addEventListener("click", () => openInReader(button.dataset.src, button));
+    });
+    renderUnifiedIndex();
+    renderScenarioPaths();
+    renderProductionWalkthrough();
+  </script>
+</body>
+</html>

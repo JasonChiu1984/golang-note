@@ -239,7 +239,7 @@ production-api-worker/
 
 | 對比面向 | `project-concurrent-crawler` | `production-api-worker` |
 |---|---|---|
-| 學習重點 | worker pool、parser、retry | API、transaction、queue shutdown safety、observability、部署 |
+| 學習重點 | worker pool、parser、retry | API、transaction、context-aware retry、queue shutdown safety、observability、部署 |
 | 外部依賴 | 幾乎沒有 | Postgres、OTLP、Docker Compose |
 | 驗證方式 | `go test` 為主 | `go test` + `docker compose up --build` |
 | 專案階段 | 教學型大型專案 | 接近 production 的服務骨架 |
@@ -256,6 +256,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Error envelope | `error.code`、`error.message` | client 無法用穩定 code 做分支 |
 | Observability | route label、trace span name、metrics label、`X-Request-ID` | dashboard、alert 與 incident log 無法對照 |
 | Panic recovery | `500 internal_error` JSON、request id header | panic 造成連線中斷、非 JSON 錯誤或洩漏內部細節 |
+| Retry cancellation | deadlock backoff、request context、shutdown deadline | request 已取消後仍繼續重試 DB 交易或排入 queue |
 | Queue shutdown | enqueue 與 close 的同步邊界 | shutdown 期間可能送入已關閉 channel，造成 panic |
 
 `production-api-worker/docs/api-contract.md` 示範了最小可維護合約：`POST /jobs`、`GET /jobs/{id}`、health endpoint、metrics endpoint、錯誤格式與 release gate。這不是要把文件寫成百科，而是讓每次 release 都能回答三個問題：
@@ -340,14 +341,30 @@ Production service 的生命週期要分清楚三件事：process 是否活著�
 
 Queue 本身也要有明確的同步邊界。`production-api-worker/internal/worker.Queue` 用 mutex 同時保護 `closed` 狀態、enqueue send 與 channel close，確保 `ShutdownContext` 開始後的新 enqueue 只會得到 `ErrClosed`，不會在高併發 shutdown path 觸發 `send on closed channel`。
 
+### Retry Cancellation 與交易重試邊界
+
+Deadlock retry 是 production service 常見的保護機制，但 backoff 不能脫離 request context。若 HTTP request 已 timeout、client 已斷線，或服務進入 shutdown draining，service 應停止後續 DB 交易與 queue enqueue，而不是在背景繼續嘗試。
+
+`production-api-worker/internal/app.Service` 的重試策略：
+
+| 情境 | 行為 |
+|---|---|
+| 第一次交易遇到 `domain.ErrDeadlock` | 記錄 warning，短暫 backoff 後重試 |
+| Backoff 期間 `ctx.Done()` | 立即回傳 `context.Canceled` 或 `context.DeadlineExceeded` |
+| Context 已取消 | 不再呼叫下一次 `WithTx`，也不 enqueue job |
+| 測試保護 | `TestCreateJobStopsDeadlockRetryWhenContextCanceled` 固定取消語意 |
+
+這個案例適合放在第 7 章，因為它同時連到 service transaction boundary、context 傳遞、錯誤分類與 worker queue 的副作用控制。
+
 ### 建議閱讀順序
 
 1. 先完成 `crawler/types.go`、`crawler/crawler.go` 的 worker / queue 心智模型。
 2. 再看 `production-api-worker/internal/app/service.go`，理解 service transaction boundary。
-3. 接著讀 `internal/api/handler.go` 與 `internal/observability/observability.go`，把 HTTP、metrics、tracing 與 panic recovery 串起來。
-4. 再看 `internal/lifecycle/readiness.go` 與 `cmd/api-worker/main.go`，理解 ready / draining / queue drain。
-5. 對照 `docs/api-contract.md` 與 `internal/api/handler_test.go`，理解合約文件如何被測試守住。
-6. 最後跑 `docker compose up --build`，驗證 migration、API、worker、metrics 整體鏈路。
+3. 對照 `internal/app/service_test.go`，理解 deadlock retry 如何被 context cancellation 中斷。
+4. 接著讀 `internal/api/handler.go` 與 `internal/observability/observability.go`，把 HTTP、metrics、tracing 與 panic recovery 串起來。
+5. 再看 `internal/lifecycle/readiness.go` 與 `cmd/api-worker/main.go`，理解 ready / draining / queue drain。
+6. 對照 `docs/api-contract.md` 與 `internal/api/handler_test.go`，理解合約文件如何被測試守住。
+7. 最後跑 `docker compose up --build`，驗證 migration、API、worker、metrics 整體鏈路。
 
 ## 讀程式順序
 

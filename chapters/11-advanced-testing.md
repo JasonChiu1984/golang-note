@@ -220,6 +220,7 @@ func TestCreateJobContract(t *testing.T) {
 | Readiness | draining 時 `/readyz=503` 是部署系統依賴的操作合約 |
 | Worker shutdown | queue 關閉後 enqueue 應回穩定錯誤，concurrent enqueue + shutdown 不應 panic |
 | Panic recovery | 未預期 panic 仍需回穩定 `500 internal_error` JSON |
+| Retry cancellation | retry backoff 遇到 `ctx.Done()` 時應停止，不再重試交易或 enqueue |
 
 對 `production-api-worker` 這類 service，建議把合約測試獨立命名，讓 release gate 可以聚焦執行：
 
@@ -290,6 +291,32 @@ func TestPanicRecoveryContract(t *testing.T) {
 | `X-Request-ID` | panic path 仍能對照 log、trace 與 metrics |
 | Contract test | 防止 middleware 順序調整時破壞 recovery 行為 |
 
+### Retry Cancellation Test
+
+重試測試不能只檢查「最後成功」。Production service 也要測取消路徑：request timeout、client disconnect 或 shutdown context 觸發後，deadlock backoff 應立即停止，避免已取消的 request 繼續消耗 DB connection 或把 job 排入 queue。
+
+```go
+func TestCreateJobStopsDeadlockRetryWhenContextCanceled(t *testing.T) {
+	obs := newTestObs(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	store := &cancelingDeadlockStore{cancel: cancel}
+	queue := &fakeQueue{}
+	service := NewService(store, queue, obs, func() string { return "job-1" })
+
+	_, err := service.CreateJob(ctx, domain.JobInput{Name: "resize"})
+
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("want context canceled, got %v", err)
+	}
+}
+```
+
+| 測試項 | 為什麼重要 |
+|---|---|
+| 取消後只呼叫一次交易 | 防止 request 已取消後仍重試 DB |
+| 回傳 `context.Canceled` / deadline | 讓上層可正確分類 timeout / shutdown |
+| Queue 沒收到 task | 防止被取消的 request 仍產生背景副作用 |
+
 ## 常見陷阱
 
 | 陷阱 | 說明 | 解決方案 |
@@ -314,6 +341,7 @@ func TestPanicRecoveryContract(t *testing.T) {
 | Readiness 合約 | `cd production-api-worker && go test ./internal/api -run 'TestReadinessContract' -count=1` | 固定 ready / draining 對 `/readyz` 的 status code |
 | Worker shutdown 安全 | `cd production-api-worker && go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1` | 固定 queue close/enqueue 同步邊界，避免 shutdown race |
 | Panic recovery 合約 | `cd production-api-worker && go test ./internal/api -run 'TestPanicRecoveryContract' -count=1` | 固定 panic path 的 `500 internal_error` JSON 與 request id |
+| Retry cancellation | `cd production-api-worker && go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1` | 固定 deadlock retry backoff 會尊重 context cancellation / deadline |
 | Module checksum | `go mod verify` | 確認 module cache 未被竄改 |
 | Dependency updates | `go list -m -u all` | 發現可更新版本，作為維護 PR 依據 |
 | Vulnerability scan | `govulncheck ./...` | 掃描實際可達的 Go 已知漏洞 |

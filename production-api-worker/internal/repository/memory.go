@@ -8,19 +8,12 @@ import (
 	"sync"
 	"time"
 
+	"golang-learning-notes/production-api-worker/internal/app"
 	"golang-learning-notes/production-api-worker/internal/domain"
 )
 
-type Tx interface {
-	InsertJob(ctx context.Context, job domain.Job) error
-	UpdateJobStatus(ctx context.Context, id string, status domain.JobStatus) error
-	GetJob(ctx context.Context, id string) (domain.Job, error)
-}
-
-type Store interface {
-	WithTx(ctx context.Context, opts *sql.TxOptions, fn func(Tx) error) error
-	GetJob(ctx context.Context, id string) (domain.Job, error)
-}
+type Tx = app.Tx
+type Store = app.Store
 
 type MemoryStore struct {
 	mu           sync.Mutex

@@ -5,7 +5,7 @@
 - HTTP API：`POST /jobs`、`GET /jobs/{id}`、`GET /metrics`
 - API contract：穩定 request/response/error schema，文件在 `docs/api-contract.md`
 - Request decoding：拒絕 malformed JSON、unknown field、trailing JSON value 與空白 name
-- Service transaction boundary：`sql.TxOptions`、deadlock retry、queue enqueue
+- Service transaction boundary：`sql.TxOptions`、context-aware deadlock retry、queue enqueue
 - Repository：memory 與 Postgres `database/sql` 版本
 - Worker queue：bounded queue、worker pool、shutdown-safe enqueue / close
 - Service lifecycle：`/livez`、`/readyz`、draining、HTTP shutdown、queue drain
@@ -52,6 +52,7 @@ go mod verify
 go list -m -u all
 govulncheck ./...
 go test ./internal/api -run 'Test.*Contract|TestReadinessContract|TestPanicRecoveryContract|TestRequestDecodingContract' -count=1
+go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
 go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1
 go test -race -cover ./...
 go test -run='^$' -bench=. -benchmem -count=10 ./... > bench.txt
@@ -67,6 +68,7 @@ docker compose up --build
 | `go test ./internal/api -run 'TestRequestDecodingContract' -count=1` | 固定 malformed JSON、unknown field、trailing JSON 與空白 name 的 `400 invalid_input` |
 | `go test ./internal/api -run 'TestReadinessContract' -count=1` | 固定 ready / draining 狀態與 `/readyz` status code |
 | `go test ./internal/api -run 'TestPanicRecoveryContract' -count=1` | 固定 handler panic 時的 `500 internal_error` JSON 與 request id 行為 |
+| `go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1` | 固定 deadlock retry backoff 會尊重 request cancellation / shutdown deadline |
 | `go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1` | 固定 queue close/enqueue 同步邊界，避免 shutdown race panic |
 | `go test -race -cover ./...` | 驗證 service、handler、queue 與併發安全 |
 | `go test -run='^$' -bench=. -benchmem -count=10 ./...` | API / worker 效能改動需保留 benchmark 證據 |
@@ -120,6 +122,17 @@ Production shutdown 不是單純收到 signal 就結束 process。`api-worker` �
 | Forced cancel | drain 超時才取消 worker context，避免 shutdown 無限卡住 |
 
 `Queue.Enqueue` 與 `Queue.ShutdownContext` 共用同一個 mutex 保護 `closed` 狀態、channel send 與 channel close。這個邊界確保 shutdown 開始後的新 enqueue 會得到 `worker.ErrClosed`，不會在高併發關閉期間觸發 `send on closed channel` panic。
+
+## Retry Cancellation
+
+資料庫 deadlock retry 不能只用固定 `time.Sleep`。Production request 可能已經 timeout、client 已經斷線，或 shutdown context 已開始取消；此時 service 應停止 backoff 與後續交易重試，避免把已取消的 request 延長成背景工作。
+
+| 場景 | 行為 |
+|---|---|
+| deadlock 後 context 仍有效 | 進入短 backoff，再重試交易 |
+| backoff 期間 context canceled | 立即回傳 `context.Canceled` 或 `context.DeadlineExceeded` |
+| retry 已停止 | 不再 enqueue job，也不再建立後續交易 |
+| Regression test | `TestCreateJobStopsDeadlockRetryWhenContextCanceled` |
 
 ## Performance Diagnostics
 

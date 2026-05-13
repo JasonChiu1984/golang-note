@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.15 - 2026-05-13
+
+- 新增 2026-05-13 11:51 資深工程師審查報告，確認教程已具備 API contract、lifecycle、panic recovery 與 queue shutdown safety，但 service deadlock retry 尚未固定 context cancellation 行為。
+- `production-api-worker/internal/app.Service` 的 deadlock retry backoff 改為監聽 `ctx.Done()`，request timeout、client disconnect 或 shutdown context 取消後會立即停止重試。
+- `app.Service` 改依賴小型 `Store` / `Observability` interface，讓 service 層取消語意可在無 Postgres / OpenTelemetry 下載的受限環境獨立測試。
+- 新增 `TestCreateJobStopsDeadlockRetryWhenContextCanceled`，固定取消後不再呼叫下一次交易，也不 enqueue 背景 job。
+- README、第 7 / 11 章、進階 Cheat Sheet、康乃爾筆記與 `production-api-worker` 文件補上 context-aware retry、cancellation gate 與驗證指令。
+- `docs/index.html` 同步由 `圖解筆記3-4整合/golang-complete-visual-course.html` 複製產生，供 GitHub Pages / docs 入口使用。
+
 ## v1.0.14 - 2026-05-13
 
 - 新增 2026-05-13 11:02 資深工程師審查報告，確認 production API 合約已補齊，但 worker queue shutdown 仍有 enqueue 與 close 競態風險。

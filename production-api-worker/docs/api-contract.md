@@ -1,8 +1,8 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.14 ｜ 基準日期：2026-05-13 ｜ 適用範圍：local memory mode、Postgres + OTLP mode
+> 版本：v1.0.15 ｜ 基準日期：2026-05-13 ｜ 適用範圍：local memory mode、Postgres + OTLP mode
 
-這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 panic recovery 行為需要透過 contract test 保護。
+這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery、retry 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 cancellation 行為需要透過 contract test 保護。
 
 ## Compatibility Rules
 
@@ -16,8 +16,9 @@
 | Readiness lifecycle | draining 時 `/readyz` 必須回 `503`，讓外部導流系統停止送新 request |
 | Panic recovery | 未預期 panic 必須回 `500` 與穩定 `internal_error` JSON，不暴露 panic 細節 |
 | Worker shutdown | queue close 與 enqueue send 必須同步，shutdown 後新 enqueue 回穩定錯誤 |
+| Retry cancellation | deadlock retry 的 backoff 必須尊重 `context` cancellation / deadline |
 | Breaking change | 需新增版本路由或遷移期，不能直接覆蓋既有合約 |
-| Release gate | 任何 handler 或 queue lifecycle 改動都要跑 contract / shutdown safety test |
+| Release gate | 任何 handler、service retry 或 queue lifecycle 改動都要跑 contract / cancellation / shutdown safety test |
 
 ## Request Correlation
 
@@ -159,6 +160,7 @@ X-Request-ID: request-from-client
 ```bash
 cd production-api-worker
 go test ./internal/api -run 'Test.*Contract' -count=1
+go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
 go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1
 ```
 
@@ -172,4 +174,5 @@ go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownD
 - client 提供的 `X-Request-ID` 需原樣回傳；未提供時需自動產生 `req-*`。
 - draining 時 `/readyz` 需回 `503 Service Unavailable`，避免 shutdown 期間仍接收新流量。
 - handler panic 需回 `500 internal_error` JSON，並保留原 `X-Request-ID`。
+- deadlock retry backoff 遇到 context cancellation / deadline 時需停止，不得繼續重試或 enqueue。
 - queue shutdown 期間不可發生 `send on closed channel`；close 後新 enqueue 需回穩定錯誤。
