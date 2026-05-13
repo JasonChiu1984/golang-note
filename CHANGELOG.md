@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.0.26 - 2026-05-13
+
+- 新增 2026-05-13 22:03 資深工程師審查報告，確認 v1.0.25 已補齊 Compose smoke gate，但進階效能教材仍有兩個整合缺口：真實效能測試報告尚未進入主教材 gate，Assembly 微服務補充頁尚未形成正式學習入口與風險邊界。
+- 新增 `TestCode/performance-comparison/run-real-benchmark.sh` 與 `測試報告/`，可自動產出 C / Python / Go 真實效能測試 Markdown 報告與 raw stdout。
+- `docs/c-python-go-performance-supplement.html` 補上真實測試報告區塊、測試環境、圖表、raw output 連結與解讀限制。
+- 新增 `docs/golang-assembly-microservice.html`，說明 Assembly 只作為可量測 hot path adapter，並保留 pure Go fallback、engine selection、benchmark、disassembly 與部署風險。
+- `docs/golang-syntax-application-svg.html` 與整合來源同步保留單語法流程、if 流程圖與語法域圖解，讓語法補充頁更貼近專案應用。
+- README、第 10 章、進階 Cheat Sheet、康乃爾筆記同步加入正式效能報告與 Assembly hot path gate。
+- `.gitignore` 忽略 raw benchmark binary，保留可審查的文字 raw output 與 Markdown 報告。
+- `docs/index.html` 已重新由 `圖解筆記3-4整合/golang-complete-visual-course.html` 複製產生，讓 GitHub Pages 主入口包含 Assembly 微服務補充頁。
+
 ## v1.0.25 - 2026-05-13
 
 - 新增 2026-05-13 21:03 資深工程師審查報告，確認 v1.0.24 已把 CI / release gate 落成 workflow，但 Docker job 仍只驗證 image build，缺少 Compose 端到端 smoke gate。

@@ -217,6 +217,12 @@ go test -bench=. -benchmem -count=10 ./go
 python3 python/bench.py
 ```
 
+若要產出可交付的正式 Markdown 報告，請從 repo root 使用固定 script：
+
+```bash
+./TestCode/performance-comparison/run-real-benchmark.sh
+```
+
 | 項目 | 必須記錄 | 風險 |
 |---|---|---|
 | CPU / OS | CPU 型號、核心數、OS 版本 | 不同 scheduler、cache、turbo policy 會改變結果 |
@@ -224,8 +230,23 @@ python3 python/bench.py
 | Go / Python 版本 | `go version`、`python3 --version` | runtime、GC、interpreter 差異會讓結果漂移 |
 | 資料量 | iteration、payload size、連線數、檔案大小 | 小資料容易被啟動成本或 cache effect 主導 |
 | 原始結果 | stdout、`go test -bench`、`time` / profiler output | 只寫平均倍率無法被 reviewer 追溯 |
+| 報告產物 | `測試報告/<timestamp>-C-Python-Go-真實效能測試報告.md`、`測試報告/raw/<timestamp>/` | 沒有 raw output 就無法重建測試條件 |
 
 > **工程經驗**：跨語言比較最常見的錯誤，是拿 C 的最佳化 build 對 Go/Python 的預設執行，或把 CPU-bound 結論套到 I/O-bound 工業通訊場景。若是 PLC / DDC / SCADA gateway，還要把 polling interval、timeout、retry、設備回應時間與 queue backlog 一起記錄。
+
+## Assembly 微服務的效能邊界
+
+`docs/golang-assembly-microservice.html` 是進階補充教材，不是一般服務設計的預設路線。Assembly 只適合明確可量測、可隔離、可回退的 CPU hot path；HTTP、JSON、DB、queue、OPC UA / Modbus / BACnet polling 都應留在 Go。
+
+| 檢查點 | 必須成立 | 不成立時的決策 |
+|---|---|---|
+| Hot path 證據 | pprof 或 benchmark 顯示該 loop 是主要 CPU 成本 | 不導入 assembly |
+| Fallback | 同一函式有 pure Go 版本與一致性測試 | 先補 fallback 再談最佳化 |
+| Engine selection | `ENGINE=auto|asm|go` 由部署設定控制 | 不讓外部 request 任意切換 |
+| Benchmark | `go test -bench=. -benchmem -count=10` 比較 asm / Go | 小於明確收益時保留 Go |
+| Disassembly | `go tool objdump` 可確認 symbol 與 build tag | 無法驗證就不發布 |
+
+> **工程經驗**：Assembly 的維護成本來自 ABI、GOARCH、build tag、debug 與 onboarding。若 benchmark 只快 1% 到 3%，通常不值得讓團隊承擔跨平台與長期維護成本。
 
 ## Profiling (效能分析)
 

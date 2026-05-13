@@ -771,6 +771,8 @@ synctest.Test(t, func(t *testing.T) {
 |---|---|---|
 | Go benchmark | `go test -run='^$' -bench=. -benchmem -count=10 ./...` | 用 `benchstat` 比較，不用單次數字下結論 |
 | 跨語言比較 | `cd examples/performance-comparison && clang -O2 c/bench.c -o /tmp/bench-c && /tmp/bench-c && go test -bench=. -benchmem -count=10 ./go && python3 python/bench.py` | 記錄 CPU、OS、compiler flags、Go/Python 版本與 raw output |
+| 跨語言正式報告 | `./TestCode/performance-comparison/run-real-benchmark.sh` | 自動輸出 Markdown 報告與 `測試報告/raw/<timestamp>/`，不要提交產生的 benchmark binary |
+| Assembly hot path | `go test ./internal/compute -bench=. -benchmem -count=10` + `go tool objdump -s 'score' ./bin/server` | 只在 pprof 證明 CPU hot path 時使用，且必須有 pure Go fallback |
 | CI workflow | `ruby -e 'require "yaml"; YAML.load_file(".github/workflows/ci.yml")'` + GitHub Actions run | workflow 必須真的存在於 repo，並固定 root test、production contract、race/coverage、govulncheck、Docker build 與 Compose smoke |
 | Compose smoke | `cd production-api-worker && docker compose up -d --build && make compose-smoke && docker compose down -v` | 驗證 livez、readyz、job create/read 與 metrics，不只確認 image build 成功 |
 | CPU 熱點 | `go tool pprof http://localhost:6060/debug/pprof/profile?seconds=30` | 適合 CPU-bound，不適合直接判斷 I/O wait |

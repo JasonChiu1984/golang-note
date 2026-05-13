@@ -11,3 +11,6 @@ coverage.out
 # Python local bytecode
 __pycache__/
 *.pyc
+
+# Generated benchmark binaries; keep raw text output and reports instead.
+測試報告/raw/*/bench-c-*

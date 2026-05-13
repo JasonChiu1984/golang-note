@@ -1,0 +1,16 @@
+run_at=2026-05-13 21:50:13 +0800
+run_at_utc=2026-05-13T13:50:13Z
+root=/Users/jasonchiu/Documents/CodexData/Golang學習筆記
+iterations=50000000
+uname=Darwin JasonChiudeMacBook-Pro.local 25.4.0 Darwin Kernel Version 25.4.0: Thu Mar 19 19:30:44 PDT 2026; root:xnu-12377.101.15~1/RELEASE_ARM64_T6000 arm64
+machine=arm64
+os_name=macOS
+os_version=26.4.1
+os_build=25E253
+cpu_model=
+physical_cpu=
+logical_cpu=
+hardware_chip=Apple M1 Max
+hardware_cores=10 (8 Performance and 2 Efficiency)
+hardware_memory=32 GB
+online_processors=10

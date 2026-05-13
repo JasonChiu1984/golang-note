@@ -21,6 +21,16 @@ go test -bench=. -benchmem -count=10 ./go
 python3 python/bench.py
 ```
 
+## 正式測試程式
+
+若需要產出含 CPU、OS、compiler、flags、Go/Python 版本、資料量與 raw output 的正式報告，請從 repo root 執行：
+
+```bash
+./TestCode/performance-comparison/run-real-benchmark.sh
+```
+
+報告會輸出到 `測試報告/`，raw stdout 會保存到 `測試報告/raw/<timestamp>/`。
+
 ## 報告必填
 
 | 欄位 | 範例 |

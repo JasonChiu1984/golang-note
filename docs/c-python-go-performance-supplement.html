@@ -188,6 +188,7 @@
       <a class="btn" href="#cases">應用案例</a>
       <a class="btn" href="#verification">驗證方法</a>
       <a class="btn" href="#report-template">測試報告模板</a>
+      <a class="btn" href="#real-test-report">真實測試報告</a>
       <a class="btn" href="#troubleshooting">排錯與最佳實務</a>
     </div>
   </nav>
@@ -227,8 +228,7 @@
         </div>
       </div>
       <div class="flow-wrap">
-        <svg class="diagram" viewBox="0 0 1080 430" role="img" aria-labelledby="execution-model-title execution-model-desc">
-          <title id="execution-model-title">C、Python、Go 執行模型圖解</title>
+        <svg class="diagram" viewBox="0 0 1080 430" role="img" aria-label="C、Python、Go 執行模型圖解" aria-describedby="execution-model-desc">
           <desc id="execution-model-desc">比較三種語言從 source code 到 runtime、native binary、interpreter、kernel 與 device 的執行路徑。</desc>
           <defs>
             <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
@@ -264,7 +264,8 @@
             <line x1="320" y1="317" x2="408" y2="317" stroke="#52637a" stroke-width="3" marker-end="url(#arrow)"></line>
             <rect x="420" y="282" width="250" height="70" rx="8" fill="#eff6ff" stroke="#93c5fd"></rect>
             <text x="444" y="312" font-size="18" font-weight="800" fill="#1d4ed8">Go Binary + Runtime</text>
-            <text x="444" y="336" font-size="13" fill="#1d4ed8">scheduler 將 goroutine multiplex 到 OS thread</text>
+            <text x="444" y="330" font-size="12" fill="#1d4ed8">scheduler multiplex</text>
+            <text x="444" y="346" font-size="12" fill="#1d4ed8">goroutine 到 OS thread</text>
             <line x1="670" y1="317" x2="758" y2="317" stroke="#52637a" stroke-width="3" marker-end="url(#arrow)"></line>
           </g>
           <rect x="770" y="96" width="250" height="238" rx="8" fill="#f8fafc" stroke="#cbd5e1"></rect>
@@ -292,8 +293,7 @@
         <article class="metric-card"><span class="badge amber">開發效率</span><strong>Python &gt; Go &gt; C</strong><span>越靠近硬體越要付出更多記憶體、錯誤處理與建置維護成本。</span></article>
       </div>
       <div class="flow-wrap" style="margin-top:12px">
-        <svg class="diagram" viewBox="0 0 1080 410" role="img" aria-labelledby="relative-speed-title relative-speed-desc">
-          <title id="relative-speed-title">C、Python、Go 相對速度概念圖</title>
+        <svg class="diagram" viewBox="0 0 1080 410" role="img" aria-label="C、Python、Go 相對速度概念圖" aria-describedby="relative-speed-desc">
           <desc id="relative-speed-desc">以 CPU-bound 純計算情境說明 C、Go、Python 的相對 overhead；圖形為概念比較，不代表固定倍率。</desc>
           <rect x="0" y="0" width="1080" height="410" fill="#fff"></rect>
           <text x="40" y="42" font-size="22" font-weight="800" fill="#17202a">相對速度圖解：越短越快</text>
@@ -341,8 +341,7 @@
         </div>
       </div>
       <div class="flow-wrap">
-        <svg class="diagram" viewBox="0 0 1080 440" role="img" aria-labelledby="syscall-path-title syscall-path-desc">
-          <title id="syscall-path-title">System Call Path 圖解</title>
+        <svg class="diagram" viewBox="0 0 1080 440" role="img" aria-label="System Call Path 圖解" aria-describedby="syscall-path-desc">
           <desc id="syscall-path-desc">說明 C、Python、Go 經由 libc、interpreter、runtime、netpoller 或 cgo 進入 kernel syscall 與 I/O device 的路徑。</desc>
           <defs>
             <marker id="sysarrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
@@ -375,7 +374,8 @@
           <text x="798" y="224" font-size="14" fill="#475569">TCP socket / NIC</text>
           <text x="798" y="252" font-size="14" fill="#475569">Serial / Modbus RTU</text>
           <text x="798" y="280" font-size="14" fill="#475569">PLC / DDC / SCADA endpoint</text>
-          <text x="798" y="318" font-size="13" fill="#64748b">若設備回應是毫秒級，語言層微秒差異通常不是主瓶頸。</text>
+          <text x="798" y="314" font-size="12" fill="#64748b">設備回應若是毫秒級，</text>
+          <text x="798" y="332" font-size="12" fill="#64748b">語言層微秒差通常不是主瓶頸。</text>
         </svg>
       </div>
       <p class="figure-caption">圖解摘要：system call 的成本來自 user/kernel boundary、排程、buffer copy、device wait 與網路/序列通訊延遲；高頻小 I/O 應優先 batch 化。</p>
@@ -433,8 +433,7 @@
         </article>
       </div>
       <div class="flow-wrap" style="margin-top:12px">
-        <svg class="diagram" viewBox="0 0 1080 450" role="img" aria-labelledby="application-selection-title application-selection-desc">
-          <title id="application-selection-title">工業自動化應用選型圖</title>
+        <svg class="diagram" viewBox="0 0 1080 450" role="img" aria-label="工業自動化應用選型圖" aria-describedby="application-selection-desc">
           <desc id="application-selection-desc">以硬體 driver、edge gateway、資料匯流、API dashboard、historian 與 data science 分層呈現 C、Go、Python 的建議位置。</desc>
           <defs>
             <marker id="casearrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
@@ -469,7 +468,8 @@
           <text x="838" y="270" font-size="13" fill="#166534">批次寫入比逐筆 syscall 重要</text>
           <rect x="812" y="328" width="220" height="82" rx="8" fill="#fffbeb" stroke="#fbbf24"></rect>
           <text x="838" y="362" font-size="17" font-weight="800" fill="#92400e">Data Science</text>
-          <text x="838" y="388" font-size="13" fill="#92400e">Python notebook / model pipeline</text>
+          <text x="838" y="386" font-size="12" fill="#92400e">Python notebook</text>
+          <text x="838" y="402" font-size="12" fill="#92400e">model pipeline</text>
         </svg>
       </div>
       <p class="figure-caption">圖解摘要：工業自動化常採混合架構：C 負責低階 driver / SDK，Go 負責長駐 gateway 與 API，Python 負責分析、報表與快速整合。</p>
@@ -587,8 +587,125 @@ python3 python/bench.py
 
 ### Conclusion
 
-說明瓶頸是在 CPU、allocation、system call、I/O wait、device timeout，還是跨語言 FFI 邊界。</code></pre>
+        說明瓶頸是在 CPU、allocation、system call、I/O wait、device timeout，還是跨語言 FFI 邊界。</code></pre>
       </div>
+    </section>
+
+    <section id="real-test-report">
+      <div class="section-head">
+        <div>
+          <h2>真實測試報告：C / Python / Go CPU-bound workload</h2>
+          <p>以下資料由 <code>TestCode/performance-comparison/run-real-benchmark.sh</code> 於 2026-05-13 22:06:02 +0800 實際執行產生，包含環境、build flags、資料量、測試結果與 raw output 追溯位置。</p>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <article class="metric-card">
+          <span class="badge green">CPU</span>
+          <strong>Apple M1 Max</strong>
+          <span>10 cores，8 Performance + 2 Efficiency，macOS 26.4.1。</span>
+        </article>
+        <article class="metric-card">
+          <span class="badge">Workload</span>
+          <strong>50,000,000</strong>
+          <span>64-bit integer hash loop；CPU-bound microbenchmark。</span>
+        </article>
+        <article class="metric-card">
+          <span class="badge amber">Raw</span>
+          <strong>完整保留</strong>
+          <span><code>測試報告/raw/2026-05-13-220602/</code></span>
+        </article>
+      </div>
+
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead><tr><th>欄位</th><th>實測內容</th><th>工程意義</th></tr></thead>
+          <tbody>
+            <tr><td>測試時間</td><td>2026-05-13 22:06:02 +0800</td><td>結果只代表當次環境與負載狀態。</td></tr>
+            <tr><td>CPU</td><td>Apple M1 Max，10 cores（8 Performance + 2 Efficiency）</td><td>CPU cache、核心類型、turbo 與背景負載都會影響結果。</td></tr>
+            <tr><td>OS</td><td>macOS 26.4.1，Darwin 25.4.0，arm64</td><td>scheduler、syscall 與計時精度會影響 benchmark。</td></tr>
+            <tr><td>C compiler</td><td>Apple clang 17.0.0（clang-1700.6.3.2）</td><td>C hot path 對 compiler 最佳化非常敏感。</td></tr>
+            <tr><td>C flags</td><td><code>-O2</code>、<code>-O3</code></td><td>本輪比較 release-style optimization，不含 ASAN/TSAN。</td></tr>
+            <tr><td>Go version</td><td><code>go version go1.22.2 darwin/arm64</code></td><td>此結果不是 Go 1.26 runtime 結果；正式升級評估需用目標 Go 版本重跑。</td></tr>
+            <tr><td>Python version</td><td><code>Python 3.14.4</code></td><td>CPython / PyPy / native extension 會產生不同結果。</td></tr>
+            <tr><td>資料量</td><td><code>iterations=50000000</code></td><td>固定資料量避免小樣本被啟動成本主導。</td></tr>
+            <tr><td>報告檔</td><td><a href="../測試報告/2026-05-13-220602-C-Python-Go-真實效能測試報告.md">Markdown 真實測試報告</a></td><td>保留完整文字報告，可作為交付附件。</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flow-wrap" style="margin-top:12px">
+        <svg class="diagram" viewBox="0 0 1080 520" role="img" aria-label="C Python Go 真實效能測試圖表" aria-describedby="real-benchmark-desc">
+          <desc id="real-benchmark-desc">以 Apple M1 Max 本機測試結果呈現 C O2、C O3、Go benchmark 與 Python 的 CPU-bound workload 時間比較。</desc>
+          <rect x="0" y="0" width="1080" height="520" fill="#fff"></rect>
+          <text x="40" y="44" font-size="24" font-weight="800" fill="#17202a">真實測試結果圖表</text>
+          <text x="40" y="72" font-size="14" fill="#5b6675">資料來源：測試報告/2026-05-13-220602-C-Python-Go-真實效能測試報告.md；時間單位為秒，Go 使用第一筆 ns/op 換算。</text>
+
+          <g transform="translate(40 112)">
+            <text x="0" y="0" font-size="18" font-weight="800" fill="#243244">執行時間（秒）</text>
+            <text x="0" y="26" font-size="13" fill="#5b6675">Python 以完整比例呈現；C / Go 因遠小於 Python，另於右側放大區呈現。</text>
+
+            <text x="0" y="74" font-size="14" font-weight="800" fill="#15803d">Go</text>
+            <rect x="120" y="56" width="3" height="26" rx="3" fill="#2563eb"></rect>
+            <text x="138" y="74" font-size="13" fill="#17202a">0.016457s</text>
+
+            <text x="0" y="122" font-size="14" font-weight="800" fill="#0f766e">C -O3</text>
+            <rect x="120" y="104" width="10" height="26" rx="3" fill="#0f766e"></rect>
+            <text x="145" y="122" font-size="13" fill="#17202a">0.109143s</text>
+
+            <text x="0" y="170" font-size="14" font-weight="800" fill="#15803d">C -O2</text>
+            <rect x="120" y="152" width="10" height="26" rx="3" fill="#15803d"></rect>
+            <text x="145" y="170" font-size="13" fill="#17202a">0.097666s</text>
+
+            <text x="0" y="218" font-size="14" font-weight="800" fill="#b45309">Python</text>
+            <rect x="120" y="200" width="820" height="26" rx="3" fill="#b45309"></rect>
+            <text x="956" y="218" font-size="13" fill="#17202a">8.640206s</text>
+          </g>
+
+          <g transform="translate(40 380)">
+            <text x="0" y="0" font-size="18" font-weight="800" fill="#243244">低延遲區放大（只看 C / Go）</text>
+            <text x="0" y="44" font-size="14" font-weight="800" fill="#2563eb">Go</text>
+            <rect x="120" y="27" width="124" height="24" rx="3" fill="#2563eb"></rect>
+            <text x="272" y="44" font-size="13" fill="#17202a">0.016457s</text>
+            <text x="0" y="88" font-size="14" font-weight="800" fill="#0f766e">C -O3</text>
+            <rect x="120" y="71" width="820" height="24" rx="3" fill="#0f766e"></rect>
+            <text x="936" y="88" font-size="13" fill="#17202a">0.109143s</text>
+            <text x="0" y="132" font-size="14" font-weight="800" fill="#15803d">C -O2</text>
+            <rect x="120" y="115" width="734" height="24" rx="3" fill="#15803d"></rect>
+            <text x="870" y="132" font-size="13" fill="#17202a">0.097666s</text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead><tr><th>語言 / 模式</th><th>實測結果</th><th>換算秒數</th><th>相對於 C -O2</th><th>備註</th></tr></thead>
+          <tbody>
+            <tr><td>C <code>-O2</code></td><td><code>language=C iterations=50000000 result=3753003574976412281 seconds=0.097666</code></td><td>0.097666</td><td>1.00x</td><td>基準列。</td></tr>
+            <tr><td>C <code>-O3</code></td><td><code>language=C iterations=50000000 result=3753003574976412281 seconds=0.109143</code></td><td>0.109143</td><td>1.12x</td><td>同 workload 下本輪略慢於 <code>-O2</code>。</td></tr>
+            <tr><td>Go benchmark</td><td><code>BenchmarkRun-10 70 16456857 ns/op 0 B/op 0 allocs/op</code></td><td>0.016457</td><td>0.17x</td><td>此數字來自 Go benchmark 單次 operation 的第一筆輸出，不等同整體服務吞吐。</td></tr>
+            <tr><td>Python</td><td><code>language=Python iterations=50000000 result=3753003574976412281 seconds=8.640206</code></td><td>8.640206</td><td>88.47x</td><td>純 CPython loop 成本高；資料分析場景通常應用 vectorization 或 native extension。</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead><tr><th>Raw 檔案</th><th>內容</th><th>用途</th></tr></thead>
+          <tbody>
+            <tr><td><a href="../測試報告/raw/2026-05-13-220602/environment.txt"><code>environment.txt</code></a></td><td>OS、CPU、核心數、root path、iterations</td><td>追溯測試環境。</td></tr>
+            <tr><td><a href="../測試報告/raw/2026-05-13-220602/clang-version.txt"><code>clang-version.txt</code></a></td><td>Apple clang 版本</td><td>確認 C compiler 來源。</td></tr>
+            <tr><td><a href="../測試報告/raw/2026-05-13-220602/go-version.txt"><code>go-version.txt</code></a></td><td>Go version</td><td>確認 Go runtime / compiler 版本。</td></tr>
+            <tr><td><a href="../測試報告/raw/2026-05-13-220602/python-version.txt"><code>python-version.txt</code></a></td><td>Python version</td><td>確認 CPython 版本。</td></tr>
+            <tr><td><a href="../測試報告/raw/2026-05-13-220602/c-o2-run.txt"><code>c-o2-run.txt</code></a></td><td>C <code>-O2</code> stdout</td><td>保留基準結果。</td></tr>
+            <tr><td><a href="../測試報告/raw/2026-05-13-220602/c-o3-run.txt"><code>c-o3-run.txt</code></a></td><td>C <code>-O3</code> stdout</td><td>比較 compiler flags 差異。</td></tr>
+            <tr><td><a href="../測試報告/raw/2026-05-13-220602/go-bench.txt"><code>go-bench.txt</code></a></td><td><code>go test -bench=. -benchmem -count=5</code></td><td>保留 Go benchmark 原文。</td></tr>
+            <tr><td><a href="../測試報告/raw/2026-05-13-220602/python-run.txt"><code>python-run.txt</code></a></td><td>Python stdout</td><td>保留 interpreter 執行結果。</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="note">解讀限制：這是 CPU-bound microbenchmark，不代表 OPC UA、Modbus、BACnet、SCADA gateway 或任何 I/O-bound service 的正式效能結論。若要做架構決策，需在目標硬體、目標 OS、目標 compiler/runtime 版本與真實 payload 下重跑。</p>
     </section>
 
     <section id="troubleshooting">

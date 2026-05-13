@@ -1,0 +1,2 @@
+$ /Users/jasonchiu/Documents/CodexData/Golang學習筆記/測試報告/raw/2026-05-13-214730/bench-c-o2
+language=C iterations=50000000 result=3753003574976412281 seconds=0.098830

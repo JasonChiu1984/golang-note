@@ -111,6 +111,82 @@
     }
     .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .flow-card-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .flow-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+    .flow-card h3 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 0 0 10px;
+    }
+    .flow-card h3 code { font-size: 1rem; }
+    .flow-card svg {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+    .if-focus-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.12fr) minmax(340px, .88fr);
+      gap: 14px;
+      align-items: stretch;
+    }
+    .domain-flow-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    .domain-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+    .domain-card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+    .domain-card-head h3 { margin: 0; }
+    .domain-card-head p { margin: 5px 0 0; color: var(--muted); }
+    .domain-card-body {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(320px, .85fr);
+      gap: 14px;
+      align-items: start;
+    }
+    .domain-card svg {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+    .code-explain {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      overflow: hidden;
+    }
+    .code-explain .explain {
+      padding: 12px;
+      color: var(--muted);
+      font-size: .95rem;
+    }
     .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
     table { width: 100%; min-width: 920px; border-collapse: collapse; }
     th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
@@ -184,7 +260,7 @@
       border-radius: 0 8px 8px 0;
     }
     @media (max-width: 860px) {
-      .hero-inner, .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .hero-inner, .grid-2, .grid-3, .flow-card-grid, .domain-card-body, .if-focus-grid { grid-template-columns: 1fr; }
       .hero, main, .toolbar-inner { padding-left: 12px; padding-right: 12px; }
       .section-head { display: block; }
       svg { min-width: 760px; }
@@ -200,7 +276,7 @@
         <p>此頁是獨立補充頁，不修改原始整合課程內容。目標是把 Go 語法從「記憶語法」轉成「知道在專案哪裡使用」：每個語法類別都用 SVG 顯示用途、流向與工程落點。</p>
       </div>
       <div class="hero-stats" aria-label="頁面摘要">
-        <a class="stat" href="#keyword-map"><strong>25</strong><span>Go keywords 全覆蓋</span></a>
+        <a class="stat" href="#per-syntax-flows"><strong>25</strong><span>單語法 SVG 流程圖</span></a>
         <a class="stat" href="#syntax-flow"><strong>12</strong><span>語法應用域</span></a>
         <a class="stat" href="#application-panels"><strong>8</strong><span>專案應用 SVG 場景</span></a>
         <a class="stat" href="#coverage-matrix"><strong>1</strong><span>完整驗收矩陣</span></a>
@@ -211,7 +287,10 @@
   <nav class="toolbar" aria-label="補充頁導覽">
     <div class="toolbar-inner">
       <a class="btn" href="#syntax-flow">語法到專案</a>
+      <a class="btn" href="#if-flowchart">if 流程圖</a>
+      <a class="btn" href="#domain-flow-examples">語法域圖解</a>
       <a class="btn" href="#keyword-map">Keyword 圖</a>
+      <a class="btn" href="#per-syntax-flows">單語法流程</a>
       <a class="btn" href="#application-panels">應用場景</a>
       <a class="btn" href="#coverage-matrix">覆蓋矩陣</a>
       <a class="btn" href="#examples">範例</a>
@@ -300,6 +379,101 @@
       </div>
     </section>
 
+    <section id="if-flowchart">
+      <div class="section-head">
+        <div>
+          <h2>if 防衛式檢查流程圖</h2>
+          <p>Go 專案最常見的 `if` 用法是 guard clause：先處理錯誤與不合法輸入，再讓主要流程保持直線。</p>
+        </div>
+        <span class="tag">Focused SVG</span>
+      </div>
+      <div class="if-focus-grid">
+        <div class="svg-shell">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 560" role="img" aria-labelledby="if-flow-title if-flow-desc">
+            <title id="if-flow-title">if 防衛式檢查流程圖</title>
+            <desc id="if-flow-desc">使用 if err != nil 判斷錯誤分支，錯誤時立即返回，正常時繼續主要流程。</desc>
+            <defs>
+              <marker id="if-arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+                <path d="M2 2 L10 6 L2 10 Z" fill="#2563eb"/>
+              </marker>
+              <marker id="if-error-arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+                <path d="M2 2 L10 6 L2 10 Z" fill="#be123c"/>
+              </marker>
+            </defs>
+            <g id="if-background"></g>
+            <g id="if-connectors">
+              <path class="line line-blue" marker-end="url(#if-arrow)" d="M190 120 H300"/>
+              <path class="line line-blue" marker-end="url(#if-arrow)" d="M470 120 H590"/>
+              <path class="line line-blue" marker-end="url(#if-arrow)" d="M760 120 H850"/>
+              <path class="line" marker-end="url(#if-arrow)" d="M680 230 V314"/>
+              <path class="line line-amber" marker-end="url(#if-arrow)" d="M680 430 V486"/>
+              <path class="line" d="M390 196 V262"/>
+              <path class="line line-amber" d="M390 262 H670"/>
+              <path class="line line-amber" marker-end="url(#if-arrow)" d="M670 262 V314"/>
+              <path class="line line-rose" marker-end="url(#if-error-arrow)" d="M470 120 C520 42 675 42 732 92"/>
+            </g>
+            <g id="if-nodes">
+              <rect class="node node-blue" x="36" y="72" width="154" height="96"/>
+              <text class="svg-title" x="113" y="106" text-anchor="middle" font-size="18">輸入資料</text>
+              <text class="svg-code" x="113" y="134" text-anchor="middle" font-size="13">input / request</text>
+
+              <polygon points="390,54 486,120 390,186 294,120" fill="#fffbeb" stroke="#f59e0b" stroke-width="2"/>
+              <text class="svg-title" x="390" y="108" text-anchor="middle" font-size="17">條件判斷</text>
+              <text class="svg-code" x="390" y="136" text-anchor="middle" font-size="13">err != nil ?</text>
+
+              <rect class="node node-rose" x="732" y="72" width="190" height="96"/>
+              <text class="svg-title" x="827" y="106" text-anchor="middle" font-size="18">True：立即返回</text>
+              <text class="svg-code" x="827" y="134" text-anchor="middle" font-size="13">return fmt.Errorf(...)</text>
+
+              <rect class="node node-teal" x="590" y="314" width="180" height="96"/>
+              <text class="svg-title" x="680" y="348" text-anchor="middle" font-size="18">False：繼續主流程</text>
+              <text class="svg-code" x="680" y="376" text-anchor="middle" font-size="13">create / save / enqueue</text>
+
+              <rect class="node node-violet" x="576" y="486" width="210" height="54"/>
+              <text class="svg-title" x="681" y="520" text-anchor="middle" font-size="17">回傳成功結果</text>
+
+              <rect class="node" x="70" y="252" width="275" height="126"/>
+              <text class="svg-title" x="207" y="286" text-anchor="middle" font-size="18">Guard Clause 原則</text>
+              <text class="svg-muted" x="207" y="316" text-anchor="middle" font-size="13">錯誤先處理，主流程保持直線</text>
+              <text class="svg-muted" x="207" y="342" text-anchor="middle" font-size="13">避免巢狀 if / else 持續加深</text>
+            </g>
+            <g id="if-labels">
+              <text class="svg-title" x="530" y="76" font-size="15" fill="#be123c">true</text>
+              <text class="svg-title" x="494" y="254" font-size="15" fill="#b45309">false</text>
+            </g>
+          </svg>
+        </div>
+        <div class="code-explain">
+          <pre><code>func CreateJob(ctx context.Context, input JobInput) (Job, error) {
+    if err := validate(input); err != nil {
+        return Job{}, fmt.Errorf("validate job input: %w", err)
+    }
+
+    job := Job{Name: input.Name}
+    if err := store.Save(ctx, job); err != nil {
+        return Job{}, fmt.Errorf("save job: %w", err)
+    }
+
+    return job, nil
+}</code></pre>
+          <div class="explain">
+            `if` 的重點不是多寫分支，而是把異常路徑盡早返回。這種 guard clause 讓正常流程維持垂直閱讀，適合 validation、error wrapping、HTTP handler、service use case 與 repository 呼叫。
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="domain-flow-examples">
+      <div class="section-head">
+        <div>
+          <h2>12 個語法域：SVG 流程圖與範例程式碼解說</h2>
+          <p>依照你提供的語法域矩陣產生。每一列都對應一張 SVG：語法集合如何進入實務場景、如何落到專案層、最後要檢查哪些風險。</p>
+        </div>
+        <span class="tag">Domain Flow + Code</span>
+      </div>
+      <div class="domain-flow-grid" id="domainFlowGrid" aria-live="polite"></div>
+    </section>
+
     <section id="keyword-map">
       <div class="section-head">
         <div>
@@ -350,6 +524,17 @@
           </g>
         </svg>
       </div>
+    </section>
+
+    <section id="per-syntax-flows">
+      <div class="section-head">
+        <div>
+          <h2>每個語法的 SVG 應用流程圖</h2>
+          <p>每張卡都用同一套工程流程描述：什麼情境會用到、實際語法怎麼寫、在專案中落到哪一層、review 時要驗證什麼。</p>
+        </div>
+        <span class="tag">25 Syntax Flow SVGs</span>
+      </div>
+      <div class="flow-card-grid" id="perSyntaxFlowGrid" aria-live="polite"></div>
     </section>
 
     <section id="application-panels">
@@ -550,5 +735,650 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
       <p class="note">此補充頁使用透明背景 SVG、明確 viewBox、命名 group、CJK fallback fonts，便於後續在瀏覽器、Figma 或 Illustrator 中檢查與調整。</p>
     </section>
   </main>
+  <script>
+    const syntaxDomains = [
+      {
+        domain: "套件與檔案",
+        syntax: "package、import、exported identifier、blank import",
+        app: "拆分 API / service / repository，控制依賴方向",
+        risk: "循環 import、過度使用 global init",
+        code: [
+          "package service",
+          "",
+          "import (",
+          "    \"context\"",
+          "    \"example.com/app/internal/repository\"",
+          ")",
+          "",
+          "type JobService struct {",
+          "    store *repository.JobStore",
+          "}",
+        ].join("\n"),
+        explain: "package 決定編譯與可見性邊界；import 決定依賴方向。exported identifier 只暴露穩定 API，blank import 只應用於 driver registration 等明確副作用。",
+      },
+      {
+        domain: "宣告",
+        syntax: "const、var、type、func、iota、短變數宣告",
+        app: "固定設定、狀態、domain type、行為入口",
+        risk: "遮蔽變數、magic number、隱含零值誤用",
+        code: [
+          "type JobStatus int",
+          "",
+          "const (",
+          "    StatusQueued JobStatus = iota",
+          "    StatusRunning",
+          "    StatusDone",
+          ")",
+          "",
+          "func NewStatus(name string) JobStatus {",
+          "    status := StatusQueued",
+          "    return status",
+          "}",
+        ].join("\n"),
+        explain: "宣告語法把常數、狀態、型別與行為入口定義清楚。短變數宣告適合局部值，但 code review 要特別看是否遮蔽外層 err 或狀態。",
+      },
+      {
+        domain: "基本型別與運算",
+        syntax: "bool、string、integer、float、complex、rune、byte、conversion、operators",
+        app: "資料轉換、數值計算、狀態判斷",
+        risk: "整數溢位、型別轉換截斷、字串與 byte/rune 混淆",
+        code: [
+          "func normalizeName(raw string) (string, bool) {",
+          "    if len([]rune(raw)) > 64 {",
+          "        return \"\", false",
+          "    }",
+          "    size := int64(len([]byte(raw)))",
+          "    return fmt.Sprintf(\"%s:%d\", raw, size), true",
+          "}",
+        ].join("\n"),
+        explain: "string 長度、byte 長度與 rune 數量不是同一件事。資料轉換時要明確標示 conversion，數值運算要確認溢位與精度需求。",
+      },
+      {
+        domain: "複合型別",
+        syntax: "array、slice、map、struct、pointer、composite literal、struct tag、embedded field",
+        app: "DTO、config、cache、buffer、entity",
+        risk: "nil map、slice aliasing、pointer ownership 不清",
+        code: [
+          "type Config struct {",
+          "    Port int `json:\"port\"`",
+          "}",
+          "",
+          "cache := map[string]Config{}",
+          "items := make([]Config, 0, 16)",
+          "cfg := &Config{Port: 8080}",
+          "cache[\"api\"] = *cfg",
+          "items = append(items, *cfg)",
+        ].join("\n"),
+        explain: "struct 適合描述資料形狀，map 適合索引，slice 適合有序集合。pointer 代表共享或可修改 ownership，必須在 API 邊界說清楚。",
+      },
+      {
+        domain: "表達式",
+        syntax: "selector、index、slice expression、call、type assertion、receive、send",
+        app: "資料存取、方法呼叫、interface 解包、channel 通訊",
+        risk: "panic、blocking、nil pointer、interface type mismatch",
+        code: [
+          "func dispatch(v any, jobs chan<- Job) error {",
+          "    job, ok := v.(Job)",
+          "    if !ok {",
+          "        return fmt.Errorf(\"invalid job\")",
+          "    }",
+          "    jobs <- job",
+          "    return nil",
+          "}",
+        ].join("\n"),
+        explain: "selector、index、call 是日常表達式；type assertion 與 channel send/receive 會牽涉 runtime 失敗或 blocking，因此要有 ok 檢查與 timeout/cancel 設計。",
+      },
+      {
+        domain: "控制流程",
+        syntax: "if、else、for、range、switch、case、default、label、break、continue、goto、fallthrough",
+        app: "validation、retry、parser、state machine、event dispatch",
+        risk: "巢狀過深、fallthrough 語意不明、range 變數捕獲",
+        code: [
+          "for _, job := range jobs {",
+          "    switch job.Status {",
+          "    case StatusDone:",
+          "        continue",
+          "    case StatusRunning:",
+          "        return nil",
+          "    default:",
+          "        return fmt.Errorf(\"unknown status\")",
+          "    }",
+          "}",
+        ].join("\n"),
+        explain: "控制流程用來讓狀態變化可讀。實務上優先 early return、明確 default，避免不必要的 goto/fallthrough 與過深巢狀。",
+      },
+      {
+        domain: "函式與方法",
+        syntax: "parameter、return、named return、variadic、closure、method receiver、function value",
+        app: "封裝 use case、callback、middleware、strategy",
+        risk: "named return 可讀性差、closure 捕獲錯誤、receiver 選擇不一致",
+        code: [
+          "type Service struct { store Store }",
+          "",
+          "func (s *Service) Create(ctx context.Context, name string) (Job, error) {",
+          "    job := Job{Name: name}",
+          "    if err := s.store.Save(ctx, job); err != nil {",
+          "        return Job{}, err",
+          "    }",
+          "    return job, nil",
+          "}",
+        ].join("\n"),
+        explain: "func 與 method 是 use case 邊界。receiver 用 pointer 還是 value 要一致；callback/closure 要避免捕獲迴圈變數或隱含共享狀態。",
+      },
+      {
+        domain: "介面與抽象",
+        syntax: "interface、method set、type assertion、type switch、empty interface / any",
+        app: "mock、adapter、repository boundary、plugin-like design",
+        risk: "過大 interface、nil interface 陷阱、runtime cast 過多",
+        code: [
+          "type Store interface {",
+          "    Save(context.Context, Job) error",
+          "}",
+          "",
+          "func UseStore(ctx context.Context, store Store, job Job) error {",
+          "    return store.Save(ctx, job)",
+          "}",
+        ].join("\n"),
+        explain: "interface 應由使用端定義，越小越穩定。any/type assertion/type switch 適合 adapter 邊界，不應在 domain logic 到處散落 runtime cast。",
+      },
+      {
+        domain: "泛型",
+        syntax: "type parameter、constraint、type set、comparable、~T",
+        app: "可重用 collection helper、parser、validation、cache key",
+        risk: "約束過度複雜、錯把泛型當繼承",
+        code: [
+          "func IndexBy[T any, K comparable](items []T, key func(T) K) map[K]T {",
+          "    out := make(map[K]T, len(items))",
+          "    for _, item := range items {",
+          "        out[key(item)] = item",
+          "    }",
+          "    return out",
+          "}",
+        ].join("\n"),
+        explain: "泛型適合資料轉換、索引與可重用 helper。constraint 只描述必要能力，不要把泛型當 class hierarchy 或過度抽象工具。",
+      },
+      {
+        domain: "錯誤與資源",
+        syntax: "error、defer、panic、recover、wrapping",
+        app: "穩定失敗路徑、資源釋放、HTTP error envelope",
+        risk: "吞錯、panic 當流程控制、defer 在迴圈中累積成本",
+        code: [
+          "func readConfig(path string) error {",
+          "    f, err := os.Open(path)",
+          "    if err != nil {",
+          "        return fmt.Errorf(\"open config: %w\", err)",
+          "    }",
+          "    defer f.Close()",
+          "    return decode(f)",
+          "}",
+        ].join("\n"),
+        explain: "error 是正常失敗路徑；defer 負責釋放資源；panic/recover 只應在邊界轉成穩定錯誤，不應作為一般流程控制。",
+      },
+      {
+        domain: "併發",
+        syntax: "go、chan、buffered channel、select、context、sync、atomic",
+        app: "worker pool、pipeline、timeout、cancel、fan-in/fan-out",
+        risk: "goroutine leak、send on closed channel、data race",
+        code: [
+          "func run(ctx context.Context, jobs <-chan Job) {",
+          "    for {",
+          "        select {",
+          "        case <-ctx.Done():",
+          "            return",
+          "        case job, ok := <-jobs:",
+          "            if !ok { return }",
+          "            process(job)",
+          "        }",
+          "    }",
+          "}",
+        ].join("\n"),
+        explain: "go/chan/select 必須和 context、close owner、WaitGroup 或 atomic 狀態一起設計。每個 goroutine 都要有可退出路徑。",
+      },
+      {
+        domain: "測試與建置",
+        syntax: "testing、benchmark、fuzz、build tag、module、embed",
+        app: "contract test、performance gate、平台差異、靜態資源",
+        risk: "只測 happy path、benchmark 次數不足、build tag 漏測",
+        code: [
+          "func TestCreateJob(t *testing.T) {",
+          "    got, err := CreateJob(context.Background(), fakeStore{}, Job{Name: \"demo\"})",
+          "    if err != nil { t.Fatal(err) }",
+          "    if got.Name != \"demo\" { t.Fatalf(\"unexpected job\") }",
+          "}",
+          "",
+          "func BenchmarkCreateJob(b *testing.B) {",
+          "    for i := 0; i < b.N; i++ { _ = fastPath() }",
+          "}",
+        ].join("\n"),
+        explain: "testing 固定行為合約，benchmark 固定效能證據，fuzz 找 parser 邊界，build tag/module/embed 則用於建置與部署差異。",
+      },
+    ];
+
+    const domainStepSets = [
+      ["目錄切分", "宣告 package", "匯入下層依賴", "只暴露 Exported API", "go test 檢查循環 import"],
+      ["定義 domain 名詞", "const/iota 固定狀態", "var 管理可變值", "func 作為行為入口", "review 遮蔽與零值"],
+      ["接收外部資料", "轉成明確型別", "執行運算/比較", "回傳狀態判斷", "檢查溢位與截斷"],
+      ["建立資料形狀", "struct tag 對接 JSON", "slice/map 管理集合", "pointer 表示共享修改", "檢查 nil 與 aliasing"],
+      ["讀取欄位/索引", "呼叫方法或函式", "type assertion 解包", "channel send/receive", "檢查 panic/blocking"],
+      ["先做 validation", "用 for/range 迭代", "switch/case 分派", "default 回報未知狀態", "限制巢狀與 fallthrough"],
+      ["定義 use case", "注入 parameter", "method receiver 管理狀態", "return result/error", "檢查 closure 捕獲"],
+      ["使用端定義 interface", "實作端自然滿足", "adapter/mock 注入", "少量 type assertion", "避免 nil interface"],
+      ["抽出重複 collection 邏輯", "宣告 type parameter", "constraint 描述能力", "回傳強型別結果", "避免約束過度複雜"],
+      ["取得資源", "錯誤立即 wrap", "defer 釋放", "panic 在邊界 recover", "確認錯誤不被吞掉"],
+      ["建立 context", "啟動 go worker", "chan 傳遞工作", "select 等待資料/取消", "檢查 leak/race/close owner"],
+      ["建立 module", "寫 table test", "補 benchmark/fuzz", "build tag/embed 驗證", "避免只測 happy path"],
+    ];
+    syntaxDomains.forEach((item, index) => { item.steps = domainStepSets[index]; });
+
+    const syntaxFlows = [
+      {
+        key: "package",
+        kind: "套件邊界",
+        steps: ["建立 api/service/store 目錄", "檔案第一行宣告 package", "Exported 型別形成公開 API", "上層 import 使用穩定邊界"],
+        code: ["package service", "", "type JobService struct {", "    store Store", "}"].join("\n"),
+        check: "package 只能單向依賴，避免 api -> service -> api 的循環 import。",
+      },
+      {
+        key: "import",
+        kind: "依賴管理",
+        steps: ["功能需要 context/logging", "import 標準庫或內部套件", "只呼叫必要 API", "go mod tidy 固定依賴"],
+        code: ["import (", "    \"context\"", "    \"log/slog\"", ")"].join("\n"),
+        check: "移除未使用 import，blank import 只允許明確副作用註冊。",
+      },
+      {
+        key: "const",
+        kind: "常數宣告",
+        steps: ["辨識固定業務規則", "const 命名不可變值", "iota 建立狀態枚舉", "測試鎖定狀態語意"],
+        code: ["type Status int", "", "const (", "    Queued Status = iota", "    Running", "    Done", ")"].join("\n"),
+        check: "用具名 const 取代 magic number，避免散落 0/1/2 狀態碼。",
+      },
+      {
+        key: "var",
+        kind: "狀態宣告",
+        steps: ["需要可變狀態", "選擇區域 var 或結構欄位", "利用零值啟動", "併發寫入加鎖或封裝"],
+        code: ["type Runner struct {", "    mu sync.Mutex", "    ready bool", "}"].join("\n"),
+        check: "全域 var 要特別審查初始化順序、測試污染與 data race。",
+      },
+      {
+        key: "type",
+        kind: "Domain 命名",
+        steps: ["發現 string/int 混用風險", "宣告具名 domain type", "函式簽名使用該型別", "編譯期阻擋錯誤傳參"],
+        code: ["type JobID string", "", "func LoadJob(id JobID) (Job, error) {", "    return store.Load(string(id))", "}"].join("\n"),
+        check: "type alias 只用於遷移；domain 邊界優先使用新型別。",
+      },
+      {
+        key: "func",
+        kind: "行為封裝",
+        steps: ["輸入參數進入 use case", "func 封裝 validation", "呼叫 repository/service", "回傳結果與 error"],
+        code: ["func CreateJob(ctx context.Context, in Input) (Job, error) {", "    if err := in.Validate(); err != nil { return Job{}, err }", "    return save(ctx, in)", "}"].join("\n"),
+        check: "參數、回傳與錯誤語意要清楚，避免函式同時做太多副作用。",
+      },
+      {
+        key: "if",
+        kind: "防衛式檢查",
+        steps: ["呼叫 validate", "判斷 err != nil", "錯誤分支立即 return", "成功分支走主流程"],
+        code: ["if err := validate(input); err != nil {", "    return fmt.Errorf(\"validate: %w\", err)", "}", "return store.Save(ctx, input)"].join("\n"),
+        check: "用 early return 壓平流程，避免防衛條件包住整段主邏輯。",
+      },
+      {
+        key: "else",
+        kind: "替代分支",
+        steps: ["判斷互斥狀態", "ok 分支走快速路徑", "else 處理 fallback", "檢查是否可改 early return"],
+        code: ["if cacheHit {", "    return cached, nil", "} else {", "    return fetchRemote(ctx)", "}"].join("\n"),
+        check: "else 不應變成大型巢狀；能 early return 時讓主流程靠左。",
+      },
+      {
+        key: "switch",
+        kind: "狀態分派",
+        steps: ["取得狀態值", "switch 集中分派", "各 case 呼叫 handler", "default 回未知狀態錯誤"],
+        code: ["switch job.Status {", "case Running:", "    return run(job)", "case Done:", "    return nil", "default:", "    return ErrUnknownStatus", "}"].join("\n"),
+        check: "狀態機要有 default 或完整列舉測試，避免新狀態被靜默忽略。",
+      },
+      {
+        key: "case",
+        kind: "分派分支",
+        steps: ["列出明確條件", "case 對應單一語意", "呼叫專屬處理函式", "測試每個 case"],
+        code: ["case StatusQueued:", "    return enqueue(job)", "case StatusRunning:", "    return monitor(job)"].join("\n"),
+        check: "避免多個 case 藏重複條件；共用邏輯抽成函式比較清楚。",
+      },
+      {
+        key: "default",
+        kind: "保底分支",
+        steps: ["switch 未命中", "進入 default", "回傳可觀測錯誤", "記錄未知輸入"],
+        code: ["default:", "    return fmt.Errorf(\"unknown status: %s\", status)"].join("\n"),
+        check: "default 不要空白吞掉未知狀態，production 要留下診斷訊號。",
+      },
+      {
+        key: "for",
+        kind: "迭代與重試",
+        steps: ["設定重試上限", "for 控制每一輪", "失敗等待 backoff", "命中成功或上限後離開"],
+        code: ["for attempt := 0; attempt < maxRetry; attempt++ {", "    if err := call(); err == nil { return nil }", "    time.Sleep(backoff(attempt))", "}"].join("\n"),
+        check: "每個 for 都要能說明退出條件，長輪詢需搭配 context。",
+      },
+      {
+        key: "range",
+        kind: "集合遍歷",
+        steps: ["接收 slice/map/channel", "range 取出 key/value", "逐筆執行處理", "必要時複製迴圈變數"],
+        code: ["for _, job := range jobs {", "    job := job", "    go func() { _ = process(job) }()", "}"].join("\n"),
+        check: "goroutine/closure 內使用 range 變數時要確認捕獲語意。",
+      },
+      {
+        key: "break",
+        kind: "離開流程",
+        steps: ["迴圈中偵測停止條件", "執行 break", "離開目前 loop/select/switch", "進入後續收尾"],
+        code: ["for {", "    if stopped() {", "        break", "    }", "    poll()", "}"].join("\n"),
+        check: "巢狀流程要確認 break 離開的是哪一層，必要時用 label。",
+      },
+      {
+        key: "continue",
+        kind: "跳過本輪",
+        steps: ["讀取一筆資料", "判斷資料不合格", "continue 跳過本輪", "下一筆仍正常處理"],
+        code: ["for _, job := range jobs {", "    if job.Name == \"\" {", "        continue", "    }", "    process(job)", "}"].join("\n"),
+        check: "continue 前若已取得資源，要確認清理不會被跳過。",
+      },
+      {
+        key: "fallthrough",
+        kind: "明確落下",
+        steps: ["switch 命中上層 case", "註解說明共用後續邏輯", "fallthrough 進下一 case", "測試兩個分支結果"],
+        code: ["switch level {", "case \"warn\":", "    notifyTeam()", "    fallthrough", "case \"info\":", "    writeLog()", "}"].join("\n"),
+        check: "fallthrough 是少數例外用法，必須用註解與測試證明必要性。",
+      },
+      {
+        key: "goto",
+        kind: "標籤跳轉",
+        steps: ["多段初始化可能失敗", "失敗時 goto cleanup", "集中釋放已取得資源", "回傳原始錯誤"],
+        code: ["if err := openA(); err != nil { goto cleanup }", "if err := openB(); err != nil { goto cleanup }", "cleanup:", "    return err"].join("\n"),
+        check: "一般資源釋放優先 defer；goto 只保留在低階收斂清理。",
+      },
+      {
+        key: "defer",
+        kind: "延後清理",
+        steps: ["成功取得資源", "立即宣告 defer", "主流程處理資料", "函式返回時自動 Close/Unlock"],
+        code: ["f, err := os.Open(path)", "if err != nil { return err }", "defer f.Close()", "return decode(f)"].join("\n"),
+        check: "迴圈內 defer 會累積到函式結束，熱路徑要改成顯式 close。",
+      },
+      {
+        key: "return",
+        kind: "結果回傳",
+        steps: ["完成成功或失敗路徑", "組合 result/error", "return 結束函式", "呼叫端檢查 error"],
+        code: ["if err != nil {", "    return Job{}, err", "}", "return job, nil"].join("\n"),
+        check: "不要丟失 error；named return 只在能提升可讀性時使用。",
+      },
+      {
+        key: "interface",
+        kind: "抽象邊界",
+        steps: ["使用端只需要 Save", "宣告小 interface", "production 注入真實 store", "test 注入 fake/mock"],
+        code: ["type Store interface {", "    Save(context.Context, Job) error", "}", "", "func NewService(store Store) *Service { return &Service{store: store} }"].join("\n"),
+        check: "interface 越大越難測；避免為了抽象而抽象。",
+      },
+      {
+        key: "struct",
+        kind: "資料聚合",
+        steps: ["定義資料欄位", "加上必要 struct tag", "用 composite literal 建立", "傳入 service/repository"],
+        code: ["type Job struct {", "    ID string `json:\"id\"`", "    Name string `json:\"name\"`", "}", "", "job := Job{ID: \"j-1\", Name: \"demo\"}"].join("\n"),
+        check: "確認零值是否有效；tag 變更會影響 API 相容性。",
+      },
+      {
+        key: "map",
+        kind: "快速索引",
+        steps: ["需要 key-value 查找", "make 或 literal 初始化", "用 key 讀寫資料", "處理不存在與併發寫入"],
+        code: ["cache := make(map[JobID]Job)", "cache[job.ID] = job", "job, ok := cache[id]", "if !ok { return Job{}, ErrNotFound }"].join("\n"),
+        check: "nil map 不能寫入；多 goroutine 存取需 mutex 或 sync.Map。",
+      },
+      {
+        key: "chan",
+        kind: "通訊管道",
+        steps: ["建立工作佇列", "producer send job", "worker receive job", "owner close channel"],
+        code: ["jobs := make(chan Job, 32)", "go worker(ctx, jobs)", "jobs <- job", "close(jobs)"].join("\n"),
+        check: "只能由傳送端 owner close；避免 send on closed channel。",
+      },
+      {
+        key: "go",
+        kind: "啟動併發",
+        steps: ["收到背景工作需求", "go 啟動 worker", "worker 監聽 context", "WaitGroup 等待收斂"],
+        code: ["var wg sync.WaitGroup", "wg.Add(1)", "go func() {", "    defer wg.Done()", "    worker(ctx)", "}()"].join("\n"),
+        check: "每個 goroutine 都要有取消路徑與生命週期 owner。",
+      },
+      {
+        key: "select",
+        kind: "多路等待",
+        steps: ["同時等待資料與取消", "select 監聽多個 case", "ctx timeout 優先退出", "data case 正常處理"],
+        code: ["select {", "case <-ctx.Done():", "    return ctx.Err()", "case job := <-jobs:", "    return process(job)", "}"].join("\n"),
+        check: "無條件 default 會造成 busy loop；timeout 要用 context 或 timer 管理。",
+      },
+    ];
+
+    function svgText(svg, text, x, y, options = {}) {
+      const node = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      node.setAttribute("x", String(x));
+      node.setAttribute("y", String(y));
+      node.setAttribute("font-size", String(options.size || 12));
+      node.setAttribute("fill", options.fill || "#17202a");
+      if (options.anchor) node.setAttribute("text-anchor", options.anchor);
+      if (options.weight) node.setAttribute("font-weight", options.weight);
+      if (options.code) node.setAttribute("font-family", "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace");
+      node.textContent = text;
+      svg.appendChild(node);
+      return node;
+    }
+
+    function svgWrappedText(svg, text, x, y, options = {}) {
+      const node = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      const size = options.size || 12;
+      const maxChars = options.maxChars || 12;
+      const lineHeight = options.lineHeight || size + 4;
+      node.setAttribute("x", String(x));
+      node.setAttribute("y", String(y));
+      node.setAttribute("font-size", String(size));
+      node.setAttribute("fill", options.fill || "#17202a");
+      if (options.anchor) node.setAttribute("text-anchor", options.anchor);
+      if (options.weight) node.setAttribute("font-weight", options.weight);
+      if (options.code) node.setAttribute("font-family", "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace");
+
+      const source = String(text);
+      const roughTokens = source.includes(" ") ? source.split(/\s+/) : source.match(new RegExp(`.{1,${maxChars}}`, "g")) || [source];
+      const lines = [];
+      let current = "";
+      for (const token of roughTokens) {
+        const next = current ? `${current} ${token}` : token;
+        if (next.length > maxChars && current) {
+          lines.push(current);
+          current = token;
+        } else if (token.length > maxChars) {
+          const chunks = token.match(new RegExp(`.{1,${maxChars}}`, "g")) || [token];
+          if (current) lines.push(current);
+          lines.push(...chunks.slice(0, -1));
+          current = chunks[chunks.length - 1];
+        } else {
+          current = next;
+        }
+      }
+      if (current) lines.push(current);
+
+      lines.slice(0, options.maxLines || 3).forEach((line, index) => {
+        const tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+        tspan.setAttribute("x", String(x));
+        tspan.setAttribute("dy", index === 0 ? "0" : String(lineHeight));
+        tspan.textContent = line;
+        node.appendChild(tspan);
+      });
+      svg.appendChild(node);
+      return node;
+    }
+
+    function svgRect(svg, x, y, width, height, fill, stroke = "#cbd5e1") {
+      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      rect.setAttribute("x", String(x));
+      rect.setAttribute("y", String(y));
+      rect.setAttribute("width", String(width));
+      rect.setAttribute("height", String(height));
+      rect.setAttribute("rx", "8");
+      rect.setAttribute("fill", fill);
+      rect.setAttribute("stroke", stroke);
+      rect.setAttribute("stroke-width", "2");
+      svg.appendChild(rect);
+      return rect;
+    }
+
+    function svgPath(svg, d, markerId = "flow-arrow") {
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", d);
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke", "#64748b");
+      path.setAttribute("stroke-width", "2.4");
+      path.setAttribute("stroke-linecap", "round");
+      path.setAttribute("marker-end", `url(#${markerId})`);
+      svg.appendChild(path);
+      return path;
+    }
+
+    function drawCodeSnippet(svg, code, x, y, width, height, title = "範例程式碼") {
+      svgRect(svg, x, y, width, height, "#0f172a", "#1e293b");
+      svgText(svg, title, x + 14, y + 24, { size: 12, fill: "#93c5fd", weight: 900 });
+      String(code).split("\n").slice(0, 8).forEach((line, index) => {
+        svgText(svg, line || " ", x + 14, y + 48 + index * 17, { size: 11, fill: "#e2e8f0", code: true });
+      });
+    }
+
+    function drawStepChain(svg, steps, options) {
+      const x = options.x || 24;
+      const y = options.y || 74;
+      const width = options.width || 124;
+      const height = options.height || 72;
+      const gap = options.gap || 26;
+      const markerId = options.markerId;
+      const accent = options.accent || "#eff6ff";
+      const stroke = options.stroke || "#bfdbfe";
+      steps.forEach((step, index) => {
+        const currentX = x + index * (width + gap);
+        svgRect(svg, currentX, y, width, height, index === 0 ? accent : "#ffffff", index === 0 ? stroke : "#cbd5e1");
+        svgText(svg, `Step ${index + 1}`, currentX + width / 2, y + 23, { anchor: "middle", weight: 900, size: 12, fill: index === 0 ? "#0f766e" : "#334155" });
+        svgWrappedText(svg, step, currentX + width / 2, y + 47, { anchor: "middle", size: 10, fill: "#475569", maxChars: 10, maxLines: 2, lineHeight: 13 });
+        if (index < steps.length - 1) {
+          const arrowY = y + height / 2;
+          svgPath(svg, `M${currentX + width} ${arrowY} H${currentX + width + gap - 4}`, markerId);
+        }
+      });
+    }
+
+    function createSyntaxFlowCard(item, index) {
+      const card = document.createElement("article");
+      card.className = "flow-card";
+      const heading = document.createElement("h3");
+      heading.innerHTML = `<code>${item.key}</code><span class="tag">${item.kind}</span>`;
+      card.appendChild(heading);
+
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      svg.setAttribute("viewBox", "0 0 640 330");
+      svg.setAttribute("role", "img");
+      svg.setAttribute("aria-label", `${item.key} 語法應用流程圖`);
+
+      const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+      const arrowId = `flow-arrow-${item.key}`;
+      defs.innerHTML = `<marker id="${arrowId}" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M1 1 L9 5 L1 9 Z" fill="#64748b"/></marker>`;
+      svg.appendChild(defs);
+      const background = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      background.setAttribute("id", `flow-background-${item.key}`);
+      svg.appendChild(background);
+
+      const accent = ["#eff6ff", "#ecfdf5", "#fffbeb", "#f5f3ff", "#fff1f2"][index % 5];
+      const stroke = ["#bfdbfe", "#99f6e4", "#fde68a", "#ddd6fe", "#fecdd3"][index % 5];
+      svgText(svg, `${item.key} 對應流程`, 24, 34, { weight: 900, size: 17 });
+      svgWrappedText(svg, item.kind, 616, 34, { anchor: "end", weight: 900, size: 12, fill: "#0f766e", maxChars: 12, maxLines: 1 });
+      drawStepChain(svg, item.steps, { x: 24, y: 62, width: 126, height: 78, gap: 30, markerId: arrowId, accent, stroke });
+
+      drawCodeSnippet(svg, item.code, 24, 176, 340, 126, "Go 實作片段");
+      svgRect(svg, 390, 176, 226, 126, "#ffffff");
+      svgText(svg, "Review Gate", 410, 204, { weight: 900, size: 14, fill: "#0f766e" });
+      svgWrappedText(svg, item.check, 410, 230, { size: 12, fill: "#334155", maxChars: 16, maxLines: 4, lineHeight: 16 });
+      card.appendChild(svg);
+      return card;
+    }
+
+    function createDomainFlowCard(item, index) {
+      const card = document.createElement("article");
+      card.className = "domain-card";
+
+      const head = document.createElement("div");
+      head.className = "domain-card-head";
+      const titleWrap = document.createElement("div");
+      const h3 = document.createElement("h3");
+      h3.textContent = item.domain;
+      const p = document.createElement("p");
+      p.textContent = item.syntax;
+      titleWrap.appendChild(h3);
+      titleWrap.appendChild(p);
+      const badge = document.createElement("span");
+      badge.className = "tag";
+      badge.textContent = `Domain ${String(index + 1).padStart(2, "0")}`;
+      head.appendChild(titleWrap);
+      head.appendChild(badge);
+      card.appendChild(head);
+
+      const body = document.createElement("div");
+      body.className = "domain-card-body";
+
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      svg.setAttribute("viewBox", "0 0 760 390");
+      svg.setAttribute("role", "img");
+      svg.setAttribute("aria-label", `${item.domain} 語法域應用流程圖`);
+      const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+      const arrowId = `domain-arrow-${index}`;
+      defs.innerHTML = `<marker id="${arrowId}" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M2 2 L10 6 L2 10 Z" fill="#64748b"/></marker>`;
+      svg.appendChild(defs);
+      const background = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      background.setAttribute("id", `domain-background-${index}`);
+      svg.appendChild(background);
+
+      const colors = [
+        ["#eff6ff", "#bfdbfe"],
+        ["#ecfdf5", "#99f6e4"],
+        ["#fffbeb", "#fde68a"],
+        ["#f5f3ff", "#ddd6fe"],
+        ["#fff1f2", "#fecdd3"],
+      ][index % 5];
+
+      svgText(svg, item.domain, 380, 35, { anchor: "middle", weight: 900, size: 22 });
+      svgText(svg, "由實際開發流程回推語法使用位置，不只列關鍵字。", 380, 60, { anchor: "middle", size: 13, fill: "#64748b" });
+      drawStepChain(svg, item.steps, { x: 28, y: 92, width: 116, height: 92, gap: 32, markerId: arrowId, accent: colors[0], stroke: colors[1] });
+
+      svgRect(svg, 42, 222, 316, 94, "#ffffff");
+      svgText(svg, "涵蓋語法", 64, 252, { weight: 900, size: 14, fill: "#0f766e" });
+      svgWrappedText(svg, item.syntax, 64, 278, { size: 12, fill: "#334155", maxChars: 24, maxLines: 2, lineHeight: 16 });
+
+      svgRect(svg, 402, 222, 316, 94, "#ffffff");
+      svgText(svg, "風險控制", 424, 252, { weight: 900, size: 14, fill: "#be123c" });
+      svgWrappedText(svg, item.risk, 424, 278, { size: 12, fill: "#334155", maxChars: 23, maxLines: 2, lineHeight: 16 });
+
+      svgRect(svg, 42, 334, 676, 42, "#ffffff");
+      svgText(svg, "工程判斷", 64, 360, { weight: 900, size: 13 });
+      svgWrappedText(svg, item.explain, 148, 360, { size: 11, fill: "#334155", maxChars: 64, maxLines: 1 });
+
+      const codeBox = document.createElement("div");
+      codeBox.className = "code-explain";
+      const pre = document.createElement("pre");
+      const code = document.createElement("code");
+      code.textContent = item.code;
+      pre.appendChild(code);
+      const explain = document.createElement("div");
+      explain.className = "explain";
+      explain.textContent = item.explain;
+      codeBox.appendChild(pre);
+      codeBox.appendChild(explain);
+
+      body.appendChild(svg);
+      body.appendChild(codeBox);
+      card.appendChild(body);
+      return card;
+    }
+
+    const domainGrid = document.getElementById("domainFlowGrid");
+    syntaxDomains.forEach((item, index) => domainGrid.appendChild(createDomainFlowCard(item, index)));
+
+    const flowGrid = document.getElementById("perSyntaxFlowGrid");
+    syntaxFlows.forEach((item, index) => flowGrid.appendChild(createSyntaxFlowCard(item, index)));
+  </script>
 </body>
 </html>

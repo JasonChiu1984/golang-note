@@ -1,0 +1,2 @@
+$ cd '/Users/jasonchiu/Documents/CodexData/Golang學習筆記/examples/performance-comparison' && python3 python/bench.py
+language=Python iterations=50000000 result=3753003574976412281 seconds=8.640206

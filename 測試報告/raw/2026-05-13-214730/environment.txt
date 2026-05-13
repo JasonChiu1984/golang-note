@@ -1,0 +1,8 @@
+run_at=2026-05-13 21:47:30 +0800
+run_at_utc=2026-05-13T13:47:30Z
+root=/Users/jasonchiu/Documents/CodexData/Golang學習筆記
+iterations=50000000
+Darwin JasonChiudeMacBook-Pro.local 25.4.0 Darwin Kernel Version 25.4.0: Thu Mar 19 19:30:44 PDT 2026; root:xnu-12377.101.15~1/RELEASE_ARM64_T6000 arm64
+ProductName:		macOS
+ProductVersion:		26.4.1
+BuildVersion:		25E253
