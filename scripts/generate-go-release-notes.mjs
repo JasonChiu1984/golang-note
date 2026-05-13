@@ -389,9 +389,18 @@ const releaseData = {
     value: "適合把 coverage 從 unit test 推進到 integration test，建立 PGO 評估流程，並補強錯誤聚合、context cancel cause、HTTP gateway 與 runtime observability。",
     risk: "`-i` 移除、舊 OS 支援線、cgo 預設行為、bootstrap toolchain、XML/template/archive 安全行為、GOPATH 舊流程與大量標準庫細節異動是主要風險。",
     focus: "program coverage、PGO preview、`runtime/coverage`、multi-error、`WithCancelCause`、`ResponseController`、ReverseProxy rewrite、cgo/bootstrap/linker/stdlib minor changes。",
+    performance: [
+      ["Runtime / GC", "Go 1.19 需以既有 GC CPU、heap overhead、tail latency 作 baseline。", "Go 1.20 重整 GC internal data structures，降低記憶體 overhead 並改善 overall CPU performance。", "最多約 `2%` CPU/記憶體 overhead 改善。", "API server、worker、長時間執行服務。", "`go test -bench=. -benchmem ./...`、pprof、runtime metrics、tail latency 壓測。"],
+      ["Compiler / PGO", "Go 1.19 無正式 PGO build flow，hot call site 只能靠一般 compiler optimization。", "Go 1.20 preview PGO 以 pprof CPU profile 指導 aggressive inlining。", "代表性 benchmark 約 `3-4%` performance improvement。", "CPU-bound service、hot path 明確的 CLI / gateway。", "`go build -pgo=off` 對比 `go build -pgo=cpu.pprof`。"],
+      ["Compiler / build speed", "Go 1.18 / 1.19 因 generics 支援導致 build speed regression。", "Go 1.20 改善 generics 後續成本，build speed 回到接近 Go 1.17 水準。", "build speed 最高約 `10%` 改善。", "大型 monorepo、CI cold build、泛型-heavy library。", "記錄 cold/warm build time，對比 `go test ./...` wall time。"],
+      ["crypto/ecdsa", "舊版 ECDSA supported curves 並非全部使用新的 constant-time implementation。", "Go 1.20 supported curves 操作改為 constant time，提高安全性但增加 CPU time。", "CPU time 約增加 `5% and 30%`，主要影響 P-384、P-521。", "TLS、簽章服務、憑證驗證工具。", "`go test -bench` 針對 sign/verify，保留 `benchmem` 與 curve 維度。"],
+      ["crypto/rsa decryption", "舊版 RSA backend 較快但安全模型較弱。", "Go 1.20 使用新的 safer constant-time backend，decryption CPU cost 上升。", "RSA-2048 on amd64 約 `15%` 增加；RSA-4096 on arm64 約 `45%` 增加，32-bit 架構可能更高。", "TLS termination、JWT / token signing、legacy RSA decrypt workload。", "分 key size / architecture 跑 decrypt benchmark。"],
+      ["crypto/rsa encryption", "舊版 RSA encryption throughput 較高。", "Go 1.20 新 backend 下 encryption operations 明顯變慢，但仍比 decryption 快。", "encryption 約 `20x` slower than before，但仍約比 decryption 快 `5-10x`。", "高頻 RSA encrypt 的舊系統、相容性測試工具。", "分 encrypt/decrypt benchmark，記錄 ops/sec 與 CPU profile。"],
+      ["runtime/metrics histogram", "Go 1.19 time-based histogram metrics 較精確但記憶體成本較高。", "Go 1.20 time-based histogram metrics 精度較低，但 memory footprint 大幅降低。", "官方未列百分比；明確 tradeoff 是 less precise、much less memory。", "observability dashboard、runtime metrics exporter。", "比較 metrics cardinality、scrape payload、process RSS 與 dashboard alert threshold。"],
+    ],
     coverage: [
       ["Introduction to Go 1.20", "已補齊", "整理 Go 1 compatibility、toolchain/runtime/library 為主的版本定位。", "Executive Summary / 技術總覽", "中"],
-      ["Changes to the language", "已補齊", "補 slice to array conversion、unsafe slice/string helpers、comparison order、`comparable` constraint。", "新增功能 / 相容性異動", "中高"],
+      ["Changes to the language", "已補齊", "補 slice to array conversion、unsafe slice/string helpers、struct values / array values comparison order、`comparable` constraint。", "新增功能 / 相容性異動", "中高"],
       ["Ports / Windows", "已補齊", "補 Windows 7、8、Server 2008、Server 2012 為最後支援線。", "移除 / 棄用 / 相容性異動", "中高"],
       ["Ports / Darwin and iOS", "已補齊", "補 macOS 10.13 High Sierra、10.14 Mojave 為最後支援線。", "移除 / 棄用 / 相容性異動", "中高"],
       ["Ports / FreeBSD-RISC-V", "已補齊", "補 `GOOS=freebsd`、`GOARCH=riscv64` experimental support。", "新增功能列表", "中"],
@@ -402,13 +411,14 @@ const releaseData = {
       ["Runtime", "已補齊", "補 GC CPU/memory overhead、goroutine assists 穩定性、`runtime/coverage`。", "新增功能 / 相容性異動", "中高"],
       ["Compiler", "已補齊", "補 PGO preview、3-4% profile-guided inlining、generic front-end、anonymous interface cycles、build speed up to 10%。", "新增功能 / 相容性異動", "高"],
       ["Linker", "已補齊", "補 Linux glibc/musl dynamic interpreter、Windows LLVM C toolchain、`go:` / `type:` symbol prefix。", "相容性異動 / Go 指令", "高"],
-      ["Bootstrap", "已補齊", "補 Go 1.17.13 bootstrap requirement、搜尋路徑與未來 bootstrap 前移。", "相容性異動 / Go 指令", "高"],
+      ["Bootstrap", "已補齊", "補 Go 1.17.13 bootstrap requirement、搜尋路徑與未來 Go 1.22 bootstrap 前移到 Go 1.20 final point release。", "相容性異動 / Go 指令", "高"],
       ["Standard library / major features", "已補齊", "補 `crypto/ecdh`、multi-error、`ResponseController`、ReverseProxy `Rewrite` / `SetURL` / `SetXForwarded`。", "新增功能列表", "中高"],
       ["Standard library / minor changes", "已補齊", "補 archive、bytes、context、crypto、debug、encoding、go tooling、io/fs、math、mime、net/http、os、reflect、runtime、sync、syscall、testing、time、unicode 等 minor changes。", "新增功能 / 相容性異動", "高"],
       ["Patch Revisions", "已整理", "Go 1.20.1 到 Go 1.20.14 由官方 Release History 擷取。", "Patch Revisions", "中"],
     ],
     added: [
       ["Language", "slice to array conversion", "可由 slice 直接轉成 array，例如把 `x` 轉成 `[4]byte(x)`，延續 Go 1.17 slice-to-array-pointer 能力。", "解析 binary frame、固定長度 header 時可減少 unsafe 寫法。", "補長度不足 panic 與正常轉換測試。"],
+      ["Language / comparison", "struct values / array values comparison order", "spec 明確定義 struct values 依欄位順序、array values 依 index 遞增順序逐一比較，遇到第一個 mismatch 即停止。", "依賴比較可能 panic 的 interface/composite type 時，文件與測試要標出短路順序。", "測 struct field order、array element order 與 panic case。"],
       ["Language / unsafe", "`unsafe.SliceData`、`unsafe.String`、`unsafe.StringData`", "補齊 slice/string 建構與拆解 API，降低依賴內部 representation 的需求。", "只放在低階封裝層，禁止業務層散用 unsafe。", "用 race test 與 fuzz 測 boundary。"],
       ["Language / generics", "`comparable` constraint 語意放寬", "普通 interface 等 comparable type 可滿足 `comparable` constraint，但 runtime comparison 仍可能 panic。", "generic map key helper 需補 panic case 文件。", "對 interface-containing composite types 做測試。"],
       ["Ports", "FreeBSD on RISC-V experimental support", "新增 `GOOS=freebsd`、`GOARCH=riscv64` 實驗支援。", "只放入 experimental build matrix，不作 production SLA。", "`GOOS=freebsd GOARCH=riscv64 go build`。"],
@@ -420,7 +430,7 @@ const releaseData = {
       ["Standard Library / crypto", "`crypto/ecdh`", "新增明確 ECDH package，支援 NIST curves 與 Curve25519。", "新程式優先用 `crypto/ecdh`，不要直接用低階 `crypto/elliptic` 做 ECDH。", "產生 key、derive shared secret 測試。"],
       ["Errors", "`errors.Join` and multiple `%w`", "支援一個 error 包裝多個 error，`errors.Is` / `errors.As` 可走訪多錯誤樹。", "batch job、多設備輪詢、multi-stage validation 可保留完整錯誤原因。", "測 `errors.Is` / `errors.As` 對多錯誤命中。"],
       ["Context", "`context.WithCancelCause` / `context.Cause`", "context cancel 可保留原因，便於區分 timeout、client cancel、shutdown 與 upstream failure。", "API/worker shutdown、gateway timeout 應記錄 cancel cause。", "測 timeout/client cancel/shutdown 三種 cause。"],
-      ["HTTP", "`net/http.ResponseController`", "提供 per-request extended control，包含 read/write deadline 等能力。", "streaming response、大檔案下載、長連線 handler 可更精準控制 timeout。", "用 `httptest` 驗證 deadline 行為。"],
+      ["HTTP", "`net/http.ResponseController` / `SetReadDeadline` / `SetWriteDeadline`", "提供 discoverable per-request extended control，新增 `SetReadDeadline` 與 `SetWriteDeadline` 設定單一 request 的讀寫 deadline。", "streaming response、大檔案下載、長連線 handler 可更精準控制 timeout。", "用 `httptest` 驗證 read/write deadline 行為。"],
       ["HTTP ReverseProxy", "`httputil.ReverseProxy.Rewrite`", "新增 `Rewrite` hook，以 `ProxyRequest` 同時存取 inbound/outbound request，降低 header spoofing 風險。", "gateway/proxy 新實作優先用 `Rewrite` 取代 `Director`。", "測 inbound header 不會覆蓋安全 header。"],
       ["HTTP ReverseProxy", "`ProxyRequest.SetURL` / `SetXForwarded` / `User-Agent` behavior", "`SetURL` 取代 `NewSingleHostReverseProxy` 的常見用法；`SetXForwarded` 明確設定 forwarding headers；incoming request 沒有 `User-Agent` 時不再自動補上。", "反向代理需明確定義 Host、X-Forwarded-* 與 `User-Agent` policy。", "用 integration test 檢查 forwarded headers 與 `User-Agent`。"],
       ["Archive / Path Security", "`archive/tar` / `archive/zip` insecure path controls", "`GODEBUG=tarinsecurepath=0` 與 `zipinsecurepath=0` 可對不安全路徑回傳 `ErrInsecurePath`。", "處理外部 archive 前先加惡意路徑測試。", "測 absolute path、`..`、Windows reserved name。"],
@@ -428,18 +438,22 @@ const releaseData = {
       ["crypto/ecdsa", "`PrivateKey.ECDH`", "可把 ECDSA private key 轉成 ECDH private key。", "憑證與 key 轉換流程需補安全文件。", "測支援曲線與錯誤曲線。"],
       ["crypto/ed25519", "Ed25519ph / Ed25519ctx support", "`PrivateKey.Sign` 與 `VerifyWithOptions` 支援 pre-hashed 與 context variants。", "簽章協議需明確標示 HashFunc 與 Context。", "測 context mismatch verify fail。"],
       ["crypto/subtle", "`XORBytes`", "新增 byte slice XOR helper。", "低階 crypto/protocol helper 可改用標準 API。", "測不同長度與輸出長度。"],
-      ["crypto/tls / x509", "`CertificateVerificationError` / `SetFallbackRoots`", "TLS verification failure 有具體 error type；x509 可設定 fallback roots。", "TLS client/server 排錯與 embedded root bundle 管理可更明確。", "測 unknown authority 與 fallback roots。"],
-      ["debug / binary tooling", "`debug/elf`、`debug/gosym`、`debug/pe` updates", "ELF/PE 常數與 symbol naming 支援更新，`debug/gosym` 可處理 Go 1.20 symbol prefix。", "binary analysis tool 需用 Go 1.20 library 重新測。", "用 Go 1.19/1.20 binary fixture 測。"],
-      ["encoding / fmt", "`encoding/binary` EOF behavior / `fmt.FormatString`", "Varint partial read 改回 `io.ErrUnexpectedEOF`；Formatter 可取回 format directive。", "parser 與 formatter library 應補錯誤分類測試。", "測 partial varint 與 custom Formatter。"],
-      ["Go tooling APIs", "`go/ast`、`go/token.FileSet.RemoveFile`、`go/types.Satisfies`", "AST 增加位置資訊；FileSet 可移除檔案釋放記憶體；types 可判斷 constraint satisfaction。", "長時間分析器、LSP、codegen 工具可導入。", "用大型 source tree 做 memory test。"],
+      ["crypto/tls / x509", "`CertificateVerificationError` / `SetFallbackRoots` / ECDH key parsing", "TLS verification failure 有具體 error type；x509 可設定 fallback roots；`ParsePKCS8PrivateKey`、`MarshalPKCS8PrivateKey`、`ParsePKIXPublicKey`、`MarshalPKIXPublicKey` 支援 `crypto/ecdh` keys。", "TLS client/server 排錯、embedded root bundle 與 ECDH key 管理可更明確。", "測 unknown authority、fallback roots 與 ECDH PKCS8/PKIX parse。"],
+      ["debug/elf", "`SHT_NOBITS` / `R_LARCH_*` / `R_PPC64_*`", "`SHT_NOBITS` section 讀取改回錯誤；新增 LoongArch `R_LARCH_*` 與 PPC64 ELFv2 `R_PPC64_*` relocation constants。", "ELF 解析器與 binary audit tool 需補跨架構 fixture。", "用 Linux/LoongArch/PPC64 fixture 測 relocation。"],
+      ["debug/gosym / debug/pe", "`debug/gosym` symbol prefix / `IMAGE_FILE_MACHINE_RISCV*`", "`debug/gosym` 可處理 Go 1.20 `go:` / `type:` symbol prefix；`debug/pe` 新增 `IMAGE_FILE_MACHINE_RISCV*` constants。", "Windows/RISC-V 與 Go binary symbol parser 需用新版 package。", "用 Go 1.19/1.20 binary fixture 測。"],
+      ["encoding/binary / fmt", "`ReadVarint` / `ReadUvarint` / `fmt.FormatString`", "`ReadVarint` 與 `ReadUvarint` 在 partial value 時回 `io.ErrUnexpectedEOF`；Formatter 可用 `fmt.FormatString` 取回 format directive。", "parser 與 formatter library 應補錯誤分類測試。", "測 partial varint、partial uvarint 與 custom Formatter。"],
+      ["encoding/xml", "`Encoder.Close` / namespace validation", "`Encoder.Close` 可檢查未關閉元素；decoder 拒絕 `<a:b:c>`、`xmlns:a=\"\"` empty namespace、opening/closing tag prefix mismatch。", "XML generator 與 legacy XML input 都要補驗證。", "測 unclosed element、empty namespace、closing tag prefix mismatch。"],
+      ["Go tooling APIs", "`RangeStmt.Range`、`FileStart`、`FileEnd`、`FileSet.RemoveFile`、`go/types.Satisfies`", "AST 新增 `RangeStmt.Range`、`File.FileStart`、`File.FileEnd`；FileSet 可移除檔案釋放記憶體；types 可判斷 constraint satisfaction。", "長時間分析器、LSP、codegen 工具可導入。", "用大型 source tree 做 memory test。"],
       ["IO / Filesystem", "`io.OffsetWriter`、`io/fs.SkipAll`、`path/filepath.SkipAll`、`IsLocal`", "新增 offset writer、立即成功終止 walk、路徑 lexical local 判斷。", "檔案工具、archive extractor、安全路徑檢查應導入。", "測 path traversal 與 Walk early stop。"],
-      ["Networking", "`net.LookupCNAME`、`FlagRunning`、`Dialer.ControlContext`", "CNAME lookup 行為更一致；interface flag 可區分 active link；dial control 可取得 context。", "工業網路 gateway 可用 `FlagRunning` 判斷 link 實際狀態。", "測 DNS、拔線/未連線介面、dial timeout。"],
-      ["net/http", "1xx、`DisableGeneralOptionsHandler`、`OnProxyConnectResponse`", "ResponseWriter 可送 1xx；Server 可關閉 default `OPTIONS *`；Transport 可觀察 proxy CONNECT response。", "HTTP gateway、安全 proxy、client transport 應補測。", "httptest + proxy fixture。"],
+      ["Networking", "`net.LookupCNAME`、`FlagRunning`、`Dialer.ControlContext`、DNS `trust-ad` / `nsswitch.conf`", "CNAME lookup 行為更一致；interface flag 可區分 active link；dial control 可取得 context；resolver 支援 `trust-ad` 並會偵測 `/etc/nsswitch.conf` reload。", "工業網路 gateway 可用 `FlagRunning` 判斷 link 實際狀態，DNS 行為需有部署驗證。", "測 DNS、拔線/未連線介面、dial timeout、resolver reload。"],
+      ["net/http", "1xx、`DisableGeneralOptionsHandler`、`OnProxyConnectResponse`、`StreamError`、`Cookie.Valid`", "ResponseWriter 可送 1xx；Server 可關閉 default `OPTIONS *`；Transport 可觀察 proxy CONNECT response；HTTP/2 stream errors 可用 `errors.As` 轉 `StreamError`；`Cookie.Valid` 只在 Expires 有值時檢查。", "HTTP gateway、安全 proxy、client transport 與 cookie parser 應補測。", "httptest + proxy fixture + HTTP/2 stream error case。"],
+      ["net/netip", "`IPv6LinkLocalAllRouters` / `IPv6Loopback`", "新增 `net/netip` 版本的 IPv6 link-local all-routers 與 loopback helper。", "新網路程式可統一採 `netip.Addr`，減少 `net.IP` 混用。", "測 IPv6 helper 與既有 `net.IP` 對應。"],
       ["os/exec", "`Cmd.Cancel` / `WaitDelay`", "可定義 Context cancel 或 child process 持有 pipe 時的等待行為。", "CLI wrapper、supervisor、build runner 要避免 zombie 與永遠卡住。", "測 context cancel、child holding stdout/stderr。"],
       ["reflect", "`Value.Comparable`、`Equal`、`Grow`、`SetZero`", "reflection 補 equality、slice grow 與 zero assignment helper。", "generic-ish validation、serialization、diff 工具可減少 unsafe/手寫邏輯。", "測 unexported field 與不可比較型別。"],
-      ["Runtime observability", "`runtime/metrics` / `runtime/pprof` / `runtime/trace` updates", "新增 GOMAXPROCS、cgo calls、mutex wait、GC time 等 metrics；pprof/trace 行為修正。", "把 runtime metrics 納入 dashboard，升級後比對 profile。", "metrics scrape、mutex profile、trace smoke test。"],
+      ["runtime/cgo", "`runtime/cgo.Incomplete`", "新增 `Incomplete` marker type，cgo 產生碼會用 `cgo.Incomplete` 標示 incomplete C type。", "檢查 cgo wrapper 與文件產生器是否處理 incomplete type。", "用含 opaque C struct 的 cgo fixture 測。"],
+      ["Runtime observability", "`runtime/metrics` / `runtime/pprof` / `runtime/trace` updates", "新增 GOMAXPROCS、cgo calls、mutex wait、GC time 等 metrics；pprof mutex profile samples 預先 scaling；Windows symbolization 修正；trace 減少 GC sweeper noise。", "把 runtime metrics 納入 dashboard，升級後比對 profile。", "metrics scrape、mutex profile、Windows pprof、trace smoke test。"],
       ["sync", "`sync.Map.Swap`、`CompareAndSwap`、`CompareAndDelete`", "sync.Map 支援 atomic update/delete 操作。", "高併發 cache/state table 可減少外部鎖。", "race test + high-concurrency tests。"],
-      ["testing / time / unicode", "`testing.B.Elapsed`、`time.DateTime`、`Time.Compare`、`utf16.AppendRune`", "testing、time layout、time comparison、UTF-16 append API 補齊常見需求。", "benchmark metric、時間格式、encoding 工具可改用標準 API。", "測 benchmark helper、JSON time、UTF-16 conversion。"],
+      ["syscall / testing / time / unicode", "`CgroupFD`、`UseCgroupFD`、`B.Elapsed`、`DateTime`、`DateOnly`、`TimeOnly`、`Time.Compare`、`utf16.AppendRune`", "Linux `SysProcAttr.CgroupFD` / `UseCgroupFD` 可把 child process 放進指定 cgroup；testing、time layout、time comparison、UTF-16 append API 補齊常見需求。", "benchmark metric、時間格式、encoding 工具與 Linux supervisor 可改用標準 API。", "測 cgroup launch、benchmark helper、JSON time、UTF-16 conversion。"],
     ],
     compat: [
       ["Go command", "`go build -i` / `go test -i` removed", "移除", "舊 CI、Makefile、Dockerfile 若仍帶 `-i` 會失敗。", "移除 `-i`，改依 build cache。"],
@@ -448,30 +462,36 @@ const releaseData = {
       ["Platform / Windows", "Windows 7、8、Server 2008、Server 2012 final support", "最後支援", "Go 1.21 起需 Windows 10 或 Server 2016 以上。", "升級到 Go 1.21 前先更新 OS support matrix。"],
       ["Platform / macOS", "macOS 10.13 / 10.14 final support", "最後支援", "Go 1.21 起需 macOS 10.15 Catalina 以上。", "CI runner 與開發機需升級。"],
       ["Cgo", "`CGO_ENABLED` default may become `0` without C toolchain", "預設行為變更", "minimal container 或 macOS 無 C compiler 時會自動走 pure Go build。", "Docker image 要明確設定 `CGO_ENABLED` 與 C toolchain policy。"],
+      ["Cgo / stdlib", "`net`、`os/user`、`plugin` cgo package list", "建置行為", "官方明列標準庫使用 cgo 的 packages 為 `net`、`os/user`、`plugin`；macOS 的 `net` 與 `os/user` 已改寫為不依賴 cgo。", "容器、交叉編譯與 macOS build matrix 要分別驗證。"],
       ["Cgo / macOS", "`net` + `-buildmode=c-archive` needs `-lresolv`", "link 行為變更", "macOS 將 Go archive 連到 C program 時可能缺 resolver symbol。", "C link command 加上 `-lresolv`。"],
       ["Cgo / race detector", "macOS race detector no longer needs cgo/Xcode", "需求變更", "macOS 可降低 race test 環境要求；Linux/Unix/Windows 仍需 host C toolchain。", "CI 文件分平台標註。"],
       ["Vet", "`T.Parallel` loop variable capture diagnostic", "診斷加強", "舊 subtest 可能被 vet 報出 loop variable capture。", "改用每輪 shadow variable 或 table-driven safe pattern。"],
       ["Vet", "`2006-02-01` time format diagnostic", "診斷加強", "誤把 yyyy-dd-mm 當 ISO yyyy-mm-dd 的程式會被 vet 提醒。", "改成 `2006-01-02`。"],
+      ["Runtime", "GC CPU/memory overhead up to 2%", "效能行為", "GC internal data structures 重整後，memory overhead 與 overall CPU performance 最多改善約 `2%`，goroutine assists 行為也較穩定。", "壓測時比對 GC CPU、heap overhead 與 tail latency。"],
       ["Compiler", "anonymous interface cycles rejected", "相容性異動", "極少數使用 embedded interface cycle 的程式會 compile fail。", "重構 interface graph，避免匿名循環。"],
       ["Linker", "Linux glibc/musl dynamic interpreter selected at link time", "link 行為變更", "container/base image 混用 glibc/musl 時需實際 smoke test。", "分 glibc/musl image 驗證 binary。"],
       ["Linker", "compiler-generated symbols use `go:` / `type:` prefix", "工具相容性", "自製 binary analysis / symbol parsing tool 可能依賴舊 `go.` / `type.`。", "改用 Go 1.20 `debug/gosym` 或更新 parser。"],
       ["Bootstrap", "source build requires Go 1.17.13 bootstrap", "建置要求", "自建 Go toolchain 若 bootstrap 太舊會失敗。", "安裝 Go 1.17.13，確認 `$HOME/go1.17.13` 或 `$HOME/sdk/go1.17.13`。"],
+      ["Bootstrap", "future Go 1.22 bootstrap moves to Go 1.20 final point release", "未來要求", "官方預告 bootstrap toolchain 約每年往前移，Go 1.22 預期需要 Go 1.20 final point release。", "source build 文件需避免長期停在舊 bootstrap。"],
       ["archive/tar / archive/zip", "insecure path checks via GODEBUG", "安全收緊", "外部 archive 若含 absolute path、`..`、Windows reserved name，啟用後會回 `ErrInsecurePath`。", "修正 archive producer 或清洗路徑。"],
       ["archive/zip", "directory file containing data now errors", "行為收緊", "不合規 zip 讀取可能失敗。", "測 legacy zip corpus。"],
-      ["encoding/xml", "stricter namespace/name validation", "安全/規格收緊", "多 colon name、empty namespace、closing prefix mismatch 會被拒絕。", "清理 legacy XML input。"],
-      ["crypto/ecdsa / rsa", "constant-time backend CPU cost", "安全收緊", "ECDSA supported curves 與 RSA 私鑰操作更安全但 CPU 可能上升。", "對 TLS/signing/decryption 做 benchmark。"],
+      ["encoding/xml", "`Encoder.Close` and stricter namespace/name validation", "安全/規格收緊", "`Encoder.Close` 可抓未關閉元素；多 colon name、`xmlns:a=\"\"` empty namespace、opening/closing tag prefix mismatch 會被拒絕。", "清理 legacy XML input，並在 XML encoder 收尾呼叫 `Encoder.Close`。"],
+      ["crypto/ecdsa / rsa", "constant-time backend CPU cost and `OAEPOptions.MGFHash`", "安全收緊", "ECDSA supported curves 改 constant time，CPU time 約增加 `5% and 30%`；RSA 新 constant-time backend 且 `OAEPOptions.MGFHash` 可獨立設定 MGF1 hash。", "對 TLS/signing/decryption 做 benchmark，並檢查 OAEP interoperability。"],
       ["crypto/rsa", "`PrecomputedValues` must not be manually modified", "安全要求", "手動修改或產生 RSA precomputed fields 可能破壞安全假設。", "改用標準 key generation/parsing。"],
+      ["crypto/x509", "`ParsePKCS8PrivateKey` / `ParsePKIXPublicKey` support `crypto/ecdh` keys", "API 支援", "PKCS8/PKIX marshal/parse API 可處理 `*crypto/ecdh.PrivateKey` 與 `*crypto/ecdh.PublicKey`，NIST curve parsing 仍回 ECDSA key 後可用 `ECDH` 轉換。", "憑證與 key import/export tests 要補 ECDH case。"],
       ["math/rand", "global RNG auto seed and `Seed` deprecated", "預設行為變更/棄用", "依賴 deterministic global random sequence 的測試會漂移。", "測試改用 `rand.New(rand.NewSource(seed))`；必要時用 `GODEBUG=randautoseed=0`。"],
       ["math/rand", "`Read` deprecated", "棄用", "安全用途不應用 math/rand。", "改用 `crypto/rand.Read`。"],
+      ["mime", "`ParseMediaType` duplicate parameter names", "解析行為變更", "`ParseMediaType` 允許重複 parameter name，只要對應值相同。", "HTTP header/MIME parser 測試需補 duplicate same-value 與 conflict cases。"],
       ["mime/multipart", "header/part limits", "安全限制", "大型或異常 multipart input 可能被拒絕。", "必要時調整 `GODEBUG=multipartmaxheaders` / `multipartmaxparts`，並保留上限。"],
       ["net/http", "HEAD request with body accepted", "行為變更", "舊測試若期待 server reject HEAD body 需要更新。", "以實際 API contract 重新定義。"],
-      ["net/http", "cookie parsing/validation behavior changed", "行為變更", "cookie name trimming、empty Expires validation 可能改變 legacy 行為。", "補 cookie parser regression tests。"],
+      ["net/http", "`StreamError` / `Cookie.Valid` / cookie parsing behavior changed", "行為變更", "HTTP/2 stream errors 可用 `errors.As` 轉 `StreamError`；cookie name 會 trim spaces；empty Expires 的 `Cookie.Valid` 視為有效。", "補 HTTP/2 error 與 cookie parser regression tests。"],
       ["os / Windows", "`NUL` and directory file behavior changed", "平台行為變更", "Windows path/file tests 可能受影響。", "在 Windows runner 重跑 filesystem tests。"],
-      ["reflect", "`SetIterKey` / `SetIterValue` unexported field check fixed", "行為修正", "依賴舊錯誤行為的 reflection code 會失敗。", "修正對 unexported field 的操作。"],
+      ["reflect", "`Value.Equal` / `Value.Grow` / `Value.SetZero` and iterator field checks", "API / 行為修正", "`Value.Equal`、`Value.Grow`、`Value.SetZero` 成為標準反射工具；`SetIterKey` / `SetIterValue` 補上 unexported field check。", "修正對 unexported field 的操作，並用新 API 取代手寫反射邏輯。"],
       ["regexp/syntax", "`ErrLarge` replaces generic internal error for huge regex", "錯誤分類變更", "錯誤判斷若比對 `ErrInternalError` 需更新。", "改測 `syntax.ErrLarge`。"],
       ["syscall / FreeBSD", "FreeBSD 11 compatibility shims removed", "平台相容性", "舊 FreeBSD target 不應再列為支援。", "更新部署矩陣。"],
+      ["syscall / Linux", "`SysProcAttr.CgroupFD` / `UseCgroupFD`", "平台 API", "Linux process launch 可用 `CgroupFD` 與 `UseCgroupFD` 把 child process 放入指定 cgroup。", "container supervisor 或 job runner 需補 Linux-only tests。"],
       ["testing", "`T.Run` inside `T.Cleanup` panics", "行為收緊", "不明確的 cleanup 內建立 subtest 會 panic。", "調整測試 lifecycle。"],
-      ["time", "`Time.MarshalJSON` stricter RFC3339", "格式收緊", "不合 RFC3339 的時間 JSON 可能失敗。", "補 JSON time round-trip tests。"],
+      ["time", "`DateOnly` / `TimeOnly` / stricter RFC3339 JSON", "API / 格式收緊", "新增 `DateTime`、`DateOnly`、`TimeOnly` layout constants；`Time.MarshalJSON` 對 RFC3339 更嚴格。", "時間格式統一改用命名 layout，補 JSON time round-trip tests。"],
     ],
     commands: [
       ["go -C", "before-command chdir", "新增", "Go subcommands 可先切到指定目錄再執行，簡化 multi-module script。", "`go -C ./service test ./...`"],
@@ -750,6 +770,16 @@ function pageHtml(minor, release, headings) {
   const title = `Go 1.${minor} Release Note 專業整理報告`;
   const officialUrl = `https://go.dev/doc/go1.${minor}`;
   const filename = `go1.${minor}-release-note.html`;
+  const performanceNav = data.performance?.length
+    ? '      <a class="nav-link" href="#performance-comparison">效能比較</a>\n'
+    : "";
+  const performanceSection = data.performance?.length
+    ? `    <section id="performance-comparison">
+      <div class="section-head"><h2>效能比較</h2><p>此表整理官方 release note 中明確提到的效能數字、成本變化與建議驗證方式。</p></div>
+      <div class="table-wrap"><table><thead><tr><th>官方項目</th><th>Go 1.19 / 升級前狀態</th><th>Go 1.20 變化</th><th>官方數字</th><th>受影響場景</th><th>驗證指令 / 證據</th></tr></thead><tbody>${rows(data.performance, 6)}</tbody></table></div>
+    </section>
+`
+    : "";
   return `<!doctype html>
 <html lang="zh-Hant">
 <head>
@@ -826,6 +856,7 @@ function pageHtml(minor, release, headings) {
       <a class="nav-link" href="#executive-summary">摘要</a>
       <a class="nav-link" href="#overview">總覽</a>
       <a class="nav-link" href="#impact-matrix">影響矩陣</a>
+${performanceNav}\
       <a class="nav-link" href="#official-coverage">官方覆蓋矩陣</a>
       <a class="nav-link" href="#added">新增功能</a>
       <a class="nav-link" href="#removed">移除/棄用</a>
@@ -862,6 +893,7 @@ function pageHtml(minor, release, headings) {
       <div class="section-head"><h2>升級影響矩陣</h2><p>此矩陣把版本重點轉成專案升級時的影響、風險與處置方式。</p></div>
       <div class="table-wrap"><table><thead><tr><th>影響領域</th><th>影響等級</th><th>主要價值</th><th>主要風險</th><th>建議處置</th></tr></thead><tbody>${impactRows(data, release)}</tbody></table></div>
     </section>
+${performanceSection}\
     <section id="official-coverage">
       <div class="section-head"><h2>官方段落覆蓋矩陣</h2><p>此矩陣依官方 release note 段落標題與 Release History 補齊狀態整理。</p></div>
       <div class="table-wrap"><table><thead><tr><th>官方段落</th><th>本頁狀態</th><th>整理方式</th><th>落地區域</th><th>風險等級</th></tr></thead><tbody>${coverageRows(minor, headings)}</tbody></table></div>

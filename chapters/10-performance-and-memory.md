@@ -180,6 +180,28 @@ benchstat old.txt new.txt
 | 固定環境 | 不要一邊跑 benchmark 一邊開高負載程式 |
 | 沒顯著差異就不要硬說有變快 | `benchstat` 顯示 `~` 時代表沒有足夠證據 |
 
+## Release Note 效能比較矩陣
+
+版本升級不是只看新增 API。Go release note 只要明確提到效能數字、CPU 成本或 memory tradeoff，教材頁面就應該轉成可驗證的升級矩陣：升級前狀態、升級後變化、官方數字、受影響場景與本地驗證指令。
+
+Go 1.20 的效能比較已整理在 `ReleaseNote/go1.20-release-note.html`，重點不是背數字，而是把數字轉成 release gate。
+
+| 官方項目 | 升級決策重點 | 驗證方式 |
+|---|---|---|
+| Runtime / GC | 官方提到最多約 2% CPU / memory overhead 改善，但仍要看自己的 heap、GC CPU 與 tail latency | `go test -bench=. -benchmem ./...`、pprof、runtime metrics、壓測 |
+| Compiler / PGO | PGO preview 可帶來約 3-4% 代表性 benchmark 改善，但只對 hot path 明確的 workload 有意義 | `go build -pgo=off` 對比 `go build -pgo=cpu.pprof` |
+| Build speed | generics 後續 build speed 回復，官方提到最高約 10% 改善 | 記錄 cold/warm `go test ./...` wall time |
+| crypto/ecdsa | constant-time 實作提高安全性，但 CPU time 約增加 5-30% | 針對 sign / verify 分 curve benchmark |
+| crypto/rsa | safer backend 讓 decrypt CPU cost 上升，encrypt 也可能明顯變慢 | 分 key size、architecture、encrypt/decrypt benchmark |
+| runtime/metrics histogram | time-based histogram 精度降低但 memory footprint 大幅下降 | 比較 scrape payload、RSS、dashboard alert threshold |
+
+```bash
+rg -n "效能比較|crypto/rsa encryption|runtime/metrics histogram" \
+  ReleaseNote/go1.20-release-note.html docs/ReleaseNote/go1.20-release-note.html
+```
+
+> **工程經驗**：Release Note 的官方效能數字只能當作升級假設，不是你的 production 結論。真正的結論要來自同一台機器、同一組 workload、同一套 benchmark/profile/metrics 證據。
+
 ## Profiling (效能分析)
 
 當程式變慢時，不要用猜的，用 `pprof` 來測量。

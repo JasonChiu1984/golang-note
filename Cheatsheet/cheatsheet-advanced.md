@@ -438,6 +438,15 @@ benchstat old.txt new.txt
 | mutex profile | 找 lock contention |
 | `runtime/metrics` | 長期監控 GC、heap、scheduler、goroutine 指標 |
 
+### Release Note 效能矩陣
+
+| 檢查點 | 速查 |
+|---|---|
+| 官方效能數字 | Go 1.20 頁面需列 Runtime / GC 2%、PGO 3-4%、build speed 10%、ECDSA 5-30%、RSA decrypt 15-45%、RSA encrypt 約 20x slower |
+| 成本與收益分開 | 改善項與安全成本都要列，不可只寫「新版更快」 |
+| 本地證據 | 每個效能結論都要對應 benchmark、pprof、runtime metrics 或壓測 |
+| 同步檢查 | `rg -n "效能比較|crypto/rsa encryption|runtime/metrics histogram" ReleaseNote/go1.20-release-note.html docs/ReleaseNote/go1.20-release-note.html` |
+
 ### 效能診斷選工具
 
 | 症狀 | 第一工具 | 指令 / API |

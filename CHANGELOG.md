@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.20 - 2026-05-13
+
+- 新增 2026-05-13 16:03 資深工程師審查報告，確認 production migration contract 已補齊，但 Go 1.20 Release Note 仍缺少可直接用於升級決策的效能比較矩陣。
+- `scripts/generate-go-release-notes.mjs` 新增 Go 1.20 `performance` 資料結構，讓後續重新產生頁面時保留效能比較區塊。
+- `ReleaseNote/go1.20-release-note.html` 新增「效能比較」區塊，整理 Runtime / GC、PGO、build speed、ECDSA、RSA decrypt/encrypt 與 runtime metrics histogram 的官方數字、成本與驗證方式。
+- 擴充 Go 1.20 coverage / added / compatibility 表，補強 struct/array comparison order、XML validation、net/http、runtime/cgo、syscall cgroup、crypto/x509 ECDH key parsing 等細節。
+- README、第 10 章、進階 Cheat Sheet 與康乃爾筆記補上 Release Note 效能矩陣的驗證 gate，避免升級說明只列功能而不列性能成本。
+- `docs/index.html` 已重新由 `圖解筆記3-4整合/golang-complete-visual-course.html` 複製產生，並修正 Release Notes 連結為 GitHub Pages 可用的 `ReleaseNote/index.html`。
+- `docs/ReleaseNote/` 已同步 Go 1.20 效能比較內容，讓 Pages 版與根目錄 ReleaseNote 保持一致。
+
 ## v1.0.19 - 2026-05-13
 
 - 新增 2026-05-13 15:03 資深工程師審查報告，確認 DB pool contract 已補齊，但 migration CLI 仍缺少 production migration contract。
