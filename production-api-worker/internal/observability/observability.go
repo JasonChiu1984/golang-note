@@ -104,7 +104,7 @@ func (o *Observability) MetricsHandler() http.Handler {
 
 func (o *Observability) StartSpan(ctx context.Context, name string) (context.Context, func()) {
 	ctx, span := o.Tracer.Start(ctx, name)
-	return ctx, span.End
+	return ctx, func() { span.End() }
 }
 
 func (o *Observability) InfoContext(ctx context.Context, msg string, args ...any) {
