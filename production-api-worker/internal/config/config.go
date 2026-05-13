@@ -5,20 +5,27 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
-	DefaultPort      = "8080"
-	DefaultQueueSize = 64
-	DefaultWorkers   = 4
+	DefaultPort                    = "8080"
+	DefaultQueueSize               = 64
+	DefaultWorkers                 = 4
+	DefaultDatabaseMaxOpenConns    = 25
+	DefaultDatabaseMaxIdleConns    = 10
+	DefaultDatabaseConnMaxLifetime = 30 * time.Minute
 )
 
 type Config struct {
-	Port         string
-	QueueSize    int
-	Workers      int
-	DatabaseURL  string
-	OTLPEndpoint string
+	Port                    string
+	QueueSize               int
+	Workers                 int
+	DatabaseURL             string
+	DatabaseMaxOpenConns    int
+	DatabaseMaxIdleConns    int
+	DatabaseConnMaxLifetime time.Duration
+	OTLPEndpoint            string
 }
 
 func Load() (Config, error) {
@@ -42,13 +49,31 @@ func LoadFromLookup(lookup func(string) (string, bool)) (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
+	databaseMaxOpenConns, err := parsePositiveInt("DATABASE_MAX_OPEN_CONNS", readString(lookup, "DATABASE_MAX_OPEN_CONNS", strconv.Itoa(DefaultDatabaseMaxOpenConns)))
+	if err != nil {
+		return Config{}, err
+	}
+	databaseMaxIdleConns, err := parsePositiveInt("DATABASE_MAX_IDLE_CONNS", readString(lookup, "DATABASE_MAX_IDLE_CONNS", strconv.Itoa(DefaultDatabaseMaxIdleConns)))
+	if err != nil {
+		return Config{}, err
+	}
+	if databaseMaxIdleConns > databaseMaxOpenConns {
+		return Config{}, fmt.Errorf("DATABASE_MAX_IDLE_CONNS must be less than or equal to DATABASE_MAX_OPEN_CONNS, got %d > %d", databaseMaxIdleConns, databaseMaxOpenConns)
+	}
+	databaseConnMaxLifetime, err := parsePositiveDuration("DATABASE_CONN_MAX_LIFETIME", readString(lookup, "DATABASE_CONN_MAX_LIFETIME", DefaultDatabaseConnMaxLifetime.String()))
+	if err != nil {
+		return Config{}, err
+	}
 
 	return Config{
-		Port:         port,
-		QueueSize:    queueSize,
-		Workers:      workers,
-		DatabaseURL:  strings.TrimSpace(readString(lookup, "DATABASE_URL", "")),
-		OTLPEndpoint: strings.TrimSpace(readString(lookup, "OTEL_EXPORTER_OTLP_ENDPOINT", "")),
+		Port:                    port,
+		QueueSize:               queueSize,
+		Workers:                 workers,
+		DatabaseURL:             strings.TrimSpace(readString(lookup, "DATABASE_URL", "")),
+		DatabaseMaxOpenConns:    databaseMaxOpenConns,
+		DatabaseMaxIdleConns:    databaseMaxIdleConns,
+		DatabaseConnMaxLifetime: databaseConnMaxLifetime,
+		OTLPEndpoint:            strings.TrimSpace(readString(lookup, "OTEL_EXPORTER_OTLP_ENDPOINT", "")),
 	}, nil
 }
 
@@ -72,6 +97,14 @@ func parsePositiveInt(name, value string) (int, error) {
 	parsed, err := strconv.Atoi(value)
 	if err != nil || parsed <= 0 {
 		return 0, fmt.Errorf("%s must be a positive integer, got %q", name, value)
+	}
+	return parsed, nil
+}
+
+func parsePositiveDuration(name, value string) (time.Duration, error) {
+	parsed, err := time.ParseDuration(value)
+	if err != nil || parsed <= 0 {
+		return 0, fmt.Errorf("%s must be a positive duration such as 30m or 1h, got %q", name, value)
 	}
 	return parsed, nil
 }

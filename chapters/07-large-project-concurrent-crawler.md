@@ -368,9 +368,14 @@ Production API 的 timeout 不是未知錯誤。若 handler 建立的 request de
 | `QUEUE_SIZE` | `64` | 必須是正整數 |
 | `WORKERS` | `4` | 必須是正整數 |
 | `DATABASE_URL` | 空 | 空值時使用 memory store |
+| `DATABASE_MAX_OPEN_CONNS` | `25` | 必須是正整數 |
+| `DATABASE_MAX_IDLE_CONNS` | `10` | 必須是正整數，且不可大於最大開啟連線數 |
+| `DATABASE_CONN_MAX_LIFETIME` | `30m0s` | 必須是正數 duration |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | 空 | 空值時只輸出 stdout trace |
 
 這個案例適合放在第 7 章，因為它強調 `cmd/` 的職責不是堆業務邏輯，而是做 configuration、dependency wiring 與啟動失敗邊界。設定 loader 有自己的 unit test，避免部署環境變更時破壞啟動合約。
+
+DB connection pool 也是啟動合約的一部分。若 `SetMaxOpenConns(25)`、`SetMaxIdleConns(10)`、`SetConnMaxLifetime(30*time.Minute)` 直接寫死在 repository，讀者會學到錯誤的維運模型：程式碼編譯值控制 production 容量，而不是部署設定、DB `max_connections` 與 worker 數共同決定。`production-api-worker` 因此把 Postgres pool 參數提升到 config 層，並用 config unit test 固定「idle 不可大於 open」與 duration 格式。
 
 ### Service Lifecycle：ready、draining、shutdown
 

@@ -222,7 +222,7 @@ func TestCreateJobContract(t *testing.T) {
 | Panic recovery | 未預期 panic 仍需回穩定 `500 internal_error` JSON |
 | Request timeout | handler deadline exceeded 應回 `504 request_timeout`，不可漂移成 `500 internal_error` |
 | Retry cancellation | retry backoff 遇到 `ctx.Done()` 時應停止，不再重試交易或 enqueue |
-| Startup config | 不合法 `PORT`、`QUEUE_SIZE`、`WORKERS` 應 fail fast，不可 silent fallback |
+| Startup / DB pool config | 不合法 `PORT`、`QUEUE_SIZE`、`WORKERS`、DB pool size 或 DB pool duration 應 fail fast，不可 silent fallback |
 
 對 `production-api-worker` 這類 service，建議把合約測試獨立命名，讓 release gate 可以聚焦執行：
 
@@ -395,7 +395,7 @@ func TestLoadFromLookupRejectsInvalidRequiredConfig(t *testing.T) {
 | Panic recovery 合約 | `cd production-api-worker && go test ./internal/api -run 'TestPanicRecoveryContract' -count=1` | 固定 panic path 的 `500 internal_error` JSON 與 request id |
 | Request timeout 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestTimeoutContract' -count=1` | 固定 handler timeout 的 `504 request_timeout` JSON 與 request id |
 | Retry cancellation | `cd production-api-worker && go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1` | 固定 deadlock retry backoff 會尊重 context cancellation / deadline |
-| Startup config | `cd production-api-worker && go test ./internal/config -count=1` | 固定設定預設值、合法 env 與錯誤設定 fail-fast 行為 |
+| Startup / DB pool config | `cd production-api-worker && go test ./internal/config -count=1` | 固定設定預設值、合法 env、DB pool 關係與錯誤設定 fail-fast 行為 |
 | Module checksum | `go mod verify` | 確認 module cache 未被竄改 |
 | Dependency updates | `go list -m -u all` | 發現可更新版本，作為維護 PR 依據 |
 | Vulnerability scan | `govulncheck ./...` | 掃描實際可達的 Go 已知漏洞 |

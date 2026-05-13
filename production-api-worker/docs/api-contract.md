@@ -1,6 +1,6 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.17 ｜ 基準日期：2026-05-13 ｜ 適用範圍：local memory mode、Postgres + OTLP mode
+> 版本：v1.0.18 ｜ 基準日期：2026-05-13 ｜ 適用範圍：local memory mode、Postgres + OTLP mode
 
 這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery、retry 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 cancellation 行為需要透過 contract test 保護。
 
@@ -16,7 +16,7 @@
 | Readiness lifecycle | draining 時 `/readyz` 必須回 `503`，讓外部導流系統停止送新 request |
 | Panic recovery | 未預期 panic 必須回 `500` 與穩定 `internal_error` JSON，不暴露 panic 細節 |
 | Request timeout | handler deadline exceeded 必須回 `504 request_timeout`，不得漂移成 `500 internal_error` |
-| Startup configuration | `PORT`、`QUEUE_SIZE`、`WORKERS` 必須先驗證；錯誤設定 fail fast，不可 silent fallback |
+| Startup configuration | `PORT`、`QUEUE_SIZE`、`WORKERS` 與 DB pool 設定必須先驗證；錯誤設定 fail fast，不可 silent fallback |
 | Worker shutdown | queue close 與 enqueue send 必須同步，shutdown 後新 enqueue 回穩定錯誤 |
 | Retry cancellation | deadlock retry 的 backoff 必須尊重 `context` cancellation / deadline |
 | Breaking change | 需新增版本路由或遷移期，不能直接覆蓋既有合約 |
@@ -149,9 +149,12 @@ Content-Type: application/json
 | `QUEUE_SIZE` | `64` | 正整數 |
 | `WORKERS` | `4` | 正整數 |
 | `DATABASE_URL` | 空字串 | 空字串時使用 memory store |
+| `DATABASE_MAX_OPEN_CONNS` | `25` | 正整數 |
+| `DATABASE_MAX_IDLE_CONNS` | `10` | 正整數，且不可大於 `DATABASE_MAX_OPEN_CONNS` |
+| `DATABASE_CONN_MAX_LIFETIME` | `30m0s` | 正數 duration，例如 `30m` 或 `1h` |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | 空字串 | 空字串時使用 stdout trace exporter |
 
-錯誤設定必須讓 process fail fast，例如 `PORT=http`、`QUEUE_SIZE=0`、`WORKERS=-1` 不應被靜默改成預設值。
+錯誤設定必須讓 process fail fast，例如 `PORT=http`、`QUEUE_SIZE=0`、`WORKERS=-1`、`DATABASE_MAX_IDLE_CONNS > DATABASE_MAX_OPEN_CONNS` 或 `DATABASE_CONN_MAX_LIFETIME=soon` 不應被靜默改成預設值。
 
 ## Panic Recovery
 

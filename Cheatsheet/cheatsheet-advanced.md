@@ -217,6 +217,7 @@ func FetchUser(ctx context.Context, id int) (*User, error) {
 | `PORT` | 啟動時 parse 成 1-65535；不要接受 `:8080` 或任意字串 |
 | `QUEUE_SIZE` | 必須是正整數；錯誤值 fail fast，不要 silent fallback |
 | `WORKERS` | 必須是正整數；容量規劃要能被測試固定 |
+| DB pool | `DATABASE_MAX_OPEN_CONNS`、`DATABASE_MAX_IDLE_CONNS`、`DATABASE_CONN_MAX_LIFETIME` 要由 env 驗證；idle 不可大於 open |
 | Optional endpoint | `DATABASE_URL` 空值時明確進 memory mode；OTLP endpoint 空值時明確使用 stdout exporter |
 | 測試 | `go test ./internal/config -count=1` 固定 default、valid env、invalid env |
 

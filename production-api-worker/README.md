@@ -6,7 +6,7 @@
 - API contract：穩定 request/response/error schema，文件在 `docs/api-contract.md`
 - Request decoding：拒絕 malformed JSON、unknown field、trailing JSON value 與空白 name
 - Service transaction boundary：`sql.TxOptions`、context-aware deadlock retry、queue enqueue
-- Startup configuration：集中驗證 `PORT`、`QUEUE_SIZE`、`WORKERS`，錯誤設定 fail fast
+- Startup configuration：集中驗證 `PORT`、`QUEUE_SIZE`、`WORKERS` 與 DB pool 設定，錯誤設定 fail fast
 - Repository：memory 與 Postgres `database/sql` 版本
 - Worker queue：bounded queue、worker pool、shutdown-safe enqueue / close
 - Service lifecycle：`/livez`、`/readyz`、draining、HTTP shutdown、queue drain
@@ -67,7 +67,7 @@ docker compose up --build
 | `go mod verify` | 確認 module cache 與 `go.sum` hash 一致 |
 | `go list -m -u all` | 發現可更新依賴並建立維護紀錄 |
 | `govulncheck ./...` | 掃描 API / worker 實際可達的已知漏洞 |
-| `go test ./internal/config -count=1` | 固定啟動設定預設值、合法 env 與錯誤設定 fail-fast 行為 |
+| `go test ./internal/config -count=1` | 固定啟動設定與 DB pool 預設值、合法 env 與錯誤設定 fail-fast 行為 |
 | `go test ./internal/api -run 'Test.*Contract' -count=1` | 固定 HTTP status、JSON shape、錯誤 code 與 response header |
 | `go test ./internal/api -run 'TestRequestDecodingContract' -count=1` | 固定 malformed JSON、unknown field、trailing JSON 與空白 name 的 `400 invalid_input` |
 | `go test ./internal/api -run 'TestReadinessContract' -count=1` | 固定 ready / draining 狀態與 `/readyz` status code |
@@ -102,13 +102,18 @@ docker compose up --build
 | `QUEUE_SIZE` | `64` | 正整數 | bounded queue 容量 |
 | `WORKERS` | `4` | 正整數 | worker goroutine 數量 |
 | `DATABASE_URL` | 空字串 | 空字串時使用 memory store | Postgres 連線字串 |
+| `DATABASE_MAX_OPEN_CONNS` | `25` | 正整數 | Postgres 最大開啟連線數 |
+| `DATABASE_MAX_IDLE_CONNS` | `10` | 正整數，且不可大於 `DATABASE_MAX_OPEN_CONNS` | Postgres idle connection 上限 |
+| `DATABASE_CONN_MAX_LIFETIME` | `30m0s` | 正數 duration，例如 `30m`、`1h` | Postgres connection 最大生命週期 |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | 空字串 | 空字串時只用 stdout trace exporter | OTLP collector endpoint |
 
 ```bash
 cd production-api-worker
-PORT=9090 QUEUE_SIZE=128 WORKERS=8 go run ./cmd/api-worker
+PORT=9090 QUEUE_SIZE=128 WORKERS=8 DATABASE_MAX_OPEN_CONNS=40 DATABASE_MAX_IDLE_CONNS=12 DATABASE_CONN_MAX_LIFETIME=45m go run ./cmd/api-worker
 go test ./internal/config -count=1
 ```
+
+DB pool 設定不可藏在 repository 內硬編碼，因為 production 容量通常同時受 API concurrency、worker 數、Postgres `max_connections`、migration job 與維運連線影響。設定 loader 會先驗證 idle connection 不可大於 open connection，避免部署後才由資料庫壓力或連線耗盡暴露問題。
 
 ## Observability Correlation
 

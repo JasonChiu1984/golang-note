@@ -40,7 +40,7 @@ func main() {
 	}
 	defer obs.Shutdown(context.Background())
 
-	store, cleanup, err := openStore(ctx, cfg.DatabaseURL)
+	store, cleanup, err := openStore(ctx, cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -95,11 +95,15 @@ func main() {
 	}
 }
 
-func openStore(ctx context.Context, dsn string) (repository.Store, func(), error) {
-	if dsn == "" {
+func openStore(ctx context.Context, cfg config.Config) (repository.Store, func(), error) {
+	if cfg.DatabaseURL == "" {
 		return repository.NewMemoryStore(), func() {}, nil
 	}
-	store, err := repository.OpenPostgres(ctx, dsn)
+	store, err := repository.OpenPostgresWithPool(ctx, cfg.DatabaseURL, repository.PoolConfig{
+		MaxOpenConns:    cfg.DatabaseMaxOpenConns,
+		MaxIdleConns:    cfg.DatabaseMaxIdleConns,
+		ConnMaxLifetime: cfg.DatabaseConnMaxLifetime,
+	})
 	if err != nil {
 		return nil, nil, fmt.Errorf("open postgres: %w", err)
 	}

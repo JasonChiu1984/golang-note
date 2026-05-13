@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.18 - 2026-05-13
+
+- 新增 2026-05-13 14:02 資深工程師審查報告，確認教程已具備 startup configuration contract，但 Postgres connection pool 仍硬編碼在 repository 層。
+- `production-api-worker/internal/config` 新增 `DATABASE_MAX_OPEN_CONNS`、`DATABASE_MAX_IDLE_CONNS` 與 `DATABASE_CONN_MAX_LIFETIME` 驗證。
+- `production-api-worker/internal/repository` 新增 `PoolConfig` 與 `OpenPostgresWithPool`，讓 `cmd/api-worker` 由啟動設定注入 DB pool。
+- 新增 config unit tests，固定 DB pool 預設值、合法 env、idle/open 關係與 duration 錯誤行為。
+- README、第 7 / 11 章、進階 Cheat Sheet、康乃爾筆記與 `production-api-worker` 文件補上 DB pool contract 與 release gate。
+- `docs/index.html` 已重新執行同步步驟，並保留 GitHub Pages 可用的 `ReleaseNote/index.html` 連結，避免回退前次 release-note 路徑修正。
+
 ## v1.0.17 - 2026-05-13
 
 - 新增 2026-05-13 13:02 資深工程師審查報告，確認教程已具備 API / timeout / shutdown / retry 合約，但啟動設定仍會 silent fallback。

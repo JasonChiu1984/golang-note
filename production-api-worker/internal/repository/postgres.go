@@ -17,14 +17,28 @@ type PostgresStore struct {
 	db *sql.DB
 }
 
+type PoolConfig struct {
+	MaxOpenConns    int
+	MaxIdleConns    int
+	ConnMaxLifetime time.Duration
+}
+
 func OpenPostgres(ctx context.Context, dsn string) (*PostgresStore, error) {
+	return OpenPostgresWithPool(ctx, dsn, PoolConfig{
+		MaxOpenConns:    25,
+		MaxIdleConns:    10,
+		ConnMaxLifetime: 30 * time.Minute,
+	})
+}
+
+func OpenPostgresWithPool(ctx context.Context, dsn string, pool PoolConfig) (*PostgresStore, error) {
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		return nil, err
 	}
-	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(10)
-	db.SetConnMaxLifetime(30 * time.Minute)
+	db.SetMaxOpenConns(pool.MaxOpenConns)
+	db.SetMaxIdleConns(pool.MaxIdleConns)
+	db.SetConnMaxLifetime(pool.ConnMaxLifetime)
 
 	pingCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
@@ -128,4 +142,3 @@ func classifyPostgresError(err error) error {
 	}
 	return err
 }
-
