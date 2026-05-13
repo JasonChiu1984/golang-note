@@ -13,10 +13,12 @@
     .meta-row,.nav{display:flex;flex-wrap:wrap;gap:8px}.meta,.nav a,.actions a{display:inline-flex;align-items:center;min-height:30px;padding:5px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;font-size:13px;font-weight:800}
     .nav{position:sticky;top:0;z-index:2;padding:10px 0;background:rgba(245,247,250,.95);border-bottom:1px solid var(--line)}
     section{margin:24px 0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-    .version-card{border:1px solid var(--line);border-radius:8px;background:#fff;padding:16px}.version-card h2{margin:6px 0 8px}.version-card p{color:var(--muted)}
-    .phase{display:inline-flex;padding:3px 8px;border-radius:999px;background:#e6f3f1;color:var(--accent);font-size:12px;font-weight:900}
+    .version-card{min-width:0;border:1px solid var(--line);border-radius:8px;background:#fff;padding:16px}.version-card h2{margin:6px 0 8px}.version-card p{color:var(--muted)}
+    .phase{display:inline-flex;max-width:100%;padding:3px 8px;border-radius:999px;background:#e6f3f1;color:var(--accent);font-size:12px;font-weight:900;line-height:1.35;white-space:normal;overflow-wrap:anywhere}
     .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-    .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:#fff} table{width:100%;min-width:860px;border-collapse:collapse} th,td{padding:10px 12px;border:1px solid var(--line);text-align:left;vertical-align:top;overflow-wrap:anywhere} th{background:var(--head)}
+    table{width:100%;border-collapse:collapse}.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:#fff}.table-wrap table{min-width:860px}
+    .version-card table{min-width:0;table-layout:fixed;margin-top:12px}.version-card th{width:152px}.version-card th,.version-card td{white-space:normal;word-break:break-word;overflow-wrap:anywhere}
+    th,td{padding:10px 12px;border:1px solid var(--line);text-align:left;vertical-align:top;overflow-wrap:anywhere} th{background:var(--head)}
     @media(max-width:760px){header,main{width:min(100% - 24px,1200px)}.grid{grid-template-columns:1fr}}
   </style>
 </head>
@@ -47,14 +49,14 @@
 <tr><td>Go 1.16</td><td>2021-02-16</td><td>Module/泛型期</td><td>`embed`、`io/fs`、modules default、`go install pkg@version`。</td><td><a href="go1.16-release-note.html">報告</a></td></tr>
 <tr><td>Go 1.17</td><td>2021-08-16</td><td>Module/泛型期</td><td>register calling convention、lazy module loading、`//go:build`、unsafe helpers。</td><td><a href="go1.17-release-note.html">報告</a></td></tr>
 <tr><td>Go 1.18</td><td>2022-03-15</td><td>Module/泛型期</td><td>generics、fuzzing、workspaces、`net/netip`。</td><td><a href="go1.18-release-note.html">報告</a></td></tr>
-<tr><td>Go 1.19</td><td>2022-08-02</td><td>現代標準庫期</td><td>`GOMEMLIMIT`、revised memory model、doc comment、runtime metrics。</td><td><a href="go1.19-release-note.html">報告</a></td></tr>
-<tr><td>Go 1.20</td><td>2023-02-01</td><td>現代標準庫期</td><td>program coverage、PGO preview、`runtime/coverage`、multi-error、`WithCancelCause`、`ResponseController`、ReverseProxy rewrite、cgo/bootstrap/linker/stdlib minor changes。</td><td><a href="go1.20-release-note.html">報告</a></td></tr>
-<tr><td>Go 1.21</td><td>2023-08-08</td><td>現代標準庫期</td><td>`slices`、`maps`、`cmp`、`log/slog`、toolchain management、PGO。</td><td><a href="go1.21-release-note.html">報告</a></td></tr>
-<tr><td>Go 1.22</td><td>2024-02-06</td><td>現代標準庫期</td><td>loop variable per-iteration、range over integers、ServeMux patterns、`math/rand/v2`。</td><td><a href="go1.22-release-note.html">報告</a></td></tr>
-<tr><td>Go 1.23</td><td>2024-08-13</td><td>現代標準庫期</td><td>iterators、`iter` package、timer changes、`stdversion` vet、telemetry。</td><td><a href="go1.23-release-note.html">報告</a></td></tr>
-<tr><td>Go 1.24</td><td>2025-02-11</td><td>現代標準庫期</td><td>`tool` directive、`os.Root`、`testing.B.Loop`、generic aliases、GOAUTH。</td><td><a href="go1.24-release-note.html">報告</a></td></tr>
-<tr><td>Go 1.25</td><td>2025-08-12</td><td>現代標準庫期</td><td>container-aware `GOMAXPROCS`、`testing/synctest`、`WaitGroup.Go`。</td><td><a href="go1.25-release-note.html">報告</a></td></tr>
-<tr><td>Go 1.26</td><td>2026-02-10</td><td>現代標準庫期</td><td>`new(expression)`、modernizers、Green Tea GC、`testing.T.Attr` / `ArtifactDir`。</td><td><a href="go1.26-release-note.html">報告</a></td></tr></tbody></table></div>
+<tr><td>Go 1.19</td><td>2022-08-02</td><td>Modern Toolchain and Standard Library Governance Era</td><td>`GOMEMLIMIT`、revised memory model、doc comment、runtime metrics。</td><td><a href="go1.19-release-note.html">報告</a></td></tr>
+<tr><td>Go 1.20</td><td>2023-02-01</td><td>Modern Toolchain and Standard Library Governance Era</td><td>program coverage、PGO preview、`runtime/coverage`、multi-error、`WithCancelCause`、`ResponseController`、ReverseProxy rewrite、cgo/bootstrap/linker/stdlib minor changes。</td><td><a href="go1.20-release-note.html">報告</a></td></tr>
+<tr><td>Go 1.21</td><td>2023-08-08</td><td>Modern Toolchain and Standard Library Governance Era</td><td>`slices`、`maps`、`cmp`、`log/slog`、toolchain management、PGO。</td><td><a href="go1.21-release-note.html">報告</a></td></tr>
+<tr><td>Go 1.22</td><td>2024-02-06</td><td>Modern Toolchain and Standard Library Governance Era</td><td>loop variable per-iteration、range over integers、ServeMux patterns、`math/rand/v2`。</td><td><a href="go1.22-release-note.html">報告</a></td></tr>
+<tr><td>Go 1.23</td><td>2024-08-13</td><td>Modern Toolchain and Standard Library Governance Era</td><td>iterators、`iter` package、timer changes、`stdversion` vet、telemetry。</td><td><a href="go1.23-release-note.html">報告</a></td></tr>
+<tr><td>Go 1.24</td><td>2025-02-11</td><td>Modern Toolchain and Standard Library Governance Era</td><td>`tool` directive、`os.Root`、`testing.B.Loop`、generic aliases、GOAUTH。</td><td><a href="go1.24-release-note.html">報告</a></td></tr>
+<tr><td>Go 1.25</td><td>2025-08-12</td><td>Modern Toolchain and Standard Library Governance Era</td><td>container-aware `GOMAXPROCS`、`testing/synctest`、`WaitGroup.Go`。</td><td><a href="go1.25-release-note.html">報告</a></td></tr>
+<tr><td>Go 1.26</td><td>2026-02-10</td><td>Modern Toolchain and Standard Library Governance Era</td><td>`new(expression)`、modernizers、Green Tea GC、`testing.T.Attr` / `ArtifactDir`。</td><td><a href="go1.26-release-note.html">報告</a></td></tr></tbody></table></div>
     </section>
     <section>
       <h2>獨立版本報告</h2>
@@ -212,7 +214,7 @@
       <div class="actions"><a href="go1.18-release-note.html">本地專業報告</a><a href="https://go.dev/doc/go1.18">官方文件</a></div>
     </article>
 <article class="version-card" id="go119">
-      <div><span class="phase">現代標準庫期</span><h2>Go 1.19</h2><p>Go 1.19 強化 memory governance、doc comment 與 memory model，是 production service runtime 調校的重要版本。</p></div>
+      <div><span class="phase">Modern Toolchain and Standard Library Governance Era</span><h2>Go 1.19</h2><p>Go 1.19 強化 memory governance、doc comment 與 memory model，是 production service runtime 調校的重要版本。</p></div>
       <table><tbody>
         <tr><th>Release date</th><td>2022-08-02</td></tr>
         <tr><th>Patch revisions</th><td>13</td></tr>
@@ -221,7 +223,7 @@
       <div class="actions"><a href="go1.19-release-note.html">本地專業報告</a><a href="https://go.dev/doc/go1.19">官方文件</a></div>
     </article>
 <article class="version-card" id="go120">
-      <div><span class="phase">現代標準庫期</span><h2>Go 1.20</h2><p>Go 1.20 以 toolchain、runtime/compiler、coverage、PGO preview 與標準庫 API 補強為主，是工程治理型版本。</p></div>
+      <div><span class="phase">Modern Toolchain and Standard Library Governance Era</span><h2>Go 1.20</h2><p>Go 1.20 以 toolchain、runtime/compiler、coverage、PGO preview 與標準庫 API 補強為主，是工程治理型版本。</p></div>
       <table><tbody>
         <tr><th>Release date</th><td>2023-02-01</td></tr>
         <tr><th>Patch revisions</th><td>14</td></tr>
@@ -230,7 +232,7 @@
       <div class="actions"><a href="go1.20-release-note.html">本地專業報告</a><a href="https://go.dev/doc/go1.20">官方文件</a></div>
     </article>
 <article class="version-card" id="go121">
-      <div><span class="phase">現代標準庫期</span><h2>Go 1.21</h2><p>Go 1.21 是現代標準庫與 toolchain 管理的重要版本，加入 `log/slog`、`slices`、`maps`、`cmp` 與 toolchain switching。</p></div>
+      <div><span class="phase">Modern Toolchain and Standard Library Governance Era</span><h2>Go 1.21</h2><p>Go 1.21 是現代標準庫與 toolchain 管理的重要版本，加入 `log/slog`、`slices`、`maps`、`cmp` 與 toolchain switching。</p></div>
       <table><tbody>
         <tr><th>Release date</th><td>2023-08-08</td></tr>
         <tr><th>Patch revisions</th><td>13</td></tr>
@@ -239,7 +241,7 @@
       <div class="actions"><a href="go1.21-release-note.html">本地專業報告</a><a href="https://go.dev/doc/go1.21">官方文件</a></div>
     </article>
 <article class="version-card" id="go122">
-      <div><span class="phase">現代標準庫期</span><h2>Go 1.22</h2><p>Go 1.22 帶來 loop variable 語意修正、integer range 與標準庫 ServeMux 大幅增強。</p></div>
+      <div><span class="phase">Modern Toolchain and Standard Library Governance Era</span><h2>Go 1.22</h2><p>Go 1.22 帶來 loop variable 語意修正、integer range 與標準庫 ServeMux 大幅增強。</p></div>
       <table><tbody>
         <tr><th>Release date</th><td>2024-02-06</td></tr>
         <tr><th>Patch revisions</th><td>12</td></tr>
@@ -248,7 +250,7 @@
       <div class="actions"><a href="go1.22-release-note.html">本地專業報告</a><a href="https://go.dev/doc/go1.22">官方文件</a></div>
     </article>
 <article class="version-card" id="go123">
-      <div><span class="phase">現代標準庫期</span><h2>Go 1.23</h2><p>Go 1.23 引入 iterator/range-over-function、timer channel 行為變更與標準庫 API 版本檢查。</p></div>
+      <div><span class="phase">Modern Toolchain and Standard Library Governance Era</span><h2>Go 1.23</h2><p>Go 1.23 引入 iterator/range-over-function、timer channel 行為變更與標準庫 API 版本檢查。</p></div>
       <table><tbody>
         <tr><th>Release date</th><td>2024-08-13</td></tr>
         <tr><th>Patch revisions</th><td>12</td></tr>
@@ -257,7 +259,7 @@
       <div class="actions"><a href="go1.23-release-note.html">本地專業報告</a><a href="https://go.dev/doc/go1.23">官方文件</a></div>
     </article>
 <article class="version-card" id="go124">
-      <div><span class="phase">現代標準庫期</span><h2>Go 1.24</h2><p>Go 1.24 聚焦 tool directive、filesystem security、benchmark API 與供應鏈治理。</p></div>
+      <div><span class="phase">Modern Toolchain and Standard Library Governance Era</span><h2>Go 1.24</h2><p>Go 1.24 聚焦 tool directive、filesystem security、benchmark API 與供應鏈治理。</p></div>
       <table><tbody>
         <tr><th>Release date</th><td>2025-02-11</td></tr>
         <tr><th>Patch revisions</th><td>13</td></tr>
@@ -266,7 +268,7 @@
       <div class="actions"><a href="go1.24-release-note.html">本地專業報告</a><a href="https://go.dev/doc/go1.24">官方文件</a></div>
     </article>
 <article class="version-card" id="go125">
-      <div><span class="phase">現代標準庫期</span><h2>Go 1.25</h2><p>Go 1.25 強化 container-aware runtime、同步測試與 concurrency helper。</p></div>
+      <div><span class="phase">Modern Toolchain and Standard Library Governance Era</span><h2>Go 1.25</h2><p>Go 1.25 強化 container-aware runtime、同步測試與 concurrency helper。</p></div>
       <table><tbody>
         <tr><th>Release date</th><td>2025-08-12</td></tr>
         <tr><th>Patch revisions</th><td>10</td></tr>
@@ -275,7 +277,7 @@
       <div class="actions"><a href="go1.25-release-note.html">本地專業報告</a><a href="https://go.dev/doc/go1.25">官方文件</a></div>
     </article>
 <article class="version-card" id="go126">
-      <div><span class="phase">現代標準庫期</span><h2>Go 1.26</h2><p>Go 1.26 延續現代化工具鏈與 runtime 路線，重點在 modernizer、GC、測試 artifact 與語言小幅擴充。</p></div>
+      <div><span class="phase">Modern Toolchain and Standard Library Governance Era</span><h2>Go 1.26</h2><p>Go 1.26 延續現代化工具鏈與 runtime 路線，重點在 modernizer、GC、測試 artifact 與語言小幅擴充。</p></div>
       <table><tbody>
         <tr><th>Release date</th><td>2026-02-10</td></tr>
         <tr><th>Patch revisions</th><td>3</td></tr>
@@ -286,7 +288,7 @@
     </section>
     <section>
       <h2>分期說明</h2>
-      <div class="table-wrap"><table><thead><tr><th>分期</th><th>版本範圍</th><th>工程意義</th></tr></thead><tbody><tr><td>早期基礎期</td><td>Go 1.2 - Go 1.5</td><td>語言與 runtime 基礎能力成熟，工具鏈開始穩定化。</td></tr><tr><td>工具鏈成熟期</td><td>Go 1.6 - Go 1.10</td><td>HTTP/2、context、SSA、build/test cache 與標準庫可維運性提升。</td></tr><tr><td>Module/泛型期</td><td>Go 1.11 - Go 1.18</td><td>module、errors wrapping、embed、workspaces、generics 與 fuzzing 成為主軸。</td></tr><tr><td>現代標準庫期</td><td>Go 1.19 - Go 1.26</td><td>runtime governance、PGO、toolchain 管理、iterator、testing 與供應鏈治理成為主軸。</td></tr></tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th>分期</th><th>版本範圍</th><th>工程意義</th></tr></thead><tbody><tr><td>早期基礎期</td><td>Go 1.2 - Go 1.5</td><td>語言與 runtime 基礎能力成熟，工具鏈開始穩定化。</td></tr><tr><td>工具鏈成熟期</td><td>Go 1.6 - Go 1.10</td><td>HTTP/2、context、SSA、build/test cache 與標準庫可維運性提升。</td></tr><tr><td>Module/泛型期</td><td>Go 1.11 - Go 1.18</td><td>module、errors wrapping、embed、workspaces、generics 與 fuzzing 成為主軸。</td></tr><tr><td>Modern Toolchain and Standard Library Governance Era</td><td>Go 1.19 - Go 1.26</td><td>runtime governance、PGO、toolchain management、standard-library modernization、testing 與 supply-chain governance 成為主軸。</td></tr></tbody></table></div>
     </section>
   </main>
 </body>

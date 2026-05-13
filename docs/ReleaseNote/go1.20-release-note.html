@@ -62,8 +62,8 @@
         <span class="meta">Patch revisions：14</span>
       </div>
       <div class="summary-grid">
-        <div class="summary-card"><span class="metric">37</span><h3>新增能力項目</h3><p>語言、工具鏈、runtime/compiler、stdlib 與平台能力摘要。</p></div>
-        <div class="summary-card"><span class="metric">36</span><h3>相容性風險</h3><p>升級時需檢查的破壞性、棄用、預設行為與安全變更。</p></div>
+        <div class="summary-card"><span class="metric">38</span><h3>新增能力項目</h3><p>語言、工具鏈、runtime/compiler、stdlib 與平台能力摘要。</p></div>
+        <div class="summary-card"><span class="metric">38</span><h3>相容性風險</h3><p>升級時需檢查的破壞性、棄用、預設行為與安全變更。</p></div>
         <div class="summary-card"><span class="metric">16</span><h3>Go 指令變更</h3><p>整理 build、test、vet、module、toolchain 或 bootstrap 工作流。</p></div>
         <div class="summary-card"><span class="metric">14</span><h3>Patch Revisions</h3><p>由官方 Release History 擷取，作為採用最終 patch 的依據。</p></div>
       </div>
@@ -88,22 +88,22 @@
     <section id="executive-summary">
       <div class="section-head"><h2>Executive Summary</h2><p>本版本報告定位在工程導入與升級審查，不是官方逐字翻譯。</p></div>
       <div class="report-note">
-        <div class="panel"><div class="panel-body"><span class="status-pill">建議用途：現代標準庫期</span><strong>版本定位</strong><p>適合把 coverage 從 unit test 推進到 integration test，建立 PGO 評估流程，並補強錯誤聚合、context cancel cause、HTTP gateway 與 runtime observability。</p></div></div>
+        <div class="panel"><div class="panel-body"><span class="status-pill">建議用途：Modern Toolchain and Standard Library Governance Era</span><strong>版本定位</strong><p>適合把 coverage 從 unit test 推進到 integration test，建立 PGO 評估流程，並補強錯誤聚合、context cancel cause、HTTP gateway 與 runtime observability。</p></div></div>
         <div class="table-wrap">
           <table class="summary-table"><colgroup><col><col><col></colgroup><thead><tr><th>審查面向</th><th>結論</th><th>必要動作</th></tr></thead><tbody>
             <tr><td>專案價值</td><td>適合把 coverage 從 unit test 推進到 integration test，建立 PGO 評估流程，並補強錯誤聚合、context cancel cause、HTTP gateway 與 runtime observability。</td><td>program coverage、PGO preview、`runtime/coverage`、multi-error、`WithCancelCause`、`ResponseController`、ReverseProxy rewrite、cgo/bootstrap/linker/stdlib minor changes。</td></tr>
             <tr><td>主要風險</td><td>`-i` 移除、舊 OS 支援線、cgo 預設行為、bootstrap toolchain、XML/template/archive 安全行為、GOPATH 舊流程與大量標準庫細節異動是主要風險。</td><td>把風險項目轉成 CI、測試與部署 checklist。</td></tr>
-            <tr><td>版本階段</td><td>現代標準庫期：runtime governance、PGO、toolchain 管理、iterator、testing 與供應鏈治理成為主軸。</td><td>用分期脈絡判斷是否需要回補歷史教材。</td></tr>
+            <tr><td>版本階段</td><td>Modern Toolchain and Standard Library Governance Era：runtime governance、PGO、toolchain management、standard-library modernization、testing 與 supply-chain governance 成為主軸。</td><td>用分期脈絡判斷是否需要回補歷史教材。</td></tr>
             <tr><td>驗收標準</td><td>需通過 build、test、版本來源連結、patch revision 與本地 HTML 結構檢查。</td><td>在 release PR 或教學更新紀錄中列出證據。</td></tr>
           </tbody></table>
         </div>
       </div>
     </section>
     <section id="overview">
-      <div class="section-head"><h2>技術總覽</h2><p>Go 1.20 屬於 現代標準庫期，下列主題是本頁的工程導入重點。</p></div>
+      <div class="section-head"><h2>技術總覽</h2><p>Go 1.20 屬於 Modern Toolchain and Standard Library Governance Era，下列主題是本頁的工程導入重點。</p></div>
       <div class="table-wrap"><table><thead><tr><th>主題</th><th>重點</th><th>工程意義</th></tr></thead><tbody>
         <tr><td><span class="tag">Version</span></td><td>Go 1.20 released 2023-02-01</td><td>以 major release note 為主，patch revisions 作為安全與 bugfix 補充。</td></tr>
-        <tr><td><span class="tag blue">Phase</span></td><td>現代標準庫期</td><td>runtime governance、PGO、toolchain 管理、iterator、testing 與供應鏈治理成為主軸。</td></tr>
+        <tr><td><span class="tag blue">Phase</span></td><td>Modern Toolchain and Standard Library Governance Era</td><td>runtime governance、PGO、toolchain management、standard-library modernization、testing 與 supply-chain governance 成為主軸。</td></tr>
         <tr><td><span class="tag warn">Adoption</span></td><td>program coverage、PGO preview、`runtime/coverage`、multi-error、`WithCancelCause`、`ResponseController`、ReverseProxy rewrite、cgo/bootstrap/linker/stdlib minor changes。</td><td>升級時應轉成測試、CI 與文件驗收項目。</td></tr>
       </tbody></table></div>
     </section>
@@ -141,7 +141,7 @@
 <tr><td>Linker</td><td>已補齊</td><td>補 Linux glibc/musl dynamic interpreter、Windows LLVM C toolchain、`go:` / `type:` symbol prefix。</td><td>相容性異動 / Go 指令</td><td>高</td></tr>
 <tr><td>Bootstrap</td><td>已補齊</td><td>補 Go 1.17.13 bootstrap requirement、搜尋路徑與未來 Go 1.22 bootstrap 前移到 Go 1.20 final point release。</td><td>相容性異動 / Go 指令</td><td>高</td></tr>
 <tr><td>Standard library / major features</td><td>已補齊</td><td>補 `crypto/ecdh`、multi-error、`ResponseController`、ReverseProxy `Rewrite` / `SetURL` / `SetXForwarded`。</td><td>新增功能列表</td><td>中高</td></tr>
-<tr><td>Standard library / minor changes</td><td>已補齊</td><td>補 archive、bytes、context、crypto、debug、encoding、go tooling、io/fs、math、mime、net/http、os、reflect、runtime、sync、syscall、testing、time、unicode 等 minor changes。</td><td>新增功能 / 相容性異動</td><td>高</td></tr>
+<tr><td>Standard library / minor changes</td><td>已補齊</td><td>補 archive、bytes、context、crypto、debug、encoding、go tooling、html/template、io/fs、math/big、mime、net/http、os、reflect、runtime、sync、syscall、testing、time、unicode 等 minor changes。</td><td>新增功能 / 相容性異動</td><td>高</td></tr>
 <tr><td>Patch Revisions</td><td>已整理</td><td>Go 1.20.1 到 Go 1.20.14 由官方 Release History 擷取。</td><td>Patch Revisions</td><td>中</td></tr></tbody></table></div>
     </section>
     <section id="added">
@@ -157,7 +157,7 @@
 <tr><td>Compiler</td><td>generic front-end internal data change</td><td>compiler front-end 改用新的 internal data handling，修正多項 generic type issue，並允許 generic function/method 內宣告 type。</td><td>泛型-heavy library 升級後應補 build/test。</td><td>`go test ./...` + generic API tests。</td></tr>
 <tr><td>Compiler</td><td>build speed improvements</td><td>Go 1.20 改善 Go 1.18/1.19 因 generics 導致的 build speed regression，最高約 10%。</td><td>大型 monorepo 可量測 CI build time。</td><td>記錄升級前後 cold/warm build 時間。</td></tr>
 <tr><td>Standard Library / crypto</td><td>`crypto/ecdh`</td><td>新增明確 ECDH package，支援 NIST curves 與 Curve25519。</td><td>新程式優先用 `crypto/ecdh`，不要直接用低階 `crypto/elliptic` 做 ECDH。</td><td>產生 key、derive shared secret 測試。</td></tr>
-<tr><td>Errors</td><td>`errors.Join` and multiple `%w`</td><td>支援一個 error 包裝多個 error，`errors.Is` / `errors.As` 可走訪多錯誤樹。</td><td>batch job、多設備輪詢、multi-stage validation 可保留完整錯誤原因。</td><td>測 `errors.Is` / `errors.As` 對多錯誤命中。</td></tr>
+<tr><td>Errors / fmt</td><td>`errors.Join` and fmt.Errorf multiple %w</td><td>支援一個 error 包裝多個 error；`fmt.Errorf` 可在單一 format string 中使用多個 `%w`，回傳可 unwrap 到所有 `%w` operands 的 error；`errors.Is` / `errors.As` 可走訪多錯誤樹。</td><td>batch job、多設備輪詢、multi-stage validation 可保留完整錯誤原因。</td><td>測 fmt.Errorf multiple %w、`errors.Is` / `errors.As` 對多錯誤命中。</td></tr>
 <tr><td>Context</td><td>`context.WithCancelCause` / `context.Cause`</td><td>context cancel 可保留原因，便於區分 timeout、client cancel、shutdown 與 upstream failure。</td><td>API/worker shutdown、gateway timeout 應記錄 cancel cause。</td><td>測 timeout/client cancel/shutdown 三種 cause。</td></tr>
 <tr><td>HTTP</td><td>`net/http.ResponseController` / `SetReadDeadline` / `SetWriteDeadline`</td><td>提供 discoverable per-request extended control，新增 `SetReadDeadline` 與 `SetWriteDeadline` 設定單一 request 的讀寫 deadline。</td><td>streaming response、大檔案下載、長連線 handler 可更精準控制 timeout。</td><td>用 `httptest` 驗證 read/write deadline 行為。</td></tr>
 <tr><td>HTTP ReverseProxy</td><td>`httputil.ReverseProxy.Rewrite`</td><td>新增 `Rewrite` hook，以 `ProxyRequest` 同時存取 inbound/outbound request，降低 header spoofing 風險。</td><td>gateway/proxy 新實作優先用 `Rewrite` 取代 `Director`。</td><td>測 inbound header 不會覆蓋安全 header。</td></tr>
@@ -167,6 +167,7 @@
 <tr><td>crypto/ecdsa</td><td>`PrivateKey.ECDH`</td><td>可把 ECDSA private key 轉成 ECDH private key。</td><td>憑證與 key 轉換流程需補安全文件。</td><td>測支援曲線與錯誤曲線。</td></tr>
 <tr><td>crypto/ed25519</td><td>Ed25519ph / Ed25519ctx support</td><td>`PrivateKey.Sign` 與 `VerifyWithOptions` 支援 pre-hashed 與 context variants。</td><td>簽章協議需明確標示 HashFunc 與 Context。</td><td>測 context mismatch verify fail。</td></tr>
 <tr><td>crypto/subtle</td><td>`XORBytes`</td><td>新增 byte slice XOR helper。</td><td>低階 crypto/protocol helper 可改用標準 API。</td><td>測不同長度與輸出長度。</td></tr>
+<tr><td>crypto/tls</td><td>parsed certificates shared across active clients / memory savings</td><td>TLS parsed certificates are now shared across active clients using that certificate；大量 concurrent clients 連到共用 certificate chain 的 server 時，可降低 certificate parsing 相關 memory usage。</td><td>高併發 TLS client、proxy、gateway 與連多個共用憑證鏈的服務時，記憶體 profile 可能改善。</td><td>用 TLS client 壓測比對 process RSS、heap profile 與 concurrent connection 數。</td></tr>
 <tr><td>crypto/tls / x509</td><td>`CertificateVerificationError` / `SetFallbackRoots` / ECDH key parsing</td><td>TLS verification failure 有具體 error type；x509 可設定 fallback roots；`ParsePKCS8PrivateKey`、`MarshalPKCS8PrivateKey`、`ParsePKIXPublicKey`、`MarshalPKIXPublicKey` 支援 `crypto/ecdh` keys。</td><td>TLS client/server 排錯、embedded root bundle 與 ECDH key 管理可更明確。</td><td>測 unknown authority、fallback roots 與 ECDH PKCS8/PKIX parse。</td></tr>
 <tr><td>debug/elf</td><td>`SHT_NOBITS` / `R_LARCH_*` / `R_PPC64_*`</td><td>`SHT_NOBITS` section 讀取改回錯誤；新增 LoongArch `R_LARCH_*` 與 PPC64 ELFv2 `R_PPC64_*` relocation constants。</td><td>ELF 解析器與 binary audit tool 需補跨架構 fixture。</td><td>用 Linux/LoongArch/PPC64 fixture 測 relocation。</td></tr>
 <tr><td>debug/gosym / debug/pe</td><td>`debug/gosym` symbol prefix / `IMAGE_FILE_MACHINE_RISCV*`</td><td>`debug/gosym` 可處理 Go 1.20 `go:` / `type:` symbol prefix；`debug/pe` 新增 `IMAGE_FILE_MACHINE_RISCV*` constants。</td><td>Windows/RISC-V 與 Go binary symbol parser 需用新版 package。</td><td>用 Go 1.19/1.20 binary fixture 測。</td></tr>
@@ -206,22 +207,24 @@
 <tr><td>archive/tar / archive/zip</td><td>insecure path checks via GODEBUG</td><td>安全收緊</td><td>外部 archive 若含 absolute path、`..`、Windows reserved name，啟用後會回 `ErrInsecurePath`。</td><td>修正 archive producer 或清洗路徑。</td></tr>
 <tr><td>archive/zip</td><td>directory file containing data now errors</td><td>行為收緊</td><td>不合規 zip 讀取可能失敗。</td><td>測 legacy zip corpus。</td></tr>
 <tr><td>encoding/xml</td><td>`Encoder.Close` and stricter namespace/name validation</td><td>安全/規格收緊</td><td>`Encoder.Close` 可抓未關閉元素；多 colon name、`xmlns:a=&quot;&quot;` empty namespace、opening/closing tag prefix mismatch 會被拒絕。</td><td>清理 legacy XML input，並在 XML encoder 收尾呼叫 `Encoder.Close`。</td></tr>
+<tr><td>html/template</td><td>`GODEBUG=jstmpllitinterp=1` rollback toggle</td><td>安全收緊</td><td>Go 1.20.3 and later disallow actions in ECMAScript 6 template literals；短期可用 `GODEBUG=jstmpllitinterp=1` 恢復舊行為。</td><td>修正 template action 位置，不把 rollback toggle 當長期策略。</td></tr>
 <tr><td>crypto/ecdsa / rsa</td><td>constant-time backend CPU cost and `OAEPOptions.MGFHash`</td><td>安全收緊</td><td>ECDSA supported curves 改 constant time，CPU time 約增加 `5% and 30%`；RSA 新 constant-time backend 且 `OAEPOptions.MGFHash` 可獨立設定 MGF1 hash。</td><td>對 TLS/signing/decryption 做 benchmark，並檢查 OAEP interoperability。</td></tr>
 <tr><td>crypto/rsa</td><td>`PrecomputedValues` must not be manually modified</td><td>安全要求</td><td>手動修改或產生 RSA precomputed fields 可能破壞安全假設。</td><td>改用標準 key generation/parsing。</td></tr>
 <tr><td>crypto/x509</td><td>`ParsePKCS8PrivateKey` / `ParsePKIXPublicKey` support `crypto/ecdh` keys</td><td>API 支援</td><td>PKCS8/PKIX marshal/parse API 可處理 `*crypto/ecdh.PrivateKey` 與 `*crypto/ecdh.PublicKey`，NIST curve parsing 仍回 ECDSA key 後可用 `ECDH` 轉換。</td><td>憑證與 key import/export tests 要補 ECDH case。</td></tr>
 <tr><td>math/rand</td><td>global RNG auto seed and `Seed` deprecated</td><td>預設行為變更/棄用</td><td>依賴 deterministic global random sequence 的測試會漂移。</td><td>測試改用 `rand.New(rand.NewSource(seed))`；必要時用 `GODEBUG=randautoseed=0`。</td></tr>
 <tr><td>math/rand</td><td>`Read` deprecated</td><td>棄用</td><td>安全用途不應用 math/rand。</td><td>改用 `crypto/rand.Read`。</td></tr>
+<tr><td>math/big</td><td>not suited for attacker-controlled cryptography input</td><td>安全說明</td><td>`math/big` scope 很廣且 timing depends on input；不適合直接拿來處理 attacker-controlled cryptography input，標準庫 crypto packages 也避免對攻擊者可控輸入呼叫 non-trivial `Int` methods。</td><td>密碼學程式使用標準 crypto package 或 constant-time implementation，不自行用 `math/big` 組協議。</td></tr>
 <tr><td>mime</td><td>`ParseMediaType` duplicate parameter names</td><td>解析行為變更</td><td>`ParseMediaType` 允許重複 parameter name，只要對應值相同。</td><td>HTTP header/MIME parser 測試需補 duplicate same-value 與 conflict cases。</td></tr>
-<tr><td>mime/multipart</td><td>header/part limits</td><td>安全限制</td><td>大型或異常 multipart input 可能被拒絕。</td><td>必要時調整 `GODEBUG=multipartmaxheaders` / `multipartmaxparts`，並保留上限。</td></tr>
+<tr><td>mime/multipart</td><td>`Reader.NextPart` / `NextRawPart` error wrapping and limits</td><td>安全限制 / 錯誤行為</td><td>`Reader.NextPart`、`Reader.NextRawPart` 與 `Reader` methods 現在會 wrap underlying `io.Reader` errors；大型或異常 multipart input 可能被 header/part limits 拒絕。</td><td>必要時調整 `GODEBUG=multipartmaxheaders` / `multipartmaxparts`，並讓錯誤判斷支援 wrapped errors。</td></tr>
 <tr><td>net/http</td><td>HEAD request with body accepted</td><td>行為變更</td><td>舊測試若期待 server reject HEAD body 需要更新。</td><td>以實際 API contract 重新定義。</td></tr>
 <tr><td>net/http</td><td>`StreamError` / `Cookie.Valid` / cookie parsing behavior changed</td><td>行為變更</td><td>HTTP/2 stream errors 可用 `errors.As` 轉 `StreamError`；cookie name 會 trim spaces；empty Expires 的 `Cookie.Valid` 視為有效。</td><td>補 HTTP/2 error 與 cookie parser regression tests。</td></tr>
 <tr><td>os / Windows</td><td>`NUL` and directory file behavior changed</td><td>平台行為變更</td><td>Windows path/file tests 可能受影響。</td><td>在 Windows runner 重跑 filesystem tests。</td></tr>
 <tr><td>reflect</td><td>`Value.Equal` / `Value.Grow` / `Value.SetZero` and iterator field checks</td><td>API / 行為修正</td><td>`Value.Equal`、`Value.Grow`、`Value.SetZero` 成為標準反射工具；`SetIterKey` / `SetIterValue` 補上 unexported field check。</td><td>修正對 unexported field 的操作，並用新 API 取代手寫反射邏輯。</td></tr>
 <tr><td>regexp/syntax</td><td>`ErrLarge` replaces generic internal error for huge regex</td><td>錯誤分類變更</td><td>錯誤判斷若比對 `ErrInternalError` 需更新。</td><td>改測 `syntax.ErrLarge`。</td></tr>
 <tr><td>syscall / FreeBSD</td><td>FreeBSD 11 compatibility shims removed</td><td>平台相容性</td><td>舊 FreeBSD target 不應再列為支援。</td><td>更新部署矩陣。</td></tr>
-<tr><td>syscall / Linux</td><td>`SysProcAttr.CgroupFD` / `UseCgroupFD`</td><td>平台 API</td><td>Linux process launch 可用 `CgroupFD` 與 `UseCgroupFD` 把 child process 放入指定 cgroup。</td><td>container supervisor 或 job runner 需補 Linux-only tests。</td></tr>
+<tr><td>syscall / Linux</td><td>`CLONE_*` constants / `SysProcAttr.Cloneflags` / `CgroupFD` / `UseCgroupFD`</td><td>平台 API</td><td>Linux 新增可搭配 `SysProcAttr.Cloneflags` 使用的 `CLONE_*` constants；process launch 也可用 `CgroupFD` 與 `UseCgroupFD` 把 child process 放入指定 cgroup。</td><td>container supervisor、namespace/cgroup launcher 或 job runner 需補 Linux-only tests。</td></tr>
 <tr><td>testing</td><td>`T.Run` inside `T.Cleanup` panics</td><td>行為收緊</td><td>不明確的 cleanup 內建立 subtest 會 panic。</td><td>調整測試 lifecycle。</td></tr>
-<tr><td>time</td><td>`DateOnly` / `TimeOnly` / stricter RFC3339 JSON</td><td>API / 格式收緊</td><td>新增 `DateTime`、`DateOnly`、`TimeOnly` layout constants；`Time.MarshalJSON` 對 RFC3339 更嚴格。</td><td>時間格式統一改用命名 layout，補 JSON time round-trip tests。</td></tr></tbody></table></div>
+<tr><td>time</td><td>`DateOnly` / `TimeOnly` / `time.Parse` sub-nanosecond precision / stricter RFC3339 JSON</td><td>API / 格式行為</td><td>新增 `DateTime`、`DateOnly`、`TimeOnly` layout constants；`time.Parse` now ignores sub-nanosecond precision instead of reporting those digits as an error；`Time.MarshalJSON` 對 RFC3339 更嚴格。</td><td>時間格式統一改用命名 layout，補 Parse sub-nanosecond input 與 JSON time round-trip tests。</td></tr></tbody></table></div>
     </section>
     <section id="commands">
       <div class="section-head"><h2>條列式表格分析：Go 指令新增 / 移除功能</h2><p>整理 Go command、build、test、vet、module、toolchain 或 bootstrap 相關變更。</p></div>

@@ -62,8 +62,8 @@
         <span class="meta">Patch revisions：13</span>
       </div>
       <div class="summary-grid">
-        <div class="summary-card"><span class="metric">4</span><h3>新增能力項目</h3><p>語言、工具鏈、runtime/compiler、stdlib 與平台能力摘要。</p></div>
-        <div class="summary-card"><span class="metric">2</span><h3>相容性風險</h3><p>升級時需檢查的破壞性、棄用、預設行為與安全變更。</p></div>
+        <div class="summary-card"><span class="metric">11</span><h3>新增能力項目</h3><p>語言、工具鏈、runtime/compiler、stdlib 與平台能力摘要。</p></div>
+        <div class="summary-card"><span class="metric">3</span><h3>相容性風險</h3><p>升級時需檢查的破壞性、棄用、預設行為與安全變更。</p></div>
         <div class="summary-card"><span class="metric">2</span><h3>Go 指令變更</h3><p>整理 build、test、vet、module、toolchain 或 bootstrap 工作流。</p></div>
         <div class="summary-card"><span class="metric">13</span><h3>Patch Revisions</h3><p>由官方 Release History 擷取，作為採用最終 patch 的依據。</p></div>
       </div>
@@ -76,6 +76,7 @@
       <a class="nav-link" href="#impact-matrix">影響矩陣</a>
 
       <a class="nav-link" href="#official-coverage">官方覆蓋矩陣</a>
+      <a class="nav-link" href="#official-detail">官方細節重寫</a>
       <a class="nav-link" href="#added">新增功能</a>
       <a class="nav-link" href="#removed">移除/棄用</a>
       <a class="nav-link" href="#commands">Go 指令</a>
@@ -88,22 +89,22 @@
     <section id="executive-summary">
       <div class="section-head"><h2>Executive Summary</h2><p>本版本報告定位在工程導入與升級審查，不是官方逐字翻譯。</p></div>
       <div class="report-note">
-        <div class="panel"><div class="panel-body"><span class="status-pill">建議用途：現代標準庫期</span><strong>版本定位</strong><p>適合建立工具依賴治理、目錄範圍 filesystem、benchmark loop 與 JSON/time/security 教材。</p></div></div>
+        <div class="panel"><div class="panel-body"><span class="status-pill">建議用途：Modern Toolchain and Standard Library Governance Era</span><strong>版本定位</strong><p>適合建立工具依賴治理、目錄範圍 filesystem、benchmark loop 與 JSON/time/security 教材。</p></div></div>
         <div class="table-wrap">
           <table class="summary-table"><colgroup><col><col><col></colgroup><thead><tr><th>審查面向</th><th>結論</th><th>必要動作</th></tr></thead><tbody>
             <tr><td>專案價值</td><td>適合建立工具依賴治理、目錄範圍 filesystem、benchmark loop 與 JSON/time/security 教材。</td><td>`tool` directive、`os.Root`、`testing.B.Loop`、generic aliases、GOAUTH。</td></tr>
             <tr><td>主要風險</td><td>tool directive、GOAUTH、os.Root 導入需整理 CI 與安全政策。</td><td>把風險項目轉成 CI、測試與部署 checklist。</td></tr>
-            <tr><td>版本階段</td><td>現代標準庫期：runtime governance、PGO、toolchain 管理、iterator、testing 與供應鏈治理成為主軸。</td><td>用分期脈絡判斷是否需要回補歷史教材。</td></tr>
+            <tr><td>版本階段</td><td>Modern Toolchain and Standard Library Governance Era：runtime governance、PGO、toolchain management、standard-library modernization、testing 與 supply-chain governance 成為主軸。</td><td>用分期脈絡判斷是否需要回補歷史教材。</td></tr>
             <tr><td>驗收標準</td><td>需通過 build、test、版本來源連結、patch revision 與本地 HTML 結構檢查。</td><td>在 release PR 或教學更新紀錄中列出證據。</td></tr>
           </tbody></table>
         </div>
       </div>
     </section>
     <section id="overview">
-      <div class="section-head"><h2>技術總覽</h2><p>Go 1.24 屬於 現代標準庫期，下列主題是本頁的工程導入重點。</p></div>
+      <div class="section-head"><h2>技術總覽</h2><p>Go 1.24 屬於 Modern Toolchain and Standard Library Governance Era，下列主題是本頁的工程導入重點。</p></div>
       <div class="table-wrap"><table><thead><tr><th>主題</th><th>重點</th><th>工程意義</th></tr></thead><tbody>
         <tr><td><span class="tag">Version</span></td><td>Go 1.24 released 2025-02-11</td><td>以 major release note 為主，patch revisions 作為安全與 bugfix 補充。</td></tr>
-        <tr><td><span class="tag blue">Phase</span></td><td>現代標準庫期</td><td>runtime governance、PGO、toolchain 管理、iterator、testing 與供應鏈治理成為主軸。</td></tr>
+        <tr><td><span class="tag blue">Phase</span></td><td>Modern Toolchain and Standard Library Governance Era</td><td>runtime governance、PGO、toolchain management、standard-library modernization、testing 與 supply-chain governance 成為主軸。</td></tr>
         <tr><td><span class="tag warn">Adoption</span></td><td>`tool` directive、`os.Root`、`testing.B.Loop`、generic aliases、GOAUTH。</td><td>升級時應轉成測試、CI 與文件驗收項目。</td></tr>
       </tbody></table></div>
     </section>
@@ -118,29 +119,66 @@
 
     <section id="official-coverage">
       <div class="section-head"><h2>官方段落覆蓋矩陣</h2><p>此矩陣依官方 release note 段落標題與 Release History 補齊狀態整理。</p></div>
-      <div class="table-wrap"><table><thead><tr><th>官方段落</th><th>本頁狀態</th><th>整理方式</th><th>落地區域</th><th>風險等級</th></tr></thead><tbody><tr><td>Introduction to Go 1.24</td><td>已整理</td><td>依官方 Introduction to Go 1.24 段落整理為工程摘要。</td><td>放入新增功能、相容性異動、指令變更或導入計畫區。</td><td>中</td></tr>
-<tr><td>Changes to the language</td><td>已整理</td><td>依官方 Changes to the language 段落整理為工程摘要。</td><td>放入新增功能、相容性異動、指令變更或導入計畫區。</td><td>中</td></tr>
-<tr><td>Tools</td><td>已整理</td><td>依官方 Tools 段落整理為工程摘要。</td><td>放入新增功能、相容性異動、指令變更或導入計畫區。</td><td>中</td></tr>
-<tr><td>Go command</td><td>已整理</td><td>依官方 Go command 段落整理為工程摘要。</td><td>放入新增功能、相容性異動、指令變更或導入計畫區。</td><td>中</td></tr>
-<tr><td>Cgo</td><td>已整理</td><td>依官方 Cgo 段落整理為工程摘要。</td><td>放入新增功能、相容性異動、指令變更或導入計畫區。</td><td>中</td></tr>
-<tr><td>Objdump</td><td>已整理</td><td>依官方 Objdump 段落整理為工程摘要。</td><td>放入新增功能、相容性異動、指令變更或導入計畫區。</td><td>中</td></tr>
-<tr><td>Vet</td><td>已整理</td><td>依官方 Vet 段落整理為工程摘要。</td><td>放入新增功能、相容性異動、指令變更或導入計畫區。</td><td>中</td></tr>
-<tr><td>GOCACHEPROG</td><td>已整理</td><td>依官方 GOCACHEPROG 段落整理為工程摘要。</td><td>放入新增功能、相容性異動、指令變更或導入計畫區。</td><td>中</td></tr>
-<tr><td>Runtime</td><td>已整理</td><td>依官方 Runtime 段落整理為工程摘要。</td><td>放入新增功能、相容性異動、指令變更或導入計畫區。</td><td>中高</td></tr>
-<tr><td>Compiler</td><td>已整理</td><td>依官方 Compiler 段落整理為工程摘要。</td><td>放入新增功能、相容性異動、指令變更或導入計畫區。</td><td>中</td></tr>
-<tr><td>Patch Revisions</td><td>已整理</td><td>Go 1.24 patch revisions 由官方 Release History 擷取。</td><td>列於 Patch Revisions 區，作為採用最終 patch 的依據。</td><td>中</td></tr></tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th>官方段落</th><th>本頁狀態</th><th>整理方式</th><th>落地區域</th><th>風險等級</th></tr></thead><tbody><tr><td>Introduction to Go 1.24</td><td>已重寫</td><td>依官方 Introduction to Go 1.24 段落重寫為專業報告摘要，並補上工程導入與驗證觀點。</td><td>官方細節重寫 / 新增功能 / 相容性異動 / Go 指令區。</td><td>中</td></tr>
+<tr><td>Changes to the language</td><td>已重寫</td><td>依官方 Changes to the language 段落重寫為專業報告摘要，並補上工程導入與驗證觀點。</td><td>官方細節重寫 / 新增功能 / 相容性異動 / Go 指令區。</td><td>中</td></tr>
+<tr><td>Go command</td><td>已重寫</td><td>依官方 Go command 段落重寫為專業報告摘要，並補上工程導入與驗證觀點。</td><td>官方細節重寫 / 新增功能 / 相容性異動 / Go 指令區。</td><td>中</td></tr>
+<tr><td>Cgo</td><td>已重寫</td><td>依官方 Cgo 段落重寫為專業報告摘要，並補上工程導入與驗證觀點。</td><td>官方細節重寫 / 新增功能 / 相容性異動 / Go 指令區。</td><td>中</td></tr>
+<tr><td>Objdump</td><td>已重寫</td><td>依官方 Objdump 段落重寫為專業報告摘要，並補上工程導入與驗證觀點。</td><td>官方細節重寫 / 新增功能 / 相容性異動 / Go 指令區。</td><td>中</td></tr>
+<tr><td>Vet</td><td>已重寫</td><td>依官方 Vet 段落重寫為專業報告摘要，並補上工程導入與驗證觀點。</td><td>官方細節重寫 / 新增功能 / 相容性異動 / Go 指令區。</td><td>中</td></tr>
+<tr><td>GOCACHEPROG</td><td>已重寫</td><td>依官方 GOCACHEPROG 段落重寫為專業報告摘要，並補上工程導入與驗證觀點。</td><td>官方細節重寫 / 新增功能 / 相容性異動 / Go 指令區。</td><td>中</td></tr>
+<tr><td>Runtime</td><td>已重寫</td><td>依官方 Runtime 段落重寫為專業報告摘要，並補上工程導入與驗證觀點。</td><td>官方細節重寫 / 新增功能 / 相容性異動 / Go 指令區。</td><td>中高</td></tr>
+<tr><td>Compiler</td><td>已重寫</td><td>依官方 Compiler 段落重寫為專業報告摘要，並補上工程導入與驗證觀點。</td><td>官方細節重寫 / 新增功能 / 相容性異動 / Go 指令區。</td><td>中</td></tr>
+<tr><td>Linker</td><td>已重寫</td><td>依官方 Linker 段落重寫為專業報告摘要，並補上工程導入與驗證觀點。</td><td>官方細節重寫 / 新增功能 / 相容性異動 / Go 指令區。</td><td>中</td></tr>
+<tr><td>Bootstrap</td><td>已重寫</td><td>依官方 Bootstrap 段落重寫為專業報告摘要，並補上工程導入與驗證觀點。</td><td>官方細節重寫 / 新增功能 / 相容性異動 / Go 指令區。</td><td>中</td></tr>
+<tr><td>Directory-limited filesystem access</td><td>已重寫</td><td>依官方 Directory-limited filesystem access 段落重寫為專業報告摘要，並補上工程導入與驗證觀點。</td><td>官方細節重寫 / 新增功能 / 相容性異動 / Go 指令區。</td><td>中</td></tr>
+<tr><td>New benchmark function</td><td>已重寫</td><td>依官方 New benchmark function 段落重寫為專業報告摘要，並補上工程導入與驗證觀點。</td><td>官方細節重寫 / 新增功能 / 相容性異動 / Go 指令區。</td><td>中</td></tr>
+<tr><td>Improved finalizers</td><td>已重寫</td><td>依官方 Improved finalizers 段落重寫為專業報告摘要，並補上工程導入與驗證觀點。</td><td>官方細節重寫 / 新增功能 / 相容性異動 / Go 指令區。</td><td>中</td></tr>
+<tr><td>New weak package</td><td>已重寫</td><td>依官方 New weak package 段落重寫為專業報告摘要，並補上工程導入與驗證觀點。</td><td>官方細節重寫 / 新增功能 / 相容性異動 / Go 指令區。</td><td>中</td></tr>
+<tr><td>New crypto/mlkem package</td><td>已重寫</td><td>依官方 New crypto/mlkem package 段落重寫為專業報告摘要，並補上工程導入與驗證觀點。</td><td>官方細節重寫 / 新增功能 / 相容性異動 / Go 指令區。</td><td>中</td></tr>
+<tr><td>New crypto/hkdf, crypto/pbkdf2, and crypto/sha3 packages</td><td>已重寫</td><td>依官方 New crypto/hkdf, crypto/pbkdf2, and crypto/sha3 packages 段落重寫為專業報告摘要，並補上工程導入與驗證觀點。</td><td>官方細節重寫 / 新增功能 / 相容性異動 / Go 指令區。</td><td>中</td></tr>
+<tr><td>FIPS 140-3 compliance</td><td>已重寫</td><td>依官方 FIPS 140-3 compliance 段落重寫為專業報告摘要，並補上工程導入與驗證觀點。</td><td>官方細節重寫 / 新增功能 / 相容性異動 / Go 指令區。</td><td>中</td></tr>
+<tr><td>New experimental testing/synctest package</td><td>已重寫</td><td>依官方 New experimental testing/synctest package 段落重寫為專業報告摘要，並補上工程導入與驗證觀點。</td><td>官方細節重寫 / 新增功能 / 相容性異動 / Go 指令區。</td><td>中</td></tr>
+<tr><td>Minor changes to the library</td><td>已重寫</td><td>依官方 Minor changes to the library 段落重寫為專業報告摘要，並補上工程導入與驗證觀點。</td><td>官方細節重寫 / 新增功能 / 相容性異動 / Go 指令區。</td><td>中</td></tr>
+<tr><td>Linux</td><td>已重寫</td><td>依官方 Linux 段落重寫為專業報告摘要，並補上工程導入與驗證觀點。</td><td>官方細節重寫 / 新增功能 / 相容性異動 / Go 指令區。</td><td>中</td></tr>
+<tr><td>Darwin</td><td>已重寫</td><td>依官方 Darwin 段落重寫為專業報告摘要，並補上工程導入與驗證觀點。</td><td>官方細節重寫 / 新增功能 / 相容性異動 / Go 指令區。</td><td>中</td></tr>
+<tr><td>WebAssembly</td><td>已重寫</td><td>依官方 WebAssembly 段落重寫為專業報告摘要，並補上工程導入與驗證觀點。</td><td>官方細節重寫 / 新增功能 / 相容性異動 / Go 指令區。</td><td>中</td></tr>
+<tr><td>Windows</td><td>已重寫</td><td>依官方 Windows 段落重寫為專業報告摘要，並補上工程導入與驗證觀點。</td><td>官方細節重寫 / 新增功能 / 相容性異動 / Go 指令區。</td><td>中</td></tr>
+<tr><td>Patch Revisions</td><td>已重寫</td><td>Go 1.24 patch revisions 由官方 Release History 擷取並改寫為採用建議。</td><td>列於 Patch Revisions 區，作為採用最終 patch 的依據。</td><td>中</td></tr></tbody></table></div>
+    </section>
+    <section id="official-detail">
+      <div class="section-head"><h2>官方段落細節重寫摘要</h2><p>此表把官方 release note 段落轉成專案導入、風險與驗證語言；Go 1.20 以既有完整專業報告為準，其他版本以此表補強深度。</p></div>
+      <div class="table-wrap"><table><thead><tr><th>官方段落</th><th>官方重點整理</th><th>工程解讀</th><th>驗證 / 導入動作</th></tr></thead><tbody><tr><td>Introduction to Go 1.24</td><td>官方重點：Introduction、The、February、Most。The latest Go release, version 1.24, arrives in February 2025 , six months after Go 1.23 . Most of its changes are in the implementation of the toolchain, runtime, and libraries. …</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr>
+<tr><td>Changes to the language</td><td>官方重點：GOEXPERIMENT、Changes、See、For。Go 1.24 now fully supports generic type aliases : a type alias may be parameterized like a defined type. See the language spec for details. For now, the feature can be disabled by…</td><td>以語言語意、編譯相容性與 API 設計規則重寫，導入前要補 compile tests 與範例。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
+<tr><td>Go command</td><td>官方重點：GOBIN、GODEBUG、GOAUTH、go tool、go get、go install、go run、Go build。Go modules can now track executable dependencies using tool directives in go.mod. This removes the need for the previous workaround of adding tools as blank imports to a file conv…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr>
+<tr><td>Cgo</td><td>官方重點：Cgo、cgo、For、New、See。Cgo supports new annotations for C functions to improve run time performance. #cgo noescape cFunctionName tells the compiler that memory passed to the C function cFunctionname doe…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
+<tr><td>Objdump</td><td>官方重點：GOARCH、Objdump、The、LoongArch、RISC、S390X。The objdump tool now supports dissassembly on 64-bit LoongArch ( GOARCH=loong64 ), RISC-V ( GOARCH=riscv64 ), and S390X ( GOARCH=s390x ).</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
+<tr><td>Vet</td><td>官方重點：go test、fmt.Printf、fmt.Print、sync.Locker、sync.Mutex、Vet、The、Some。The new tests analyzer reports common mistakes in declarations of tests, fuzzers, benchmarks, and examples in test packages, such as malformed names, incorrect signatures, or exam…</td><td>以語言語意、編譯相容性與 API 設計規則重寫，導入前要補 compile tests 與範例。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr>
+<tr><td>GOCACHEPROG</td><td>官方重點：GOCACHEPROG、GOEXPERIMENT、go tool、cmd/go、The、JSON、This、For。The cmd/go internal binary and test caching mechanism can now be implemented by child processes implementing a JSON protocol between the cmd/go tool and the child process named by…</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>Runtime</td><td>官方重點：GOEXPERIMENT、Runtime、Several、CPU、Results、These、Swiss、Tables。Several performance improvements to the runtime have decreased CPU overheads by 2–3% on average across a suite of representative benchmarks. Results may vary by application. These…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
+<tr><td>Compiler</td><td>官方重點：cgo、Compiler、The。The compiler already disallowed defining new methods with receiver types that were cgo-generated, but it was possible to circumvent that restriction via an alias type. Go 1.24 now…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
+<tr><td>Linker</td><td>官方重點：Go build、Linker、The、GNU、ELF、NT_GNU_BUILD_ID、UUID、Mach。The linker now generates a GNU build ID (the ELF NT_GNU_BUILD_ID note) on ELF platforms and a UUID (the Mach-O LC_UUID load command) on macOS by default. The build ID or UUID is d…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
+<tr><td>Bootstrap</td><td>官方重點：Bootstrap。As mentioned in the Go 1.22 release notes , Go 1.24 now requires Go 1.22.6 or later for bootstrap. We expect that Go 1.26 will require a point release of Go 1.24 or later for boot…</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
+<tr><td>Directory-limited filesystem access</td><td>官方重點：os.Root、os.OpenRoot、os.Root.Open、os.Root.Create、os.Root.Mkdir、os.Root.Stat、Directory、The。The new os.Root type provides the ability to perform filesystem operations within a specific directory. The os.OpenRoot function opens a directory and returns an os.Root . Methods…</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr></tbody></table></div>
     </section>
     <section id="added">
       <div class="section-head"><h2>條列式表格分析：新增功能列表</h2><p>整理 Go 1.24 值得納入教材與專案升級清單的新能力。</p></div>
       <div class="table-wrap"><table><thead><tr><th>分類</th><th>新增功能 / 行為</th><th>功能說明</th><th>工程導入建議</th><th>驗證方式</th></tr></thead><tbody><tr><td>Language</td><td>generic type aliases</td><td>泛型 alias 更完整。</td><td>API 遷移可保留泛型型別相容。</td><td>compile compatibility tests。</td></tr>
 <tr><td>Modules</td><td>`tool` directive</td><td>可在 go.mod 記錄 tool dependencies。</td><td>把 mockgen/staticcheck 等工具納入治理。</td><td>`go tool` workflow。</td></tr>
 <tr><td>Filesystem</td><td>`os.Root`</td><td>限制 filesystem operations 在指定 root 內。</td><td>防 path traversal。</td><td>malicious path tests。</td></tr>
-<tr><td>Testing</td><td>`B.Loop`</td><td>benchmark loop API 更不易寫錯。</td><td>更新 benchmark pattern。</td><td>benchmark review。</td></tr></tbody></table></div>
+<tr><td>Testing</td><td>New benchmark function / `B.Loop`</td><td>補 Go 1.24 官方 `New benchmark function` 段落，`testing.B.Loop` 讓 benchmark loop 更不易寫錯。</td><td>更新 benchmark pattern，避免手寫 `for i := 0; i &lt; b.N; i++` 的錯誤。</td><td>benchmark review 與 `go test -bench=. -benchmem`。</td></tr>
+<tr><td>Runtime</td><td>Improved finalizers</td><td>補 Go 1.24 官方 `Improved finalizers` 段落，聚焦 finalizer/cleanup 類生命週期管理改進。</td><td>管理 native resource、file descriptor 或外部 handle 時要補生命週期測試。</td><td>GC/finalizer smoke test 與 leak test。</td></tr>
+<tr><td>Standard library</td><td>New weak package</td><td>補 Go 1.24 官方 `New weak package` 段落，支援 weak pointer/cache 類模式。</td><td>cache、memoization 與資源索引不可依賴 weak reference 作唯一正確性來源。</td><td>測 GC 後 cache miss 與 race behavior。</td></tr>
+<tr><td>Crypto</td><td>New crypto/mlkem package</td><td>補 Go 1.24 官方 `New crypto/mlkem package` 段落，標記 post-quantum key encapsulation 相關能力。</td><td>只在協議明確要求時導入，並保留互通性測試。</td><td>KEM interop fixture 與 crypto tests。</td></tr>
+<tr><td>Crypto</td><td>New crypto/hkdf, crypto/pbkdf2, and crypto/sha3 packages</td><td>補官方 `New crypto/hkdf, crypto/pbkdf2, and crypto/sha3 packages` 段落，將常用 KDF/hash 能力納入標準庫。</td><td>移除第三方 helper 前先確認 API/參數/輸出相容。</td><td>用 RFC/test vector 驗證。</td></tr>
+<tr><td>Crypto</td><td>FIPS 140-3 compliance</td><td>補 Go 1.24 官方 `FIPS 140-3 compliance` 段落，標記合規建置與 crypto policy。</td><td>合規環境要明確記錄 build mode、module 與 runtime policy。</td><td>合規 build smoke test 與 crypto policy 文件。</td></tr>
+<tr><td>Testing</td><td>New experimental testing/synctest package</td><td>補 Go 1.24 官方 `New experimental testing/synctest package` 段落，適用 deterministic concurrency/time tests。</td><td>只用於可隔離的同步測試，不取代整合測試。</td><td>重寫 flaky timeout/retry tests。</td></tr>
+<tr><td>Ports</td><td>Ports</td><td>補 Go 1.24 官方 `Ports` 段落，包含 Linux、Darwin、WebAssembly、Windows 等平台更新。</td><td>平台支援矩陣與 runner image 要同步更新。</td><td>GOOS/GOARCH build matrix。</td></tr></tbody></table></div>
     </section>
     <section id="removed">
       <div class="section-head"><h2>條列式表格分析：移除 / 棄用 / 相容性異動列表</h2><p>列出本版本升級時需要特別確認的相容性、預設行為、安全或平台風險。</p></div>
       <div class="table-wrap"><table><thead><tr><th>分類</th><th>項目</th><th>狀態</th><th>影響</th><th>替代方式 / 建議</th></tr></thead><tbody><tr><td>Security</td><td>`os.Root` adoption</td><td>行為設計</td><td>需明確定義 root boundary。</td><td>path traversal tests。</td></tr>
-<tr><td>Tooling</td><td>`tool` directive governance</td><td>流程變更</td><td>CI tool install 改走 module governance。</td><td>更新 Makefile/CI。</td></tr></tbody></table></div>
+<tr><td>Tooling</td><td>`tool` directive governance</td><td>流程變更</td><td>CI tool install 改走 module governance。</td><td>更新 Makefile/CI。</td></tr>
+<tr><td>Ports</td><td>Ports platform changes</td><td>平台相容性</td><td>Go 1.24 官方 ports 段落會影響 Linux、Darwin、WebAssembly、Windows deployment assumptions。</td><td>分平台 smoke test 與部署文件更新。</td></tr></tbody></table></div>
     </section>
     <section id="commands">
       <div class="section-head"><h2>條列式表格分析：Go 指令新增 / 移除功能</h2><p>整理 Go command、build、test、vet、module、toolchain 或 bootstrap 相關變更。</p></div>

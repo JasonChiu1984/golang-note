@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.21 - 2026-05-13
+
+- 新增 2026-05-13 17:03 資深工程師審查報告，確認 Go 1.20 效能矩陣已補齊，但 Go 1.2-1.26 Release Note 仍需要把官方段落細節重寫成果正式發布並同步到 Pages。
+- `scripts/generate-go-release-notes.mjs` 補強官方段落解析與細節重寫，讓非 Go 1.20 版本也有 `官方段落細節重寫摘要`，並把 Tools、Ports、minor changes、new package 與 Patch Revisions 轉成工程導入與驗證語言。
+- `ReleaseNote/go1.2-release-note.html` 到 `ReleaseNote/go1.26-release-note.html` 重新產生，補齊 Go 1.21-Go 1.26 的 Tools / Ports / minor changes / 新 package rows，並統一 Go 1.19-Go 1.26 phase wording。
+- `docs/ReleaseNote/` 已同步根目錄 ReleaseNote HTML，避免 GitHub Pages 版落後於本地正式報告。
+- README 與 VERSION 更新到 `v1.0.21`，新增 Release Note 官方覆蓋驗證 gate。
+- `docs/index.html` 已重新由 `圖解筆記3-4整合/golang-complete-visual-course.html` 複製產生，並保留 GitHub Pages 可用的 `ReleaseNote/index.html` 連結。
+
 ## v1.0.20 - 2026-05-13
 
 - 新增 2026-05-13 16:03 資深工程師審查報告，確認 production migration contract 已補齊，但 Go 1.20 Release Note 仍缺少可直接用於升級決策的效能比較矩陣。

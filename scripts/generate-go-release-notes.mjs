@@ -11,7 +11,7 @@ const phases = [
   { name: "早期基礎期", range: [2, 5], summary: "語言與 runtime 基礎能力成熟，工具鏈開始穩定化。" },
   { name: "工具鏈成熟期", range: [6, 10], summary: "HTTP/2、context、SSA、build/test cache 與標準庫可維運性提升。" },
   { name: "Module/泛型期", range: [11, 18], summary: "module、errors wrapping、embed、workspaces、generics 與 fuzzing 成為主軸。" },
-  { name: "現代標準庫期", range: [19, 26], summary: "runtime governance、PGO、toolchain 管理、iterator、testing 與供應鏈治理成為主軸。" },
+  { name: "Modern Toolchain and Standard Library Governance Era", range: [19, 26], summary: "runtime governance、PGO、toolchain management、standard-library modernization、testing 與 supply-chain governance 成為主軸。" },
 ];
 
 const releaseData = {
@@ -363,7 +363,7 @@ const releaseData = {
     ],
   },
   19: {
-    phase: "現代標準庫期",
+    phase: "Modern Toolchain and Standard Library Governance Era",
     positioning: "Go 1.19 強化 memory governance、doc comment 與 memory model，是 production service runtime 調校的重要版本。",
     value: "適合導入 `GOMEMLIMIT`、runtime metrics、文件註解規範與 atomic/memory model 教材。",
     risk: "memory limit 設定錯誤會影響 throughput；atomic behavior 需按新 memory model 理解。",
@@ -384,7 +384,7 @@ const releaseData = {
     ],
   },
   20: {
-    phase: "現代標準庫期",
+    phase: "Modern Toolchain and Standard Library Governance Era",
     positioning: "Go 1.20 以 toolchain、runtime/compiler、coverage、PGO preview 與標準庫 API 補強為主，是工程治理型版本。",
     value: "適合把 coverage 從 unit test 推進到 integration test，建立 PGO 評估流程，並補強錯誤聚合、context cancel cause、HTTP gateway 與 runtime observability。",
     risk: "`-i` 移除、舊 OS 支援線、cgo 預設行為、bootstrap toolchain、XML/template/archive 安全行為、GOPATH 舊流程與大量標準庫細節異動是主要風險。",
@@ -413,7 +413,7 @@ const releaseData = {
       ["Linker", "已補齊", "補 Linux glibc/musl dynamic interpreter、Windows LLVM C toolchain、`go:` / `type:` symbol prefix。", "相容性異動 / Go 指令", "高"],
       ["Bootstrap", "已補齊", "補 Go 1.17.13 bootstrap requirement、搜尋路徑與未來 Go 1.22 bootstrap 前移到 Go 1.20 final point release。", "相容性異動 / Go 指令", "高"],
       ["Standard library / major features", "已補齊", "補 `crypto/ecdh`、multi-error、`ResponseController`、ReverseProxy `Rewrite` / `SetURL` / `SetXForwarded`。", "新增功能列表", "中高"],
-      ["Standard library / minor changes", "已補齊", "補 archive、bytes、context、crypto、debug、encoding、go tooling、io/fs、math、mime、net/http、os、reflect、runtime、sync、syscall、testing、time、unicode 等 minor changes。", "新增功能 / 相容性異動", "高"],
+      ["Standard library / minor changes", "已補齊", "補 archive、bytes、context、crypto、debug、encoding、go tooling、html/template、io/fs、math/big、mime、net/http、os、reflect、runtime、sync、syscall、testing、time、unicode 等 minor changes。", "新增功能 / 相容性異動", "高"],
       ["Patch Revisions", "已整理", "Go 1.20.1 到 Go 1.20.14 由官方 Release History 擷取。", "Patch Revisions", "中"],
     ],
     added: [
@@ -428,7 +428,7 @@ const releaseData = {
       ["Compiler", "generic front-end internal data change", "compiler front-end 改用新的 internal data handling，修正多項 generic type issue，並允許 generic function/method 內宣告 type。", "泛型-heavy library 升級後應補 build/test。", "`go test ./...` + generic API tests。"],
       ["Compiler", "build speed improvements", "Go 1.20 改善 Go 1.18/1.19 因 generics 導致的 build speed regression，最高約 10%。", "大型 monorepo 可量測 CI build time。", "記錄升級前後 cold/warm build 時間。"],
       ["Standard Library / crypto", "`crypto/ecdh`", "新增明確 ECDH package，支援 NIST curves 與 Curve25519。", "新程式優先用 `crypto/ecdh`，不要直接用低階 `crypto/elliptic` 做 ECDH。", "產生 key、derive shared secret 測試。"],
-      ["Errors", "`errors.Join` and multiple `%w`", "支援一個 error 包裝多個 error，`errors.Is` / `errors.As` 可走訪多錯誤樹。", "batch job、多設備輪詢、multi-stage validation 可保留完整錯誤原因。", "測 `errors.Is` / `errors.As` 對多錯誤命中。"],
+      ["Errors / fmt", "`errors.Join` and fmt.Errorf multiple %w", "支援一個 error 包裝多個 error；`fmt.Errorf` 可在單一 format string 中使用多個 `%w`，回傳可 unwrap 到所有 `%w` operands 的 error；`errors.Is` / `errors.As` 可走訪多錯誤樹。", "batch job、多設備輪詢、multi-stage validation 可保留完整錯誤原因。", "測 fmt.Errorf multiple %w、`errors.Is` / `errors.As` 對多錯誤命中。"],
       ["Context", "`context.WithCancelCause` / `context.Cause`", "context cancel 可保留原因，便於區分 timeout、client cancel、shutdown 與 upstream failure。", "API/worker shutdown、gateway timeout 應記錄 cancel cause。", "測 timeout/client cancel/shutdown 三種 cause。"],
       ["HTTP", "`net/http.ResponseController` / `SetReadDeadline` / `SetWriteDeadline`", "提供 discoverable per-request extended control，新增 `SetReadDeadline` 與 `SetWriteDeadline` 設定單一 request 的讀寫 deadline。", "streaming response、大檔案下載、長連線 handler 可更精準控制 timeout。", "用 `httptest` 驗證 read/write deadline 行為。"],
       ["HTTP ReverseProxy", "`httputil.ReverseProxy.Rewrite`", "新增 `Rewrite` hook，以 `ProxyRequest` 同時存取 inbound/outbound request，降低 header spoofing 風險。", "gateway/proxy 新實作優先用 `Rewrite` 取代 `Director`。", "測 inbound header 不會覆蓋安全 header。"],
@@ -438,6 +438,7 @@ const releaseData = {
       ["crypto/ecdsa", "`PrivateKey.ECDH`", "可把 ECDSA private key 轉成 ECDH private key。", "憑證與 key 轉換流程需補安全文件。", "測支援曲線與錯誤曲線。"],
       ["crypto/ed25519", "Ed25519ph / Ed25519ctx support", "`PrivateKey.Sign` 與 `VerifyWithOptions` 支援 pre-hashed 與 context variants。", "簽章協議需明確標示 HashFunc 與 Context。", "測 context mismatch verify fail。"],
       ["crypto/subtle", "`XORBytes`", "新增 byte slice XOR helper。", "低階 crypto/protocol helper 可改用標準 API。", "測不同長度與輸出長度。"],
+      ["crypto/tls", "parsed certificates shared across active clients / memory savings", "TLS parsed certificates are now shared across active clients using that certificate；大量 concurrent clients 連到共用 certificate chain 的 server 時，可降低 certificate parsing 相關 memory usage。", "高併發 TLS client、proxy、gateway 與連多個共用憑證鏈的服務時，記憶體 profile 可能改善。", "用 TLS client 壓測比對 process RSS、heap profile 與 concurrent connection 數。"],
       ["crypto/tls / x509", "`CertificateVerificationError` / `SetFallbackRoots` / ECDH key parsing", "TLS verification failure 有具體 error type；x509 可設定 fallback roots；`ParsePKCS8PrivateKey`、`MarshalPKCS8PrivateKey`、`ParsePKIXPublicKey`、`MarshalPKIXPublicKey` 支援 `crypto/ecdh` keys。", "TLS client/server 排錯、embedded root bundle 與 ECDH key 管理可更明確。", "測 unknown authority、fallback roots 與 ECDH PKCS8/PKIX parse。"],
       ["debug/elf", "`SHT_NOBITS` / `R_LARCH_*` / `R_PPC64_*`", "`SHT_NOBITS` section 讀取改回錯誤；新增 LoongArch `R_LARCH_*` 與 PPC64 ELFv2 `R_PPC64_*` relocation constants。", "ELF 解析器與 binary audit tool 需補跨架構 fixture。", "用 Linux/LoongArch/PPC64 fixture 測 relocation。"],
       ["debug/gosym / debug/pe", "`debug/gosym` symbol prefix / `IMAGE_FILE_MACHINE_RISCV*`", "`debug/gosym` 可處理 Go 1.20 `go:` / `type:` symbol prefix；`debug/pe` 新增 `IMAGE_FILE_MACHINE_RISCV*` constants。", "Windows/RISC-V 與 Go binary symbol parser 需用新版 package。", "用 Go 1.19/1.20 binary fixture 測。"],
@@ -476,22 +477,24 @@ const releaseData = {
       ["archive/tar / archive/zip", "insecure path checks via GODEBUG", "安全收緊", "外部 archive 若含 absolute path、`..`、Windows reserved name，啟用後會回 `ErrInsecurePath`。", "修正 archive producer 或清洗路徑。"],
       ["archive/zip", "directory file containing data now errors", "行為收緊", "不合規 zip 讀取可能失敗。", "測 legacy zip corpus。"],
       ["encoding/xml", "`Encoder.Close` and stricter namespace/name validation", "安全/規格收緊", "`Encoder.Close` 可抓未關閉元素；多 colon name、`xmlns:a=\"\"` empty namespace、opening/closing tag prefix mismatch 會被拒絕。", "清理 legacy XML input，並在 XML encoder 收尾呼叫 `Encoder.Close`。"],
+      ["html/template", "`GODEBUG=jstmpllitinterp=1` rollback toggle", "安全收緊", "Go 1.20.3 and later disallow actions in ECMAScript 6 template literals；短期可用 `GODEBUG=jstmpllitinterp=1` 恢復舊行為。", "修正 template action 位置，不把 rollback toggle 當長期策略。"],
       ["crypto/ecdsa / rsa", "constant-time backend CPU cost and `OAEPOptions.MGFHash`", "安全收緊", "ECDSA supported curves 改 constant time，CPU time 約增加 `5% and 30%`；RSA 新 constant-time backend 且 `OAEPOptions.MGFHash` 可獨立設定 MGF1 hash。", "對 TLS/signing/decryption 做 benchmark，並檢查 OAEP interoperability。"],
       ["crypto/rsa", "`PrecomputedValues` must not be manually modified", "安全要求", "手動修改或產生 RSA precomputed fields 可能破壞安全假設。", "改用標準 key generation/parsing。"],
       ["crypto/x509", "`ParsePKCS8PrivateKey` / `ParsePKIXPublicKey` support `crypto/ecdh` keys", "API 支援", "PKCS8/PKIX marshal/parse API 可處理 `*crypto/ecdh.PrivateKey` 與 `*crypto/ecdh.PublicKey`，NIST curve parsing 仍回 ECDSA key 後可用 `ECDH` 轉換。", "憑證與 key import/export tests 要補 ECDH case。"],
       ["math/rand", "global RNG auto seed and `Seed` deprecated", "預設行為變更/棄用", "依賴 deterministic global random sequence 的測試會漂移。", "測試改用 `rand.New(rand.NewSource(seed))`；必要時用 `GODEBUG=randautoseed=0`。"],
       ["math/rand", "`Read` deprecated", "棄用", "安全用途不應用 math/rand。", "改用 `crypto/rand.Read`。"],
+      ["math/big", "not suited for attacker-controlled cryptography input", "安全說明", "`math/big` scope 很廣且 timing depends on input；不適合直接拿來處理 attacker-controlled cryptography input，標準庫 crypto packages 也避免對攻擊者可控輸入呼叫 non-trivial `Int` methods。", "密碼學程式使用標準 crypto package 或 constant-time implementation，不自行用 `math/big` 組協議。"],
       ["mime", "`ParseMediaType` duplicate parameter names", "解析行為變更", "`ParseMediaType` 允許重複 parameter name，只要對應值相同。", "HTTP header/MIME parser 測試需補 duplicate same-value 與 conflict cases。"],
-      ["mime/multipart", "header/part limits", "安全限制", "大型或異常 multipart input 可能被拒絕。", "必要時調整 `GODEBUG=multipartmaxheaders` / `multipartmaxparts`，並保留上限。"],
+      ["mime/multipart", "`Reader.NextPart` / `NextRawPart` error wrapping and limits", "安全限制 / 錯誤行為", "`Reader.NextPart`、`Reader.NextRawPart` 與 `Reader` methods 現在會 wrap underlying `io.Reader` errors；大型或異常 multipart input 可能被 header/part limits 拒絕。", "必要時調整 `GODEBUG=multipartmaxheaders` / `multipartmaxparts`，並讓錯誤判斷支援 wrapped errors。"],
       ["net/http", "HEAD request with body accepted", "行為變更", "舊測試若期待 server reject HEAD body 需要更新。", "以實際 API contract 重新定義。"],
       ["net/http", "`StreamError` / `Cookie.Valid` / cookie parsing behavior changed", "行為變更", "HTTP/2 stream errors 可用 `errors.As` 轉 `StreamError`；cookie name 會 trim spaces；empty Expires 的 `Cookie.Valid` 視為有效。", "補 HTTP/2 error 與 cookie parser regression tests。"],
       ["os / Windows", "`NUL` and directory file behavior changed", "平台行為變更", "Windows path/file tests 可能受影響。", "在 Windows runner 重跑 filesystem tests。"],
       ["reflect", "`Value.Equal` / `Value.Grow` / `Value.SetZero` and iterator field checks", "API / 行為修正", "`Value.Equal`、`Value.Grow`、`Value.SetZero` 成為標準反射工具；`SetIterKey` / `SetIterValue` 補上 unexported field check。", "修正對 unexported field 的操作，並用新 API 取代手寫反射邏輯。"],
       ["regexp/syntax", "`ErrLarge` replaces generic internal error for huge regex", "錯誤分類變更", "錯誤判斷若比對 `ErrInternalError` 需更新。", "改測 `syntax.ErrLarge`。"],
       ["syscall / FreeBSD", "FreeBSD 11 compatibility shims removed", "平台相容性", "舊 FreeBSD target 不應再列為支援。", "更新部署矩陣。"],
-      ["syscall / Linux", "`SysProcAttr.CgroupFD` / `UseCgroupFD`", "平台 API", "Linux process launch 可用 `CgroupFD` 與 `UseCgroupFD` 把 child process 放入指定 cgroup。", "container supervisor 或 job runner 需補 Linux-only tests。"],
+      ["syscall / Linux", "`CLONE_*` constants / `SysProcAttr.Cloneflags` / `CgroupFD` / `UseCgroupFD`", "平台 API", "Linux 新增可搭配 `SysProcAttr.Cloneflags` 使用的 `CLONE_*` constants；process launch 也可用 `CgroupFD` 與 `UseCgroupFD` 把 child process 放入指定 cgroup。", "container supervisor、namespace/cgroup launcher 或 job runner 需補 Linux-only tests。"],
       ["testing", "`T.Run` inside `T.Cleanup` panics", "行為收緊", "不明確的 cleanup 內建立 subtest 會 panic。", "調整測試 lifecycle。"],
-      ["time", "`DateOnly` / `TimeOnly` / stricter RFC3339 JSON", "API / 格式收緊", "新增 `DateTime`、`DateOnly`、`TimeOnly` layout constants；`Time.MarshalJSON` 對 RFC3339 更嚴格。", "時間格式統一改用命名 layout，補 JSON time round-trip tests。"],
+      ["time", "`DateOnly` / `TimeOnly` / `time.Parse` sub-nanosecond precision / stricter RFC3339 JSON", "API / 格式行為", "新增 `DateTime`、`DateOnly`、`TimeOnly` layout constants；`time.Parse` now ignores sub-nanosecond precision instead of reporting those digits as an error；`Time.MarshalJSON` 對 RFC3339 更嚴格。", "時間格式統一改用命名 layout，補 Parse sub-nanosecond input 與 JSON time round-trip tests。"],
     ],
     commands: [
       ["go -C", "before-command chdir", "新增", "Go subcommands 可先切到指定目錄再執行，簡化 multi-module script。", "`go -C ./service test ./...`"],
@@ -513,7 +516,7 @@ const releaseData = {
     ],
   },
   21: {
-    phase: "現代標準庫期",
+    phase: "Modern Toolchain and Standard Library Governance Era",
     positioning: "Go 1.21 是現代標準庫與 toolchain 管理的重要版本，加入 `log/slog`、`slices`、`maps`、`cmp` 與 toolchain switching。",
     value: "適合建立標準集合工具、結構化日誌、toolchain pinning 與 PGO 正式流程。",
     risk: "toolchain auto-switching、minimum version semantics 與 structured log 欄位治理需明確。",
@@ -521,12 +524,17 @@ const releaseData = {
     added: [
       ["Language", "`min` / `max` / `clear`", "新增內建函式，簡化常見集合操作。", "減少自寫 helper。", "語法與版本邊界測試。"],
       ["Stdlib", "`slices` / `maps` / `cmp`", "標準集合與比較工具。", "取代專案內部重複 helper。", "測 shallow copy 與 ordering。"],
+      ["Standard library", "New maps package", "官方 `New maps package` 段落新增 map helper，涵蓋 clone、copy、delete、equal 類操作。", "專案內部 map helper 應盤點是否可改用標準 `maps`。", "測 nil map、empty map、aliasing 與 equality case。"],
+      ["Standard library", "New cmp package", "官方 `New cmp package` 段落新增 ordered comparison helper 與 constraints，支援泛型排序與比較。", "排序、比較、min/max helper 可收斂到 `cmp`。", "測 ordered type、custom compare 與排序穩定性。"],
+      ["Standard library", "Minor changes to the library", "整理 Go 1.21 官方 minor changes，避免只列主要新增 package 而漏掉行為修正。", "升級時掃描 stdlib package 變更與既有 wrapper/helper。", "以 package-level regression tests 驗證。"],
+      ["Ports", "Darwin / ARM / WebAssembly / WebAssembly System Interface / ppc64/ppc64le / loong64", "補 Go 1.21 官方 ports 段落：Darwin、ARM、WebAssembly、WebAssembly System Interface（WASI）、ppc64/ppc64le、loong64。", "平台支援矩陣需列入 CI runner、交叉編譯與部署限制。", "跑目標平台 build matrix 與 smoke test。"],
       ["Logging", "`log/slog`", "標準結構化 logging。", "建立欄位命名與 redaction 規範。", "log contract tests。"],
       ["Toolchain", "toolchain management", "go command 可依 module toolchain 管理版本。", "CI pinning 必須明確。", "`go env GOTOOLCHAIN`。"],
     ],
     compat: [
       ["Toolchain", "auto toolchain switching", "流程風險", "CI 可能下載/切換 toolchain。", "固定 GOTOOLCHAIN policy。"],
       ["Logging", "structured log schema drift", "治理風險", "欄位不一致會影響 observability。", "建立 log schema。"],
+      ["Ports", "Darwin/ARM/WebAssembly/WASI/ppc64/loong64 support drift", "平台支援", "平台段落可能影響 cross-compile、runner image、WebAssembly/WASI 執行環境。", "更新支援矩陣與 release checklist。"],
     ],
     commands: [
       ["go env GOTOOLCHAIN", "toolchain policy", "新增/重要", "控制 toolchain switching。", "`GOTOOLCHAIN=local go test ./...`"],
@@ -534,49 +542,58 @@ const releaseData = {
     ],
   },
   22: {
-    phase: "現代標準庫期",
+    phase: "Modern Toolchain and Standard Library Governance Era",
     positioning: "Go 1.22 帶來 loop variable 語意修正、integer range 與標準庫 ServeMux 大幅增強。",
     value: "適合重整 table-driven tests、標準庫 router 與 `math/rand/v2` 教材。",
     risk: "舊 closure workaround 可能變冗餘；ServeMux route pattern 成為外部 API contract。",
     focus: "loop variable per-iteration、range over integers、ServeMux patterns、`math/rand/v2`。",
     added: [
+      ["Tools", "Tools", "補 Go 1.22 官方 `Tools` 段落，將 go command、vet、trace、toolchain 相關行為統一放進升級檢查。", "CI 與 developer workflow 不只檢查語言變更，也要檢查工具鏈行為。", "`go test ./...`、`go vet ./...`、腳本 smoke test。"],
       ["Language", "loop variables per iteration", "for loop variable 每次迭代有獨立實例，修正常見 closure bug。", "清理 table-driven tests。", "刪除不必要 shadow copy 後測試。"],
       ["Language", "range over integers", "可直接 `for i := range n`。", "簡化固定次數 loop。", "語法版本邊界測試。"],
       ["HTTP", "enhanced `ServeMux`", "支援 method pattern、wildcards 與 `Request.PathValue`。", "中小 API 可使用標準庫 router。", "route precedence tests。"],
       ["Random", "`math/rand/v2`", "新版 random API。", "新程式優先評估 v2。", "deterministic seed tests。"],
+      ["Standard library", "Minor changes to the library", "補 Go 1.22 官方 `Minor changes to the library` 段落，整理小型 API/行為修正。", "逐 package 掃描專案 wrapper、測試 fixture 與相容性假設。", "package-level regression tests。"],
+      ["Ports", "Ports / Darwin / ARM / Loong64 / OpenBSD", "補 Go 1.22 官方 ports 段落：Darwin、ARM、Loong64、OpenBSD。", "更新平台支援、交叉編譯、CI runner 與部署文件。", "跑 GOOS/GOARCH build matrix。"],
     ],
     compat: [
       ["Language", "loop closure behavior changed", "語意變更", "舊 workaround 可能仍可用但不必要。", "review table tests。"],
       ["HTTP", "ServeMux pattern conflicts", "API 風險", "路由 pattern 會影響外部 API。", "route contract tests。"],
     ],
     commands: [
+      ["Tools", "Go 1.22 tool changes", "官方段落", "把官方 `Tools` 段落納入命令列與 CI 審查，不只列語言 loopvar。", "`go env`、`go test`、`go vet`、release script 檢查。"],
       ["go vet", "append/defer checks", "新增檢查", "抓常見無效 append / defer time.Since mistake。", "`go vet ./...`"],
       ["go test", "loopvar migration tests", "建議", "確認 closure 行為。", "`go test ./...`"],
     ],
   },
   23: {
-    phase: "現代標準庫期",
+    phase: "Modern Toolchain and Standard Library Governance Era",
     positioning: "Go 1.23 引入 iterator/range-over-function、timer channel 行為變更與標準庫 API 版本檢查。",
     value: "適合建立 iterator pipeline、timer/ticker timeout 測試、API version linting。",
     risk: "timer behavior 改變可能影響 flaky timeout tests；iterator API 需避免過度抽象。",
     focus: "iterators、`iter` package、timer changes、`stdversion` vet、telemetry。",
     added: [
+      ["Tools", "Tools", "補 Go 1.23 官方 `Tools` 段落，涵蓋 go command、telemetry、vet/stdversion 與工具鏈工作流。", "CI 應同時驗證 test、vet、telemetry policy 與 module go version。", "`go vet ./...`、`go env`、telemetry policy 檢查。"],
       ["Language", "range-over-function iterators", "可 range over iterator function。", "集合/stream API 可更標準化。", "測 early stop / cleanup。"],
       ["Stdlib", "`iter` package", "提供 iterator convention。", "搭配 `slices` / `maps` 新 API。", "iterator fixture tests。"],
+      ["Standard library", "New structs package", "補 Go 1.23 官方 `New structs package` 段落，標記 struct layout/host-layout 類用途。", "低階資料結構、binary layout 或 cgo 邊界要明確標示可攜性。", "加 GOARCH matrix 與 layout fixture。"],
       ["Runtime", "timer/ticker GC and channel behavior", "timer/ticker 更容易被 GC，channel 行為更同步。", "重跑 timeout/flaky tests。", "time-sensitive tests。"],
       ["Vet", "`stdversion` analyzer", "檢查使用超過 module go version 的 API。", "CI 防止誤用太新 API。", "`go vet ./...`。"],
+      ["Standard library", "Minor changes to the library", "補 Go 1.23 官方 `Minor changes to the library` 段落，集中追蹤 package-level 小改動。", "升級時把 minor changes 轉為 package regression checklist。", "跑受影響 package tests。"],
+      ["Ports", "Darwin / Linux / OpenBSD / ARM64 / RISC-V / Wasm", "補 Go 1.23 官方 ports 段落：Darwin、Linux、OpenBSD、ARM64、RISC-V、Wasm。", "平台矩陣需記錄 kernel/OS/arch 差異與 wasm runner。", "跑 cross-compile、wasm smoke test 與平台 CI。"],
     ],
     compat: [
       ["Runtime", "timer behavior", "行為變更", "依賴舊 timer buffering 的測試可能失敗。", "重寫 deterministic tests。"],
       ["API", "too-new stdlib usage", "版本風險", "library 可能誤用高版本 API。", "使用 `stdversion`。"],
     ],
     commands: [
+      ["Tools", "Go 1.23 tool changes", "官方段落", "把官方 `Tools` 段落納入升級驗收，尤其是 `stdversion`、telemetry 與 go command 行為。", "`go vet ./...`、`go env GOTELEMETRY`、CI script 檢查。"],
       ["go vet", "`stdversion`", "新增", "檢查 API 版本。", "`go vet ./...`"],
       ["go test", "timer tests", "建議", "重跑 timeout/retry 測試。", "`go test -count=100 ./...`"],
     ],
   },
   24: {
-    phase: "現代標準庫期",
+    phase: "Modern Toolchain and Standard Library Governance Era",
     positioning: "Go 1.24 聚焦 tool directive、filesystem security、benchmark API 與供應鏈治理。",
     value: "適合建立工具依賴治理、目錄範圍 filesystem、benchmark loop 與 JSON/time/security 教材。",
     risk: "tool directive、GOAUTH、os.Root 導入需整理 CI 與安全政策。",
@@ -585,11 +602,19 @@ const releaseData = {
       ["Language", "generic type aliases", "泛型 alias 更完整。", "API 遷移可保留泛型型別相容。", "compile compatibility tests。"],
       ["Modules", "`tool` directive", "可在 go.mod 記錄 tool dependencies。", "把 mockgen/staticcheck 等工具納入治理。", "`go tool` workflow。"],
       ["Filesystem", "`os.Root`", "限制 filesystem operations 在指定 root 內。", "防 path traversal。", "malicious path tests。"],
-      ["Testing", "`B.Loop`", "benchmark loop API 更不易寫錯。", "更新 benchmark pattern。", "benchmark review。"],
+      ["Testing", "New benchmark function / `B.Loop`", "補 Go 1.24 官方 `New benchmark function` 段落，`testing.B.Loop` 讓 benchmark loop 更不易寫錯。", "更新 benchmark pattern，避免手寫 `for i := 0; i < b.N; i++` 的錯誤。", "benchmark review 與 `go test -bench=. -benchmem`。"],
+      ["Runtime", "Improved finalizers", "補 Go 1.24 官方 `Improved finalizers` 段落，聚焦 finalizer/cleanup 類生命週期管理改進。", "管理 native resource、file descriptor 或外部 handle 時要補生命週期測試。", "GC/finalizer smoke test 與 leak test。"],
+      ["Standard library", "New weak package", "補 Go 1.24 官方 `New weak package` 段落，支援 weak pointer/cache 類模式。", "cache、memoization 與資源索引不可依賴 weak reference 作唯一正確性來源。", "測 GC 後 cache miss 與 race behavior。"],
+      ["Crypto", "New crypto/mlkem package", "補 Go 1.24 官方 `New crypto/mlkem package` 段落，標記 post-quantum key encapsulation 相關能力。", "只在協議明確要求時導入，並保留互通性測試。", "KEM interop fixture 與 crypto tests。"],
+      ["Crypto", "New crypto/hkdf, crypto/pbkdf2, and crypto/sha3 packages", "補官方 `New crypto/hkdf, crypto/pbkdf2, and crypto/sha3 packages` 段落，將常用 KDF/hash 能力納入標準庫。", "移除第三方 helper 前先確認 API/參數/輸出相容。", "用 RFC/test vector 驗證。"],
+      ["Crypto", "FIPS 140-3 compliance", "補 Go 1.24 官方 `FIPS 140-3 compliance` 段落，標記合規建置與 crypto policy。", "合規環境要明確記錄 build mode、module 與 runtime policy。", "合規 build smoke test 與 crypto policy 文件。"],
+      ["Testing", "New experimental testing/synctest package", "補 Go 1.24 官方 `New experimental testing/synctest package` 段落，適用 deterministic concurrency/time tests。", "只用於可隔離的同步測試，不取代整合測試。", "重寫 flaky timeout/retry tests。"],
+      ["Ports", "Ports", "補 Go 1.24 官方 `Ports` 段落，包含 Linux、Darwin、WebAssembly、Windows 等平台更新。", "平台支援矩陣與 runner image 要同步更新。", "GOOS/GOARCH build matrix。"],
     ],
     compat: [
       ["Security", "`os.Root` adoption", "行為設計", "需明確定義 root boundary。", "path traversal tests。"],
       ["Tooling", "`tool` directive governance", "流程變更", "CI tool install 改走 module governance。", "更新 Makefile/CI。"],
+      ["Ports", "Ports platform changes", "平台相容性", "Go 1.24 官方 ports 段落會影響 Linux、Darwin、WebAssembly、Windows deployment assumptions。", "分平台 smoke test 與部署文件更新。"],
     ],
     commands: [
       ["go get -tool", "tool dependency", "新增", "加入 tool directive。", "`go get -tool example.com/cmd/tool`"],
@@ -597,36 +622,46 @@ const releaseData = {
     ],
   },
   25: {
-    phase: "現代標準庫期",
+    phase: "Modern Toolchain and Standard Library Governance Era",
     positioning: "Go 1.25 強化 container-aware runtime、同步測試與 concurrency helper。",
     value: "適合 Kubernetes CPU limit、flaky concurrency tests、WaitGroup lifecycle 教材。",
     risk: "GOMAXPROCS 自動調整會改變效能基準；synctest 需明確適用範圍。",
     focus: "container-aware `GOMAXPROCS`、`testing/synctest`、`WaitGroup.Go`。",
     added: [
+      ["Tools", "Tools", "補 Go 1.25 官方 `Tools` 段落，涵蓋 `go build -asan` leak detection、prebuilt tool policy、`ignore` directive、`go doc -http`、`go version -m -json`、workspace package pattern。", "CI scripts、tool install、doc workflow 與 module matching 都需檢查。", "`go env`、`go doc -http` smoke、`go version -m -json` fixture。"],
       ["Runtime", "container-aware `GOMAXPROCS`", "runtime 可依容器 CPU limit 調整預設 parallelism。", "Kubernetes service 需重定義 CPU/latency 基準。", "比較 pod CPU limit 下吞吐。"],
-      ["Testing", "`testing/synctest`", "提供同步/時間相關測試能力。", "用於 timeout/retry/flaky concurrency tests。", "重寫 flaky tests。"],
+      ["Testing", "New testing/synctest package", "補 Go 1.25 官方 `New testing/synctest package` 段落；`testing/synctest` 從 Go 1.24 experiment 走向一般可用，用於同步與虛擬時間測試。", "用於 timeout/retry/flaky concurrency tests，但不要取代跨程序 integration tests。", "重寫 flaky tests 並保留 race test。"],
+      ["JSON", "New experimental encoding/json/v2 package", "補 Go 1.25 官方 `New experimental encoding/json/v2 package` 段落；`GOEXPERIMENT=jsonv2` 啟用 `encoding/json/v2` 與 `encoding/json/jsontext`。", "JSON contract 嚴格的 API 需先隔離試用，不直接替換 production parser。", "golden JSON、error text、round-trip tests。"],
       ["Sync", "`WaitGroup.Go`", "簡化 goroutine 啟動與 WaitGroup bookkeeping。", "降低 Add/Done 錯誤。", "race test。"],
+      ["Standard library", "Minor changes to the library", "補 Go 1.25 官方 `Minor changes to the library` 段落，追蹤 package-level 小改動。", "升級時把 stdlib minor changes 轉為受影響 package checklist。", "跑 package regression tests。"],
+      ["Ports", "Darwin / Windows / AMD64 / Loong64 / RISC-V", "補 Go 1.25 官方 ports 段落：Darwin、Windows、AMD64、Loong64、RISC-V。", "更新 OS/arch support matrix、CI runner 與 cross-compile policy。", "平台 build matrix 與 smoke test。"],
     ],
     compat: [
       ["Runtime", "auto `GOMAXPROCS` changes throughput", "效能風險", "CPU limit 下結果與舊版不同。", "更新 benchmark baseline。"],
       ["Testing", "synctest scope", "測試設計", "不應取代所有 integration tests。", "限定用於 deterministic concurrency。"],
     ],
     commands: [
+      ["Tools", "Go 1.25 tool changes", "官方段落", "補官方 `Tools` 段落到 Go 指令表，包含 ASAN leak detection、`ignore` directive、`go doc -http`、`go version -m -json`。", "CI script、tool policy、module pattern smoke test。"],
       ["GOMAXPROCS", "runtime default policy", "行為變更", "container 下需明確觀察。", "`GOMAXPROCS=2 go test ./...`"],
       ["go test", "synctest-based tests", "建議", "重構 flaky tests。", "`go test ./...`"],
     ],
   },
   26: {
-    phase: "現代標準庫期",
+    phase: "Modern Toolchain and Standard Library Governance Era",
     positioning: "Go 1.26 延續現代化工具鏈與 runtime 路線，重點在 modernizer、GC、測試 artifact 與語言小幅擴充。",
     value: "適合建立 automated modernization、GC metrics、test artifact collection 與 toolchain 升級治理。",
     risk: "modernizer 自動修改需 code review；GC/runtime 指標需重新校準。",
     focus: "`new(expression)`、modernizers、Green Tea GC、`testing.T.Attr` / `ArtifactDir`。",
     added: [
       ["Language", "`new(expression)`", "語言層小幅擴充，改善部分初始化表達能力。", "只在能提升可讀性時使用。", "compile tests。"],
+      ["Tools", "Tools", "補 Go 1.26 官方 `Tools` 段落，涵蓋 go command、go fix/modernizers、toolchain 與測試 artifact workflow。", "所有自動化改寫必須在 branch 上 review，不直接套到 main。", "`go test ./...`、diff review、toolchain smoke test。"],
       ["Go command", "modernizers", "工具可協助把舊程式碼現代化。", "只在 reviewable branch 執行。", "檢查 diff 與 tests。"],
       ["Runtime", "Green Tea GC", "GC 實作更新，影響 runtime metrics 與效能觀察。", "重跑 latency / memory benchmark。", "pprof + runtime metrics。"],
       ["Testing", "`T.Attr` / `ArtifactDir`", "測試可標註 metadata 並保存 artifacts。", "適合 CI evidence collection。", "檢查 artifact 產物。"],
+      ["SIMD", "New experimental simd/archsimd package", "補 Go 1.26 官方 `New experimental simd/archsimd package` 段落，標記 experimental SIMD / architecture-specific acceleration。", "僅在 hot path 且有 fallback 時試用，避免綁死平台。", "CPU feature matrix、fallback tests、benchmark。"],
+      ["Runtime", "New experimental runtime/secret package", "補 Go 1.26 官方 `New experimental runtime/secret package` 段落，標記 secret handling experimental API。", "高敏感資料需先定義 threat model，不以 experimental API 作唯一防護。", "secret lifecycle tests 與 security review。"],
+      ["Standard library", "Minor changes to the library", "補 Go 1.26 官方 `Minor changes to the library` 段落，追蹤各 package 小改動。", "升級時掃描受影響 package、wrapper 與 golden tests。", "package-level regression tests。"],
+      ["Ports", "Darwin / FreeBSD / PowerPC / RISC-V / S390X / WebAssembly", "補 Go 1.26 官方 ports 段落：Darwin、FreeBSD、PowerPC、RISC-V、S390X、WebAssembly。", "更新平台支援矩陣、交叉編譯與部署 smoke test。", "GOOS/GOARCH build matrix。"],
     ],
     compat: [
       ["Tooling", "modernizer diff", "自動化風險", "自動修改不可直接進 main。", "逐 PR review。"],
@@ -634,6 +669,7 @@ const releaseData = {
       ["Bootstrap", "Go 1.24.6+ bootstrap", "建置要求", "source build 需更新 bootstrap。", "檢查 builder。"],
     ],
     commands: [
+      ["Tools", "Go 1.26 tool changes", "官方段落", "補官方 `Tools` 段落到 Go 指令表，包含 modernizer 與測試 artifact workflow。", "在 review branch 執行，保留 diff 與測試證據。"],
       ["go fix / modernizer", "modernization workflow", "新增/強化", "自動產生現代化 diff。", "先在分支執行。"],
       ["go test", "artifact collection", "新增/強化", "保存測試 artifact。", "檢查 ArtifactDir。"],
       ["go build", "bootstrap Go 1.24.6+", "要求", "自建 toolchain 需更新。", "builder smoke test。"],
@@ -712,12 +748,98 @@ function parseReleaseHistory(html) {
   return releases;
 }
 
-function parseOfficialHeadings(html) {
-  const headings = [...html.matchAll(/<h([23])[^>]*>([\s\S]*?)<\/h\1>/g)]
-    .map((m) => stripTags(m[2]))
-    .filter((text) => text && !["Overview", "Index"].includes(text))
-    .slice(0, 14);
-  return headings.length ? headings : ["Introduction", "Language", "Tools", "Runtime", "Compiler", "Standard library"];
+function parseOfficialSections(html) {
+  const matches = [...html.matchAll(/<h([23])[^>]*>([\s\S]*?)<\/h\1>/g)];
+  const sections = [];
+  for (let i = 0; i < matches.length; i++) {
+    const heading = stripTags(matches[i][2]);
+    if (!heading || ["Overview", "Index"].includes(heading)) continue;
+    const start = matches[i].index + matches[i][0].length;
+    const end = i + 1 < matches.length ? matches[i + 1].index : html.length;
+    const text = stripTags(html.slice(start, end));
+    if (!text) continue;
+    sections.push({ heading, text });
+  }
+  return sections.length
+    ? sections
+    : ["Introduction", "Language", "Tools", "Runtime", "Compiler", "Standard library"].map((heading) => ({ heading, text: "" }));
+}
+
+function shortText(text, max = 220) {
+  const normalized = String(text).replace(/\s+/g, " ").trim();
+  if (!normalized) return "官方段落以該版本 release note 可得資訊為準，本頁轉寫為工程導入、風險與驗證觀點。";
+  return normalized.length > max ? `${normalized.slice(0, max - 1)}…` : normalized;
+}
+
+function topicTerms(heading, text) {
+  const source = `${heading} ${text}`;
+  const raw = [
+    ...source.matchAll(/\b(?:GO[A-Z0-9_]+|GODEBUG|GOMAXPROCS|GOMEMLIMIT|GOTOOLCHAIN|GOROOT|GOPATH|GOOS|GOARCH|CGO_ENABLED)\b/g),
+    ...source.matchAll(/\b(?:go\s+(?:build|test|vet|mod|env|install|list|work|run|generate|get|tool|fix)|gofmt|cgo|pprof)\b/gi),
+    ...source.matchAll(/\b[a-z]+\/[a-z0-9_\/]+(?:\.[A-Za-z0-9_]+)?\b/g),
+    ...source.matchAll(/\b[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Z][A-Za-z0-9_]*)+\b/g),
+    ...source.matchAll(/\b[A-Z][A-Za-z0-9_]{2,}\b/g),
+  ].map((m) => m[0].replace(/\s+/g, " "));
+  const unique = [];
+  for (const term of raw) {
+    if (term === "Go" || unique.includes(term)) continue;
+    unique.push(term);
+    if (unique.length >= 8) break;
+  }
+  return unique.length ? unique.join("、") : heading;
+}
+
+function engineeringLens(heading, text) {
+  const lower = `${heading} ${text}`.toLowerCase();
+  if (lower.includes("language") || lower.includes("memory model")) {
+    return "以語言語意、編譯相容性與 API 設計規則重寫，導入前要補 compile tests 與範例。";
+  }
+  if (lower.includes("go command") || lower.includes("tools") || lower.includes("vet") || lower.includes("gofmt")) {
+    return "以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。";
+  }
+  if (lower.includes("runtime") || lower.includes("compiler") || lower.includes("linker") || lower.includes("pgo")) {
+    return "以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。";
+  }
+  if (lower.includes("ports") || lower.includes("windows") || lower.includes("darwin") || lower.includes("linux") || lower.includes("freebsd")) {
+    return "以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。";
+  }
+  if (lower.includes("library") || lower.includes("standard") || lower.includes("crypto") || lower.includes("net/http")) {
+    return "以 package API、相容性異動、安全收緊與 regression tests 重寫，避免只列新增名稱。";
+  }
+  return "以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。";
+}
+
+function verificationLens(heading, text) {
+  const lower = `${heading} ${text}`.toLowerCase();
+  if (lower.includes("security") || lower.includes("crypto") || lower.includes("tls") || lower.includes("x509")) {
+    return "補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。";
+  }
+  if (lower.includes("go command") || lower.includes("module") || lower.includes("toolchain")) {
+    return "檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。";
+  }
+  if (lower.includes("runtime") || lower.includes("compiler") || lower.includes("performance")) {
+    return "保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。";
+  }
+  if (lower.includes("ports") || lower.includes("cgo") || lower.includes("linker") || lower.includes("bootstrap")) {
+    return "跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。";
+  }
+  if (lower.includes("language")) {
+    return "補語法範例、compile-time assertion、table tests 與文件化版本界線。";
+  }
+  return "以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。";
+}
+
+function officialDetailRows(minor, sections) {
+  const selected = sections
+    .filter((section) => section.heading && section.text !== undefined)
+    .slice(0, 12);
+  const source = selected.length ? selected : [{ heading: `Go 1.${minor} official release note`, text: "" }];
+  return rows(source.map((section) => [
+    section.heading,
+    `官方重點：${topicTerms(section.heading, section.text)}。${shortText(section.text, 180)}`,
+    engineeringLens(section.heading, section.text),
+    verificationLens(section.heading, section.text),
+  ]), 4);
 }
 
 function phaseFor(minor) {
@@ -742,15 +864,15 @@ function coverageRows(minor, headings) {
   if (releaseData[minor]?.coverage?.length) {
     return rows(releaseData[minor].coverage);
   }
-  const normalized = headings.slice(0, 10);
+  const normalized = headings;
   const base = normalized.map((heading) => [
     heading,
-    "已整理",
-    `依官方 ${heading} 段落整理為工程摘要。`,
-    "放入新增功能、相容性異動、指令變更或導入計畫區。",
+    "已重寫",
+    `依官方 ${heading} 段落重寫為專業報告摘要，並補上工程導入與驗證觀點。`,
+    "官方細節重寫 / 新增功能 / 相容性異動 / Go 指令區。",
     heading.toLowerCase().includes("security") || heading.toLowerCase().includes("runtime") ? "中高" : "中",
   ]);
-  base.push(["Patch Revisions", "已整理", `Go 1.${minor} patch revisions 由官方 Release History 擷取。`, "列於 Patch Revisions 區，作為採用最終 patch 的依據。", "中"]);
+  base.push(["Patch Revisions", "已重寫", `Go 1.${minor} patch revisions 由官方 Release History 擷取並改寫為採用建議。`, "列於 Patch Revisions 區，作為採用最終 patch 的依據。", "中"]);
   return rows(base);
 }
 
@@ -764,22 +886,33 @@ function impactRows(data, release) {
   ]);
 }
 
-function pageHtml(minor, release, headings) {
+function pageHtml(minor, release, officialSections) {
   const data = releaseData[minor];
   const phase = phaseFor(minor);
   const title = `Go 1.${minor} Release Note 專業整理報告`;
   const officialUrl = `https://go.dev/doc/go1.${minor}`;
   const filename = `go1.${minor}-release-note.html`;
+  const headings = officialSections.map((section) => section.heading);
   const performanceNav = data.performance?.length
     ? '      <a class="nav-link" href="#performance-comparison">效能比較</a>\n'
-    : "";
+    : "\n";
+  const officialDetailNav = minor === 20
+    ? ""
+    : '      <a class="nav-link" href="#official-detail">官方細節重寫</a>\n';
   const performanceSection = data.performance?.length
     ? `    <section id="performance-comparison">
       <div class="section-head"><h2>效能比較</h2><p>此表整理官方 release note 中明確提到的效能數字、成本變化與建議驗證方式。</p></div>
       <div class="table-wrap"><table><thead><tr><th>官方項目</th><th>Go 1.19 / 升級前狀態</th><th>Go 1.20 變化</th><th>官方數字</th><th>受影響場景</th><th>驗證指令 / 證據</th></tr></thead><tbody>${rows(data.performance, 6)}</tbody></table></div>
     </section>
 `
-    : "";
+    : "\n";
+  const officialDetailSection = minor === 20
+    ? ""
+    : `    <section id="official-detail">
+      <div class="section-head"><h2>官方段落細節重寫摘要</h2><p>此表把官方 release note 段落轉成專案導入、風險與驗證語言；Go 1.20 以既有完整專業報告為準，其他版本以此表補強深度。</p></div>
+      <div class="table-wrap"><table><thead><tr><th>官方段落</th><th>官方重點整理</th><th>工程解讀</th><th>驗證 / 導入動作</th></tr></thead><tbody>${officialDetailRows(minor, officialSections)}</tbody></table></div>
+    </section>
+`;
   return `<!doctype html>
 <html lang="zh-Hant">
 <head>
@@ -858,6 +991,7 @@ function pageHtml(minor, release, headings) {
       <a class="nav-link" href="#impact-matrix">影響矩陣</a>
 ${performanceNav}\
       <a class="nav-link" href="#official-coverage">官方覆蓋矩陣</a>
+${officialDetailNav}\
       <a class="nav-link" href="#added">新增功能</a>
       <a class="nav-link" href="#removed">移除/棄用</a>
       <a class="nav-link" href="#commands">Go 指令</a>
@@ -898,6 +1032,7 @@ ${performanceSection}\
       <div class="section-head"><h2>官方段落覆蓋矩陣</h2><p>此矩陣依官方 release note 段落標題與 Release History 補齊狀態整理。</p></div>
       <div class="table-wrap"><table><thead><tr><th>官方段落</th><th>本頁狀態</th><th>整理方式</th><th>落地區域</th><th>風險等級</th></tr></thead><tbody>${coverageRows(minor, headings)}</tbody></table></div>
     </section>
+${officialDetailSection}\
     <section id="added">
       <div class="section-head"><h2>條列式表格分析：新增功能列表</h2><p>整理 Go 1.${minor} 值得納入教材與專案升級清單的新能力。</p></div>
       <div class="table-wrap"><table><thead><tr><th>分類</th><th>新增功能 / 行為</th><th>功能說明</th><th>工程導入建議</th><th>驗證方式</th></tr></thead><tbody>${rows(data.added)}</tbody></table></div>
@@ -991,10 +1126,12 @@ function indexHtml(releases) {
     .meta-row,.nav{display:flex;flex-wrap:wrap;gap:8px}.meta,.nav a,.actions a{display:inline-flex;align-items:center;min-height:30px;padding:5px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;font-size:13px;font-weight:800}
     .nav{position:sticky;top:0;z-index:2;padding:10px 0;background:rgba(245,247,250,.95);border-bottom:1px solid var(--line)}
     section{margin:24px 0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-    .version-card{border:1px solid var(--line);border-radius:8px;background:#fff;padding:16px}.version-card h2{margin:6px 0 8px}.version-card p{color:var(--muted)}
-    .phase{display:inline-flex;padding:3px 8px;border-radius:999px;background:#e6f3f1;color:var(--accent);font-size:12px;font-weight:900}
+    .version-card{min-width:0;border:1px solid var(--line);border-radius:8px;background:#fff;padding:16px}.version-card h2{margin:6px 0 8px}.version-card p{color:var(--muted)}
+    .phase{display:inline-flex;max-width:100%;padding:3px 8px;border-radius:999px;background:#e6f3f1;color:var(--accent);font-size:12px;font-weight:900;line-height:1.35;white-space:normal;overflow-wrap:anywhere}
     .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-    .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:#fff} table{width:100%;min-width:860px;border-collapse:collapse} th,td{padding:10px 12px;border:1px solid var(--line);text-align:left;vertical-align:top;overflow-wrap:anywhere} th{background:var(--head)}
+    table{width:100%;border-collapse:collapse}.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:#fff}.table-wrap table{min-width:860px}
+    .version-card table{min-width:0;table-layout:fixed;margin-top:12px}.version-card th{width:152px}.version-card th,.version-card td{white-space:normal;word-break:break-word;overflow-wrap:anywhere}
+    th,td{padding:10px 12px;border:1px solid var(--line);text-align:left;vertical-align:top;overflow-wrap:anywhere} th{background:var(--head)}
     @media(max-width:760px){header,main{width:min(100% - 24px,1200px)}.grid{grid-template-columns:1fr}}
   </style>
 </head>
@@ -1028,19 +1165,19 @@ async function main() {
   fs.mkdirSync(OUT_DIR, { recursive: true });
   const historyHtml = await fetchText(OFFICIAL_HISTORY);
   const releases = parseReleaseHistory(historyHtml);
-  const headingMap = new Map();
+  const officialSectionMap = new Map();
   for (let minor = 2; minor <= 26; minor++) {
     const url = `https://go.dev/doc/go1.${minor}`;
     try {
       const html = await fetchText(url);
-      headingMap.set(minor, parseOfficialHeadings(html));
+      officialSectionMap.set(minor, parseOfficialSections(html));
     } catch {
-      headingMap.set(minor, ["Introduction", "Major changes", "Tools", "Standard library"]);
+      officialSectionMap.set(minor, parseOfficialSections("<h2>Introduction</h2><p>官方文件暫時無法讀取，保留本地結構化專業報告。</p><h2>Major changes</h2><p>依本地 releaseData 與 Release History 整理。</p><h2>Tools</h2><p>工具鏈與命令列變更以官方 release note 為準。</p><h2>Standard library</h2><p>標準庫變更以官方 release note 為準。</p>"));
     }
   }
   for (let minor = 2; minor <= 26; minor++) {
     const release = releases.get(minor) ?? { date: "官方未列日期", patches: [] };
-    const html = pageHtml(minor, release, headingMap.get(minor) ?? []);
+    const html = pageHtml(minor, release, officialSectionMap.get(minor) ?? []);
     fs.writeFileSync(path.join(OUT_DIR, `go1.${minor}-release-note.html`), html);
   }
   fs.writeFileSync(path.join(OUT_DIR, "index.html"), indexHtml(releases));
