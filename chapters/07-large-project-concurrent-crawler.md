@@ -217,6 +217,170 @@ go test ./project-concurrent-crawler/...
 go run ./project-concurrent-crawler/cmd/crawler
 ```
 
+## 第二階段專案：production API + worker
+
+如果並發爬蟲已經讓你理解 worker pool、retry、store abstraction，下一步就不該停在 toy project。這個教材已經附了一個更接近實務服務的第二階段專案：`production-api-worker/`。
+
+```text
+production-api-worker/
+├── cmd/
+│   ├── api-worker/      # HTTP API + queue 啟動入口
+│   └── migrate/         # migration CLI
+├── internal/
+│   ├── api/             # handler / routing / metrics endpoint
+│   ├── app/             # service / transaction boundary
+│   ├── domain/          # 核心型別
+│   ├── observability/   # slog + Prometheus + OpenTelemetry
+│   ├── repository/      # memory / Postgres store
+│   └── worker/          # bounded queue + graceful shutdown
+├── docker-compose.yml
+└── README.md
+```
+
+| 對比面向 | `project-concurrent-crawler` | `production-api-worker` |
+|---|---|---|
+| 學習重點 | worker pool、parser、retry | API、transaction、context-aware retry、request timeout contract、queue shutdown safety、observability、部署 |
+| 外部依賴 | 幾乎沒有 | Postgres、OTLP、Docker Compose |
+| 驗證方式 | `go test` 為主 | `go test` + `docker compose up --build` |
+| 專案階段 | 教學型大型專案 | 接近 production 的服務骨架 |
+
+### API 合約與相容性
+
+production service 的對外邊界不是 handler 程式碼本身，而是「使用端可以依賴的合約」。如果沒有明確的合約文件與測試，重構 handler、調整錯誤訊息或新增欄位時，很容易無意間破壞前端、CLI 或其他服務。
+
+| 合約面向 | 必須固定的內容 | 破壞風險 |
+|---|---|---|
+| Endpoint | method、path、path parameter | client 找不到路由或誤用動詞 |
+| Request schema | 必填欄位、型別、大小限制、unknown field、trailing JSON | 舊 client 送出的 payload 被拒絕，或錯誤 request 被誤當 500 |
+| Response schema | HTTP status、JSON 欄位、狀態 enum | client decode 失敗或狀態判斷錯誤 |
+| Error envelope | `error.code`、`error.message` | client 無法用穩定 code 做分支 |
+| Observability | route label、trace span name、metrics label、`X-Request-ID` | dashboard、alert 與 incident log 無法對照 |
+| Panic recovery | `500 internal_error` JSON、request id header | panic 造成連線中斷、非 JSON 錯誤或洩漏內部細節 |
+| Request timeout | `504 request_timeout` JSON、request id header | handler deadline exceeded 被誤分類成 `500 internal_error`，client 無法區分 timeout 與 bug |
+| Retry cancellation | deadlock backoff、request context、shutdown deadline | request 已取消後仍繼續重試 DB 交易或排入 queue |
+| Queue shutdown | enqueue 與 close 的同步邊界 | shutdown 期間可能送入已關閉 channel，造成 panic |
+
+`production-api-worker/docs/api-contract.md` 示範了最小可維護合約：`POST /jobs`、`GET /jobs/{id}`、health endpoint、metrics endpoint、錯誤格式與 release gate。這不是要把文件寫成百科，而是讓每次 release 都能回答三個問題：
+
+1. 這次變更是否改了使用端看得到的 HTTP 合約？
+2. 若改了，是否向後相容？
+3. 若不相容，是否需要新版本路由、feature flag 或 migration 計畫？
+
+### Request Correlation 與可排障性
+
+Production service 的 observability 不是「有 metrics endpoint」就結束。當使用者回報一個失敗 request 時，工程師必須能從 response header 找到同一筆 structured log 與 trace span。`production-api-worker` 用 `X-Request-ID` 做最小關聯：
+
+| 關聯位置 | 固定內容 |
+|---|---|
+| HTTP response | 永遠回傳 `X-Request-ID`；若 client 已提供則原樣保留 |
+| Structured log | `request_id`、`method`、`route`、`error_code` |
+| Trace attribute | `request.id`、`http.route` |
+| Contract test | `TestRequestIDContract` 固定自動產生與 header 回傳行為 |
+
+這類欄位也屬於外部操作合約。改掉 route label、span name 或 request id header，可能不會讓單元測試失敗，卻會讓 dashboard、alert rule、客服查詢與 incident review 失去關聯。
+
+### Contract Test Gate
+
+合約文件需要測試保護。`production-api-worker/internal/api` 的 contract test 應至少固定：
+
+```bash
+cd production-api-worker
+go test ./internal/api -run 'Test.*Contract' -count=1
+```
+
+| 測試項 | 檢查內容 |
+|---|---|
+| 成功建立 job | `202 Accepted`、`Content-Type: application/json`、`id/name/payload/status` |
+| 不合法 request | malformed JSON、unknown field、trailing JSON、空白 name 都回 `400 Bad Request`、`error.code=invalid_input` |
+| 找不到資源 | `404 Not Found`、`error.code=not_found` |
+| Queue full | `503 Service Unavailable`、`error.code=queue_full` |
+| Request ID | client header 原樣回傳；未提供時產生 `req-*` |
+| Panic recovery | handler panic 仍回 `500`、`error.code=internal_error` 與原 `X-Request-ID` |
+| Request timeout | handler deadline exceeded 仍回 `504`、`error.code=request_timeout` 與原 `X-Request-ID` |
+
+> 工程經驗：內部重構可以自由，但外部合約要保守。若需要破壞性變更，先新增新路由或新欄位，讓舊 client 有遷移窗口。
+
+### Request Decoding 與輸入邊界
+
+HTTP handler 的第一個 production 邊界是 request decoder。`json.Decoder` 預設允許一些容易被忽略的情況，例如只 decode 第一個 JSON value，或把 unknown field 交給後續流程無聲略過。對 API contract 來說，這些都應該明確化，否則 client typo 可能長期潛伏，真正出錯時又被誤分類成 `500 internal_error`。
+
+`production-api-worker` 的 `POST /jobs` 使用獨立的 `decodeJobInput` gate：
+
+| 檢查 | 合約行為 |
+|---|---|
+| Malformed JSON | `400 invalid_input` |
+| Unknown field | `400 invalid_input` |
+| Trailing JSON value | `400 invalid_input` |
+| 空白 `name` | `400 invalid_input` |
+
+這類檢查不只是「表單驗證」，而是 API 相容性的一部分。當欄位命名、payload 限制或 decoder 嚴格度改變時，都應該進入 contract test 與 release note。
+
+### Panic Recovery 與錯誤邊界
+
+Go 的 `panic/recover` 不應拿來取代一般錯誤處理，但 production HTTP server 需要在最外層 handler 邊界做 recover。原因不是要吞掉 bug，而是避免未預期 panic 讓 client 看到連線中斷、HTML 錯誤頁或 panic 細節。
+
+`production-api-worker` 的 routes 順序是：request context middleware 建立 `X-Request-ID`，metrics middleware 記錄 status，recover middleware 把 panic 轉成穩定 JSON。這讓 panic path 仍然有 request id、structured log 與 metrics label。
+
+| 邊界 | 做法 |
+|---|---|
+| Handler / service panic | recover middleware 記錄 `panic recovered` structured log |
+| Client response | 固定 `500 Internal Server Error` 與 `error.code=internal_error` |
+| Request correlation | 原本的 `X-Request-ID` 仍回傳，方便排障 |
+| 測試保護 | `TestPanicRecoveryContract` 固定外部錯誤格式 |
+
+### Request Timeout 與錯誤分類
+
+Production API 的 timeout 不是未知錯誤。若 handler 建立的 request deadline 到期，上層 client 需要知道這是 timeout path，才能決定是否 retry、降級或回報使用者。因此 `context.DeadlineExceeded` 不應落到 `500 internal_error`。
+
+`production-api-worker/internal/api.Handler.writeError` 會把 deadline exceeded 分類成穩定合約：
+
+| 邊界 | 做法 |
+|---|---|
+| Handler timeout | 回 `504 Gateway Timeout` |
+| Error code | `request_timeout` |
+| Request correlation | 原本的 `X-Request-ID` 仍回傳 |
+| 測試保護 | `TestRequestTimeoutContract` 固定 timeout 外部行為 |
+
+### Service Lifecycle：ready、draining、shutdown
+
+Production service 的生命週期要分清楚三件事：process 是否活著、是否還能接新流量、已接收的背景工作是否已處理完。`production-api-worker` 用 `/livez`、`/readyz` 與 queue drain 示範這個差異。
+
+| 階段 | `/livez` | `/readyz` | 主要行為 |
+|---|---:|---:|---|
+| Ready | 200 | 200 | 正常接收 API request 與 queue job |
+| Draining | 200 | 503 | 停止對外導流，既有 request 仍可在 deadline 內完成 |
+| Queue drain | 200 | 503 | 不再接新 job，等待已排入 queue 的工作完成 |
+| Forced cancel | 可能結束 | 503 | drain deadline 到期才取消 worker context |
+
+這個流程避免兩種常見錯誤：第一，process 還活著但其實已準備關閉，load balancer 仍繼續送流量；第二，收到 signal 立刻 cancel worker context，導致 queue 裡已接受的 job 被中斷。
+
+Queue 本身也要有明確的同步邊界。`production-api-worker/internal/worker.Queue` 用 mutex 同時保護 `closed` 狀態、enqueue send 與 channel close，確保 `ShutdownContext` 開始後的新 enqueue 只會得到 `ErrClosed`，不會在高併發 shutdown path 觸發 `send on closed channel`。
+
+### Retry Cancellation 與交易重試邊界
+
+Deadlock retry 是 production service 常見的保護機制，但 backoff 不能脫離 request context。若 HTTP request 已 timeout、client 已斷線，或服務進入 shutdown draining，service 應停止後續 DB 交易與 queue enqueue，而不是在背景繼續嘗試。
+
+`production-api-worker/internal/app.Service` 的重試策略：
+
+| 情境 | 行為 |
+|---|---|
+| 第一次交易遇到 `domain.ErrDeadlock` | 記錄 warning，短暫 backoff 後重試 |
+| Backoff 期間 `ctx.Done()` | 立即回傳 `context.Canceled` 或 `context.DeadlineExceeded` |
+| Context 已取消 | 不再呼叫下一次 `WithTx`，也不 enqueue job |
+| 測試保護 | `TestCreateJobStopsDeadlockRetryWhenContextCanceled` 固定取消語意 |
+
+這個案例適合放在第 7 章，因為它同時連到 service transaction boundary、context 傳遞、錯誤分類與 worker queue 的副作用控制。
+
+### 建議閱讀順序
+
+1. 先完成 `crawler/types.go`、`crawler/crawler.go` 的 worker / queue 心智模型。
+2. 再看 `production-api-worker/internal/app/service.go`，理解 service transaction boundary。
+3. 對照 `internal/app/service_test.go`，理解 deadlock retry 如何被 context cancellation 中斷。
+4. 接著讀 `internal/api/handler.go` 與 `internal/observability/observability.go`，把 HTTP、metrics、tracing 與 panic recovery 串起來。
+5. 再看 `internal/lifecycle/readiness.go` 與 `cmd/api-worker/main.go`，理解 ready / draining / queue drain。
+6. 對照 `docs/api-contract.md` 與 `internal/api/handler_test.go`，理解合約文件如何被測試守住。
+7. 最後跑 `docker compose up --build`，驗證 migration、API、worker、metrics 整體鏈路。
+
 ## 讀程式順序
 
 1. 先看 `crawler/types.go` 理解資料模型與介面。
@@ -229,3 +393,4 @@ go run ./project-concurrent-crawler/cmd/crawler
 1. 把 `MaxDepth` 改成 2，觀察任務數量變化。
 2. 新增一個 `FileStore`，把結果寫成 JSON lines。
 3. 對 retry 分支新增更多測試案例。
+4. 參照 `production-api-worker`，幫 crawler 加上 metrics 與 graceful shutdown。

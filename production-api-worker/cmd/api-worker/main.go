@@ -15,6 +15,7 @@ import (
 
 	"golang-learning-notes/production-api-worker/internal/api"
 	"golang-learning-notes/production-api-worker/internal/app"
+	"golang-learning-notes/production-api-worker/internal/lifecycle"
 	"golang-learning-notes/production-api-worker/internal/observability"
 	"golang-learning-notes/production-api-worker/internal/repository"
 	"golang-learning-notes/production-api-worker/internal/worker"
@@ -40,30 +41,52 @@ func main() {
 	}
 	defer cleanup()
 
+	readiness := lifecycle.NewReadiness()
+	workerCtx, cancelWorkers := context.WithCancel(context.Background())
+	defer cancelWorkers()
+
 	var service *app.Service
 	queue := worker.New(envInt("QUEUE_SIZE", 64), func(ctx context.Context, task worker.Task) error {
 		return service.ProcessJob(ctx, task)
 	}, obs)
 	service = app.NewService(store, queue, obs, newID)
-	queue.Start(ctx, envInt("WORKERS", 4))
+	queue.Start(workerCtx, envInt("WORKERS", 4))
 	defer queue.Shutdown()
 
 	server := &http.Server{
 		Addr:              ":" + envString("PORT", "8080"),
-		Handler:           api.NewHandler(service, obs).Routes(),
+		Handler:           api.NewHandler(service, obs, api.WithReadiness(readiness.Ready)).Routes(),
 		ReadHeaderTimeout: 3 * time.Second,
 	}
 
+	shutdownDone := make(chan struct{})
 	go func() {
+		defer close(shutdownDone)
 		<-ctx.Done()
+		readiness.MarkDraining()
+		obs.Logger.Info("shutdown signal received, draining service")
+
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		_ = server.Shutdown(shutdownCtx)
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			obs.Logger.Error("http server shutdown failed", "error", err)
+		}
+		cancel()
+
+		queueCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if err := queue.ShutdownContext(queueCtx); err != nil {
+			obs.Logger.Error("worker queue drain timed out", "error", err)
+			cancelWorkers()
+			_ = queue.ShutdownContext(context.Background())
+		}
+		cancel()
 	}()
 
 	obs.Logger.Info("server listening", "addr", server.Addr)
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatal(err)
+	}
+	if ctx.Err() != nil {
+		<-shutdownDone
 	}
 }
 

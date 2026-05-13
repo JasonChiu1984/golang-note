@@ -113,7 +113,7 @@ flowchart LR
 | `make` | 建立 slice / map / channel | `make([]int, 10)` |
 | `max` | 取最大值（Go 1.21+） | `max(1, 2, 3)` |
 | `min` | 取最小值（Go 1.21+） | `min(1, 2, 3)` |
-| `new` | 配置記憶體，回傳指標 | `p := new(int)` |
+| `new` | 配置記憶體，回傳指標；Go 1.26+ 可直接接 expression | `p := new(int)` / `p := new(42)` |
 | `panic` | 觸發 panic | `panic("error")` |
 | `print` | 列印到 stderr（debug 用） | `print("debug")` |
 | `println` | 列印到 stderr 加換行 | `println("debug")` |
@@ -452,11 +452,17 @@ append(slice []T, elems ...T)
 p := new(int)     // *int，值為 0
 u := new(User)    // *User，各欄位為零值
 
+// Go 1.26+：new 可接 expression，回傳該值的指標
+age := new(42)                    // *int，值為 42
+name := new(strings.ToUpper("go")) // *string，值為 "GO"
+
 // make：回傳已初始化的值
 s := make([]int, 0, 10)  // 已初始化的 slice
 m := make(map[string]int) // 已初始化的 map
 ch := make(chan int, 5)   // buffered channel
 ```
+
+> Go 1.26 以前，`new` 只能接型別（例如 `new(int)`）；若需要指向某個初始值，通常要先宣告變數再取址。新版語法讓 optional field、測試資料與 pointer literal 更簡潔。
 
 ---
 

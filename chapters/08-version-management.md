@@ -95,6 +95,76 @@ flowchart LR
 | `go mod verify` | 驗證 hash | CI 中確認依賴沒被篡改 |
 | `go mod download` | 預先下載依賴 | Docker build 優化 |
 
+## 依賴升級審核流程
+
+真實團隊不應該把 `go get ...@latest` 當成唯一升級流程。依賴更新同時牽涉相容性、漏洞、授權、間接依賴與 build reproducibility。
+
+```bash
+# 1. 先看目前 module graph 與可更新版本
+go list -m all
+go list -m -u all
+
+# 2. 指定要升級的 module，避免一次全量升級造成風險失焦
+go get example.com/dependency@v1.8.2
+
+# 3. 整理 module metadata 並驗證 checksum
+go mod tidy
+go mod verify
+
+# 4. 跑測試與漏洞掃描
+go test ./...
+govulncheck ./...
+```
+
+| Gate | 目的 | 失敗時怎麼處理 |
+|---|---|---|
+| `go list -m -u all` | 找出可更新版本 | 只升級與本次需求或安全修補相關的 module |
+| `go mod tidy` | 確認 `go.mod` / `go.sum` 只留下實際需要的依賴 | 檢查是否誤刪 test-only dependency |
+| `go mod verify` | 驗證 module cache 內容與 `go.sum` hash 一致 | 清掉 module cache 後重抓，若仍失敗要停止 release |
+| `go test ./...` | 確認升級沒有破壞行為 | 先看 API breaking change，再決定 pin 版本或修 code |
+| `govulncheck ./...` | 掃描實際可達的已知漏洞 | 優先處理 direct call path，其次處理間接依賴與未觸達漏洞 |
+
+> **工程經驗**：依賴升級 PR 應該小而可審。一次升級太多 module 時，測試失敗或效能退化很難定位。
+
+## Vulnerability Management：`govulncheck`
+
+Go 官方漏洞資料庫與 `govulncheck` 可以把「module 有漏洞」縮小成「你的程式是否真的呼叫到漏洞路徑」。這比只看 CVE 清單更接近 Go 專案的實際風險。
+
+```bash
+# 安裝或更新工具
+go install golang.org/x/vuln/cmd/govulncheck@latest
+
+# 掃描目前 module
+govulncheck ./...
+```
+
+| 結果類型 | 代表意義 | 建議處理 |
+|---|---|---|
+| Affected direct call | 你的程式可達漏洞函式 | 立即升級或移除該呼叫路徑 |
+| Affected indirect call | 依賴內部可達漏洞 | 升級直接依賴，必要時追 issue |
+| Vulnerable but not called | module 版本含漏洞但目前未觸達 | 排入維護更新，不應完全忽略 |
+| No vulnerabilities found | 目前資料庫未發現已知漏洞 | 保留掃描時間、Go 版本與資料庫時間 |
+
+`govulncheck` 需要讀取 module graph 與漏洞資料庫，離線 CI 可能失敗。此時不要把失敗偽裝成通過；應在 release note 標註「未完成漏洞掃描」並在可連網環境補跑。
+
+## Go 1.24+ Tool Dependencies
+
+Go 1.24 起可以用 `tool` directive 管理開發工具，避免每個人用不同版本的 linter、generator 或 security scanner。
+
+```bash
+# 將 govulncheck 記錄為本 module 的工具依賴
+go get -tool golang.org/x/vuln/cmd/govulncheck
+
+# 之後用 go tool 執行，版本由 go.mod 管理
+go tool govulncheck ./...
+```
+
+| 做法 | 優點 | 注意事項 |
+|---|---|---|
+| `go install tool@latest` | 快速、適合個人臨時使用 | 版本不會被專案鎖定 |
+| `go get -tool ...` | 工具版本納入 `go.mod`，CI 可重現 | 會增加 tool dependency，需要一起維護 |
+| `go run tool@version` | 不污染全域環境 | 每次可能需要下載，CI 較慢 |
+
 ## Private Module
 
 ```bash
@@ -113,6 +183,8 @@ git config --global url."https://oauth2:${TOKEN}@github.com/".insteadOf "https:/
 | `GOPRIVATE` | 不走 proxy 也不走 checksum DB |
 | `GONOSUMCHECK` | 不驗證 checksum |
 | `GONOPROXY` | 不走 proxy |
+
+> **供應鏈提醒**：`GOPRIVATE` 會讓私有 module 不走公共 checksum database，這是必要的隱私保護，但也代表公司內部要有自己的審核與鏡像策略。不要把 `GONOSUMCHECK=*` 當成方便的全域設定。
 
 ## Module Proxy
 
@@ -253,3 +325,4 @@ GOWORK=off go build ./...
 3. 用 `go mod graph` 觀察依賴樹。
 4. 設定 `GOPRIVATE` 模擬私有 module。
 5. 建立兩個 module（`lib` 和 `app`），用 `go work` 讓 `app` 使用本地的 `lib`。
+6. 對其中一個 module 跑 `go list -m -u all`、`go mod verify` 與 `govulncheck ./...`，寫下哪些結果會阻擋 release。

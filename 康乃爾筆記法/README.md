@@ -1,5 +1,9 @@
 # Golang 學習筆記 — 康乃爾筆記法索引
 
+> **版本基準**：Go 1.26.3
+>
+> 康乃爾筆記用於複習與自測，版本訊號需與主教材一致；若範例 module 仍保留 `go 1.22`，代表相容層，不代表教材只涵蓋 Go 1.22。
+
 > **康乃爾筆記法格式說明**：
 > - 左欄（線索欄）：關鍵字、問題、提示 — 用來自我測驗
 > - 右欄（筆記欄）：詳細說明、程式碼範例
@@ -20,7 +24,7 @@
 | 07 | [大型專案架構](07-大型專案架構.md) | 目錄結構、DI、Config、Makefile |
 | 08 | [版本管理](08-版本管理.md) | go.mod、SemVer、go work |
 | 09 | [執行檔打包與部署](09-執行檔打包與部署.md) | build、交叉編譯、Docker、CI/CD |
-| 10 | [效能調優與記憶體](10-效能調優與記憶體.md) | pprof、GC、escape analysis、sync.Pool |
+| 10 | [效能調優與記憶體](10-效能調優與記憶體.md) | pprof、GC、escape analysis、sync.Pool、runtime metrics、benchstat |
 | 11 | [進階測試實務](11-進階測試實務.md) | mock、fuzz、integration test |
 | A1 | [語言規範速覽](A1-語言規範速覽.md) | 識別符、關鍵字、字面量、作用域 |
 

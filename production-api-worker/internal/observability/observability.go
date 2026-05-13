@@ -102,6 +102,31 @@ func (o *Observability) MetricsHandler() http.Handler {
 	return promhttp.HandlerFor(o.Registry, promhttp.HandlerOpts{})
 }
 
+func (o *Observability) StartSpan(ctx context.Context, name string) (context.Context, func()) {
+	ctx, span := o.Tracer.Start(ctx, name)
+	return ctx, span.End
+}
+
+func (o *Observability) InfoContext(ctx context.Context, msg string, args ...any) {
+	o.Logger.InfoContext(ctx, msg, args...)
+}
+
+func (o *Observability) WarnContext(ctx context.Context, msg string, args ...any) {
+	o.Logger.WarnContext(ctx, msg, args...)
+}
+
+func (o *Observability) ObserveWorkerQueueDepth(depth int) {
+	o.Metrics.QueueDepth.Set(float64(depth))
+}
+
+func (o *Observability) ObserveWorkerJobDuration(seconds float64) {
+	o.Metrics.JobDuration.Observe(seconds)
+}
+
+func (o *Observability) ObserveWorkerJobResult(result string) {
+	o.Metrics.JobsTotal.WithLabelValues(result).Inc()
+}
+
 func (o *Observability) Shutdown(ctx context.Context) error {
 	shutdownCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()

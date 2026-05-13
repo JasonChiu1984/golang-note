@@ -8,31 +8,46 @@ import (
 	"time"
 
 	"golang-learning-notes/production-api-worker/internal/domain"
-	"golang-learning-notes/production-api-worker/internal/observability"
-	"golang-learning-notes/production-api-worker/internal/repository"
 	"golang-learning-notes/production-api-worker/internal/worker"
 )
+
+type Tx interface {
+	InsertJob(ctx context.Context, job domain.Job) error
+	UpdateJobStatus(ctx context.Context, id string, status domain.JobStatus) error
+	GetJob(ctx context.Context, id string) (domain.Job, error)
+}
+
+type Store interface {
+	WithTx(ctx context.Context, opts *sql.TxOptions, fn func(Tx) error) error
+	GetJob(ctx context.Context, id string) (domain.Job, error)
+}
 
 type Queue interface {
 	Enqueue(ctx context.Context, task worker.Task) error
 }
 
+type Observability interface {
+	StartSpan(ctx context.Context, name string) (context.Context, func())
+	InfoContext(ctx context.Context, msg string, args ...any)
+	WarnContext(ctx context.Context, msg string, args ...any)
+}
+
 type IDGenerator func() string
 
 type Service struct {
-	store repository.Store
+	store Store
 	queue Queue
-	obs   *observability.Observability
+	obs   Observability
 	newID IDGenerator
 }
 
-func NewService(store repository.Store, queue Queue, obs *observability.Observability, newID IDGenerator) *Service {
+func NewService(store Store, queue Queue, obs Observability, newID IDGenerator) *Service {
 	return &Service{store: store, queue: queue, obs: obs, newID: newID}
 }
 
 func (s *Service) CreateJob(ctx context.Context, input domain.JobInput) (domain.Job, error) {
-	ctx, span := s.obs.Tracer.Start(ctx, "Service.CreateJob")
-	defer span.End()
+	ctx, endSpan := s.obs.StartSpan(ctx, "Service.CreateJob")
+	defer endSpan()
 
 	if err := domain.ValidateJobInput(input); err != nil {
 		return domain.Job{}, err
@@ -46,7 +61,7 @@ func (s *Service) CreateJob(ctx context.Context, input domain.JobInput) (domain.
 	}
 
 	err := s.withDeadlockRetry(ctx, func() error {
-		return s.store.WithTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted}, func(tx repository.Tx) error {
+		return s.store.WithTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted}, func(tx Tx) error {
 			return tx.InsertJob(ctx, job)
 		})
 	})
@@ -55,7 +70,7 @@ func (s *Service) CreateJob(ctx context.Context, input domain.JobInput) (domain.
 	}
 
 	if err := s.queue.Enqueue(ctx, worker.Task{JobID: job.ID}); err != nil {
-		_ = s.store.WithTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted}, func(tx repository.Tx) error {
+		_ = s.store.WithTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted}, func(tx Tx) error {
 			return tx.UpdateJobStatus(ctx, job.ID, domain.JobFailed)
 		})
 		return domain.Job{}, err
@@ -64,16 +79,16 @@ func (s *Service) CreateJob(ctx context.Context, input domain.JobInput) (domain.
 }
 
 func (s *Service) GetJob(ctx context.Context, id string) (domain.Job, error) {
-	ctx, span := s.obs.Tracer.Start(ctx, "Service.GetJob")
-	defer span.End()
+	ctx, endSpan := s.obs.StartSpan(ctx, "Service.GetJob")
+	defer endSpan()
 	return s.store.GetJob(ctx, id)
 }
 
 func (s *Service) ProcessJob(ctx context.Context, task worker.Task) error {
-	ctx, span := s.obs.Tracer.Start(ctx, "Service.ProcessJob")
-	defer span.End()
+	ctx, endSpan := s.obs.StartSpan(ctx, "Service.ProcessJob")
+	defer endSpan()
 
-	if err := s.store.WithTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted}, func(tx repository.Tx) error {
+	if err := s.store.WithTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted}, func(tx Tx) error {
 		return tx.UpdateJobStatus(ctx, task.JobID, domain.JobProcessing)
 	}); err != nil {
 		return err
@@ -81,12 +96,12 @@ func (s *Service) ProcessJob(ctx context.Context, task worker.Task) error {
 
 	time.Sleep(10 * time.Millisecond)
 
-	if err := s.store.WithTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted}, func(tx repository.Tx) error {
+	if err := s.store.WithTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted}, func(tx Tx) error {
 		return tx.UpdateJobStatus(ctx, task.JobID, domain.JobDone)
 	}); err != nil {
 		return err
 	}
-	s.obs.Logger.InfoContext(ctx, "job processed", "job_id", task.JobID)
+	s.obs.InfoContext(ctx, "job processed", "job_id", task.JobID)
 	return nil
 }
 
@@ -97,9 +112,23 @@ func (s *Service) withDeadlockRetry(ctx context.Context, fn func() error) error 
 		if !errors.Is(err, domain.ErrDeadlock) {
 			return err
 		}
-		s.obs.Logger.WarnContext(ctx, "deadlock retry", "attempt", attempt+1)
-		time.Sleep(time.Duration(attempt+1) * 10 * time.Millisecond)
+		if attempt == 2 {
+			return err
+		}
+		s.obs.WarnContext(ctx, "deadlock retry", "attempt", attempt+1)
+		backoff := time.Duration(attempt+1) * 10 * time.Millisecond
+		timer := time.NewTimer(backoff)
+		select {
+		case <-timer.C:
+		case <-ctx.Done():
+			if !timer.Stop() {
+				select {
+				case <-timer.C:
+				default:
+				}
+			}
+			return ctx.Err()
+		}
 	}
 	return err
 }
-

@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -38,7 +39,7 @@ type Job struct {
 }
 
 func ValidateJobInput(input JobInput) error {
-	if input.Name == "" {
+	if strings.TrimSpace(input.Name) == "" {
 		return fmt.Errorf("name is required: %w", ErrInvalidInput)
 	}
 	if len(input.Payload) > 4096 {
@@ -46,4 +47,3 @@ func ValidateJobInput(input JobInput) error {
 	}
 	return nil
 }
-

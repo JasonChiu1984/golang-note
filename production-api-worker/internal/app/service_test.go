@@ -2,12 +2,14 @@ package app
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"fmt"
+	"sync"
 	"testing"
+	"time"
 
 	"golang-learning-notes/production-api-worker/internal/domain"
-	"golang-learning-notes/production-api-worker/internal/observability"
-	"golang-learning-notes/production-api-worker/internal/repository"
 	"golang-learning-notes/production-api-worker/internal/worker"
 )
 
@@ -25,8 +27,8 @@ func (q *fakeQueue) Enqueue(ctx context.Context, task worker.Task) error {
 }
 
 func TestCreateJobRetriesDeadlockAndEnqueues(t *testing.T) {
-	obs := newTestObs(t)
-	store := repository.NewMemoryStore()
+	obs := noopObs{}
+	store := newMemoryStore()
 	store.ForceNextDeadlock()
 	queue := &fakeQueue{}
 	service := NewService(store, queue, obs, func() string { return "job-1" })
@@ -44,8 +46,8 @@ func TestCreateJobRetriesDeadlockAndEnqueues(t *testing.T) {
 }
 
 func TestCreateJobMarksFailedWhenQueueFull(t *testing.T) {
-	obs := newTestObs(t)
-	store := repository.NewMemoryStore()
+	obs := noopObs{}
+	store := newMemoryStore()
 	queue := &fakeQueue{err: domain.ErrQueueFull}
 	service := NewService(store, queue, obs, func() string { return "job-2" })
 
@@ -63,17 +65,135 @@ func TestCreateJobMarksFailedWhenQueueFull(t *testing.T) {
 	}
 }
 
-func newTestObs(t *testing.T) *observability.Observability {
-	t.Helper()
-	obs, err := observability.New(context.Background(), "test", discardWriter{})
-	if err != nil {
-		t.Fatal(err)
+func TestCreateJobStopsDeadlockRetryWhenContextCanceled(t *testing.T) {
+	obs := noopObs{}
+	ctx, cancel := context.WithCancel(context.Background())
+	store := &cancelingDeadlockStore{cancel: cancel}
+	queue := &fakeQueue{}
+	service := NewService(store, queue, obs, func() string { return "job-3" })
+
+	_, err := service.CreateJob(ctx, domain.JobInput{Name: "resize", Payload: "image"})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("want context canceled, got %v", err)
 	}
-	t.Cleanup(func() { _ = obs.Shutdown(context.Background()) })
-	return obs
+	if store.calls != 1 {
+		t.Fatalf("WithTx calls = %d, want 1", store.calls)
+	}
+	if len(queue.got) != 0 {
+		t.Fatalf("job should not be enqueued after canceled retry: %+v", queue.got)
+	}
 }
 
-type discardWriter struct{}
+type cancelingDeadlockStore struct {
+	cancel context.CancelFunc
+	calls  int
+}
 
-func (discardWriter) Write(p []byte) (int, error) { return len(p), nil }
+func (s *cancelingDeadlockStore) WithTx(ctx context.Context, opts *sql.TxOptions, fn func(Tx) error) error {
+	s.calls++
+	s.cancel()
+	return domain.ErrDeadlock
+}
 
+func (s *cancelingDeadlockStore) GetJob(ctx context.Context, id string) (domain.Job, error) {
+	return domain.Job{}, domain.ErrNotFound
+}
+
+type noopObs struct{}
+
+func (noopObs) StartSpan(ctx context.Context, name string) (context.Context, func()) {
+	return ctx, func() {}
+}
+
+func (noopObs) InfoContext(ctx context.Context, msg string, args ...any) {}
+func (noopObs) WarnContext(ctx context.Context, msg string, args ...any) {}
+
+type memoryStore struct {
+	mu           sync.Mutex
+	jobs         map[string]domain.Job
+	nextDeadlock bool
+}
+
+func newMemoryStore() *memoryStore {
+	return &memoryStore{jobs: map[string]domain.Job{}}
+}
+
+func (s *memoryStore) ForceNextDeadlock() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.nextDeadlock = true
+}
+
+func (s *memoryStore) WithTx(ctx context.Context, opts *sql.TxOptions, fn func(Tx) error) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.nextDeadlock {
+		s.nextDeadlock = false
+		return domain.ErrDeadlock
+	}
+
+	snapshot := make(map[string]domain.Job, len(s.jobs))
+	for k, v := range s.jobs {
+		snapshot[k] = v
+	}
+	tx := &memoryTx{jobs: snapshot}
+	if err := fn(tx); err != nil {
+		return err
+	}
+	s.jobs = snapshot
+	return nil
+}
+
+func (s *memoryStore) GetJob(ctx context.Context, id string) (domain.Job, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	job, ok := s.jobs[id]
+	if !ok {
+		return domain.Job{}, fmt.Errorf("job %s: %w", id, domain.ErrNotFound)
+	}
+	return job, nil
+}
+
+type memoryTx struct {
+	jobs map[string]domain.Job
+}
+
+func (tx *memoryTx) InsertJob(ctx context.Context, job domain.Job) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	now := time.Now()
+	job.CreatedAt = now
+	job.UpdatedAt = now
+	tx.jobs[job.ID] = job
+	return nil
+}
+
+func (tx *memoryTx) UpdateJobStatus(ctx context.Context, id string, status domain.JobStatus) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	job, ok := tx.jobs[id]
+	if !ok {
+		return fmt.Errorf("job %s: %w", id, domain.ErrNotFound)
+	}
+	job.Status = status
+	job.UpdatedAt = time.Now()
+	if status == domain.JobProcessing {
+		job.Attempts++
+	}
+	tx.jobs[id] = job
+	return nil
+}
+
+func (tx *memoryTx) GetJob(ctx context.Context, id string) (domain.Job, error) {
+	if err := ctx.Err(); err != nil {
+		return domain.Job{}, err
+	}
+	job, ok := tx.jobs[id]
+	if !ok {
+		return domain.Job{}, fmt.Errorf("job %s: %w", id, domain.ErrNotFound)
+	}
+	return job, nil
+}

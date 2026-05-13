@@ -167,6 +167,7 @@ fmt.Println(value)
 | `fmt.Errorf("%w")` | 包裝錯誤並保留原錯 |
 | `errors.Is` | 判斷錯誤鏈是否包含某錯 |
 | `errors.As` | 取出特定錯誤型別 |
+| `errors.AsType` | **(Go 1.26+)** 以泛型方式取出特定錯誤型別 |
 | `errors.Join` | **(Go 1.20+)** 合併多個錯誤 |
 
 ### 合併錯誤 (`errors.Join`)
@@ -215,6 +216,14 @@ func (e *APIError) Error() string { return e.Msg }
 // 提取並使用
 var apiErr *APIError
 if errors.As(err, &apiErr) {
+	fmt.Printf("HTTP Status: %d\n", apiErr.Code)
+}
+```
+
+Go 1.26 起可用泛型版 `errors.AsType`，少掉宣告暫存變數與傳指標的樣板：
+
+```go
+if apiErr, ok := errors.AsType[*APIError](err); ok {
 	fmt.Printf("HTTP Status: %d\n", apiErr.Code)
 }
 ```
@@ -276,6 +285,18 @@ func First[T any](items []T) (T, bool) {
 | `any` | 任意型別 |
 | `comparable` | 可用 `==` / `!=` |
 | `~int` | 底層型別是 int 的自訂型別也可 |
+
+Go 1.26 起，泛型型別可以在自己的 type parameter list 內參照自己，適合描述遞迴或自我約束的資料結構：
+
+```go
+type Adder[A Adder[A]] interface {
+	Add(A) A
+}
+
+func SumPair[A Adder[A]](a, b A) A {
+	return a.Add(b)
+}
+```
 
 ## 實務取捨
 

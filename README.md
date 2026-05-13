@@ -2,6 +2,30 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
+> 教材版本：`v1.0.16`
+> 教材基準：`Go 1.26.3`
+> 這次更新重點：補齊 request timeout 的 HTTP contract gate，避免 `context.DeadlineExceeded` 漂移成 `500 internal_error`。
+
+## 版本策略
+
+| 項目 | 目前策略 |
+|---|---|
+| 教材講解基準 | 以 Go 1.26.3 作為 2026-05 的主教材版本 |
+| 範例相容層 | 現有 `go.mod` 仍保留 `go 1.22`，避免舊環境無法執行基本範例 |
+| 新特性標示 | Go 1.25 / 1.26 內容會在章節、康乃爾筆記與速查表內明確標示版本 |
+| 實務建議 | 新專案建議直接使用目前受支援的最新 Go 1.26 patch release |
+| 升級檢查 | 升級 Go 1.26 時同步確認 bootstrap toolchain、目標 OS/ARCH、Docker base image、CI `setup-go` 與 CGO 依賴 |
+| 依賴治理 | 每次新增或升級 module 都要跑 `go mod tidy`、`go mod verify`、`go list -m -u all` 與 `govulncheck ./...` |
+| 效能診斷 | 效能修改前後需保留 benchmark / profile / metrics 證據，避免只靠直覺調整 |
+| API 合約 | 對外 HTTP endpoint 需有穩定 request/response/error schema，並用 contract test 阻擋破壞性變更 |
+| Request decoding | JSON request 需拒絕 malformed body、unknown field、trailing JSON value 與空白必填欄位 |
+| 觀測性關聯 | 對外 API 需保留 `X-Request-ID`，並讓 log、trace、metrics 可互相對照 |
+| 服務生命週期 | SIGINT/SIGTERM 時先讓 readiness 轉為 draining，再停止收新流量並等待 queue drain |
+| Queue shutdown | queue close 與 enqueue 必須由同一個同步邊界保護，避免 shutdown 期間送入已關閉 channel |
+| Panic recovery | HTTP handler 需用 middleware 將未預期 panic 轉成穩定 `internal_error` JSON，並保留 request id |
+| Retry cancellation | DB deadlock retry 的 backoff 必須尊重 `context` cancellation / deadline，避免 shutdown 或 request timeout 後繼續重試 |
+| Request timeout | Handler 造成的 `context.DeadlineExceeded` 應回 `504 request_timeout`，避免 timeout 被誤分類成未知伺服器錯誤 |
+
 ## 學習路線
 
 ```mermaid
@@ -31,7 +55,7 @@ flowchart TD
 | 7 | [大型專案架構與實務](chapters/07-large-project-concurrent-crawler.md) | 目錄佈局、DI、Config、Makefile、並發爬蟲 |
 | 8 | [版本管理](chapters/08-version-management.md) | go.mod 深入、SemVer、private module、proxy |
 | 9 | [執行檔打包與部署](chapters/09-build-and-deploy.md) | 交叉編譯、ldflags、embed、Docker、CI/CD |
-| 10 | [效能調優與記憶體管理](chapters/10-performance-and-memory.md) | Escape Analysis、pprof、GC、sync.Pool |
+| 10 | [效能調優與記憶體管理](chapters/10-performance-and-memory.md) | Escape Analysis、pprof、GC、sync.Pool、runtime metrics、trace、benchstat |
 | 11 | [進階測試實務](chapters/11-advanced-testing.md) | Mocking 策略、Fuzz Testing、Integration Test |
 
 ### 附錄
@@ -56,11 +80,48 @@ flowchart TD
 go run ./examples/...
 ```
 
-## 大型專案測試
+## 專案實戰路線
 
 ```bash
 go test ./project-concurrent-crawler/...
 ```
+
+| 專案 | 目標 | 建議時機 | 入口 |
+|---|---|---|---|
+| `project-concurrent-crawler` | 練習 worker pool、retry、parser/store 抽象 | 第一次完成第 7 章後 | `go test ./project-concurrent-crawler/...` |
+| `production-api-worker` | 練習 HTTP API、strict request decoding、transaction、context-aware retry、request timeout contract、queue shutdown safety、observability、panic recovery、graceful shutdown、Docker Compose | 完成第 5、7、9、11 章後 | `cd production-api-worker && go test ./...` |
+
+`production-api-worker` 也附上 [API 合約文件](production-api-worker/docs/api-contract.md)，用來示範 production service 不只要能跑，也要把 endpoint、錯誤格式、相容性規則與 release gate 寫清楚。
+
+## 驗證指令
+
+| 場景 | 指令 | 說明 |
+|---|---|---|
+| 根目錄範例 | `go run ./examples/...` | 快速確認語法範例可執行 |
+| 爬蟲專案 | `go test ./project-concurrent-crawler/...` | 驗證並發流程與 retry |
+| Production 專案 | `cd production-api-worker && go test ./...` | 驗證 API、service、worker |
+| 受限環境 | `TMPDIR=$PWD/.tmp GOCACHE=$PWD/.gocache GOMODCACHE=$PWD/.gomodcache go test ./...` | 避免使用系統快取路徑 |
+| Go 1.26 新特性 | `go1.26.3 test ./...` 或本機 Go 1.26.3 | 驗證 `new(expression)`、`testing/synctest` 等新版內容 |
+| Go 1.26 test artifact | `go1.26.3 test -artifacts -outputdir ./test-artifacts ./...` | 驗證 `T.ArtifactDir` / `B.ArtifactDir` / `F.ArtifactDir` 並收集輸出產物 |
+| Go 1.26 升級盤點 | 對照第 1 / 9 章的支援矩陣 | 確認 macOS、Windows、FreeBSD、Wasm、bootstrap 與容器建置限制 |
+| 依賴供應鏈檢查 | `go mod tidy && go mod verify && go list -m -u all && govulncheck ./...` | 第 8 / 9 / 11 章的依賴治理與 release gate 基線 |
+| API 合約回歸 | `cd production-api-worker && go test ./internal/api -run 'Test.*Contract' -count=1` | 驗證 HTTP status、JSON schema 與錯誤 code 沒有意外改變 |
+| Request decoding 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestDecodingContract' -count=1` | 驗證 malformed JSON、unknown field、trailing JSON 與空白 name 都回 `400 invalid_input` |
+| Request ID 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestIDContract|TestCreateJobContract' -count=1` | 驗證 `X-Request-ID` 會回傳並進入 request context |
+| Readiness / drain 合約 | `cd production-api-worker && go test ./internal/api -run 'TestReadinessContract' -count=1` | 驗證 draining 時 `/readyz` 會回 503，讓 LB / orchestrator 停止導流 |
+| Worker shutdown 安全 | `cd production-api-worker && go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1` | 驗證 queue 關閉後 enqueue 回穩定錯誤，shutdown 期間不會送入已關閉 channel |
+| Panic recovery 合約 | `cd production-api-worker && go test ./internal/api -run 'TestPanicRecoveryContract' -count=1` | 驗證 handler panic 會回 `500`、`internal_error` JSON 與原 request id |
+| Request timeout 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestTimeoutContract' -count=1` | 驗證 handler timeout 會回 `504 request_timeout`，不漂移成 `500 internal_error` |
+| Retry cancellation 合約 | `cd production-api-worker && go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1` | 驗證 deadlock backoff 遇到 request cancel / shutdown context 會立即停止，不再重試或 enqueue |
+| 效能 A/B 驗證 | `go test -run='^$' -bench=. -benchmem -count=10 ./... > bench.txt` | 搭配 `benchstat old.txt new.txt` 比較修改前後差異 |
+| Runtime profile | `go tool pprof http://localhost:6060/debug/pprof/profile?seconds=30` | CPU 熱點；block/mutex profile 需先在程式中啟用 |
+| Execution trace | `go test -trace=trace.out ./... && go tool trace trace.out` | 分析排程、syscall、GC 與平行度，不用來取代 CPU/heap profile |
+
+> 若在 sandbox / 離線環境執行：
+> - `project-concurrent-crawler` 可能因本機 `dyld` / test binary 工具鏈異常失敗。
+> - `production-api-worker` 第一次抓依賴需要網路；無法連外時會停在 module download。
+> - `govulncheck` 與 `go list -m -u all` 需要可連線到 module proxy / vulnerability database；離線環境可保留命令與結果待補。
+> - 目前本機若仍是 Go 1.22.x，只能驗證既有相容範例；Go 1.26 新語法與測試 API 需換成 Go 1.26.3 toolchain。
 
 ## 建議讀法
 
@@ -68,7 +129,8 @@ go test ./project-concurrent-crawler/...
 |---|---|
 | 第一次讀 | 先照章節順序看，重點放在心智模型 |
 | 第二次讀 | 邊讀邊跑 `examples`，改參數觀察輸出 |
-| 第三次讀 | 看大型專案，把語法對應到真實程式結構 |
+| 第三次讀 | 先看 `project-concurrent-crawler`，把語法對應到真實程式結構 |
+| 第四次讀 | 再看 `production-api-worker`，補上 API、觀測性與部署流程 |
 | 實務前 | 補上測試、錯誤處理、context，再寫功能 |
 | 速查 | 開發中隨時翻 Cheat Sheet |
 
@@ -85,7 +147,8 @@ go test ./project-concurrent-crawler/...
 │   └── cheatsheet-advanced.md     ← 進階速查
 ├── chapters/
 ├── examples/
-└── project-concurrent-crawler/
+├── project-concurrent-crawler/    ← 第 1 個大型專案：並發爬蟲
+└── production-api-worker/         ← 第 2 個大型專案：production API + worker
 ```
 
 

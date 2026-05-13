@@ -230,11 +230,11 @@
       <div>
         <p class="eyebrow">圖解筆記4 / Go Production Advanced</p>
         <h1>把 Go 語法升級成可上線的工程決策</h1>
-        <p>這份補強篇聚焦資深後端開發最常碰到的三個缺口：Go 1.21 / 1.22 / 1.23 標準庫版本邊界、資料庫層、可觀察性。目標不是背 API，而是看懂一個 production request 從進入服務到落庫、觀測、除錯的完整路徑。</p>
+        <p>這份補強篇聚焦資深後端開發最常碰到的三個缺口：Go 1.21-1.26 現代標準庫與 runtime、資料庫層、可觀察性。目標不是背 API，而是看懂一個 production request 從進入服務到落庫、觀測、除錯的完整路徑。</p>
       </div>
       <div class="hero-stats">
         <div class="stat"><strong>3</strong><span>工程主軸</span></div>
-        <div class="stat"><strong>12</strong><span>可展開步驟卡</span></div>
+        <div class="stat"><strong>13</strong><span>可展開步驟卡</span></div>
         <div class="stat"><strong>0</strong><span>外部 CDN</span></div>
       </div>
     </div>
@@ -349,6 +349,11 @@
             <strong>http.ServeMux</strong>
             <span>method route / path variable / routing</span>
           </button>
+          <button class="syntax-index-card syntax-link" type="button" data-target="runtime-testing-card">
+            <span class="badge teal">Go 1.25/1.26</span>
+            <strong>runtime / testing</strong>
+            <span>GOMAXPROCS / synctest / artifacts / GC</span>
+          </button>
           <button class="syntax-index-card syntax-link" type="button" data-target="db-pool-card">
             <span class="badge green">database/sql</span>
             <strong>DB pool</strong>
@@ -401,8 +406,8 @@
     <section id="modern-stdlib">
       <div class="section-head">
         <div>
-          <h2>Modern Stdlib：Go 1.21 / 1.22 / 1.23 版本邊界</h2>
-          <p>新版標準庫把常見集合操作與 HTTP 路由收斂到官方 API；本章明確切開 Go 1.21、Go 1.22 與 Go 1.23+ 的可用 API，避免專案版本假設混淆。</p>
+          <h2>Modern Stdlib：Go 1.21-1.26 標準庫與 runtime</h2>
+          <p>新版標準庫把常見集合操作、HTTP 路由、併發測試與 runtime 調度行為收斂到官方 API，減少手寫迴圈、第三方 router 與不穩定測試技巧。</p>
         </div>
       </div>
       <div class="panel">
@@ -592,6 +597,22 @@ func main() {
             </ol>
           </details>
           <div class="anti">反例：只為了 path variable 就引入大型框架，增加升級與資安維護成本。</div>
+        </article>
+
+        <article class="topic-card span-12" id="runtime-testing-card">
+          <span class="badge teal">Go 1.25/1.26</span>
+          <h3>Runtime / Testing：容器、虛擬時間與測試產物</h3>
+          <p class="muted">production Go 不只看語法，也要理解 runtime 預設值與 CI 測試證據。Go 1.25/1.26 把容器 CPU limit、併發測試與 artifact 收集變成更可操作的工程介面。</p>
+          <table>
+            <thead><tr><th>能力</th><th>版本</th><th>工程意義</th></tr></thead>
+            <tbody>
+              <tr><td><code>GOMAXPROCS</code> container-aware</td><td>Go 1.25+</td><td>Linux container 內預設考慮 cgroup CPU limit，避免 worker 過度排程。</td></tr>
+              <tr><td><code>testing/synctest</code></td><td>Go 1.25+</td><td>用虛擬時間測 goroutine 與 timeout，降低 flaky test。</td></tr>
+              <tr><td><code>T.ArtifactDir</code></td><td>Go 1.26+</td><td>把 golden diff、截圖、profile、fuzz repro 交給 CI 收集。</td></tr>
+              <tr><td>Green Tea GC</td><td>Go 1.26+</td><td>預設 GC，改善小物件標記與掃描 locality；仍需 profile 驗證。</td></tr>
+            </tbody>
+          </table>
+          <div class="check">升級 runtime 後，仍應用 pprof、runtime metrics、壓測與 race test 驗證真實工作負載。</div>
         </article>
       </div>
     </section>

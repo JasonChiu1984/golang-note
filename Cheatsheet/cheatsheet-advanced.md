@@ -75,7 +75,7 @@ type Result[T any] struct {
 | `any` | 任意型別 |
 | `comparable` | 可用 `==` / `!=` |
 | `~int` | 底層型別是 int（含自訂型別） |
-| `constraints.Ordered` | 可比較大小（`<`, `>` 等） |
+| `cmp.Ordered` | Go 1.21+ 標準庫約束，可比較大小（`<`, `>` 等） |
 
 ---
 
@@ -199,6 +199,17 @@ func FetchUser(ctx context.Context, id int) (*User, error) {
 | 只向下傳 | 不要從子 goroutine 回傳 ctx |
 | `WithValue` 只放 request-scoped | trace ID、auth token，不放業務邏輯 |
 
+### Graceful Shutdown
+
+| 階段 | Go 實作重點 |
+|---|---|
+| Signal | `signal.NotifyContext` 接收中斷訊號 |
+| Draining | readiness 狀態轉為 false，讓 `/readyz` 回 503 |
+| HTTP shutdown | `http.Server.Shutdown(ctx)` 停止接新連線並等待既有 request |
+| Worker drain | close queue 並用 `WaitGroup` 等待已排入 task 完成 |
+| Queue close/send | close 與 enqueue send 需共用 mutex 或單一 owner，避免送入已關閉 channel |
+| Timeout | drain deadline 到期才 cancel worker context |
+
 ---
 
 ## Error Wrapping
@@ -213,6 +224,11 @@ if errors.Is(err, sql.ErrNoRows) { /* not found */ }
 // 取出特定錯誤型別
 var netErr *net.OpError
 if errors.As(err, &netErr) {
+    fmt.Println("network op:", netErr.Op)
+}
+
+// Go 1.26+ 泛型版 errors.As
+if netErr, ok := errors.AsType[*net.OpError](err); ok {
     fmt.Println("network op:", netErr.Op)
 }
 
@@ -313,6 +329,62 @@ ENTRYPOINT ["/app"]
 
 ---
 
+## API 合約速查
+
+| 合約項 | Release 前檢查 |
+|---|---|
+| Endpoint | method、path、path parameter 是否仍相容 |
+| Request schema | 必填欄位、型別、unknown field、trailing JSON 與大小限制是否改變 |
+| Response schema | status code、JSON 欄位、enum 是否仍可被舊 client decode |
+| Error envelope | 是否維持穩定 `error.code` 與 `error.message` |
+| Request ID | `X-Request-ID` 是否會回傳，client 提供時是否原樣保留 |
+| Observability label | route label、span name、metrics label、`request.id` 是否會破壞 dashboard |
+| Worker shutdown | concurrent enqueue + shutdown 是否不 panic，close 後是否回穩定錯誤 |
+| Panic recovery | 未預期 panic 是否仍回 `500 internal_error` JSON 與原 request id |
+| Request timeout | `context.DeadlineExceeded` 是否回 `504 request_timeout`，而不是漂移成 `500 internal_error` |
+| Retry cancellation | deadlock backoff 是否尊重 `ctx.Done()`，取消後是否停止交易與 enqueue |
+
+```bash
+cd production-api-worker
+go test ./internal/api -run 'Test.*Contract' -count=1
+go test ./internal/api -run 'TestRequestDecodingContract' -count=1
+go test ./internal/api -run 'TestRequestIDContract|TestCreateJobContract' -count=1
+go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1
+go test ./internal/api -run 'TestPanicRecoveryContract' -count=1
+go test ./internal/api -run 'TestRequestTimeoutContract' -count=1
+go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
+```
+
+```json
+{
+  "error": {
+    "code": "invalid_input",
+    "message": "invalid input"
+  }
+}
+```
+
+> 對外錯誤分支用穩定 code，不用自然語言 message 做 client 判斷。
+
+> Request decoder 錯誤也屬於 API 合約：malformed JSON、unknown field、trailing JSON value 與空白必填欄位都應回 `400 invalid_input`，不能漂移成 `500 internal_error`。
+
+```json
+{
+  "error": {
+    "code": "internal_error",
+    "message": "internal error"
+  }
+}
+```
+
+> Panic recovery 是 HTTP 邊界保護：記錄 panic，但 client 只看到穩定 `internal_error`，並保留 `X-Request-ID` 方便排障。
+
+> Request timeout 是 HTTP 合約保護：handler deadline exceeded 要回 `504 request_timeout`，讓 client 能把 timeout 與未知伺服器錯誤分開處理。
+
+> Retry cancellation 是 service 邊界保護：deadlock backoff 要用 `select` 監聽 `ctx.Done()`，request 已取消後不得繼續重試 DB 或 enqueue job。
+
+---
+
 ## 效能工具
 
 ```bash
@@ -335,6 +407,11 @@ go run -race .
 # HTTP pprof（生產環境）
 import _ "net/http/pprof"
 go tool pprof http://localhost:6060/debug/pprof/heap
+
+# Benchmark A/B
+go test -run='^$' -bench=. -benchmem -count=10 ./... > old.txt
+go test -run='^$' -bench=. -benchmem -count=10 ./... > new.txt
+benchstat old.txt new.txt
 ```
 
 | 工具 | 用途 |
@@ -344,6 +421,23 @@ go tool pprof http://localhost:6060/debug/pprof/heap
 | `-race` | 偵測 data race |
 | `goleak` | 偵測 goroutine leak |
 | `benchstat` | 比較 benchmark 結果 |
+| block profile | 找 channel / timer / cond 等同步等待 |
+| mutex profile | 找 lock contention |
+| `runtime/metrics` | 長期監控 GC、heap、scheduler、goroutine 指標 |
+
+### 效能診斷選工具
+
+| 症狀 | 第一工具 | 指令 / API |
+|---|---|---|
+| CPU 高 | CPU profile | `go tool pprof .../profile?seconds=30` |
+| allocation 高 | heap / alloc profile | `go test -memprofile=mem.out -bench=.` |
+| goroutine 變多 | goroutine profile / metrics | `/debug/pprof/goroutine`、`/sched/goroutines:goroutines` |
+| lock 等待 | mutex profile | `runtime.SetMutexProfileFraction(5)` |
+| channel / timer 阻塞 | block profile | `runtime.SetBlockProfileRate(1)` |
+| 平行度不足 / syscall 等待 | execution trace | `go test -trace=trace.out` |
+| GC 壓力 | runtime metrics / gctrace | `/gc/heap/live:bytes`、`GODEBUG=gctrace=1` |
+
+> 正式效能結論要附修改前後資料；單次 benchmark 或只看平均值不足以支撐 release decision。
 
 ---
 
@@ -361,6 +455,26 @@ go tool pprof http://localhost:6060/debug/pprof/heap
 | `go get pkg@none` | 移除 |
 | `go list -m all` | 列出所有依賴 |
 | `go list -m -u all` | 檢查可更新版本 |
+| `govulncheck ./...` | 掃描實際可達的已知漏洞 |
+| `go get -tool pkg` | Go 1.24+ 管理專案工具依賴 |
+
+### 依賴更新 Gate
+
+```bash
+go list -m -u all
+go get example.com/pkg@v1.2.3
+go mod tidy
+go mod verify
+go test ./...
+govulncheck ./...
+```
+
+| 檢查 | release 判斷 |
+|---|---|
+| `go.mod` / `go.sum` diff | 必須是預期變更 |
+| `go mod verify` | 失敗就停止 release |
+| `govulncheck` | 有可達漏洞就升級或移除呼叫 |
+| `go list -m -u all` | 高風險安全更新需有處理紀錄 |
 
 ---
 
@@ -551,7 +665,7 @@ time.Parse("2006-01-02", "2024-01-15")
 
 ---
 
-## 現代 Go API (Go 1.20-1.22) 速查
+## 現代 Go API (Go 1.20-1.26) 速查
 
 ### 泛型集合 (`slices` / `maps`) (Go 1.21)
 
@@ -596,4 +710,33 @@ import "math/rand/v2"
 // 全自動 Seed，不再需要 rand.Seed()
 n := rand.IntN(100)
 f := rand.Float64()
+```
+
+### Go 1.25/1.26 工具鏈與 runtime
+
+| 功能 | 版本 | 用途 |
+|---|---:|---|
+| container-aware `GOMAXPROCS` | Go 1.25+ | Linux container 內預設會考慮 cgroup CPU limit，避免過度排程 |
+| `testing/synctest` | Go 1.25+ | 用虛擬時間測併發與 timeout，減少 `time.Sleep` flaky test |
+| `go fix` modernizers | Go 1.26+ | 用官方 analyzer 套用現代化 idiom 與標準庫 API 遷移 |
+| Green Tea GC | Go 1.26+ | 預設 GC，改善小物件標記與掃描 locality |
+| goroutine leak profile | Go 1.26+ experiment | 用 `GOEXPERIMENT=goroutineleakprofile` 偵測部分永久阻塞 goroutine |
+| `T.ArtifactDir` / `B.ArtifactDir` / `F.ArtifactDir` | Go 1.26+ | 測試、benchmark、fuzz 產物輸出到固定 artifact 目錄 |
+
+```bash
+# Go 1.26+：把 ArtifactDir 產物保留到 CI 可收集的資料夾
+go test -artifacts -outputdir ./test-artifacts ./...
+```
+
+```go
+// Go 1.25+：併發測試不用靠 sleep 猜時間
+synctest.Test(t, func(t *testing.T) {
+    ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+    defer cancel()
+
+    <-ctx.Done()
+    if err := ctx.Err(); !errors.Is(err, context.DeadlineExceeded) {
+        t.Fatalf("unexpected err: %v", err)
+    }
+})
 ```
