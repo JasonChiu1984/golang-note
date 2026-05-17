@@ -669,6 +669,7 @@
             <tr><td><a href="../production-api-worker/internal/app/service.go"><code>internal/app/service.go</code></a></td><td>Service</td><td>validation、transaction boundary、deadlock retry、enqueue。</td></tr>
             <tr><td><a href="../production-api-worker/internal/repository/postgres.go"><code>internal/repository/postgres.go</code></a></td><td>Postgres</td><td>pgx/stdlib、database/sql、PingContext、pool、deadlock 分類。</td></tr>
             <tr><td><a href="../production-api-worker/internal/observability/observability.go"><code>internal/observability/observability.go</code></a></td><td>Observability</td><td>Prometheus registry、OTel stdout/OTLP exporter、slog。</td></tr>
+            <tr><td><a href="../production-api-worker/otel-collector.yaml"><code>otel-collector.yaml</code></a></td><td>OTLP collector</td><td>固定 OTLP gRPC receiver、debug exporter 與 Compose endpoint。</td></tr>
             <tr><td><a href="../production-api-worker/api/openapi.yaml"><code>api/openapi.yaml</code></a></td><td>OpenAPI</td><td>固定 endpoint、schema、error code、Bearer auth 與 request id。</td></tr>
             <tr><td><a href="../production-api-worker/docker-compose.yml"><code>docker-compose.yml</code></a></td><td>Runtime</td><td>Postgres、OTel collector、migration、API 串接。</td></tr>
             <tr><td><a href="../production-api-worker/scripts/compose-smoke.sh"><code>compose-smoke.sh</code></a></td><td>Smoke</td><td>驗證 livez、readyz、job create/read 與 metrics。</td></tr>
@@ -1564,15 +1565,17 @@ docker compose down -v</code></pre>
       ["Operational runbook", "Observability", "node scripts/check-operational-runbook.mjs", ["SLI/SLO", "Prometheus alert rules", "incident workflow", "runbook link"], "告警規則與排障文件可被 CI gate 固定。"],
       ["Prometheus config", "Observability", "node scripts/check-prometheus-config.mjs\ndocker compose --profile monitoring up -d --build", ["scrape job", "rule_files", "monitoring profile", "API_KEY 風險"], "Prometheus 設定、告警規則與 Compose profile 可被檢查。"],
       ["Pprof diagnostics", "Observability", "ENABLE_PPROF=true PPROF_TOKEN=debug-token go run ./cmd/api-worker", ["預設關閉", "Bearer token", "短期 incident diagnostics", "診斷後關閉"], "debug endpoint 不常態公開，並由 TestPprofDiagnosticsContract 固定安全邊界。"],
+      ["OTLP collector", "Observability", "node scripts/check-otel-collector-contract.mjs\ncd production-api-worker && make otel-check", ["OTLP gRPC receiver", "debug exporter", "Compose endpoint", "CI gate"], "trace pipeline 不只存在於程式碼，也被 collector config 與 CI 固定。"],
+      ["Rate limit contract", "API", "RATE_LIMIT_REQUESTS_PER_MINUTE=120 go run ./cmd/api-worker\nnode scripts/check-rate-limit-contract.mjs", ["per-client IP", "429 rate_limited", "Retry-After", "health endpoint 不限速"], "API backpressure 不只靠 queue 滿載，也先在 HTTP 邊界擋住單一 client 過量請求。"],
       ["Testing gate", "Testing", "go test ./...\ngo test -race ./...\ngo build ./cmd/api-worker", ["unit test", "httptest", "race test", "build gate"], "CI gate 全部通過才合併。"]
     ];
 
     const reviewItems = [
       ["語法完整度", "9/10", "以教材深度評估：40 張單一語法卡 + 200 語法範例，足以支撐日常 Go 開發。", "若作為 runbook，仍可補 unsafe/cgo/build tag 與版本升級策略。"],
       ["併發深度", "9/10", "以教材深度評估：goroutine、channel、select、context、worker pool、shutdown 都有專案化說明。", "若作為 runbook，需再補 leak detection、壓測腳本與事故操作流程。"],
-      ["API 工程化", "8/10", "以教材深度評估：handler、ServeMux、錯誤分類、httptest 與 production flow 已串起。", "若作為 runbook，需再補 middleware chain、auth、idempotency、灰度發布。"],
+      ["API 工程化", "8.2/10", "以教材深度評估：handler、ServeMux、錯誤分類、httptest、API security 與 rate limit contract 已串起。", "若作為 runbook，需再補 middleware chain、idempotency、灰度發布與 API gateway policy。"],
       ["DB Transaction", "8/10", "以教材深度評估：database/sql、pool、transaction、repository 與 Postgres 範例已具備。", "若作為 runbook，需再補 isolation level、deadlock retry、migration rollback 操作手冊。"],
-      ["Observability", "8.9/10", "以教材深度評估：slog、Prometheus、OpenTelemetry、health、pprof diagnostics contract，加上 operational runbook、alert rules、scrape config 與 Compose monitoring profile。", "若作為企業 runbook，需再補正式 Alertmanager、OTLP backend、平台部署範本與 profile artifact 管理。"],
+      ["Observability", "9.0/10", "以教材深度評估：slog、Prometheus、OpenTelemetry、OTLP collector contract、health、pprof diagnostics contract，加上 operational runbook、alert rules、scrape config 與 Compose monitoring profile。", "若作為企業 runbook，需再補正式 Alertmanager、OTLP backend、平台部署範本、取樣策略與 profile artifact 管理。"],
       ["Testing", "9/10", "以教材深度評估：testing、table-driven、benchmark、fuzz、race、httptest 都已納入。", "若作為 runbook，需再補 contract test、integration test、測試資料治理。"],
       ["CI/CD", "8/10", "以教材深度評估：有 Docker、migration、GitHub Actions gate 與可執行 production-api-worker。", "若作為 runbook，需再補 release promotion、rollback drill、SBOM、簽章與供應鏈掃描。"],
       ["可執行專案", "9/10", "以教材深度評估：production-api-worker 已有 cmd/internal/service/repository/worker/observability。", "若作為 runbook，需再補 DB integration test、load test、容量規劃與部署拓撲。"]

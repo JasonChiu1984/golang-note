@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.32
+  version: v1.0.34
   description: >
     Machine-readable contract for the Go teaching production API worker.
     This file mirrors docs/api-contract.md and the Go contract tests.
@@ -54,6 +54,8 @@ paths:
           $ref: "#/components/responses/InvalidInput"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimited"
         "503":
           $ref: "#/components/responses/QueueFull"
         "504":
@@ -89,6 +91,8 @@ paths:
                 $ref: "#/components/schemas/Job"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimited"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -224,6 +228,7 @@ components:
                 - not_found
                 - queue_full
                 - request_timeout
+                - rate_limited
                 - unauthorized
                 - internal_error
             message:
@@ -261,6 +266,19 @@ components:
       headers:
         X-Request-ID:
           $ref: "#/components/headers/RequestID"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    RateLimited:
+      description: Client IP exceeded RATE_LIMIT_REQUESTS_PER_MINUTE for protected job endpoints.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/RequestID"
+        Retry-After:
+          description: Seconds before retrying the protected endpoint.
+          schema:
+            type: string
       content:
         application/json:
           schema:

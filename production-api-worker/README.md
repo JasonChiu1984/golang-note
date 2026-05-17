@@ -7,6 +7,7 @@
 - OpenAPI contract：machine-readable schema 位於 `api/openapi.yaml`，用來對齊文件、測試、SDK 與前端 mock
 - API security：可用 `API_KEY` 啟用 Bearer token 保護 `/jobs` 與 `/metrics`，health endpoint 保持公開
 - Diagnostics / pprof contract：`ENABLE_PPROF` 預設關閉；啟用 `/debug/pprof/` 時必須提供 `PPROF_TOKEN` 或沿用 `API_KEY`
+- Rate limit contract：`RATE_LIMIT_REQUESTS_PER_MINUTE` 依 client IP 保護 `/jobs` 與 `/jobs/{id}`，超限回 `429 rate_limited`
 - Request decoding：拒絕 malformed JSON、unknown field、trailing JSON value 與空白 name
 - Service transaction boundary：`sql.TxOptions`、context-aware deadlock retry、queue enqueue
 - Startup configuration：集中驗證 `PORT`、`QUEUE_SIZE`、`WORKERS` 與 DB pool 設定，錯誤設定 fail fast
@@ -76,6 +77,7 @@ go test ./internal/migration -count=1
 go test ./internal/api -run 'Test.*Contract|TestReadinessContract|TestPanicRecoveryContract|TestRequestDecodingContract' -count=1
 go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1
 go test ./internal/api -run 'TestPprofDiagnosticsContract' -count=1
+go test ./internal/api -run 'TestRateLimitContract' -count=1
 go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
 go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1
 go test -race -cover ./...
@@ -83,6 +85,7 @@ make openapi-check
 make runbook-check
 make prometheus-check
 make pprof-check
+make rate-limit-check
 go test -run='^$' -bench=. -benchmem -count=10 ./... > bench.txt
 docker compose up --build
 make compose-smoke
@@ -104,6 +107,7 @@ make compose-smoke
 | `go test ./internal/api -run 'TestRequestTimeoutContract' -count=1` | 固定 handler timeout 時的 `504 request_timeout` JSON 與 request id 行為 |
 | `go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1` | 固定 API key 認證邊界、公開 health endpoint 與安全標頭 |
 | `go test ./internal/api -run 'TestPprofDiagnosticsContract' -count=1` | 固定 pprof 預設關閉、啟用後要求 Bearer token、合法 token 才能讀 `/debug/pprof/` |
+| `go test ./internal/api -run 'TestRateLimitContract' -count=1` | 固定 per-client request limit、`429 rate_limited`、`Retry-After` 與 request id 行為 |
 | `go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1` | 固定 deadlock retry backoff 會尊重 request cancellation / shutdown deadline |
 | `go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1` | 固定 queue close/enqueue 同步邊界，避免 shutdown race panic |
 | `go test -race -cover ./...` | 驗證 service、handler、queue 與併發安全 |
@@ -111,6 +115,7 @@ make compose-smoke
 | `make runbook-check` | 固定 SLI/SLO、Prometheus alert rules、incident workflow 與 runbook link 不被移除 |
 | `make prometheus-check` | 固定 Prometheus scrape config、rule_files、Compose monitoring profile 與 README/runbook 入口 |
 | `make pprof-check` | 固定 pprof diagnostics contract、`ENABLE_PPROF`、`PPROF_TOKEN`、runbook、Go tests 與 CI 入口 |
+| `make rate-limit-check` | 固定 rate limit contract、`RATE_LIMIT_REQUESTS_PER_MINUTE`、OpenAPI、Go tests、README 與 CI 入口 |
 | `go test -run='^$' -bench=. -benchmem -count=10 ./...` | API / worker 效能改動需保留 benchmark 證據 |
 | `docker compose up --build` | 啟動 Postgres、migration、API、worker 與 metrics 整體鏈路 |
 | `make compose-smoke` | 用主機端 curl 驗證 `/livez`、`/readyz`、job create/read 與 `/metrics` |
@@ -158,7 +163,7 @@ Machine-readable contract 位於 `api/openapi.yaml`。它不是取代 Go contrac
 | Request timeout | `context.DeadlineExceeded` 對外回 `504 request_timeout`，避免被誤分類成 `internal_error` |
 | Status enum | `pending`、`processing`、`done`、`failed` 不任意改名 |
 | Breaking change | 新增版本路由或遷移期，不直接覆蓋既有合約 |
-| OpenAPI sync | endpoint、schema、error code、auth 邊界同步更新 `api/openapi.yaml` 與 `docs/api-contract.md` |
+| OpenAPI sync | endpoint、schema、error code、auth / rate limit 邊界同步更新 `api/openapi.yaml` 與 `docs/api-contract.md` |
 
 ```bash
 make openapi-check
@@ -182,6 +187,7 @@ cd .. && node scripts/check-openapi-contract.mjs
 | `API_KEY` | 空字串 | 空字串時不啟用 API key；有值時 trim 後要求 Bearer token | 保護 `/jobs` 與 `/metrics` |
 | `ENABLE_PPROF` | `false` | boolean；`true` 時必須同時有 `PPROF_TOKEN` 或 `API_KEY` | 短期啟用 `/debug/pprof/` diagnostics endpoint |
 | `PPROF_TOKEN` | 空字串 | trim；空值時可沿用 `API_KEY`，但 `ENABLE_PPROF=true` 不可兩者皆空 | 保護 `/debug/pprof/` |
+| `RATE_LIMIT_REQUESTS_PER_MINUTE` | `120` | 正整數 | 每個 client IP 每分鐘可呼叫業務 endpoint 的次數 |
 
 ```bash
 cd production-api-worker
@@ -210,6 +216,45 @@ go tool pprof profile.pb.gz
 ```
 
 正式部署時應再加上 VPN、內網來源限制或 gateway policy。診斷完成後要關閉 `ENABLE_PPROF`，避免 heap、goroutine、cmdline 或 trace 資訊長期暴露。
+
+## Rate Limit Contract
+
+Rate limit 是 API 操作保護，不是商業授權邏輯。`production-api-worker` 使用固定 window 的 per-client IP 限速保護 `/jobs` 與 `/jobs/{id}`；health endpoint 保持不受影響，避免 load balancer、Docker Compose 或 Kubernetes 探測被誤擋。
+
+| 狀態 | 行為 |
+|---|---|
+| 未超過限制 | 正常進入 handler 與 service |
+| 超過 `RATE_LIMIT_REQUESTS_PER_MINUTE` | 回 `429 Too Many Requests` |
+| Error envelope | `{"error":{"code":"rate_limited","message":"rate limited"}}` |
+| Header | 保留 `X-Request-ID`，並回 `Retry-After: 60` |
+| Test gate | `TestRateLimitContract` |
+
+```bash
+RATE_LIMIT_REQUESTS_PER_MINUTE=120 go run ./cmd/api-worker
+go test ./internal/config ./internal/api -run 'TestLoadFromLookup|TestRateLimitContract' -count=1
+make rate-limit-check
+```
+
+## OTLP Collector Contract
+
+OpenTelemetry 不能只停在程式碼呼叫 `Tracer.Start`。教學環境至少要固定 receiver、exporter、Compose endpoint 與 CI 檢查，避免 trace 設定在版本更新後失效。
+
+| 邊界 | 合約 |
+|---|---|
+| Collector config | `production-api-worker/otel-collector.yaml` |
+| Receiver | OTLP gRPC `0.0.0.0:4317` |
+| Local exporter | `debug exporter`，教學環境輸出基本 trace 訊號 |
+| Compose endpoint | `OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317` |
+| Host port | `4317:4317` 供本機測試與替換 backend 使用 |
+| Verification | `make otel-check` 或 `node scripts/check-otel-collector-contract.mjs` |
+
+```bash
+cd production-api-worker
+make otel-check
+docker compose config
+```
+
+正式環境通常會把 exporter 換成 OTLP backend、Tempo、Jaeger 或雲端 APM。替換時應保留 receiver、pipeline 與服務端 endpoint 的合約，並在 runbook 註明資料保留期限、取樣率與敏感欄位處理策略。
 
 ## API Security Contract
 

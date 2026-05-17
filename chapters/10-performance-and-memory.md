@@ -187,6 +187,13 @@ open http://localhost:9090
 docker compose down -v
 ```
 
+本地 trace pipeline 也要先通過 OTLP collector contract。`production-api-worker/otel-collector.yaml` 固定 OTLP gRPC receiver `0.0.0.0:4317`、`debug exporter` 與 traces pipeline；正式環境替換 exporter 前，至少要確認 receiver、endpoint 與 pipeline 名稱沒有漂移。
+
+```bash
+node scripts/check-otel-collector-contract.mjs
+cd production-api-worker && make otel-check
+```
+
 ## Benchmark A/B 與 `benchstat`
 
 單次 benchmark 容易被 CPU 溫度、背景程式、電源狀態與測試快取影響。正式比較修改前後時，請重複多次並用 `benchstat` 看統計差異。

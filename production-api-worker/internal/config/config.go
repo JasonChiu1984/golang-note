@@ -15,6 +15,7 @@ const (
 	DefaultDatabaseMaxOpenConns    = 25
 	DefaultDatabaseMaxIdleConns    = 10
 	DefaultDatabaseConnMaxLifetime = 30 * time.Minute
+	DefaultRateLimitPerMinute      = 120
 	DefaultMigrationsDir           = "migrations"
 	DefaultMigrationTimeout        = 30 * time.Second
 )
@@ -26,6 +27,7 @@ type Config struct {
 	APIKey                  string
 	PprofEnabled            bool
 	PprofToken              string
+	RateLimitPerMinute      int
 	DatabaseURL             string
 	DatabaseMaxOpenConns    int
 	DatabaseMaxIdleConns    int
@@ -88,6 +90,10 @@ func LoadFromLookup(lookup func(string) (string, bool)) (Config, error) {
 	if pprofEnabled && apiKey == "" && pprofToken == "" {
 		return Config{}, fmt.Errorf("ENABLE_PPROF requires PPROF_TOKEN or API_KEY")
 	}
+	rateLimitPerMinute, err := parsePositiveInt("RATE_LIMIT_REQUESTS_PER_MINUTE", readString(lookup, "RATE_LIMIT_REQUESTS_PER_MINUTE", strconv.Itoa(DefaultRateLimitPerMinute)))
+	if err != nil {
+		return Config{}, err
+	}
 
 	return Config{
 		Port:                    port,
@@ -96,6 +102,7 @@ func LoadFromLookup(lookup func(string) (string, bool)) (Config, error) {
 		APIKey:                  apiKey,
 		PprofEnabled:            pprofEnabled,
 		PprofToken:              pprofToken,
+		RateLimitPerMinute:      rateLimitPerMinute,
 		DatabaseURL:             strings.TrimSpace(readString(lookup, "DATABASE_URL", "")),
 		DatabaseMaxOpenConns:    databaseMaxOpenConns,
 		DatabaseMaxIdleConns:    databaseMaxIdleConns,

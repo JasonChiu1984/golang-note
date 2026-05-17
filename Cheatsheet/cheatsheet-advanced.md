@@ -450,6 +450,7 @@ benchstat old.txt new.txt
 |---|---|
 | `pprof` | CPU / memory / goroutine profiling |
 | `trace` | 排程、GC、系統呼叫時間線 |
+| `node scripts/check-otel-collector-contract.mjs` | 固定 OTLP collector receiver、debug exporter 與 Compose endpoint |
 | `-race` | 偵測 data race |
 | `goleak` | 偵測 goroutine leak |
 | `benchstat` | 比較 benchmark 結果 |

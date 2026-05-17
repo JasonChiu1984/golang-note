@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.0.34 - 2026-05-17
+
+- 新增 2026-05-17 18:32:16 CST +0800 資深工程師審查報告，確認 v1.0.33 已補齊 OTLP collector contract，但 production API 仍缺少可測的 per-client rate limit 防護。
+- `production-api-worker` 新增 `RATE_LIMIT_REQUESTS_PER_MINUTE` 設定，預設每個 client IP 每分鐘 120 次；設定錯誤會在啟動設定載入階段 fail fast。
+- API handler 新增 rate limit middleware，保護 `/jobs` 與 `/jobs/{id}`；超限時回 `429 rate_limited` JSON，保留 `X-Request-ID`，並設定 `Retry-After: 60`。
+- 新增 `internal/api/rate_limit.go`、`TestRateLimitContract` 與 config 測試，固定 per-IP window、錯誤碼、header 與設定驗證。
+- OpenAPI spec 新增 `429` / `rate_limited` 合約；README、production README、API contract、runbook、第 7 / 11 章、進階 Cheat Sheet 與整合視覺課程同步加入 rate limit gate。
+- 新增 `scripts/check-rate-limit-contract.mjs`、`make rate-limit-check` 與 GitHub Actions root-course gate，讓文件、OpenAPI、Go tests、Docker Compose env 與 CI 保持一致。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
+## v1.0.33 - 2026-05-17
+
+- 新增 2026-05-17 16:38 資深工程師審查報告，確認 v1.0.32 已補齊 pprof diagnostics contract，但 OpenTelemetry collector 尚未形成可重跑的 receiver / exporter / Compose endpoint 檢查。
+- `production-api-worker/otel-collector.yaml` 將本地 exporter 改為 `debug`，固定 OTLP gRPC receiver `0.0.0.0:4317` 與 traces pipeline。
+- 新增 `scripts/check-otel-collector-contract.mjs`，檢查 collector config、Docker Compose OTLP endpoint、runbook、README、章節與 CI workflow 都保留 OTLP collector contract。
+- `production-api-worker/Makefile` 新增 `otel-check` target，GitHub Actions root-course gate 新增 OTLP collector contract check。
+- README、`production-api-worker/README.md`、operational runbook、第 7 / 10 / 11 章、進階 Cheat Sheet 與整合視覺課程同步加入 OTLP collector contract。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.32 - 2026-05-17
 
 - 新增 2026-05-17 14:02 資深工程師審查報告，確認 v1.0.31 已補齊 Prometheus / OpenAPI 合約，但 production diagnostics / pprof 仍缺少可測的啟用條件、認證邊界與 runbook 流程。

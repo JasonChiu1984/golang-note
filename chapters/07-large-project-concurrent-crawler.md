@@ -272,6 +272,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Response schema | HTTP status、JSON 欄位、狀態 enum | client decode 失敗或狀態判斷錯誤 |
 | Error envelope | `error.code`、`error.message` | client 無法用穩定 code 做分支 |
 | Observability | route label、trace span name、metrics label、`X-Request-ID` | dashboard、alert 與 incident log 無法對照 |
+| OTLP collector contract | `production-api-worker/otel-collector.yaml`、OTLP gRPC `0.0.0.0:4317`、`debug exporter`、Compose endpoint | trace 程式碼存在，但 collector pipeline 或 Compose endpoint 漂移後無法收 span |
 | API security | `API_KEY`、Bearer token、公開 health endpoint、安全標頭 | 業務 endpoint 或 metrics 無條件公開，或 health check 被認證擋住 |
 | OpenAPI contract | `api/openapi.yaml`、request/response schema、error code、auth scheme | Markdown 文件與前端 mock / SDK / API gateway review 漂移 |
 | Panic recovery | `500 internal_error` JSON、request id header | panic 造成連線中斷、非 JSON 錯誤或洩漏內部細節 |
@@ -299,6 +300,13 @@ Production service 的 observability 不是「有 metrics endpoint」就結束�
 | Contract test | `TestRequestIDContract` 固定自動產生與 header 回傳行為 |
 
 這類欄位也屬於外部操作合約。改掉 route label、span name 或 request id header，可能不會讓單元測試失敗，卻會讓 dashboard、alert rule、客服查詢與 incident review 失去關聯。
+
+OpenTelemetry 也需要 deployment contract。`production-api-worker/otel-collector.yaml` 固定 OTLP gRPC receiver `0.0.0.0:4317` 與本地 `debug exporter`，`docker-compose.yml` 則固定 `OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317`。這不是正式 APM 架構，而是教學用的最小 trace pipeline：先確定 API span 真的能送到 collector，再由正式環境把 exporter 換成 Tempo、Jaeger、OTLP backend 或雲端平台。
+
+```bash
+node scripts/check-otel-collector-contract.mjs
+cd production-api-worker && make otel-check
+```
 
 ### API Security Contract
 

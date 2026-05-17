@@ -23,6 +23,7 @@ type Handler struct {
 	ready     func() bool
 	authToken string
 	pprof     pprofConfig
+	limiter   *rateLimiter
 }
 
 type Option func(*Handler)
@@ -55,11 +56,18 @@ func WithPprof(enabled bool, token string) Option {
 	}
 }
 
+func WithRateLimit(limit int, window time.Duration) Option {
+	return func(h *Handler) {
+		h.limiter = newRateLimiter(limit, window)
+	}
+}
+
 func NewHandler(service *app.Service, obs *observability.Observability, options ...Option) *Handler {
 	handler := &Handler{
 		service: service,
 		obs:     obs,
 		ready:   func() bool { return true },
+		limiter: newRateLimiter(120, time.Minute),
 	}
 	for _, option := range options {
 		option(handler)
@@ -82,7 +90,7 @@ func (h *Handler) Routes() http.Handler {
 		mux.HandleFunc("GET /debug/pprof/trace", pprof.Trace)
 		mux.HandleFunc("GET /debug/pprof/{name}", pprof.Index)
 	}
-	return h.securityHeadersMiddleware(h.requestContextMiddleware(h.metricsMiddleware(h.recoverMiddleware(h.authMiddleware(mux)))))
+	return h.securityHeadersMiddleware(h.requestContextMiddleware(h.metricsMiddleware(h.recoverMiddleware(h.authMiddleware(h.rateLimitMiddleware(mux))))))
 }
 
 func (h *Handler) readyz(w http.ResponseWriter, r *http.Request) {
@@ -201,11 +209,38 @@ func (h *Handler) authMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func (h *Handler) rateLimitMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if h.limiter == nil || !requiresRateLimit(r.URL.Path) {
+			next.ServeHTTP(w, r)
+			return
+		}
+		if !h.limiter.Allow(clientIP(r)) {
+			w.Header().Set("Retry-After", "60")
+			writeJSON(w, http.StatusTooManyRequests, errorResponse{
+				Error: errorBody{Code: "rate_limited", Message: "rate limited"},
+			})
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 func requiresAuth(path string) bool {
 	if path == "/metrics" {
 		return true
 	}
 	if path == "/jobs" || strings.HasPrefix(path, "/jobs/") {
+		return true
+	}
+	return false
+}
+
+func requiresRateLimit(path string) bool {
+	if path == "/jobs" || strings.HasPrefix(path, "/jobs/") {
+		return true
+	}
+	if isPprofPath(path) {
 		return true
 	}
 	return false

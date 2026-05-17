@@ -1,6 +1,6 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.31 ｜ 基準日期：2026-05-17 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract
+> 版本：v1.0.34 ｜ 基準日期：2026-05-17 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Rate limit contract
 
 這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery、retry 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 cancellation 行為需要透過 contract test 保護。
 
@@ -21,6 +21,7 @@ Machine-readable contract 位於 `production-api-worker/api/openapi.yaml`。此 
 | Startup configuration | `PORT`、`QUEUE_SIZE`、`WORKERS` 與 DB pool 設定必須先驗證；錯誤設定 fail fast，不可 silent fallback |
 | API security | `API_KEY` 有值時，`/jobs` 與 `/metrics` 必須要求 Bearer token；health endpoint 仍需公開供部署系統探測 |
 | Security headers | 所有 response 應回 `X-Content-Type-Options`、`X-Frame-Options` 與 `Referrer-Policy` |
+| Rate limit | `/jobs` 與 `/jobs/{id}` 需有 per-client IP 限速；超限回 `429 rate_limited`，health endpoint 不限速 |
 | OpenAPI sync | endpoint、request schema、response schema、error code、Bearer auth 與 `X-Request-ID` 需同步 `api/openapi.yaml` |
 | Worker shutdown | queue close 與 enqueue send 必須同步，shutdown 後新 enqueue 回穩定錯誤 |
 | Retry cancellation | deadlock retry 的 backoff 必須尊重 `context` cancellation / deadline |
@@ -184,8 +185,37 @@ Content-Type: application/json
 | `DATABASE_CONN_MAX_LIFETIME` | `30m0s` | 正數 duration，例如 `30m` 或 `1h` |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | 空字串 | 空字串時使用 stdout trace exporter |
 | `API_KEY` | 空字串 | 空值停用 API key；有值時保護 `/jobs` 與 `/metrics` |
+| `RATE_LIMIT_REQUESTS_PER_MINUTE` | `120` | 正整數；每個 client IP 每分鐘業務 endpoint 呼叫上限 |
 
 錯誤設定必須讓 process fail fast，例如 `PORT=http`、`QUEUE_SIZE=0`、`WORKERS=-1`、`DATABASE_MAX_IDLE_CONNS > DATABASE_MAX_OPEN_CONNS` 或 `DATABASE_CONN_MAX_LIFETIME=soon` 不應被靜默改成預設值。
+
+## Rate Limit
+
+Rate limit 固定 API 的過載保護邊界，避免單一 client 持續壓垮 handler、queue 或 DB。此合約保護 `/jobs` 與 `/jobs/{id}`；`/livez`、`/readyz` 保持公開且不受限速影響。
+
+```http
+429 Too Many Requests
+Content-Type: application/json
+X-Request-ID: request-from-client
+Retry-After: 60
+```
+
+```json
+{
+  "error": {
+    "code": "rate_limited",
+    "message": "rate limited"
+  }
+}
+```
+
+| 項目 | 合約 |
+|---|---|
+| 設定 | `RATE_LIMIT_REQUESTS_PER_MINUTE`，預設 `120` |
+| Key | client IP；正式反向代理環境需明確管理 `X-Forwarded-For` 信任邊界 |
+| Protected routes | `/jobs`、`/jobs/{id}` |
+| Public routes | `/livez`、`/readyz` |
+| Test gate | `go test ./internal/api -run 'TestRateLimitContract' -count=1` |
 
 ## Migration Operation Contract
 

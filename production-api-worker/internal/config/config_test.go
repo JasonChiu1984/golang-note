@@ -36,21 +36,25 @@ func TestLoadFromLookupDefaults(t *testing.T) {
 	if cfg.PprofEnabled || cfg.PprofToken != "" {
 		t.Fatalf("unexpected pprof config: %+v", cfg)
 	}
+	if cfg.RateLimitPerMinute != DefaultRateLimitPerMinute {
+		t.Fatalf("RateLimitPerMinute = %d, want %d", cfg.RateLimitPerMinute, DefaultRateLimitPerMinute)
+	}
 }
 
 func TestLoadFromLookupUsesEnvironment(t *testing.T) {
 	cfg, err := LoadFromLookup(mapLookup(map[string]string{
-		"PORT":                        "9090",
-		"QUEUE_SIZE":                  "128",
-		"WORKERS":                     "8",
-		"API_KEY":                     " secret-token ",
-		"ENABLE_PPROF":                " true ",
-		"PPROF_TOKEN":                 " debug-token ",
-		"DATABASE_URL":                " postgres://app:app@localhost:5432/app?sslmode=disable ",
-		"DATABASE_MAX_OPEN_CONNS":     "40",
-		"DATABASE_MAX_IDLE_CONNS":     "12",
-		"DATABASE_CONN_MAX_LIFETIME":  "45m",
-		"OTEL_EXPORTER_OTLP_ENDPOINT": " http://otel:4317 ",
+		"PORT":                           "9090",
+		"QUEUE_SIZE":                     "128",
+		"WORKERS":                        "8",
+		"API_KEY":                        " secret-token ",
+		"ENABLE_PPROF":                   " true ",
+		"PPROF_TOKEN":                    " debug-token ",
+		"RATE_LIMIT_REQUESTS_PER_MINUTE": "240",
+		"DATABASE_URL":                   " postgres://app:app@localhost:5432/app?sslmode=disable ",
+		"DATABASE_MAX_OPEN_CONNS":        "40",
+		"DATABASE_MAX_IDLE_CONNS":        "12",
+		"DATABASE_CONN_MAX_LIFETIME":     "45m",
+		"OTEL_EXPORTER_OTLP_ENDPOINT":    " http://otel:4317 ",
 	}))
 	if err != nil {
 		t.Fatalf("LoadFromLookup returned error: %v", err)
@@ -64,6 +68,9 @@ func TestLoadFromLookupUsesEnvironment(t *testing.T) {
 	}
 	if !cfg.PprofEnabled || cfg.PprofToken != "debug-token" {
 		t.Fatalf("unexpected pprof config: %+v", cfg)
+	}
+	if cfg.RateLimitPerMinute != 240 {
+		t.Fatalf("RateLimitPerMinute = %d", cfg.RateLimitPerMinute)
 	}
 	if cfg.DatabaseURL != "postgres://app:app@localhost:5432/app?sslmode=disable" {
 		t.Fatalf("DatabaseURL = %q", cfg.DatabaseURL)
@@ -129,6 +136,11 @@ func TestLoadFromLookupRejectsInvalidRequiredConfig(t *testing.T) {
 			name:      "pprof flag is not boolean",
 			env:       map[string]string{"ENABLE_PPROF": "sometimes"},
 			wantError: "ENABLE_PPROF must be a boolean",
+		},
+		{
+			name:      "rate limit is not positive",
+			env:       map[string]string{"RATE_LIMIT_REQUESTS_PER_MINUTE": "0"},
+			wantError: "RATE_LIMIT_REQUESTS_PER_MINUTE must be a positive integer",
 		},
 	}
 

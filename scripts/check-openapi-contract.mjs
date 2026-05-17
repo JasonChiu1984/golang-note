@@ -18,7 +18,7 @@ const requiredFiles = [
 const specTerms = [
   "openapi: 3.1.0",
   "title: production-api-worker API",
-  "version: v1.0.32",
+  "version: v1.0.34",
   "/jobs:",
   "post:",
   "/jobs/{id}:",
@@ -33,6 +33,7 @@ const specTerms = [
   "not_found",
   "queue_full",
   "request_timeout",
+  "rate_limited",
   "unauthorized",
   "internal_error",
   "pending",
@@ -89,7 +90,7 @@ for (const [pattern, label] of routePatterns) {
   }
 }
 
-const responseCodes = ["202", "200", "400", "401", "404", "503", "504", "500"];
+const responseCodes = ["202", "200", "400", "401", "404", "429", "503", "504", "500"];
 for (const code of responseCodes) {
   if (!spec.includes(`"${code}":`)) {
     missing.push(`${specPath} missing response code: ${code}`);

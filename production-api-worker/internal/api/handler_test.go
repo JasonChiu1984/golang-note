@@ -341,6 +341,42 @@ func TestPprofDiagnosticsContract(t *testing.T) {
 	}
 }
 
+func TestRateLimitContract(t *testing.T) {
+	handler := newContractHandlerWithOptions(t, nil, WithRateLimit(1, time.Minute))
+
+	req := httptest.NewRequest(http.MethodPost, "/jobs", strings.NewReader(`{"name":"resize","payload":"image"}`))
+	req.RemoteAddr = "192.0.2.10:1234"
+	req.Header.Set(requestIDHeader, "rate-limit-request")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("first request status = %d, want %d: %s", rec.Code, http.StatusAccepted, rec.Body.String())
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/jobs", strings.NewReader(`{"name":"resize","payload":"image"}`))
+	req.RemoteAddr = "192.0.2.10:1234"
+	req.Header.Set(requestIDHeader, "rate-limit-request")
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusTooManyRequests {
+		t.Fatalf("second request status = %d, want %d: %s", rec.Code, http.StatusTooManyRequests, rec.Body.String())
+	}
+	if got := rec.Header().Get(requestIDHeader); got != "rate-limit-request" {
+		t.Fatalf("request id header = %q, want rate-limit-request", got)
+	}
+	if got := rec.Header().Get("Retry-After"); got != "60" {
+		t.Fatalf("Retry-After = %q, want 60", got)
+	}
+
+	var response errorResponse
+	if err := json.NewDecoder(rec.Body).Decode(&response); err != nil {
+		t.Fatal(err)
+	}
+	if response.Error.Code != "rate_limited" {
+		t.Fatalf("error code = %q, want rate_limited", response.Error.Code)
+	}
+}
+
 func TestErrorContract(t *testing.T) {
 	tests := []struct {
 		name       string

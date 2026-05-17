@@ -36,6 +36,7 @@ const replacements = [
   ["../production-api-worker/internal/app/service.go", "https://github.com/JasonChiu1984/golang-note/blob/main/production-api-worker/internal/app/service.go"],
   ["../production-api-worker/internal/repository/postgres.go", "https://github.com/JasonChiu1984/golang-note/blob/main/production-api-worker/internal/repository/postgres.go"],
   ["../production-api-worker/internal/observability/observability.go", "https://github.com/JasonChiu1984/golang-note/blob/main/production-api-worker/internal/observability/observability.go"],
+  ["../production-api-worker/otel-collector.yaml", "https://github.com/JasonChiu1984/golang-note/blob/main/production-api-worker/otel-collector.yaml"],
   ["../production-api-worker/api/openapi.yaml", "https://github.com/JasonChiu1984/golang-note/blob/main/production-api-worker/api/openapi.yaml"],
   ["../production-api-worker/docker-compose.yml", "https://github.com/JasonChiu1984/golang-note/blob/main/production-api-worker/docker-compose.yml"],
   ["../production-api-worker/scripts/compose-smoke.sh", "https://github.com/JasonChiu1984/golang-note/blob/main/production-api-worker/scripts/compose-smoke.sh"],

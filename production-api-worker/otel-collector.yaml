@@ -5,12 +5,11 @@ receivers:
         endpoint: 0.0.0.0:4317
 
 exporters:
-  logging:
+  debug:
     verbosity: basic
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
-      exporters: [logging]
-
+      exporters: [debug]
