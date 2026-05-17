@@ -282,12 +282,24 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Startup config | port、queue size、worker count、optional endpoint | 錯誤 env 被 silent fallback，容量與部署設定不一致 |
 | Migration contract | migration env、timeout、schema version、SQL 檔命名 | 重複套用 schema、release 後無法追蹤 DB 版本 |
 | Queue shutdown | enqueue 與 close 的同步邊界 | shutdown 期間可能送入已關閉 channel，造成 panic |
+| Shutdown signal contract | `SIGINT`、`SIGTERM`、readiness draining、HTTP shutdown、queue drain | Docker / Kubernetes 發出 `SIGTERM` 時未進入 graceful shutdown |
 
 `production-api-worker/docs/api-contract.md` 示範了最小可維護合約：`POST /jobs`、`GET /jobs/{id}`、health endpoint、metrics endpoint、錯誤格式與 release gate。`production-api-worker/api/openapi.yaml` 則把同一份合約轉成 machine-readable OpenAPI artifact，讓前端 mock、SDK 產生、API gateway review 與 contract diff 可以共用同一份 schema。這不是要把文件寫成百科，而是讓每次 release 都能回答三個問題：
 
 1. 這次變更是否改了使用端看得到的 HTTP 合約？
 2. 若改了，是否向後相容？
 3. 若不相容，是否需要新版本路由、feature flag 或 migration 計畫？
+
+### Shutdown signal contract
+
+服務生命週期不只處理 local Ctrl+C。`production-api-worker` 的 `api-worker` 需要同時監聽 `SIGINT` 與 `SIGTERM`，讓本機中斷、Docker stop、Compose rolling update 與 Kubernetes rolling deploy 都能進入同一套 draining 流程。
+
+```bash
+cd production-api-worker
+go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1
+```
+
+若只監聽 `os.Interrupt`，正式部署收到 `SIGTERM` 時可能直接離開 process，導致 `/readyz` 沒有先轉 503、HTTP server 沒有停止接新 request、queue 也沒有時間 drain。
 
 ### Request Correlation 與可排障性
 

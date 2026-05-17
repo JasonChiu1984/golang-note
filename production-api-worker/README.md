@@ -8,6 +8,8 @@
 - API security：可用 `API_KEY` 啟用 Bearer token 保護 `/jobs` 與 `/metrics`，health endpoint 保持公開
 - Diagnostics / pprof contract：`ENABLE_PPROF` 預設關閉；啟用 `/debug/pprof/` 時必須提供 `PPROF_TOKEN` 或沿用 `API_KEY`
 - Rate limit contract：`RATE_LIMIT_REQUESTS_PER_MINUTE` 依 client IP 保護 `/jobs` 與 `/jobs/{id}`，超限回 `429 rate_limited`
+- Trusted proxy client IP：`TRUSTED_PROXY_CIDRS` 預設空值；只有信任代理來源才採用 `X-Forwarded-For`
+- Shutdown Signal Contract：`api-worker` 同時監聽 SIGINT / SIGTERM，收到訊號後才進入 draining、HTTP shutdown 與 queue drain
 - Request decoding：拒絕 malformed JSON、unknown field、trailing JSON value 與空白 name
 - Service transaction boundary：`sql.TxOptions`、context-aware deadlock retry、queue enqueue
 - Startup configuration：集中驗證 `PORT`、`QUEUE_SIZE`、`WORKERS` 與 DB pool 設定，錯誤設定 fail fast
@@ -78,6 +80,7 @@ go test ./internal/api -run 'Test.*Contract|TestReadinessContract|TestPanicRecov
 go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1
 go test ./internal/api -run 'TestPprofDiagnosticsContract' -count=1
 go test ./internal/api -run 'TestRateLimitContract' -count=1
+go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1
 go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
 go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1
 go test -race -cover ./...
@@ -86,6 +89,7 @@ make runbook-check
 make prometheus-check
 make pprof-check
 make rate-limit-check
+make shutdown-signal-check
 go test -run='^$' -bench=. -benchmem -count=10 ./... > bench.txt
 docker compose up --build
 make compose-smoke
@@ -108,6 +112,7 @@ make compose-smoke
 | `go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1` | 固定 API key 認證邊界、公開 health endpoint 與安全標頭 |
 | `go test ./internal/api -run 'TestPprofDiagnosticsContract' -count=1` | 固定 pprof 預設關閉、啟用後要求 Bearer token、合法 token 才能讀 `/debug/pprof/` |
 | `go test ./internal/api -run 'TestRateLimitContract' -count=1` | 固定 per-client request limit、`429 rate_limited`、`Retry-After` 與 request id 行為 |
+| `go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1` | 固定 SIGINT/SIGTERM shutdown signal set，避免只處理 local Ctrl+C |
 | `go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1` | 固定 deadlock retry backoff 會尊重 request cancellation / shutdown deadline |
 | `go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1` | 固定 queue close/enqueue 同步邊界，避免 shutdown race panic |
 | `go test -race -cover ./...` | 驗證 service、handler、queue 與併發安全 |
@@ -116,6 +121,7 @@ make compose-smoke
 | `make prometheus-check` | 固定 Prometheus scrape config、rule_files、Compose monitoring profile 與 README/runbook 入口 |
 | `make pprof-check` | 固定 pprof diagnostics contract、`ENABLE_PPROF`、`PPROF_TOKEN`、runbook、Go tests 與 CI 入口 |
 | `make rate-limit-check` | 固定 rate limit contract、`RATE_LIMIT_REQUESTS_PER_MINUTE`、OpenAPI、Go tests、README 與 CI 入口 |
+| `make shutdown-signal-check` | 固定 shutdown signal contract、SIGINT/SIGTERM、main test、README、API contract 與 CI 入口 |
 | `go test -run='^$' -bench=. -benchmem -count=10 ./...` | API / worker 效能改動需保留 benchmark 證據 |
 | `docker compose up --build` | 啟動 Postgres、migration、API、worker 與 metrics 整體鏈路 |
 | `make compose-smoke` | 用主機端 curl 驗證 `/livez`、`/readyz`、job create/read 與 `/metrics` |
@@ -188,6 +194,7 @@ cd .. && node scripts/check-openapi-contract.mjs
 | `ENABLE_PPROF` | `false` | boolean；`true` 時必須同時有 `PPROF_TOKEN` 或 `API_KEY` | 短期啟用 `/debug/pprof/` diagnostics endpoint |
 | `PPROF_TOKEN` | 空字串 | trim；空值時可沿用 `API_KEY`，但 `ENABLE_PPROF=true` 不可兩者皆空 | 保護 `/debug/pprof/` |
 | `RATE_LIMIT_REQUESTS_PER_MINUTE` | `120` | 正整數 | 每個 client IP 每分鐘可呼叫業務 endpoint 的次數 |
+| `TRUSTED_PROXY_CIDRS` | 空字串 | comma-separated CIDR | 只有受信任代理來源才採用 `X-Forwarded-For` 第一個 IP |
 
 ```bash
 cd production-api-worker
@@ -227,13 +234,17 @@ Rate limit 是 API 操作保護，不是商業授權邏輯。`production-api-wor
 | 超過 `RATE_LIMIT_REQUESTS_PER_MINUTE` | 回 `429 Too Many Requests` |
 | Error envelope | `{"error":{"code":"rate_limited","message":"rate limited"}}` |
 | Header | 保留 `X-Request-ID`，並回 `Retry-After: 60` |
-| Test gate | `TestRateLimitContract` |
+| Trusted proxy | `TRUSTED_PROXY_CIDRS` 空值時不信任 `X-Forwarded-For`；CIDR 命中時採用第一個 forwarded IP |
+| Test gate | `TestRateLimitContract`、`TestRateLimitTrustedProxyContract` |
 
 ```bash
 RATE_LIMIT_REQUESTS_PER_MINUTE=120 go run ./cmd/api-worker
-go test ./internal/config ./internal/api -run 'TestLoadFromLookup|TestRateLimitContract' -count=1
+TRUSTED_PROXY_CIDRS=10.0.0.0/8 RATE_LIMIT_REQUESTS_PER_MINUTE=120 go run ./cmd/api-worker
+go test ./internal/config ./internal/api -run 'TestLoadFromLookup|TestRateLimitContract|TestRateLimitTrustedProxyContract' -count=1
 make rate-limit-check
 ```
+
+正式環境若位於 Nginx、Envoy、API Gateway 或 Kubernetes ingress 後方，只能把代理所在的內部 CIDR 放進 `TRUSTED_PROXY_CIDRS`。服務直接暴露時保持空值，避免外部 client 自行送 `X-Forwarded-For` 繞過限速。
 
 ## OTLP Collector Contract
 
@@ -348,11 +359,12 @@ Handler 內部會用 request-scoped timeout 保護 service 呼叫。若 deadline
 
 ## Service Lifecycle
 
-Production shutdown 不是單純收到 signal 就結束 process。`api-worker` 收到中斷訊號後會先把 readiness 標成 draining，讓 `/readyz` 回 `503 Service Unavailable`，再呼叫 `http.Server.Shutdown` 停止接新 request，最後等待 worker queue drain。
+Production shutdown 不是單純收到 signal 就結束 process。`api-worker` 的 Shutdown Signal Contract 必須同時處理 local Ctrl+C 的 SIGINT 與 orchestrator / Docker / Kubernetes rolling deploy 常用的 SIGTERM。收到中斷訊號後會先把 readiness 標成 draining，讓 `/readyz` 回 `503 Service Unavailable`，再呼叫 `http.Server.Shutdown` 停止接新 request，最後等待 worker queue drain。
 
 | 階段 | 行為 |
 |---|---|
 | Ready | `/livez=200`、`/readyz=200`，可接受 API request |
+| Signal | SIGINT/SIGTERM 皆需進入同一套 draining 流程 |
 | Draining | `/livez=200`、`/readyz=503`，外部 load balancer 應停止導流 |
 | HTTP shutdown | `http.Server.Shutdown` 最多等待 5 秒讓既有 request 完成 |
 | Queue drain | `Queue.ShutdownContext` 最多等待 10 秒處理已排入工作 |

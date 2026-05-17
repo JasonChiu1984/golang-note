@@ -377,6 +377,40 @@ func TestRateLimitContract(t *testing.T) {
 	}
 }
 
+func TestRateLimitTrustedProxyContract(t *testing.T) {
+	untrusted := newContractHandlerWithOptions(t, nil, WithRateLimit(1, time.Minute))
+
+	req := httptest.NewRequest(http.MethodPost, "/jobs", strings.NewReader(`{"name":"resize","payload":"image"}`))
+	req.RemoteAddr = "203.0.113.10:4567"
+	req.Header.Set("X-Forwarded-For", "198.51.100.1")
+	rec := httptest.NewRecorder()
+	untrusted.ServeHTTP(rec, req)
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("first untrusted status = %d, want %d: %s", rec.Code, http.StatusAccepted, rec.Body.String())
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/jobs", strings.NewReader(`{"name":"resize","payload":"image"}`))
+	req.RemoteAddr = "203.0.113.10:4567"
+	req.Header.Set("X-Forwarded-For", "198.51.100.2")
+	rec = httptest.NewRecorder()
+	untrusted.ServeHTTP(rec, req)
+	if rec.Code != http.StatusTooManyRequests {
+		t.Fatalf("second untrusted status = %d, want %d: %s", rec.Code, http.StatusTooManyRequests, rec.Body.String())
+	}
+
+	trusted := newContractHandlerWithOptions(t, nil, WithRateLimit(1, time.Minute), WithTrustedProxyCIDRs([]string{"10.0.0.0/8"}))
+	for _, forwarded := range []string{"198.51.100.10", "198.51.100.11"} {
+		req = httptest.NewRequest(http.MethodPost, "/jobs", strings.NewReader(`{"name":"resize","payload":"image"}`))
+		req.RemoteAddr = "10.0.0.5:4567"
+		req.Header.Set("X-Forwarded-For", forwarded)
+		rec = httptest.NewRecorder()
+		trusted.ServeHTTP(rec, req)
+		if rec.Code != http.StatusAccepted {
+			t.Fatalf("trusted forwarded %s status = %d, want %d: %s", forwarded, rec.Code, http.StatusAccepted, rec.Body.String())
+		}
+	}
+}
+
 func TestErrorContract(t *testing.T) {
 	tests := []struct {
 		name       string

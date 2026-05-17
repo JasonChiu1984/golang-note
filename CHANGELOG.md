@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.35 - 2026-05-18
+
+- 新增 2026-05-18 06:25:05 CST +0800 資深工程師審查報告，確認 v1.0.34 已補齊 Rate limit contract，但 shutdown signal 與 trusted proxy client IP 邊界需被版本、文件、CI 與 Pages 入口完整收斂。
+- `production-api-worker/cmd/api-worker` 新增 `monitoredSignals()`，明確監聽 `SIGINT` 與 `SIGTERM`，讓 local Ctrl+C 與 Kubernetes / Compose rolling deploy 的 shutdown contract 對齊。
+- 新增 `TestMonitoredSignalsContract` 與 `TestRateLimitTrustedProxyContract`，固定 signal set 不可退化成只處理 SIGINT，且未信任來源不可用 `X-Forwarded-For` 偽造 rate limit key。
+- `production-api-worker` 新增 `TRUSTED_PROXY_CIDRS` 設定，只有 trusted proxy 的 `RemoteAddr` 才能採用 `X-Forwarded-For` 第一個 IP 作為 rate limit key。
+- 更新 `scripts/check-rate-limit-contract.mjs`，並新增 `scripts/check-shutdown-signal-contract.mjs`、`make shutdown-signal-check` 與 GitHub Actions gate，讓 README、production README、API contract、runbook、章節、Cheat Sheet、main.go、測試與 CI 保持一致。
+- README、`production-api-worker/README.md`、API contract、operational runbook、OpenAPI version、第 7 / 11 章、進階 Cheat Sheet 與整合視覺課程同步加入 Shutdown signal / Trusted proxy contract。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.34 - 2026-05-17
 
 - 新增 2026-05-17 20:42:15 CST +0800 資深工程師審查報告，確認 v1.0.33 已補齊 OTLP collector contract，但 production API 仍缺少可測的 per-client rate limit 防護。

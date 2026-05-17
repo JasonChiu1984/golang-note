@@ -1,6 +1,6 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.34 ｜ 基準日期：2026-05-17 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Rate limit contract
+> 版本：v1.0.35 ｜ 基準日期：2026-05-18 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract
 
 這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery、retry 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 cancellation 行為需要透過 contract test 保護。
 
@@ -22,6 +22,8 @@ Machine-readable contract 位於 `production-api-worker/api/openapi.yaml`。此 
 | API security | `API_KEY` 有值時，`/jobs` 與 `/metrics` 必須要求 Bearer token；health endpoint 仍需公開供部署系統探測 |
 | Security headers | 所有 response 應回 `X-Content-Type-Options`、`X-Frame-Options` 與 `Referrer-Policy` |
 | Rate limit | `/jobs` 與 `/jobs/{id}` 需有 per-client IP 限速；超限回 `429 rate_limited`，health endpoint 不限速 |
+| Trusted proxy | 只有 `RemoteAddr` 落在 `TRUSTED_PROXY_CIDRS` 時才採用 `X-Forwarded-For` 第一個 IP；未信任來源不可用 header 偽造 client IP |
+| Shutdown signal | `api-worker` 必須同時監聽 SIGINT 與 SIGTERM，讓 local Ctrl+C、Docker stop 與 Kubernetes rolling deploy 都進入 draining |
 | OpenAPI sync | endpoint、request schema、response schema、error code、Bearer auth 與 `X-Request-ID` 需同步 `api/openapi.yaml` |
 | Worker shutdown | queue close 與 enqueue send 必須同步，shutdown 後新 enqueue 回穩定錯誤 |
 | Retry cancellation | deadlock retry 的 backoff 必須尊重 `context` cancellation / deadline |
@@ -187,8 +189,9 @@ Content-Type: application/json
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | 空字串 | 空字串時使用 stdout trace exporter |
 | `API_KEY` | 空字串 | 空值停用 API key；有值時保護 `/jobs` 與 `/metrics` |
 | `RATE_LIMIT_REQUESTS_PER_MINUTE` | `120` | 正整數；每個 client IP 每分鐘業務 endpoint 呼叫上限 |
+| `TRUSTED_PROXY_CIDRS` | 空字串 | comma-separated CIDR；空值時不信任 `X-Forwarded-For` |
 
-錯誤設定必須讓 process fail fast，例如 `PORT=http`、`QUEUE_SIZE=0`、`WORKERS=-1`、`DATABASE_MAX_IDLE_CONNS > DATABASE_MAX_OPEN_CONNS`、`DATABASE_CONN_MAX_LIFETIME=soon` 或 `RATE_LIMIT_REQUESTS_PER_MINUTE=0` 不應被靜默改成預設值。
+錯誤設定必須讓 process fail fast，例如 `PORT=http`、`QUEUE_SIZE=0`、`WORKERS=-1`、`DATABASE_MAX_IDLE_CONNS > DATABASE_MAX_OPEN_CONNS`、`DATABASE_CONN_MAX_LIFETIME=soon`、`RATE_LIMIT_REQUESTS_PER_MINUTE=0` 或 `TRUSTED_PROXY_CIDRS=not-a-cidr` 不應被靜默改成預設值。
 
 ## Rate Limit
 
@@ -213,10 +216,13 @@ Retry-After: 60
 | 項目 | 合約 |
 |---|---|
 | 設定 | `RATE_LIMIT_REQUESTS_PER_MINUTE`，預設 `120` |
-| Key | client IP；正式反向代理環境需明確管理 `X-Forwarded-For` 信任邊界 |
+| Key | client IP；預設使用 TCP `RemoteAddr`，只有 trusted proxy 來源才採用 `X-Forwarded-For` 第一個 IP |
 | Protected routes | `/jobs`、`/jobs/{id}` |
 | Public routes | `/livez`、`/readyz`、`/metrics` |
-| Test gate | `go test ./internal/api -run 'TestRateLimitContract' -count=1` |
+| Trusted proxy env | `TRUSTED_PROXY_CIDRS=10.0.0.0/8,192.168.10.0/24` |
+| Test gate | `go test ./internal/api -run 'TestRateLimitContract|TestRateLimitTrustedProxyContract' -count=1` |
+
+若服務直接暴露在外部網段，`TRUSTED_PROXY_CIDRS` 應保持空值。若服務位於 Nginx、Envoy、API Gateway、Kubernetes ingress 或 load balancer 後方，只能把這些代理所在的內部 CIDR 加入信任清單，並由代理層清理外部傳入的 `X-Forwarded-For`。
 
 ## Migration Operation Contract
 
@@ -282,6 +288,7 @@ make openapi-check
 go test ./internal/api -run 'Test.*Contract' -count=1
 go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1
 go test ./internal/config -count=1
+go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1
 go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
 go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1
 ```
@@ -297,6 +304,7 @@ go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownD
 - draining 時 `/readyz` 需回 `503 Service Unavailable`，避免 shutdown 期間仍接收新流量。
 - handler panic 需回 `500 internal_error` JSON，並保留原 `X-Request-ID`。
 - request deadline exceeded 需回 `504 request_timeout`，並保留原 `X-Request-ID`。
+- shutdown signal set 需同時包含 SIGINT 與 SIGTERM，避免正式部署收到 SIGTERM 時跳過 draining。
 - 啟動設定需固定預設值、合法 env 與錯誤設定 fail-fast 行為。
 - deadlock retry backoff 遇到 context cancellation / deadline 時需停止，不得繼續重試或 enqueue。
 - queue shutdown 期間不可發生 `send on closed channel`；close 後新 enqueue 需回穩定錯誤。

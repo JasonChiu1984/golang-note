@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"strconv"
 	"strings"
@@ -28,6 +29,7 @@ type Config struct {
 	PprofEnabled            bool
 	PprofToken              string
 	RateLimitPerMinute      int
+	TrustedProxyCIDRs       []string
 	DatabaseURL             string
 	DatabaseMaxOpenConns    int
 	DatabaseMaxIdleConns    int
@@ -94,6 +96,10 @@ func LoadFromLookup(lookup func(string) (string, bool)) (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
+	trustedProxyCIDRs, err := parseCIDRList("TRUSTED_PROXY_CIDRS", readString(lookup, "TRUSTED_PROXY_CIDRS", ""))
+	if err != nil {
+		return Config{}, err
+	}
 
 	return Config{
 		Port:                    port,
@@ -103,6 +109,7 @@ func LoadFromLookup(lookup func(string) (string, bool)) (Config, error) {
 		PprofEnabled:            pprofEnabled,
 		PprofToken:              pprofToken,
 		RateLimitPerMinute:      rateLimitPerMinute,
+		TrustedProxyCIDRs:       trustedProxyCIDRs,
 		DatabaseURL:             strings.TrimSpace(readString(lookup, "DATABASE_URL", "")),
 		DatabaseMaxOpenConns:    databaseMaxOpenConns,
 		DatabaseMaxIdleConns:    databaseMaxIdleConns,
@@ -174,4 +181,23 @@ func parseBool(name, value string) (bool, error) {
 		return false, fmt.Errorf("%s must be a boolean such as true or false, got %q", name, value)
 	}
 	return parsed, nil
+}
+
+func parseCIDRList(name, value string) ([]string, error) {
+	if strings.TrimSpace(value) == "" {
+		return nil, nil
+	}
+	parts := strings.Split(value, ",")
+	cidrs := make([]string, 0, len(parts))
+	for _, part := range parts {
+		cidr := strings.TrimSpace(part)
+		if cidr == "" {
+			continue
+		}
+		if _, _, err := net.ParseCIDR(cidr); err != nil {
+			return nil, fmt.Errorf("%s must contain comma-separated CIDR ranges, got %q", name, cidr)
+		}
+		cidrs = append(cidrs, cidr)
+	}
+	return cidrs, nil
 }

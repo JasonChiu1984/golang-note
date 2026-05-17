@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"golang-learning-notes/production-api-worker/internal/api"
@@ -22,7 +23,7 @@ import (
 )
 
 func main() {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	ctx, stop := signal.NotifyContext(context.Background(), monitoredSignals()...)
 	defer stop()
 
 	cfg, err := config.Load()
@@ -60,7 +61,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           api.NewHandler(service, obs, api.WithReadiness(readiness.Ready), api.WithAuthToken(cfg.APIKey), api.WithPprof(cfg.PprofEnabled, pprofToken(cfg)), api.WithRateLimit(cfg.RateLimitPerMinute, time.Minute)).Routes(),
+		Handler:           api.NewHandler(service, obs, api.WithReadiness(readiness.Ready), api.WithAuthToken(cfg.APIKey), api.WithPprof(cfg.PprofEnabled, pprofToken(cfg)), api.WithRateLimit(cfg.RateLimitPerMinute, time.Minute), api.WithTrustedProxyCIDRs(cfg.TrustedProxyCIDRs)).Routes(),
 		ReadHeaderTimeout: 3 * time.Second,
 	}
 
@@ -93,6 +94,10 @@ func main() {
 	if ctx.Err() != nil {
 		<-shutdownDone
 	}
+}
+
+func monitoredSignals() []os.Signal {
+	return []os.Signal{os.Interrupt, syscall.SIGTERM}
 }
 
 func pprofToken(cfg config.Config) string {

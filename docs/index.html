@@ -1567,6 +1567,8 @@ docker compose down -v</code></pre>
       ["Pprof diagnostics", "Observability", "ENABLE_PPROF=true PPROF_TOKEN=debug-token go run ./cmd/api-worker", ["預設關閉", "Bearer token", "短期 incident diagnostics", "診斷後關閉"], "debug endpoint 不常態公開，並由 TestPprofDiagnosticsContract 固定安全邊界。"],
       ["OTLP collector", "Observability", "node scripts/check-otel-collector-contract.mjs\ncd production-api-worker && make otel-check", ["OTLP gRPC receiver", "debug exporter", "Compose endpoint", "CI gate"], "trace pipeline 不只存在於程式碼，也被 collector config 與 CI 固定。"],
       ["Rate limit contract", "API", "RATE_LIMIT_REQUESTS_PER_MINUTE=120 go run ./cmd/api-worker\nnode scripts/check-rate-limit-contract.mjs", ["per-client IP", "429 rate_limited", "Retry-After", "health endpoint 不限速"], "API backpressure 不只靠 queue 滿載，也先在 HTTP 邊界擋住單一 client 過量請求。"],
+      ["Trusted proxy client IP", "API", "TRUSTED_PROXY_CIDRS=10.0.0.0/8 go run ./cmd/api-worker", ["X-Forwarded-For", "trusted CIDR", "RemoteAddr fallback", "rate limit key"], "只有信任代理來源可覆寫 client IP，避免外部直連偽造 rate limit key。"],
+      ["Shutdown signal contract", "Lifecycle", "go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1\nnode scripts/check-shutdown-signal-contract.mjs", ["SIGINT", "SIGTERM", "readiness draining", "queue drain"], "local Ctrl+C、Docker stop 與 Kubernetes rolling deploy 都進入同一套 graceful shutdown。"],
       ["Testing gate", "Testing", "go test ./...\ngo test -race ./...\ngo build ./cmd/api-worker", ["unit test", "httptest", "race test", "build gate"], "CI gate 全部通過才合併。"]
     ];
 

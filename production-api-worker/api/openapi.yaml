@@ -1,10 +1,11 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.34
+  version: v1.0.35
   description: >
     Machine-readable contract for the Go teaching production API worker.
-    This file mirrors docs/api-contract.md and the Go contract tests.
+    This file mirrors docs/api-contract.md and the Go contract tests,
+    including rate limit and trusted proxy client IP behavior.
 servers:
   - url: http://localhost:8080
     description: Local memory or Docker Compose mode

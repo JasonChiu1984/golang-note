@@ -364,12 +364,14 @@ ENTRYPOINT ["/app"]
 | Error envelope | 是否維持穩定 `error.code` 與 `error.message` |
 | OpenAPI contract | `api/openapi.yaml` 是否同步 endpoint、schema、error code、Bearer auth 與 `X-Request-ID` |
 | Rate limit | `RATE_LIMIT_REQUESTS_PER_MINUTE` 是否固定 per-client IP、`429 rate_limited`、`Retry-After` 與 health endpoint 不限速 |
+| Shutdown signal | SIGINT/SIGTERM 是否都會進入 graceful shutdown，並由 `TestMonitoredSignalsContract` 固定 |
 | Request ID | `X-Request-ID` 是否會回傳，client 提供時是否原樣保留 |
 | Observability label | route label、span name、metrics label、`request.id` 是否會破壞 dashboard |
 | Worker shutdown | concurrent enqueue + shutdown 是否不 panic，close 後是否回穩定錯誤 |
 | Panic recovery | 未預期 panic 是否仍回 `500 internal_error` JSON 與原 request id |
 | Request timeout | `context.DeadlineExceeded` 是否回 `504 request_timeout`，而不是漂移成 `500 internal_error` |
 | Retry cancellation | deadlock backoff 是否尊重 `ctx.Done()`，取消後是否停止交易與 enqueue |
+| Shutdown signal | `api-worker` 是否同時監聽 SIGINT/SIGTERM，確保 local Ctrl+C 與 rolling deploy 都進入 draining |
 
 ```bash
 cd production-api-worker
@@ -380,6 +382,7 @@ go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownD
 go test ./internal/api -run 'TestPanicRecoveryContract' -count=1
 go test ./internal/api -run 'TestRequestTimeoutContract' -count=1
 go test ./internal/api -run 'TestRateLimitContract' -count=1
+go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1
 go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
 ```
 

@@ -227,6 +227,7 @@ func TestCreateJobContract(t *testing.T) {
 | API security | `API_KEY` 啟用後 `/jobs`、`/metrics` 需 Bearer token；`/livez`、`/readyz` 不應被認證擋住 |
 | Pprof diagnostics | `ENABLE_PPROF` 預設關閉；啟用 `/debug/pprof/` 時必須要求 Bearer token，避免 debug endpoint 公開 |
 | Rate limit | 每個 client IP 超過 `RATE_LIMIT_REQUESTS_PER_MINUTE` 時需回 `429 rate_limited`，且 health endpoint 不應被限速 |
+| Shutdown signal | `api-worker` 必須同時監聽 `SIGINT` / `SIGTERM`，並由 `TestMonitoredSignalsContract` 固定，避免正式部署訊號繞過 graceful shutdown |
 | Security headers | `X-Content-Type-Options`、`X-Frame-Options`、`Referrer-Policy` 應由 middleware 固定 |
 
 對 `production-api-worker` 這類 service，建議把合約測試獨立命名，讓 release gate 可以聚焦執行：
@@ -237,9 +238,21 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1
 go test ./internal/api -run 'TestPprofDiagnosticsContract' -count=1
 go test ./internal/api -run 'TestRateLimitContract' -count=1
+go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1
 ```
 
 > 合約測試不應過度綁定內部 struct；它要固定「外部看見的行為」，例如 JSON 欄位與錯誤 code，而不是 service 裡用了哪個 repository 實作。
+
+### Shutdown signal contract test
+
+`TestMonitoredSignalsContract` 固定 `api-worker` 的 signal set，避免日後重構時退化成只處理 local Ctrl+C 的 `os.Interrupt`。
+
+```go
+func TestMonitoredSignalsContract(t *testing.T) {
+    signals := monitoredSignals()
+    // must include os.Interrupt and syscall.SIGTERM
+}
+```
 
 ### API Security Contract Test
 
@@ -480,6 +493,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | Request ID 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestIDContract|TestCreateJobContract' -count=1` | 固定 `X-Request-ID` 保留與自動產生行為 |
 | Readiness 合約 | `cd production-api-worker && go test ./internal/api -run 'TestReadinessContract' -count=1` | 固定 ready / draining 對 `/readyz` 的 status code |
 | Worker shutdown 安全 | `cd production-api-worker && go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1` | 固定 queue close/enqueue 同步邊界，避免 shutdown race |
+| Shutdown signal contract | `cd production-api-worker && go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1` | 固定 Shutdown signal 入口，確認 SIGINT/SIGTERM 都會進入 graceful shutdown |
 | Panic recovery 合約 | `cd production-api-worker && go test ./internal/api -run 'TestPanicRecoveryContract' -count=1` | 固定 panic path 的 `500 internal_error` JSON 與 request id |
 | Request timeout 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestTimeoutContract' -count=1` | 固定 handler timeout 的 `504 request_timeout` JSON 與 request id |
 | Retry cancellation | `cd production-api-worker && go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1` | 固定 deadlock retry backoff 會尊重 context cancellation / deadline |

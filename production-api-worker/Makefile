@@ -1,4 +1,4 @@
-.PHONY: test test-race ci ci-contract openapi-check runbook-check prometheus-check pprof-check rate-limit-check otel-check docker-build compose-smoke run migrate docker-up docker-down
+.PHONY: test test-race ci ci-contract openapi-check runbook-check prometheus-check pprof-check rate-limit-check shutdown-signal-check otel-check docker-build compose-smoke run migrate docker-up docker-down
 
 test:
 	go test ./...
@@ -14,6 +14,7 @@ ci:
 ci-contract:
 	go test ./internal/config ./internal/migration -count=1
 	go test ./internal/api -run 'Test.*Contract|TestReadinessContract|TestPanicRecoveryContract|TestRequestDecodingContract|TestRequestTimeoutContract|TestRateLimitContract' -count=1
+	go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1
 	go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
 	go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1
 
@@ -31,6 +32,9 @@ pprof-check:
 
 rate-limit-check:
 	cd .. && node scripts/check-rate-limit-contract.mjs
+
+shutdown-signal-check:
+	cd .. && node scripts/check-shutdown-signal-contract.mjs
 
 otel-check:
 	cd .. && node scripts/check-otel-collector-contract.mjs

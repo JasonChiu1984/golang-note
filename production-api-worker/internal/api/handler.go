@@ -24,6 +24,7 @@ type Handler struct {
 	authToken string
 	pprof     pprofConfig
 	limiter   *rateLimiter
+	proxies   trustedProxyConfig
 }
 
 type Option func(*Handler)
@@ -59,6 +60,12 @@ func WithPprof(enabled bool, token string) Option {
 func WithRateLimit(limit int, window time.Duration) Option {
 	return func(h *Handler) {
 		h.limiter = newRateLimiter(limit, window)
+	}
+}
+
+func WithTrustedProxyCIDRs(cidrs []string) Option {
+	return func(h *Handler) {
+		h.proxies = newTrustedProxyConfig(cidrs)
 	}
 }
 
@@ -215,7 +222,7 @@ func (h *Handler) rateLimitMiddleware(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-		if !h.limiter.Allow(clientIP(r)) {
+		if !h.limiter.Allow(clientIP(r, h.proxies)) {
 			w.Header().Set("Retry-After", "60")
 			writeJSON(w, http.StatusTooManyRequests, errorResponse{
 				Error: errorBody{Code: "rate_limited", Message: "rate limited"},

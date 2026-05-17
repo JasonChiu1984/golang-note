@@ -2,9 +2,9 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
-> 教材版本：`v1.0.34`
+> 教材版本：`v1.0.35`
 > 教材基準：`Go 1.26.3`
-> 這次更新重點：補上 Rate limit contract，讓 production API 具備每個 client IP 的請求速率保護，超限時回穩定 `429 rate_limited` JSON，並用測試、OpenAPI 與 CI 檢查固定行為。
+> 這次更新重點：補上 Shutdown signal contract 與 trusted proxy client IP 邊界，讓 production API 同時監聽 SIGINT / SIGTERM，並避免未信任來源用 `X-Forwarded-For` 偽造 rate limit key。
 
 ## 版本策略
 
@@ -28,6 +28,8 @@
 | Pprof diagnostics contract | `ENABLE_PPROF=false` 為預設；啟用 `/debug/pprof/` 時必須設定 `PPROF_TOKEN` 或 `API_KEY`，並由 `node scripts/check-pprof-contract.mjs` 固定文件、測試與 CI 入口 |
 | OTLP collector contract | `production-api-worker/otel-collector.yaml` 需固定 OTLP gRPC receiver `0.0.0.0:4317`、`debug` exporter、Compose endpoint 與 `node scripts/check-otel-collector-contract.mjs` CI gate |
 | Rate limit contract | `RATE_LIMIT_REQUESTS_PER_MINUTE=120` 為預設；`/jobs` 與 `/jobs/{id}` 依 client IP 限速，超限回 `429 rate_limited` 與 `Retry-After`，並由 `node scripts/check-rate-limit-contract.mjs` 固定文件、OpenAPI、測試與 CI 入口 |
+| Shutdown signal contract | `api-worker` 必須同時監聽 SIGINT/SIGTERM；收到訊號後先讓 readiness 轉 draining，再停止 HTTP server 並 drain queue，並由 `node scripts/check-shutdown-signal-contract.mjs` 固定文件、測試與 CI 入口 |
+| Trusted proxy client IP | `TRUSTED_PROXY_CIDRS` 預設空值；只有 trusted proxy 來源可採用 `X-Forwarded-For` 第一個 IP，避免外部直連偽造 rate limit key |
 | Assembly 教材 | Assembly 只能作為可量測 hot path 的小型 adapter，必須保留 pure Go fallback、benchmark、pprof 與部署風險說明 |
 | 微服務教材 | Go 微服務需獨立說明 handler、service、config、timeout、health check、Docker smoke 與 deployment risk |
 | 跨語言 / GPU 效能範例 | C/Python/Go 效能比較需提供可重跑 workload、正式測試 script、compiler flags、語言版本、raw output 與 Markdown 報告；GPU/Metal 比較需分開標示 CPU baseline、GPU kernel time 與 GPU total time |
@@ -126,7 +128,7 @@ go test ./project-concurrent-crawler/...
 | 專案 | 目標 | 建議時機 | 入口 |
 |---|---|---|---|
 | `project-concurrent-crawler` | 練習 worker pool、retry、parser/store 抽象 | 第一次完成第 7 章後 | `go test ./project-concurrent-crawler/...` |
-| `production-api-worker` | 練習 HTTP API、OpenAPI contract、API key security contract、diagnostics / pprof contract、OTLP collector contract、rate limit contract、startup config、DB pool contract、migration contract、strict request decoding、transaction、context-aware retry、request timeout contract、queue shutdown safety、observability、operational runbook、Prometheus monitoring profile、panic recovery、graceful shutdown、Docker Compose | 完成第 5、7、9、11 章後 | `cd production-api-worker && go test ./...` |
+| `production-api-worker` | 練習 HTTP API、OpenAPI contract、API key security contract、diagnostics / pprof contract、OTLP collector contract、rate limit contract、shutdown signal contract、startup config、DB pool contract、migration contract、strict request decoding、transaction、context-aware retry、request timeout contract、queue shutdown safety、observability、operational runbook、Prometheus monitoring profile、panic recovery、graceful shutdown、Docker Compose | 完成第 5、7、9、11 章後 | `cd production-api-worker && go test ./...` |
 
 `production-api-worker` 也附上 [API 合約文件](production-api-worker/docs/api-contract.md)，用來示範 production service 不只要能跑，也要把 endpoint、錯誤格式、相容性規則與 release gate 寫清楚。
 
@@ -150,7 +152,8 @@ go test ./project-concurrent-crawler/...
 | OpenAPI contract gate | `node scripts/check-openapi-contract.mjs` | 確認 `production-api-worker/api/openapi.yaml` 保留 endpoint、request/response schema、error code、Bearer auth 與 `X-Request-ID` |
 | Pprof diagnostics gate | `node scripts/check-pprof-contract.mjs` | 確認 `ENABLE_PPROF`、`PPROF_TOKEN`、`/debug/pprof/`、Go tests、runbook、README 與 CI 入口一致 |
 | OTLP collector gate | `node scripts/check-otel-collector-contract.mjs` | 確認 `production-api-worker/otel-collector.yaml`、Compose OTLP endpoint、debug exporter、runbook、README 與 CI 入口一致 |
-| Rate limit contract gate | `node scripts/check-rate-limit-contract.mjs` | 確認 `RATE_LIMIT_REQUESTS_PER_MINUTE`、`429 rate_limited`、Go tests、OpenAPI、README 與 CI 入口一致 |
+| Rate limit contract gate | `node scripts/check-rate-limit-contract.mjs` | 確認 `RATE_LIMIT_REQUESTS_PER_MINUTE`、`TRUSTED_PROXY_CIDRS`、`429 rate_limited`、Go tests、OpenAPI、README 與 CI 入口一致 |
+| Shutdown signal contract gate | `node scripts/check-shutdown-signal-contract.mjs` | 確認 SIGINT/SIGTERM、`TestMonitoredSignalsContract`、README、API contract、章節與 CI 入口一致 |
 | Docs index 連結自動修正 | `node scripts/fix-docs-index-links.mjs --sync-source && node scripts/fix-docs-index-links.mjs --check` | 每次重產 `docs/index.html` 後，自動改成 GitHub Pages `docs/` root 可用路徑，避免 `/docs`、`/ReleaseNote` 404 |
 | HTML 回主頁教程檢查 | `node scripts/check-html-home-links.mjs` | 確認 `docs/`、`ReleaseNote/` 與圖解 HTML 頁面都有可解析到 `docs/index.html` 的「主頁教程」入口 |
 | 跨語言效能範例 | `cd examples/performance-comparison && clang -O2 c/bench.c -o /tmp/bench-c && /tmp/bench-c && go test -bench=. -benchmem -count=1 ./go && python3 python/bench.py` | 確認 C/Python/Go 範例可重跑，並保留正式報告所需原始輸出 |
@@ -175,7 +178,8 @@ go test ./project-concurrent-crawler/...
 | Migration 合約 | `cd production-api-worker && go test ./internal/config ./internal/migration -count=1` | 驗證 migration env、timeout、SQL 檔排序與 migration version 命名規則 |
 | API security 合約 | `cd production-api-worker && go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1` | 驗證 API key 啟用後保護 `/jobs`、`/metrics`，health endpoint 保持公開，response 有安全標頭 |
 | Pprof diagnostics 合約 | `cd production-api-worker && go test ./internal/config ./internal/api -run 'Test.*Pprof|TestPprofDiagnosticsContract' -count=1` | 驗證 pprof 預設關閉，啟用時缺 token fail fast，`/debug/pprof/` 未帶 Bearer token 回 401 |
-| Rate limit 合約 | `cd production-api-worker && go test ./internal/config ./internal/api -run 'TestRateLimitContract|TestLoadFromLookup' -count=1` | 驗證每個 client IP 超過 `RATE_LIMIT_REQUESTS_PER_MINUTE` 時回 `429 rate_limited` 與 `Retry-After` |
+| Rate limit 合約 | `cd production-api-worker && go test ./internal/config ./internal/api -run 'TestRateLimitContract|TestRateLimitTrustedProxyContract|TestLoadFromLookup' -count=1` | 驗證每個 client IP 超限回 `429 rate_limited`，且只有 trusted proxy 來源可採用 `X-Forwarded-For` |
+| Shutdown signal 合約 | `cd production-api-worker && go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1` | 驗證 `api-worker` 同時監聽 SIGINT/SIGTERM，避免 rolling deploy 收到 SIGTERM 時無法進入 graceful shutdown |
 | 效能 A/B 驗證 | `go test -run='^$' -bench=. -benchmem -count=10 ./... > bench.txt` | 搭配 `benchstat old.txt new.txt` 比較修改前後差異 |
 | Runtime profile | `curl -H 'Authorization: Bearer debug-token' 'http://localhost:8080/debug/pprof/profile?seconds=30' -o profile.pb.gz && go tool pprof profile.pb.gz` | CPU 熱點；正式環境需限制來源網段、帶 Bearer token，診斷後關閉 |
 | Execution trace | `go test -trace=trace.out ./... && go tool trace trace.out` | 分析排程、syscall、GC 與平行度，不用來取代 CPU/heap profile |

@@ -39,6 +39,9 @@ func TestLoadFromLookupDefaults(t *testing.T) {
 	if cfg.RateLimitPerMinute != DefaultRateLimitPerMinute {
 		t.Fatalf("RateLimitPerMinute = %d, want %d", cfg.RateLimitPerMinute, DefaultRateLimitPerMinute)
 	}
+	if len(cfg.TrustedProxyCIDRs) != 0 {
+		t.Fatalf("TrustedProxyCIDRs = %v, want empty", cfg.TrustedProxyCIDRs)
+	}
 }
 
 func TestLoadFromLookupUsesEnvironment(t *testing.T) {
@@ -50,6 +53,7 @@ func TestLoadFromLookupUsesEnvironment(t *testing.T) {
 		"ENABLE_PPROF":                   " true ",
 		"PPROF_TOKEN":                    " debug-token ",
 		"RATE_LIMIT_REQUESTS_PER_MINUTE": "240",
+		"TRUSTED_PROXY_CIDRS":            " 10.0.0.0/8, 192.168.10.0/24 ",
 		"DATABASE_URL":                   " postgres://app:app@localhost:5432/app?sslmode=disable ",
 		"DATABASE_MAX_OPEN_CONNS":        "40",
 		"DATABASE_MAX_IDLE_CONNS":        "12",
@@ -71,6 +75,9 @@ func TestLoadFromLookupUsesEnvironment(t *testing.T) {
 	}
 	if cfg.RateLimitPerMinute != 240 {
 		t.Fatalf("RateLimitPerMinute = %d", cfg.RateLimitPerMinute)
+	}
+	if got := strings.Join(cfg.TrustedProxyCIDRs, ","); got != "10.0.0.0/8,192.168.10.0/24" {
+		t.Fatalf("TrustedProxyCIDRs = %q", got)
 	}
 	if cfg.DatabaseURL != "postgres://app:app@localhost:5432/app?sslmode=disable" {
 		t.Fatalf("DatabaseURL = %q", cfg.DatabaseURL)
@@ -141,6 +148,11 @@ func TestLoadFromLookupRejectsInvalidRequiredConfig(t *testing.T) {
 			name:      "rate limit is not positive",
 			env:       map[string]string{"RATE_LIMIT_REQUESTS_PER_MINUTE": "0"},
 			wantError: "RATE_LIMIT_REQUESTS_PER_MINUTE must be a positive integer",
+		},
+		{
+			name:      "trusted proxy cidr is invalid",
+			env:       map[string]string{"TRUSTED_PROXY_CIDRS": "10.0.0.0/8,not-a-cidr"},
+			wantError: "TRUSTED_PROXY_CIDRS must contain comma-separated CIDR ranges",
 		},
 	}
 

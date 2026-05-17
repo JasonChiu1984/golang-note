@@ -12,6 +12,7 @@ const files = [
   "production-api-worker/docker-compose.yml",
   "production-api-worker/api/openapi.yaml",
   "production-api-worker/docs/api-contract.md",
+  "production-api-worker/docs/operational-runbook.md",
   ".github/workflows/ci.yml",
 ];
 
@@ -30,29 +31,35 @@ const required = {
     "DefaultRateLimitPerMinute",
     "RateLimitPerMinute",
     "RATE_LIMIT_REQUESTS_PER_MINUTE",
+    "TRUSTED_PROXY_CIDRS",
   ],
   "production-api-worker/internal/config/config_test.go": [
     "RateLimitPerMinute",
     "rate limit is not positive",
+    "trusted proxy cidr is invalid",
   ],
   "production-api-worker/internal/api/handler.go": [
     "WithRateLimit",
+    "WithTrustedProxyCIDRs",
     "rateLimitMiddleware",
     "rate_limited",
   ],
   "production-api-worker/internal/api/handler_test.go": [
     "TestRateLimitContract",
+    "TestRateLimitTrustedProxyContract",
     "http.StatusTooManyRequests",
   ],
   "production-api-worker/internal/api/rate_limit.go": [
     "type rateLimiter struct",
     "func clientIP",
+    "type trustedProxyConfig",
   ],
   "production-api-worker/docker-compose.yml": [
     "RATE_LIMIT_REQUESTS_PER_MINUTE",
+    "TRUSTED_PROXY_CIDRS",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.34",
+    "version: v1.0.35",
     "429",
     "rate_limited",
   ],
@@ -60,6 +67,12 @@ const required = {
     "Rate limit",
     "429 rate_limited",
     "RATE_LIMIT_REQUESTS_PER_MINUTE",
+    "TRUSTED_PROXY_CIDRS",
+  ],
+  "production-api-worker/docs/operational-runbook.md": [
+    "TRUSTED_PROXY_CIDRS",
+    "X-Forwarded-For",
+    "trusted proxy",
   ],
   ".github/workflows/ci.yml": [
     "Check rate limit contract",
