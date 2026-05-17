@@ -4,6 +4,7 @@
 
 - HTTP API：`POST /jobs`、`GET /jobs/{id}`、`GET /metrics`
 - API contract：穩定 request/response/error schema，文件在 `docs/api-contract.md`
+- OpenAPI contract：machine-readable schema 位於 `api/openapi.yaml`，用來對齊文件、測試、SDK 與前端 mock
 - API security：可用 `API_KEY` 啟用 Bearer token 保護 `/jobs` 與 `/metrics`，health endpoint 保持公開
 - Request decoding：拒絕 malformed JSON、unknown field、trailing JSON value 與空白 name
 - Service transaction boundary：`sql.TxOptions`、context-aware deadlock retry、queue enqueue
@@ -15,7 +16,7 @@
 - Panic recovery：handler 未預期 panic 時回穩定 `internal_error` JSON
 - Request timeout：handler deadline exceeded 時回穩定 `request_timeout` JSON
 - Observability：Prometheus client、OpenTelemetry OTLP/stdout exporter、slog、`X-Request-ID`
-- Operational runbook：SLI/SLO、Prometheus alert rules、incident workflow、verification、troubleshooting
+- Operational runbook：SLI/SLO、Prometheus alert rules、scrape config、incident workflow、verification、troubleshooting
 - Pipeline：migration CLI、Docker Compose、GitHub Actions workflow、Docker image build gate、Compose smoke gate
 
 ## Local Memory Mode
@@ -76,7 +77,9 @@ go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract'
 go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
 go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1
 go test -race -cover ./...
+make openapi-check
 make runbook-check
+make prometheus-check
 go test -run='^$' -bench=. -benchmem -count=10 ./... > bench.txt
 docker compose up --build
 make compose-smoke
@@ -100,7 +103,9 @@ make compose-smoke
 | `go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1` | 固定 deadlock retry backoff 會尊重 request cancellation / shutdown deadline |
 | `go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1` | 固定 queue close/enqueue 同步邊界，避免 shutdown race panic |
 | `go test -race -cover ./...` | 驗證 service、handler、queue 與併發安全 |
+| `make openapi-check` | 固定 OpenAPI contract、endpoint、schema、error code、Bearer auth 與 README/API 文件入口 |
 | `make runbook-check` | 固定 SLI/SLO、Prometheus alert rules、incident workflow 與 runbook link 不被移除 |
+| `make prometheus-check` | 固定 Prometheus scrape config、rule_files、Compose monitoring profile 與 README/runbook 入口 |
 | `go test -run='^$' -bench=. -benchmem -count=10 ./...` | API / worker 效能改動需保留 benchmark 證據 |
 | `docker compose up --build` | 啟動 Postgres、migration、API、worker 與 metrics 整體鏈路 |
 | `make compose-smoke` | 用主機端 curl 驗證 `/livez`、`/readyz`、job create/read 與 `/metrics` |
@@ -116,7 +121,9 @@ make compose-smoke
 | `vulnerability-scan` | root module 與 production module 的 `govulncheck ./...` | 已知漏洞進入 release |
 | `docker-build` | `production-api-worker` Docker image build + Compose smoke | Dockerfile、migration binary、runtime image 或端到端啟動流程回歸 |
 
-`production-api-worker/docs/operational-runbook.md` 是值班與 incident review 的教學入口；`configs/prometheus/production-api-worker-alerts.yml` 是對應的 Prometheus alert rule 範例。兩者由根目錄 `node scripts/check-operational-runbook.mjs` 固定，避免 observability 只剩 log / metrics 概念而沒有可操作告警與排障流程。
+`production-api-worker/docs/api-contract.md` 是人讀的 API 合約；`production-api-worker/api/openapi.yaml` 是 machine-readable OpenAPI contract，供前端 mock、SDK 產生、契約測試與文件工具共用。兩者需和 Go contract tests 一起維護，並由 `node scripts/check-openapi-contract.mjs` 固定入口。
+
+`production-api-worker/docs/operational-runbook.md` 是值班與 incident review 的教學入口；`configs/prometheus/production-api-worker-alerts.yml` 是對應的 Prometheus alert rule 範例，`configs/prometheus/prometheus.yml` 則示範本地 scrape job 與 `rule_files` 載入。這些檔案分別由根目錄 `node scripts/check-operational-runbook.mjs` 與 `node scripts/check-prometheus-config.mjs` 固定，避免 observability 只剩 log / metrics 概念而沒有可操作告警與排障流程。
 
 本機修改 production 行為前，至少先跑：
 
@@ -136,6 +143,8 @@ docker compose down -v
 
 對外 API 合約請先看 `docs/api-contract.md`。任何 handler、domain status、錯誤處理或 route label 調整，都要先判斷是否改變該文件列出的外部行為。
 
+Machine-readable contract 位於 `api/openapi.yaml`。它不是取代 Go contract tests，而是讓 schema 可以被 frontend mock、SDK generator、API gateway review 或 contract diff 工具重用。
+
 | 合約項 | 目前策略 |
 |---|---|
 | Success response | 保持 `id`、`name`、`payload`、`status` 欄位向後相容 |
@@ -144,6 +153,12 @@ docker compose down -v
 | Request timeout | `context.DeadlineExceeded` 對外回 `504 request_timeout`，避免被誤分類成 `internal_error` |
 | Status enum | `pending`、`processing`、`done`、`failed` 不任意改名 |
 | Breaking change | 新增版本路由或遷移期，不直接覆蓋既有合約 |
+| OpenAPI sync | endpoint、schema、error code、auth 邊界同步更新 `api/openapi.yaml` 與 `docs/api-contract.md` |
+
+```bash
+make openapi-check
+cd .. && node scripts/check-openapi-contract.mjs
+```
 
 ## Startup Configuration Contract
 
@@ -217,6 +232,25 @@ Migration CLI 是 deployment pipeline 的一部分，不應只是逐檔執行 SQ
 | Trace attribute | `request.id`、`http.route` |
 | Contract test | `TestRequestIDContract` 與 `TestCreateJobContract` 固定 header 行為 |
 
+## Prometheus Local Monitoring
+
+本專案提供最小 Prometheus profile，讓 alert rules 不只存在於檔案，也能被本地 Prometheus 載入。此 profile 供教學與 smoke review 使用，不宣稱取代正式監控平台。
+
+| Artifact | 用途 |
+|---|---|
+| `../configs/prometheus/prometheus.yml` | 固定 `production-api-worker` scrape job、`/metrics` path 與 alert rule 載入 |
+| `../configs/prometheus/production-api-worker-alerts.yml` | 固定 5xx、queue depth、worker latency 與 metrics missing 告警 |
+| `make prometheus-check` | 靜態檢查 Prometheus config、Compose profile、README、runbook 與 CI 入口 |
+
+```bash
+cd production-api-worker
+docker compose --profile monitoring up -d --build
+open http://localhost:9090
+docker compose down -v
+```
+
+若啟用 `API_KEY`，Prometheus scrape 必須同步設計 Bearer token 或 bearer token file。教學 profile 預設使用未設定 `API_KEY` 的 local mode，避免把密碼寫進 `prometheus.yml`。
+
 ## Panic Recovery
 
 Production API 不能讓未預期 panic 直接中斷連線或回傳非 JSON 錯誤頁。Routes 會先建立 request context，再經過 metrics 與 recover middleware；若 handler、service 或 queue 發生 panic，server 會記錄 structured log，保留原 `X-Request-ID`，並回傳穩定錯誤 envelope。
@@ -280,8 +314,12 @@ Production shutdown 不是單純收到 signal 就結束 process。`api-worker` �
 | 項目 | 文件 / 設定 |
 |---|---|
 | Runbook | `docs/operational-runbook.md` |
+| OpenAPI contract | `api/openapi.yaml` |
+| OpenAPI check | `make openapi-check` 或從 repo root 執行 `node scripts/check-openapi-contract.mjs` |
 | Prometheus alert rules | `../configs/prometheus/production-api-worker-alerts.yml` |
+| Prometheus scrape config | `../configs/prometheus/prometheus.yml` |
 | Runbook check | `make runbook-check` 或從 repo root 執行 `node scripts/check-operational-runbook.mjs` |
+| Prometheus config check | `make prometheus-check` 或從 repo root 執行 `node scripts/check-prometheus-config.mjs` |
 | 主要 SLI | API 5xx rate、worker p95 latency、queue depth、readiness、metrics scrape |
 | Incident correlation | `X-Request-ID`、route label、structured log、OpenTelemetry span |
 

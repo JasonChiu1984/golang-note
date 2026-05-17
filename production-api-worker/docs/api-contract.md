@@ -1,8 +1,10 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.28 ｜ 基準日期：2026-05-13 ｜ 適用範圍：local memory mode、Postgres + OTLP mode
+> 版本：v1.0.31 ｜ 基準日期：2026-05-17 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract
 
 這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery、retry 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 cancellation 行為需要透過 contract test 保護。
+
+Machine-readable contract 位於 `production-api-worker/api/openapi.yaml`。此 YAML 需與本文件及 Go contract tests 一起維護，用於前端 mock、SDK 產生、API gateway review 或 contract diff。
 
 ## Compatibility Rules
 
@@ -19,6 +21,7 @@
 | Startup configuration | `PORT`、`QUEUE_SIZE`、`WORKERS` 與 DB pool 設定必須先驗證；錯誤設定 fail fast，不可 silent fallback |
 | API security | `API_KEY` 有值時，`/jobs` 與 `/metrics` 必須要求 Bearer token；health endpoint 仍需公開供部署系統探測 |
 | Security headers | 所有 response 應回 `X-Content-Type-Options`、`X-Frame-Options` 與 `Referrer-Policy` |
+| OpenAPI sync | endpoint、request schema、response schema、error code、Bearer auth 與 `X-Request-ID` 需同步 `api/openapi.yaml` |
 | Worker shutdown | queue close 與 enqueue send 必須同步，shutdown 後新 enqueue 回穩定錯誤 |
 | Retry cancellation | deadlock retry 的 backoff 必須尊重 `context` cancellation / deadline |
 | Breaking change | 需新增版本路由或遷移期，不能直接覆蓋既有合約 |
@@ -244,6 +247,7 @@ X-Request-ID: request-from-client
 
 ```bash
 cd production-api-worker
+make openapi-check
 go test ./internal/api -run 'Test.*Contract' -count=1
 go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1
 go test ./internal/config -count=1

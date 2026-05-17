@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.31 - 2026-05-17
+
+- 新增 2026-05-17 13:40 資深工程師審查報告，確認 v1.0.30 已補齊 operational runbook，但 API 合約仍缺少可供前端、SDK、測試工具與文件生成共用的 machine-readable OpenAPI artifact。
+- 新增 `configs/prometheus/prometheus.yml`、Compose `monitoring` profile 與 `scripts/check-prometheus-config.mjs`，讓 Prometheus alert rules 可由本地 Prometheus 載入並被 CI 靜態檢查。
+- 新增 `production-api-worker/api/openapi.yaml`，以 OpenAPI 3.1 固定 `POST /jobs`、`GET /jobs/{id}`、`GET /livez`、`GET /readyz`、`GET /metrics`、Bearer auth、`X-Request-ID`、job schema、error envelope 與 error code。
+- 新增 `scripts/check-openapi-contract.mjs`，檢查 OpenAPI spec、README、production README、API contract 文件與 CI workflow 都保留 OpenAPI contract gate。
+- README、`production-api-worker/README.md`、`production-api-worker/docs/api-contract.md`、第 7 / 10 / 11 章、進階 Cheat Sheet、整合視覺課程與 CI workflow 同步加入 Prometheus config / OpenAPI contract gate。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.30 - 2026-05-17
 
 - 新增 2026-05-17 11:02 資深工程師審查報告，確認 v1.0.29 已補齊語法應用 SVG 流程圖品質門檻，但 production observability 仍缺少可交付的 SLI/SLO、告警規則與事故處理 runbook。

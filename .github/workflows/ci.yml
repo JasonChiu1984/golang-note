@@ -48,6 +48,12 @@ jobs:
       - name: Check operational runbook
         run: node scripts/check-operational-runbook.mjs
 
+      - name: Check Prometheus config
+        run: node scripts/check-prometheus-config.mjs
+
+      - name: Check OpenAPI contract
+        run: node scripts/check-openapi-contract.mjs
+
   production-contract:
     name: Production API worker contracts
     runs-on: ubuntu-latest

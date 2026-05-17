@@ -669,6 +669,7 @@
             <tr><td><a href="../production-api-worker/internal/app/service.go"><code>internal/app/service.go</code></a></td><td>Service</td><td>validation、transaction boundary、deadlock retry、enqueue。</td></tr>
             <tr><td><a href="../production-api-worker/internal/repository/postgres.go"><code>internal/repository/postgres.go</code></a></td><td>Postgres</td><td>pgx/stdlib、database/sql、PingContext、pool、deadlock 分類。</td></tr>
             <tr><td><a href="../production-api-worker/internal/observability/observability.go"><code>internal/observability/observability.go</code></a></td><td>Observability</td><td>Prometheus registry、OTel stdout/OTLP exporter、slog。</td></tr>
+            <tr><td><a href="../production-api-worker/api/openapi.yaml"><code>api/openapi.yaml</code></a></td><td>OpenAPI</td><td>固定 endpoint、schema、error code、Bearer auth 與 request id。</td></tr>
             <tr><td><a href="../production-api-worker/docker-compose.yml"><code>docker-compose.yml</code></a></td><td>Runtime</td><td>Postgres、OTel collector、migration、API 串接。</td></tr>
             <tr><td><a href="../production-api-worker/scripts/compose-smoke.sh"><code>compose-smoke.sh</code></a></td><td>Smoke</td><td>驗證 livez、readyz、job create/read 與 metrics。</td></tr>
             <tr><td><a href="https://github.com/JasonChiu1984/golang-note/blob/main/.github/workflows/ci.yml"><code>GitHub Actions</code></a></td><td>CI</td><td>root test、production contract、race/coverage、govulncheck、Docker build、Compose smoke。</td></tr>
@@ -1561,6 +1562,7 @@ docker compose down -v</code></pre>
       ["Worker retry", "併發/Worker", "if IsTemporary(err) && attempts < 3 { retry(task) }", ["temporary 才 retry", "永久錯誤進 failed/dead-letter", "retry 有上限"], "temporary retry 三次，permanent 不重試。"],
       ["Observability", "Observability", "logger.InfoContext(ctx, \"job processed\", \"job_id\", id, \"trace_id\", traceID)", ["log 帶 trace_id", "metrics 記 latency", "trace 跨 service/repo/worker"], "任一失敗 job 可從 metric 找到 log。"],
       ["Operational runbook", "Observability", "node scripts/check-operational-runbook.mjs", ["SLI/SLO", "Prometheus alert rules", "incident workflow", "runbook link"], "告警規則與排障文件可被 CI gate 固定。"],
+      ["Prometheus config", "Observability", "node scripts/check-prometheus-config.mjs\ndocker compose --profile monitoring up -d --build", ["scrape job", "rule_files", "monitoring profile", "API_KEY 風險"], "Prometheus 設定、告警規則與 Compose profile 可被檢查。"],
       ["Testing gate", "Testing", "go test ./...\ngo test -race ./...\ngo build ./cmd/api-worker", ["unit test", "httptest", "race test", "build gate"], "CI gate 全部通過才合併。"]
     ];
 
@@ -1569,7 +1571,7 @@ docker compose down -v</code></pre>
       ["併發深度", "9/10", "以教材深度評估：goroutine、channel、select、context、worker pool、shutdown 都有專案化說明。", "若作為 runbook，需再補 leak detection、壓測腳本與事故操作流程。"],
       ["API 工程化", "8/10", "以教材深度評估：handler、ServeMux、錯誤分類、httptest 與 production flow 已串起。", "若作為 runbook，需再補 middleware chain、auth、idempotency、灰度發布。"],
       ["DB Transaction", "8/10", "以教材深度評估：database/sql、pool、transaction、repository 與 Postgres 範例已具備。", "若作為 runbook，需再補 isolation level、deadlock retry、migration rollback 操作手冊。"],
-      ["Observability", "8.5/10", "以教材深度評估：slog、Prometheus、OpenTelemetry、health、pprof，加上 operational runbook 與 Prometheus alert rules。", "若作為企業 runbook，需再補正式 Alertmanager、OTLP backend 與平台部署範本。"],
+      ["Observability", "8.7/10", "以教材深度評估：slog、Prometheus、OpenTelemetry、health、pprof，加上 operational runbook、alert rules、scrape config 與 Compose monitoring profile。", "若作為企業 runbook，需再補正式 Alertmanager、OTLP backend 與平台部署範本。"],
       ["Testing", "9/10", "以教材深度評估：testing、table-driven、benchmark、fuzz、race、httptest 都已納入。", "若作為 runbook，需再補 contract test、integration test、測試資料治理。"],
       ["CI/CD", "8/10", "以教材深度評估：有 Docker、migration、GitHub Actions gate 與可執行 production-api-worker。", "若作為 runbook，需再補 release promotion、rollback drill、SBOM、簽章與供應鏈掃描。"],
       ["可執行專案", "9/10", "以教材深度評估：production-api-worker 已有 cmd/internal/service/repository/worker/observability。", "若作為 runbook，需再補 DB integration test、load test、容量規劃與部署拓撲。"]

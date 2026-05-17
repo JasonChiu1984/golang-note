@@ -166,7 +166,9 @@ flowchart TD
 |---|---|
 | `production-api-worker/docs/operational-runbook.md` | 定義 API 5xx、worker latency、queue depth、readiness、incident triage 與復盤流程 |
 | `configs/prometheus/production-api-worker-alerts.yml` | 固定 warning / critical alert rule 範例與 runbook link |
+| `configs/prometheus/prometheus.yml` | 固定本地 Prometheus scrape job、`/metrics` path 與 `rule_files` 載入 |
 | `node scripts/check-operational-runbook.mjs` | 確認 runbook、alert rules、README 與 CI 入口沒有被移除 |
+| `node scripts/check-prometheus-config.mjs` | 確認 Prometheus config、Compose monitoring profile、README、runbook 與 CI 入口一致 |
 
 | 告警 | 初判方向 |
 |---|---|
@@ -174,6 +176,15 @@ flowchart TD
 | worker p95 latency 升高 | 檢查 DB pool、queue depth、CPU throttling 與 worker 數，不先盲目加 goroutine |
 | queue depth 接近容量 | 判斷 downstream 慢、worker 卡住或 backpressure 策略不足 |
 | metrics missing | 檢查 `/metrics` 認證、scrape config、readiness 與 deployment 狀態 |
+
+本地可用 Compose monitoring profile 啟動教學用 Prometheus：
+
+```bash
+cd production-api-worker
+docker compose --profile monitoring up -d --build
+open http://localhost:9090
+docker compose down -v
+```
 
 ## Benchmark A/B 與 `benchstat`
 

@@ -1,0 +1,285 @@
+openapi: 3.1.0
+info:
+  title: production-api-worker API
+  version: v1.0.31
+  description: >
+    Machine-readable contract for the Go teaching production API worker.
+    This file mirrors docs/api-contract.md and the Go contract tests.
+servers:
+  - url: http://localhost:8080
+    description: Local memory or Docker Compose mode
+tags:
+  - name: jobs
+    description: Job creation and lookup endpoints
+  - name: health
+    description: Public liveness and readiness endpoints
+  - name: metrics
+    description: Prometheus metrics endpoint
+security:
+  - bearerAuth: []
+paths:
+  /jobs:
+    post:
+      tags:
+        - jobs
+      summary: Create a job and enqueue worker processing
+      operationId: createJob
+      security:
+        - bearerAuth: []
+        - {}
+      parameters:
+        - $ref: "#/components/parameters/RequestID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobInput"
+            examples:
+              resize:
+                value:
+                  name: resize
+                  payload: image
+      responses:
+        "202":
+          description: Job accepted and queued
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/RequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "400":
+          $ref: "#/components/responses/InvalidInput"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "503":
+          $ref: "#/components/responses/QueueFull"
+        "504":
+          $ref: "#/components/responses/RequestTimeout"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /jobs/{id}:
+    get:
+      tags:
+        - jobs
+      summary: Get a job by id
+      operationId: getJob
+      security:
+        - bearerAuth: []
+        - {}
+      parameters:
+        - $ref: "#/components/parameters/RequestID"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        "200":
+          description: Job found
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/RequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /livez:
+    get:
+      tags:
+        - health
+      summary: Liveness probe
+      operationId: livez
+      security: []
+      responses:
+        "200":
+          description: Process is alive
+  /readyz:
+    get:
+      tags:
+        - health
+      summary: Readiness probe
+      operationId: readyz
+      security: []
+      responses:
+        "200":
+          description: Service is ready to accept traffic
+        "503":
+          description: Service is draining and should stop receiving new traffic
+  /metrics:
+    get:
+      tags:
+        - metrics
+      summary: Prometheus metrics
+      operationId: metrics
+      security:
+        - bearerAuth: []
+        - {}
+      responses:
+        "200":
+          description: Prometheus text exposition
+          content:
+            text/plain:
+              schema:
+                type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Required only when API_KEY is configured. Health endpoints stay public.
+  parameters:
+    RequestID:
+      name: X-Request-ID
+      in: header
+      required: false
+      schema:
+        type: string
+        minLength: 1
+      description: Client-provided correlation id. Server echoes this value or creates req-*.
+  headers:
+    RequestID:
+      description: Request correlation id echoed by the server.
+      schema:
+        type: string
+  schemas:
+    JobInput:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: Logical job name. Blank or whitespace-only values are invalid.
+        payload:
+          type: string
+          maxLength: 4096
+          description: Optional small payload for the teaching example.
+    JobStatus:
+      type: string
+      enum:
+        - pending
+        - processing
+        - done
+        - failed
+    Job:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - payload
+        - status
+        - attempts
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        payload:
+          type: string
+        status:
+          $ref: "#/components/schemas/JobStatus"
+        attempts:
+          type: integer
+          minimum: 0
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ErrorEnvelope:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              enum:
+                - invalid_input
+                - not_found
+                - queue_full
+                - request_timeout
+                - unauthorized
+                - internal_error
+            message:
+              type: string
+  responses:
+    InvalidInput:
+      description: Invalid request body, unknown field, trailing JSON value, blank name, or oversized payload.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/RequestID"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    Unauthorized:
+      description: API_KEY is configured and Authorization bearer token is missing or invalid.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/RequestID"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    NotFound:
+      description: Job id does not exist.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/RequestID"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    QueueFull:
+      description: Bounded worker queue cannot accept a new job.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/RequestID"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    RequestTimeout:
+      description: Request context deadline exceeded.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/RequestID"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    InternalError:
+      description: Unexpected server error or panic recovery.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/RequestID"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"

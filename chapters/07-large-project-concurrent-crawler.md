@@ -273,6 +273,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Error envelope | `error.code`、`error.message` | client 無法用穩定 code 做分支 |
 | Observability | route label、trace span name、metrics label、`X-Request-ID` | dashboard、alert 與 incident log 無法對照 |
 | API security | `API_KEY`、Bearer token、公開 health endpoint、安全標頭 | 業務 endpoint 或 metrics 無條件公開，或 health check 被認證擋住 |
+| OpenAPI contract | `api/openapi.yaml`、request/response schema、error code、auth scheme | Markdown 文件與前端 mock / SDK / API gateway review 漂移 |
 | Panic recovery | `500 internal_error` JSON、request id header | panic 造成連線中斷、非 JSON 錯誤或洩漏內部細節 |
 | Request timeout | `504 request_timeout` JSON、request id header | handler deadline exceeded 被誤分類成 `500 internal_error`，client 無法區分 timeout 與 bug |
 | Retry cancellation | deadlock backoff、request context、shutdown deadline | request 已取消後仍繼續重試 DB 交易或排入 queue |
@@ -280,7 +281,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Migration contract | migration env、timeout、schema version、SQL 檔命名 | 重複套用 schema、release 後無法追蹤 DB 版本 |
 | Queue shutdown | enqueue 與 close 的同步邊界 | shutdown 期間可能送入已關閉 channel，造成 panic |
 
-`production-api-worker/docs/api-contract.md` 示範了最小可維護合約：`POST /jobs`、`GET /jobs/{id}`、health endpoint、metrics endpoint、錯誤格式與 release gate。這不是要把文件寫成百科，而是讓每次 release 都能回答三個問題：
+`production-api-worker/docs/api-contract.md` 示範了最小可維護合約：`POST /jobs`、`GET /jobs/{id}`、health endpoint、metrics endpoint、錯誤格式與 release gate。`production-api-worker/api/openapi.yaml` 則把同一份合約轉成 machine-readable OpenAPI artifact，讓前端 mock、SDK 產生、API gateway review 與 contract diff 可以共用同一份 schema。這不是要把文件寫成百科，而是讓每次 release 都能回答三個問題：
 
 1. 這次變更是否改了使用端看得到的 HTTP 合約？
 2. 若改了，是否向後相容？

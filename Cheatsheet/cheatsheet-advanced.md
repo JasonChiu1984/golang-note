@@ -362,6 +362,7 @@ ENTRYPOINT ["/app"]
 | Request schema | 必填欄位、型別、unknown field、trailing JSON 與大小限制是否改變 |
 | Response schema | status code、JSON 欄位、enum 是否仍可被舊 client decode |
 | Error envelope | 是否維持穩定 `error.code` 與 `error.message` |
+| OpenAPI contract | `api/openapi.yaml` 是否同步 endpoint、schema、error code、Bearer auth 與 `X-Request-ID` |
 | Request ID | `X-Request-ID` 是否會回傳，client 提供時是否原樣保留 |
 | Observability label | route label、span name、metrics label、`request.id` 是否會破壞 dashboard |
 | Worker shutdown | concurrent enqueue + shutdown 是否不 panic，close 後是否回穩定錯誤 |

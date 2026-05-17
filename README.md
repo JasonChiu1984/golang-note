@@ -2,9 +2,9 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
-> 教材版本：`v1.0.30`
+> 教材版本：`v1.0.31`
 > 教材基準：`Go 1.26.3`
-> 這次更新重點：補上 production-api-worker operational runbook、Prometheus 告警規則與可重跑 runbook 檢查，讓 observability 教材進一步落到事故處理流程。
+> 這次更新重點：補上 Prometheus scrape config、Compose monitoring profile、OpenAPI contract 與可重跑檢查，讓 operational runbook 與 API 合約都能從文件走到可驗證交付物。
 
 ## 版本策略
 
@@ -23,6 +23,8 @@
 | 補充教材頁 | 重大補充 HTML 需放入 `docs/`，包含語法應用圖解、第三方模組選型、C/Python/Go 效能比較、Assembly 與微服務 |
 | 語法 SVG 流程圖 | 單語法補充頁需以 Start/End、Input/Output、Decision、Process 等標準流程圖符號呈現，並保留 `<title>` / `<desc>` / `aria-labelledby` 可存取性 metadata |
 | Operational runbook | `production-api-worker/docs/operational-runbook.md` 與 `configs/prometheus/production-api-worker-alerts.yml` 需固定 SLI/SLO、告警、incident workflow、verification 與 risk notes |
+| Prometheus config gate | `configs/prometheus/prometheus.yml`、Compose `monitoring` profile 與 `node scripts/check-prometheus-config.mjs` 需固定 scrape job、rule_files、alert rules 載入與 API key 風險說明 |
+| OpenAPI contract | `production-api-worker/api/openapi.yaml` 需同步 `docs/api-contract.md` 與 Go contract tests，並由 `node scripts/check-openapi-contract.mjs` 固定 endpoint、schema、error code 與 auth 邊界 |
 | Assembly 教材 | Assembly 只能作為可量測 hot path 的小型 adapter，必須保留 pure Go fallback、benchmark、pprof 與部署風險說明 |
 | 微服務教材 | Go 微服務需獨立說明 handler、service、config、timeout、health check、Docker smoke 與 deployment risk |
 | 跨語言 / GPU 效能範例 | C/Python/Go 效能比較需提供可重跑 workload、正式測試 script、compiler flags、語言版本、raw output 與 Markdown 報告；GPU/Metal 比較需分開標示 CPU baseline、GPU kernel time 與 GPU total time |
@@ -119,7 +121,7 @@ go test ./project-concurrent-crawler/...
 | 專案 | 目標 | 建議時機 | 入口 |
 |---|---|---|---|
 | `project-concurrent-crawler` | 練習 worker pool、retry、parser/store 抽象 | 第一次完成第 7 章後 | `go test ./project-concurrent-crawler/...` |
-| `production-api-worker` | 練習 HTTP API、API key security contract、startup config、DB pool contract、migration contract、strict request decoding、transaction、context-aware retry、request timeout contract、queue shutdown safety、observability、operational runbook、panic recovery、graceful shutdown、Docker Compose | 完成第 5、7、9、11 章後 | `cd production-api-worker && go test ./...` |
+| `production-api-worker` | 練習 HTTP API、OpenAPI contract、API key security contract、startup config、DB pool contract、migration contract、strict request decoding、transaction、context-aware retry、request timeout contract、queue shutdown safety、observability、operational runbook、Prometheus monitoring profile、panic recovery、graceful shutdown、Docker Compose | 完成第 5、7、9、11 章後 | `cd production-api-worker && go test ./...` |
 
 `production-api-worker` 也附上 [API 合約文件](production-api-worker/docs/api-contract.md)，用來示範 production service 不只要能跑，也要把 endpoint、錯誤格式、相容性規則與 release gate 寫清楚。
 
@@ -139,6 +141,8 @@ go test ./project-concurrent-crawler/...
 | 補充教材頁 | `test -f docs/golang-syntax-application-svg.html && test -f docs/golang-third-party-modules.html && test -f docs/c-python-go-performance-supplement.html && test -f docs/golang-assembly-tutorial.html && test -f docs/golang-microservice-tutorial.html` | 確認補充 HTML 交付頁存在 |
 | 語法 SVG 流程圖品質門檻 | `node scripts/check-syntax-flow-svg.mjs` | 確認 `docs/` 與整合來源都保留 25 個單語法流程圖、標準流程圖符號、SVG metadata 與 blueprint renderer |
 | Operational runbook gate | `node scripts/check-operational-runbook.mjs` | 確認 `production-api-worker/docs/operational-runbook.md`、`configs/prometheus/production-api-worker-alerts.yml`、README 與 CI 都保留 SLI/SLO、告警、incident workflow 與驗證入口 |
+| Prometheus config gate | `node scripts/check-prometheus-config.mjs` | 確認 `configs/prometheus/prometheus.yml`、alert rules、Compose monitoring profile、README、runbook 與 CI 入口一致 |
+| OpenAPI contract gate | `node scripts/check-openapi-contract.mjs` | 確認 `production-api-worker/api/openapi.yaml` 保留 endpoint、request/response schema、error code、Bearer auth 與 `X-Request-ID` |
 | Docs index 連結自動修正 | `node scripts/fix-docs-index-links.mjs --sync-source && node scripts/fix-docs-index-links.mjs --check` | 每次重產 `docs/index.html` 後，自動改成 GitHub Pages `docs/` root 可用路徑，避免 `/docs`、`/ReleaseNote` 404 |
 | HTML 回主頁教程檢查 | `node scripts/check-html-home-links.mjs` | 確認 `docs/`、`ReleaseNote/` 與圖解 HTML 頁面都有可解析到 `docs/index.html` 的「主頁教程」入口 |
 | 跨語言效能範例 | `cd examples/performance-comparison && clang -O2 c/bench.c -o /tmp/bench-c && /tmp/bench-c && go test -bench=. -benchmem -count=1 ./go && python3 python/bench.py` | 確認 C/Python/Go 範例可重跑，並保留正式報告所需原始輸出 |
@@ -149,6 +153,7 @@ go test ./project-concurrent-crawler/...
 | CI workflow 語法 | `ruby -e 'require "yaml"; YAML.load_file(".github/workflows/ci.yml")'` | 確認 GitHub Actions YAML 可解析 |
 | CI release gate | `.github/workflows/ci.yml` | GitHub Actions 會跑 root module、production-api-worker contract、race/coverage、govulncheck、Docker build 與 Compose smoke |
 | Compose smoke gate | `cd production-api-worker && docker compose up -d --build && make compose-smoke && docker compose down -v` | 驗證 Postgres、migration、API、worker、readiness 與 metrics 端到端可用 |
+| Compose monitoring profile | `cd production-api-worker && docker compose --profile monitoring up -d --build && open http://localhost:9090` | 啟動教學用 Prometheus，載入 scrape config 與 alert rules；若設定 `API_KEY`，需同步規劃 scrape auth |
 | 依賴供應鏈檢查 | `go mod tidy && go mod verify && go list -m -u all && govulncheck ./...` | 第 8 / 9 / 11 章的依賴治理與 release gate 基線 |
 | API 合約回歸 | `cd production-api-worker && go test ./internal/api -run 'Test.*Contract' -count=1` | 驗證 HTTP status、JSON schema 與錯誤 code 沒有意外改變 |
 | Request decoding 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestDecodingContract' -count=1` | 驗證 malformed JSON、unknown field、trailing JSON 與空白 name 都回 `400 invalid_input` |

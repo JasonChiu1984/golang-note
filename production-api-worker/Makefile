@@ -1,4 +1,4 @@
-.PHONY: test test-race ci ci-contract runbook-check docker-build compose-smoke run migrate docker-up docker-down
+.PHONY: test test-race ci ci-contract openapi-check runbook-check prometheus-check docker-build compose-smoke run migrate docker-up docker-down
 
 test:
 	go test ./...
@@ -17,8 +17,14 @@ ci-contract:
 	go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
 	go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1
 
+openapi-check:
+	cd .. && node scripts/check-openapi-contract.mjs
+
 runbook-check:
 	cd .. && node scripts/check-operational-runbook.mjs
+
+prometheus-check:
+	cd .. && node scripts/check-prometheus-config.mjs
 
 docker-build:
 	docker build -t production-api-worker:local .

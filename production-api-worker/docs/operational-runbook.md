@@ -12,6 +12,7 @@
 |---|---|
 | SLI / SLO | 定義 API availability、request error rate、worker latency、queue depth 與 readiness 狀態 |
 | Alert rule | 提供 Prometheus rule 檔，可由 CI 與人工審查檢查 |
+| Prometheus scrape config | 提供本地 scrape job 與 rule_files 載入範本 |
 | Incident workflow | 從告警、分級、初判、緩解、驗證到復盤 |
 | Verification | 對應 repo 內可重跑命令，避免 runbook 只停在文字 |
 
@@ -55,6 +56,23 @@ Prometheus rule 檔位於：
 ```text
 configs/prometheus/production-api-worker-alerts.yml
 ```
+
+Prometheus scrape config 位於：
+
+```text
+configs/prometheus/prometheus.yml
+```
+
+本地教學 profile：
+
+```bash
+cd production-api-worker
+docker compose --profile monitoring up -d --build
+open http://localhost:9090
+docker compose down -v
+```
+
+若設定 `API_KEY`，`/metrics` 會要求 `Authorization: Bearer <token>`。正式環境應改用 Prometheus bearer token file、secret mount 或平台原生 scrape auth，不要把 secret 寫入 repo 內的 `prometheus.yml`。
 
 ## 4. Configuration
 
@@ -114,14 +132,17 @@ docker compose down -v
 |---|---|---|
 | Runbook 文件完整性 | `node scripts/check-operational-runbook.mjs` | runbook、alert rules、README 與 CI 入口都存在 |
 | Prometheus rule 語法層級檢查 | `node scripts/check-operational-runbook.mjs` | rule group、alert、expr、for、severity、runbook_url 皆存在 |
+| Prometheus scrape config | `node scripts/check-prometheus-config.mjs` | scrape job、rule_files、Compose monitoring profile、README 與 CI 入口一致 |
 | Production contract | `cd production-api-worker && make ci-contract` | API / config / migration / retry / worker 合約通過 |
 | Compose smoke | `cd production-api-worker && API_KEY=dev-secret docker compose up -d --build && API_KEY=dev-secret make compose-smoke` | ready、live、job create/read、metrics 通過 |
+| Compose monitoring profile | `cd production-api-worker && docker compose --profile monitoring up -d --build` | Prometheus 於 `http://localhost:9090` 載入 scrape config 與 alert rules |
 
 ## 7. Troubleshooting
 
 | 症狀 | 可能原因 | 處置 |
 |---|---|---|
 | `/metrics` 回 401 | 啟用 `API_KEY` 但 scrape 未帶 Bearer token | 調整 Prometheus scrape config 或暫用 local teaching mode |
+| Prometheus targets 顯示 down | API 未啟動、Compose profile 未啟用或 scrape auth 未同步 | 查 `docker compose ps`、`/readyz`、`/metrics` 與 Prometheus targets |
 | 5xx 集中在 `/jobs` | request decoding、DB transaction、queue enqueue 或 retry timeout | 先跑 API contract，再查 request id 對應 trace |
 | queue depth 不下降 | worker 卡住、DB 慢、downstream 慢或 worker 數不足 | 查 worker duration histogram、DB pool、CPU throttling |
 | readiness 長時間 503 | draining 未結束或 shutdown 卡住 | 查 queue drain log、worker shutdown test、compose logs |

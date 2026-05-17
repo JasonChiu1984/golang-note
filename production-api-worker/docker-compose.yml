@@ -47,3 +47,17 @@ services:
         condition: service_completed_successfully
       otel-collector:
         condition: service_started
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    command: ["--config.file=/etc/prometheus/prometheus.yml"]
+    volumes:
+      - ../configs/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../configs/prometheus/production-api-worker-alerts.yml:/etc/prometheus/rules/production-api-worker-alerts.yml:ro
+    ports:
+      - "9090:9090"
+    profiles:
+      - monitoring
+    depends_on:
+      api:
+        condition: service_started
