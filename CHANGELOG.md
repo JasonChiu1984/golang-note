@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.29 - 2026-05-17
+
+- 新增 2026-05-17 10:31 資深工程師審查報告，確認 v1.0.28 已補齊 production API security contract，但語法應用圖解仍缺少可重跑的 SVG 流程圖品質門檻。
+- `docs/golang-syntax-application-svg.html` 與 `圖解筆記3-4整合/golang-syntax-application-svg.html` 將 25 個單語法應用圖統一為 Start/End、Input/Output、Decision、Process 等標準流程圖符號。
+- 每個單語法流程圖改由 blueprint renderer 產生，保留 `flowTitle`、branch label、節點 role 與 `<title>` / `<desc>` / `aria-labelledby` SVG metadata。
+- 新增 `scripts/check-syntax-flow-svg.mjs`，檢查 `docs/` 與整合來源都具備 25 個語法 flow、25 個 blueprint、標準流程圖符號、metadata renderer，並避免舊的城市路線圖說明回流。
+- README 驗證矩陣新增語法 SVG 流程圖品質門檻；`docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.28 - 2026-05-13
 
 - 新增 2026-05-13 22:55 資深工程師審查報告，確認 v1.0.27 已補齊效能與補充頁發布鏈路，但 production API security contract 仍未進入可測合約。

@@ -414,24 +414,24 @@
               <path class="line line-rose" marker-end="url(#if-error-arrow)" d="M470 120 C520 42 675 42 732 92"/>
             </g>
             <g id="if-nodes">
-              <rect class="node node-blue" x="36" y="72" width="154" height="96"/>
-              <text class="svg-title" x="113" y="106" text-anchor="middle" font-size="18">輸入資料</text>
+              <polygon points="54,72 190,72 172,168 36,168" fill="#eff6ff" stroke="#93c5fd" stroke-width="2"/>
+              <text class="svg-title" x="113" y="106" text-anchor="middle" font-size="17">Input：接收資料</text>
               <text class="svg-code" x="113" y="134" text-anchor="middle" font-size="13">input / request</text>
 
               <polygon points="390,54 486,120 390,186 294,120" fill="#fffbeb" stroke="#f59e0b" stroke-width="2"/>
-              <text class="svg-title" x="390" y="108" text-anchor="middle" font-size="17">條件判斷</text>
+              <text class="svg-title" x="390" y="108" text-anchor="middle" font-size="17">Decision：錯誤？</text>
               <text class="svg-code" x="390" y="136" text-anchor="middle" font-size="13">err != nil ?</text>
 
-              <rect class="node node-rose" x="732" y="72" width="190" height="96"/>
-              <text class="svg-title" x="827" y="106" text-anchor="middle" font-size="18">True：立即返回</text>
+              <ellipse cx="827" cy="120" rx="95" ry="48" fill="#fff1f2" stroke="#fda4af" stroke-width="2"/>
+              <text class="svg-title" x="827" y="106" text-anchor="middle" font-size="18">End：返回錯誤</text>
               <text class="svg-code" x="827" y="134" text-anchor="middle" font-size="13">return fmt.Errorf(...)</text>
 
               <rect class="node node-teal" x="590" y="314" width="180" height="96"/>
-              <text class="svg-title" x="680" y="348" text-anchor="middle" font-size="18">False：繼續主流程</text>
+              <text class="svg-title" x="680" y="348" text-anchor="middle" font-size="18">Process：主流程</text>
               <text class="svg-code" x="680" y="376" text-anchor="middle" font-size="13">create / save / enqueue</text>
 
-              <rect class="node node-violet" x="576" y="486" width="210" height="54"/>
-              <text class="svg-title" x="681" y="520" text-anchor="middle" font-size="17">回傳成功結果</text>
+              <ellipse cx="681" cy="513" rx="105" ry="27" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="2"/>
+              <text class="svg-title" x="681" y="520" text-anchor="middle" font-size="17">End：成功結果</text>
 
               <rect class="node" x="70" y="252" width="275" height="126"/>
               <text class="svg-title" x="207" y="286" text-anchor="middle" font-size="18">Guard Clause 原則</text>
@@ -531,7 +531,7 @@
       <div class="section-head">
         <div>
           <h2>每個語法的 SVG 應用流程圖</h2>
-          <p>每張卡改用城市路線圖風格：格線底圖、開始站、輸入站、判斷路口、輸出站、主路線與修正回查路線，對照實際 Go 程式碼與 review gate。</p>
+          <p>每張卡改用標準程式流程圖符號：Start/End 終止符、Process 矩形、Decision 菱形、Input/Output 平行四邊形，並以語法本身的功能命名節點。</p>
         </div>
         <span class="tag">25 Syntax Flow SVGs</span>
       </div>
@@ -971,7 +971,7 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
     ];
     syntaxDomains.forEach((item, index) => { item.steps = domainStepSets[index]; });
 
-    const syntaxFlows = [
+	    const syntaxFlows = [
       {
         key: "package",
         kind: "套件邊界",
@@ -1146,10 +1146,296 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
         steps: ["同時等待資料與取消", "select 監聽多個 case", "ctx timeout 優先退出", "data case 正常處理"],
         code: ["select {", "case <-ctx.Done():", "    return ctx.Err()", "case job := <-jobs:", "    return process(job)", "}"].join("\n"),
         check: "無條件 default 會造成 busy loop；timeout 要用 context 或 timer 管理。",
-      },
-    ];
+	      },
+	    ];
 
-    function svgText(svg, text, x, y, options = {}) {
+	    const syntaxFlowBlueprints = {
+	      package: {
+	        flowTitle: "package：套件邊界流程",
+	        branchLabels: { pass: "export", review: "循環 import" },
+	        nodes: [
+	          ["terminator", "Start", "模組邊界需求"],
+	          ["process", "Process", "宣告 package"],
+	          ["decision", "Decision", "是否公開 API?"],
+	          ["process", "Process", "Exported identifier"],
+	          ["terminator", "End", "上層安全 import"],
+	        ],
+	      },
+	      import: {
+	        flowTitle: "import：依賴導入流程",
+	        branchLabels: { pass: "必要", review: "未使用" },
+	        nodes: [
+	          ["terminator", "Start", "功能需要依賴"],
+	          ["io", "Input", "套件路徑"],
+	          ["decision", "Decision", "是否必要?"],
+	          ["process", "Process", "import / tidy"],
+	          ["terminator", "End", "依賴圖乾淨"],
+	        ],
+	      },
+	      const: {
+	        flowTitle: "const：固定規則流程",
+	        branchLabels: { pass: "清楚", review: "magic number" },
+	        nodes: [
+	          ["terminator", "Start", "固定業務規則"],
+	          ["process", "Process", "const / iota"],
+	          ["decision", "Decision", "命名是否清楚?"],
+	          ["process", "Process", "測試枚舉語意"],
+	          ["terminator", "End", "狀態值穩定"],
+	        ],
+	      },
+	      var: {
+	        flowTitle: "var：可變狀態流程",
+	        branchLabels: { pass: "封裝", review: "data race" },
+	        nodes: [
+	          ["terminator", "Start", "需要可變狀態"],
+	          ["process", "Process", "選擇 var/欄位"],
+	          ["decision", "Decision", "是否跨 goroutine?"],
+	          ["process", "Process", "加鎖或封裝"],
+	          ["terminator", "End", "狀態可控"],
+	        ],
+	      },
+	      type: {
+	        flowTitle: "type：Domain 命名流程",
+	        branchLabels: { pass: "強型別", review: "alias?" },
+	        nodes: [
+	          ["terminator", "Start", "發現型別混用"],
+	          ["process", "Process", "宣告 domain type"],
+	          ["decision", "Decision", "是否為遷移 alias?"],
+	          ["process", "Process", "簽名改用新型別"],
+	          ["terminator", "End", "編譯期保護"],
+	        ],
+	      },
+	      func: {
+	        flowTitle: "func：Use Case 封裝流程",
+	        branchLabels: { pass: "valid", review: "too much" },
+	        nodes: [
+	          ["terminator", "Start", "外部呼叫進入"],
+	          ["io", "Input", "參數與 context"],
+	          ["decision", "Decision", "輸入合法?"],
+	          ["process", "Process", "執行 service 邏輯"],
+	          ["terminator", "End", "result / error"],
+	        ],
+	      },
+	      if: {
+	        flowTitle: "if：Guard Clause 分支流程",
+	        branchLabels: { pass: "false", review: "true" },
+	        nodes: [
+	          ["terminator", "Start", "接收 request"],
+	          ["io", "Input", "validate(input)"],
+	          ["decision", "Decision", "err != nil?"],
+	          ["process", "Process", "主流程 save"],
+	          ["terminator", "End", "return result"],
+	        ],
+	      },
+	      else: {
+	        flowTitle: "else：互斥分支流程",
+	        branchLabels: { pass: "hit", review: "fallback" },
+	        nodes: [
+	          ["terminator", "Start", "取得狀態"],
+	          ["io", "Input", "cache / flag"],
+	          ["decision", "Decision", "命中快速路徑?"],
+	          ["process", "Process", "return cached"],
+	          ["terminator", "End", "結果確定"],
+	        ],
+	      },
+	      switch: {
+	        flowTitle: "switch：狀態分派流程",
+	        branchLabels: { pass: "case", review: "default" },
+	        nodes: [
+	          ["terminator", "Start", "取得狀態值"],
+	          ["io", "Input", "job.Status"],
+	          ["decision", "Decision", "命中 case?"],
+	          ["process", "Process", "呼叫 handler"],
+	          ["terminator", "End", "分派完成"],
+	        ],
+	      },
+	      case: {
+	        flowTitle: "case：條件處理流程",
+	        branchLabels: { pass: "match", review: "missing" },
+	        nodes: [
+	          ["terminator", "Start", "列出條件"],
+	          ["process", "Process", "case 對應語意"],
+	          ["decision", "Decision", "是否單一責任?"],
+	          ["process", "Process", "專屬處理函式"],
+	          ["terminator", "End", "case 測試通過"],
+	        ],
+	      },
+	      default: {
+	        flowTitle: "default：保底分支流程",
+	        branchLabels: { pass: "unknown", review: "silent" },
+	        nodes: [
+	          ["terminator", "Start", "switch/select 未命中"],
+	          ["process", "Process", "進入 default"],
+	          ["decision", "Decision", "是否保留診斷?"],
+	          ["process", "Process", "回錯或記錄"],
+	          ["terminator", "End", "未知輸入可觀測"],
+	        ],
+	      },
+	      for: {
+	        flowTitle: "for：迭代與退出流程",
+	        branchLabels: { pass: "continue", review: "stop" },
+	        nodes: [
+	          ["terminator", "Start", "設定退出條件"],
+	          ["process", "Process", "執行一輪迭代"],
+	          ["decision", "Decision", "成功或達上限?"],
+	          ["process", "Process", "backoff / retry"],
+	          ["terminator", "End", "離開迴圈"],
+	        ],
+	      },
+	      range: {
+	        flowTitle: "range：集合遍歷流程",
+	        branchLabels: { pass: "next", review: "capture" },
+	        nodes: [
+	          ["terminator", "Start", "接收集合"],
+	          ["io", "Input", "slice / map / chan"],
+	          ["decision", "Decision", "是否需複製變數?"],
+	          ["process", "Process", "逐筆處理"],
+	          ["terminator", "End", "遍歷完成"],
+	        ],
+	      },
+	      break: {
+	        flowTitle: "break：離開流程控制",
+	        branchLabels: { pass: "stop", review: "nested" },
+	        nodes: [
+	          ["terminator", "Start", "迴圈執行中"],
+	          ["process", "Process", "偵測停止條件"],
+	          ["decision", "Decision", "離開哪一層?"],
+	          ["process", "Process", "break / label"],
+	          ["terminator", "End", "進入收尾"],
+	        ],
+	      },
+	      continue: {
+	        flowTitle: "continue：跳過本輪流程",
+	        branchLabels: { pass: "skip", review: "cleanup" },
+	        nodes: [
+	          ["terminator", "Start", "讀取一筆資料"],
+	          ["process", "Process", "檢查資料品質"],
+	          ["decision", "Decision", "是否不合格?"],
+	          ["process", "Process", "continue 下一筆"],
+	          ["terminator", "End", "保留主流程"],
+	        ],
+	      },
+	      fallthrough: {
+	        flowTitle: "fallthrough：明確落下流程",
+	        branchLabels: { pass: "intentional", review: "implicit" },
+	        nodes: [
+	          ["terminator", "Start", "命中上層 case"],
+	          ["process", "Process", "註解共用邏輯"],
+	          ["decision", "Decision", "是否必要落下?"],
+	          ["process", "Process", "fallthrough 下一 case"],
+	          ["terminator", "End", "雙分支測試"],
+	        ],
+	      },
+	      goto: {
+	        flowTitle: "goto：集中清理流程",
+	        branchLabels: { pass: "cleanup", review: "prefer defer" },
+	        nodes: [
+	          ["terminator", "Start", "多段初始化"],
+	          ["process", "Process", "偵測初始化失敗"],
+	          ["decision", "Decision", "是否需集中清理?"],
+	          ["process", "Process", "goto cleanup"],
+	          ["terminator", "End", "回傳原錯誤"],
+	        ],
+	      },
+	      defer: {
+	        flowTitle: "defer：延後清理流程",
+	        branchLabels: { pass: "safe", review: "loop cost" },
+	        nodes: [
+	          ["terminator", "Start", "取得資源"],
+	          ["process", "Process", "立即 defer close"],
+	          ["decision", "Decision", "是否在熱迴圈?"],
+	          ["process", "Process", "執行主流程"],
+	          ["terminator", "End", "返回時釋放"],
+	        ],
+	      },
+	      return: {
+	        flowTitle: "return：結果回傳流程",
+	        branchLabels: { pass: "complete", review: "lost error" },
+	        nodes: [
+	          ["terminator", "Start", "完成路徑"],
+	          ["process", "Process", "組合 result/error"],
+	          ["decision", "Decision", "error 是否保留?"],
+	          ["process", "Process", "return 結束函式"],
+	          ["terminator", "End", "呼叫端檢查"],
+	        ],
+	      },
+	      interface: {
+	        flowTitle: "interface：抽象邊界流程",
+	        branchLabels: { pass: "small", review: "too large" },
+	        nodes: [
+	          ["terminator", "Start", "使用端需要能力"],
+	          ["process", "Process", "宣告小 interface"],
+	          ["decision", "Decision", "方法是否過多?"],
+	          ["process", "Process", "注入實作/mock"],
+	          ["terminator", "End", "替換實作可測"],
+	        ],
+	      },
+	      struct: {
+	        flowTitle: "struct：資料聚合流程",
+	        branchLabels: { pass: "valid", review: "zero value" },
+	        nodes: [
+	          ["terminator", "Start", "定義資料形狀"],
+	          ["process", "Process", "欄位與 tag"],
+	          ["decision", "Decision", "零值是否有效?"],
+	          ["process", "Process", "literal 建立 entity"],
+	          ["terminator", "End", "傳入 service"],
+	        ],
+	      },
+	      map: {
+	        flowTitle: "map：索引查找流程",
+	        branchLabels: { pass: "found", review: "missing/race" },
+	        nodes: [
+	          ["terminator", "Start", "需要 key lookup"],
+	          ["process", "Process", "make / literal"],
+	          ["decision", "Decision", "key 是否存在?"],
+	          ["process", "Process", "讀寫 value"],
+	          ["terminator", "End", "回傳 ok/error"],
+	        ],
+	      },
+	      chan: {
+	        flowTitle: "chan：通訊管道流程",
+	        branchLabels: { pass: "open", review: "closed/block" },
+	        nodes: [
+	          ["terminator", "Start", "建立工作佇列"],
+	          ["io", "Input", "producer send"],
+	          ["decision", "Decision", "channel 是否可用?"],
+	          ["process", "Process", "worker receive"],
+	          ["terminator", "End", "owner close"],
+	        ],
+	      },
+	      go: {
+	        flowTitle: "go：goroutine 生命週期",
+	        branchLabels: { pass: "owned", review: "leak" },
+	        nodes: [
+	          ["terminator", "Start", "收到背景工作"],
+	          ["process", "Process", "go 啟動 worker"],
+	          ["decision", "Decision", "是否有取消路徑?"],
+	          ["process", "Process", "WaitGroup 收斂"],
+	          ["terminator", "End", "goroutine 結束"],
+	        ],
+	      },
+	      select: {
+	        flowTitle: "select：多路等待流程",
+	        branchLabels: { pass: "case", review: "busy loop" },
+	        nodes: [
+	          ["terminator", "Start", "同時等待事件"],
+	          ["io", "Input", "ctx / channel"],
+	          ["decision", "Decision", "哪個 case 先到?"],
+	          ["process", "Process", "處理資料或取消"],
+	          ["terminator", "End", "避免阻塞"],
+	        ],
+	      },
+	    };
+
+	    syntaxFlows.forEach((item) => {
+	      const blueprint = syntaxFlowBlueprints[item.key];
+	      if (!blueprint) return;
+	      item.flowTitle = blueprint.flowTitle;
+	      item.branchLabels = blueprint.branchLabels;
+	      item.flowNodes = blueprint.nodes.map(([shape, role, text]) => ({ shape, role, text }));
+	    });
+
+	    function svgText(svg, text, x, y, options = {}) {
       const node = document.createElementNS("http://www.w3.org/2000/svg", "text");
       node.setAttribute("x", String(x));
       node.setAttribute("y", String(y));
@@ -1244,13 +1530,63 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
       return polygon;
     }
 
-    function svgParallelogram(svg, x, y, width, height, fill, stroke = "#cbd5e1") {
-      const lean = Math.min(22, Math.round(width * 0.16));
-      return svgPolygon(svg, `${x + lean},${y} ${x + width},${y} ${x + width - lean},${y + height} ${x},${y + height}`, fill, stroke);
-    }
+	    function svgParallelogram(svg, x, y, width, height, fill, stroke = "#cbd5e1") {
+	      const lean = Math.min(22, Math.round(width * 0.16));
+	      return svgPolygon(svg, `${x + lean},${y} ${x + width},${y} ${x + width - lean},${y + height} ${x},${y + height}`, fill, stroke);
+	    }
 
-    function svgPath(svg, d, markerId = "flow-arrow", options = {}) {
-      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+	    function svgDiamond(svg, cx, cy, width, height, fill, stroke = "#cbd5e1") {
+	      return svgPolygon(svg, `${cx},${cy - height / 2} ${cx + width / 2},${cy} ${cx},${cy + height / 2} ${cx - width / 2},${cy}`, fill, stroke);
+	    }
+
+	    function appendSvgMetadata(svg, titleId, descId, title, desc) {
+	      const titleNode = document.createElementNS("http://www.w3.org/2000/svg", "title");
+	      titleNode.setAttribute("id", titleId);
+	      titleNode.textContent = title;
+	      const descNode = document.createElementNS("http://www.w3.org/2000/svg", "desc");
+	      descNode.setAttribute("id", descId);
+	      descNode.textContent = desc;
+	      svg.appendChild(titleNode);
+	      svg.appendChild(descNode);
+	      svg.setAttribute("aria-labelledby", `${titleId} ${descId}`);
+	    }
+
+	    function drawFlowNode(svg, node, geom, style = {}) {
+	      const fillByShape = {
+	        terminator: style.terminatorFill || style.accent || "#ecfdf5",
+	        io: "#fef3c7",
+	        process: "#dbeafe",
+	        decision: "#fee2e2",
+	      };
+	      const strokeByShape = {
+	        terminator: style.terminatorStroke || style.stroke || "#7fb069",
+	        io: "#d6b658",
+	        process: "#93c5fd",
+	        decision: "#c65f5f",
+	      };
+	      if (node.shape === "terminator") {
+	        svgEllipse(svg, geom.cx, geom.cy, geom.rx, geom.ry, fillByShape.terminator, strokeByShape.terminator);
+	      } else if (node.shape === "io") {
+	        svgParallelogram(svg, geom.x, geom.y, geom.width, geom.height, fillByShape.io, strokeByShape.io);
+	      } else if (node.shape === "decision") {
+	        svgDiamond(svg, geom.cx, geom.cy, geom.width, geom.height, fillByShape.decision, strokeByShape.decision);
+	      } else {
+	        svgRect(svg, geom.x, geom.y, geom.width, geom.height, fillByShape.process, strokeByShape.process);
+	      }
+	      const titleFill = node.shape === "decision" ? "#991b1b" : "#064e3b";
+	      svgText(svg, node.role, geom.labelX, geom.labelY - 10, { anchor: "middle", weight: 900, size: 10, fill: titleFill });
+	      svgWrappedText(svg, node.text, geom.labelX, geom.labelY + 8, {
+	        anchor: "middle",
+	        size: geom.textSize || 10,
+	        fill: "#1f2937",
+	        maxChars: geom.maxChars || 10,
+	        maxLines: geom.maxLines || 2,
+	        lineHeight: 13,
+	      });
+	    }
+
+	    function svgPath(svg, d, markerId = "flow-arrow", options = {}) {
+	      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
       path.setAttribute("d", d);
       path.setAttribute("fill", "none");
       path.setAttribute("stroke", options.stroke || "#64748b");
@@ -1283,16 +1619,17 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
       });
     }
 
-    function drawStepChain(svg, steps, options) {
-      const markerId = options.markerId;
-      const route = options.route || "#0f4c81";
-      const alertRoute = options.alertRoute || "#b45353";
-      const accent = options.accent || "#dcfce7";
-      const stroke = options.stroke || "#86efac";
-      const mode = options.mode || "syntax";
+	    function drawStepChain(svg, flowSource, options) {
+	      const markerId = options.markerId;
+	      const route = options.route || "#0f4c81";
+	      const alertRoute = options.alertRoute || "#b45353";
+	      const accent = options.accent || "#dcfce7";
+	      const stroke = options.stroke || "#86efac";
+	      const mode = options.mode || "syntax";
+	      const steps = Array.isArray(flowSource) ? flowSource : flowSource.steps;
 
-      if (mode === "domain") {
-        svgPath(svg, "M156 118 H205", markerId, { stroke: route, width: 3.2 });
+	      if (mode === "domain") {
+	        svgPath(svg, "M156 118 H205", markerId, { stroke: route, width: 3.2 });
         svgPath(svg, "M328 118 H352", markerId, { stroke: route, width: 3.2 });
         svgPath(svg, "M424 156 V178", markerId, { stroke: route, width: 3.2 });
         svgPath(svg, "M496 210 H560", markerId, { stroke: route, width: 3.2 });
@@ -1304,44 +1641,45 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
         svgRect(svg, 356, 178, 140, 64, "#dbeafe", "#93c5fd");
         svgEllipse(svg, 626, 210, 66, 29, "#dcfce7", "#7fb069");
 
-        const labels = [
-          [steps[0], 96, 112, 11, 10],
-          [steps[1], 267, 110, 10, 10],
-          [steps[2], 424, 112, 10, 9],
-          [steps[3], 426, 204, 10, 10],
-          [steps[4], 626, 204, 10, 10],
-        ];
-        labels.forEach(([text, cx, cy, size, chars], index) => {
-          svgText(svg, index === 0 ? "開始站" : index === labels.length - 1 ? "驗收站" : `路口 ${index}`, cx, cy - 10, { anchor: "middle", weight: 900, size: 10, fill: index === 2 ? "#991b1b" : "#064e3b" });
-          svgWrappedText(svg, text, cx, cy + 8, { anchor: "middle", size, fill: "#1f2937", maxChars: chars, maxLines: 2, lineHeight: 13 });
-        });
-        svgText(svg, "回查", 104, 270, { size: 11, fill: alertRoute, weight: 900 });
-        return;
-      }
+	        const labels = [
+	          [steps[0], 96, 112, 11, 10, "Start"],
+	          [steps[1], 267, 110, 10, 10, "Input"],
+	          [steps[2], 424, 112, 10, 9, "Decision"],
+	          [steps[3], 426, 204, 10, 10, "Process"],
+	          [steps[4], 626, 204, 10, 10, "End"],
+	        ];
+	        labels.forEach(([text, cx, cy, size, chars, title], index) => {
+	          svgText(svg, title, cx, cy - 10, { anchor: "middle", weight: 900, size: 10, fill: index === 2 ? "#991b1b" : "#064e3b" });
+	          svgWrappedText(svg, text, cx, cy + 8, { anchor: "middle", size, fill: "#1f2937", maxChars: chars, maxLines: 2, lineHeight: 13 });
+	        });
+	        svgText(svg, "review", 104, 270, { size: 11, fill: alertRoute, weight: 900 });
+	        return;
+	      }
 
-      svgPath(svg, "M136 108 H206", markerId, { stroke: route, width: 3.2 });
-      svgPath(svg, "M340 108 H360", markerId, { stroke: route, width: 3.2 });
-      svgPath(svg, "M430 146 V170", markerId, { stroke: route, width: 3.2 });
-      svgPath(svg, "M500 202 H536", markerId, { stroke: route, width: 3.2 });
-      svgPath(svg, "M430 234 V250 H96 V138", markerId, { stroke: alertRoute, width: 2.2, dash: "7 6" });
-
-      svgEllipse(svg, 78, 108, 58, 28, accent, stroke);
-      svgParallelogram(svg, 206, 74, 134, 68, "#fef3c7", "#d6b658");
-      svgPolygon(svg, "430,146 500,202 430,258 360,202", "#fee2e2", "#c65f5f");
-      svgRect(svg, 536, 170, 80, 64, "#dbeafe", "#93c5fd");
-
-      const labels = [
-        [steps[0], 78, 101, 10, 10, "開始"],
-        [steps[1], 273, 101, 10, 11, "輸入"],
-        [steps[2], 430, 196, 10, 10, "判斷"],
-        [steps[3], 576, 196, 10, 8, "輸出"],
-      ];
-      labels.forEach(([text, cx, cy, size, chars, title], index) => {
-        svgText(svg, title, cx, cy - 10, { anchor: "middle", weight: 900, size: 10, fill: index === 2 ? "#991b1b" : "#064e3b" });
-        svgWrappedText(svg, text, cx, cy + 8, { anchor: "middle", size, fill: "#1f2937", maxChars: chars, maxLines: 2, lineHeight: 13 });
-      });
-      svgText(svg, "修正路線", 104, 250, { size: 11, fill: alertRoute, weight: 900 });
-    }
+	      const nodes = flowSource.flowNodes || [
+	        { shape: "terminator", role: "Start", text: steps[0] },
+	        { shape: "process", role: "Process", text: steps[1] },
+	        { shape: "decision", role: "Decision", text: steps[2] },
+	        { shape: "process", role: "Process", text: steps[3] },
+	        { shape: "terminator", role: "End", text: "完成" },
+	      ];
+	      const geoms = [
+	        { cx: 78, cy: 108, rx: 58, ry: 28, labelX: 78, labelY: 101, maxChars: 10 },
+	        { x: 206, y: 74, width: 134, height: 68, labelX: 273, labelY: 101, maxChars: 10 },
+	        { cx: 430, cy: 128, width: 140, height: 112, labelX: 430, labelY: 122, maxChars: 9, textSize: 10 },
+	        { x: 536, y: 96, width: 88, height: 66, labelX: 580, labelY: 119, maxChars: 8, textSize: 9 },
+	        { cx: 580, cy: 232, rx: 60, ry: 28, labelX: 580, labelY: 225, maxChars: 9 },
+	      ];
+	      svgPath(svg, "M136 108 H206", markerId, { stroke: route, width: 3.2 });
+	      svgPath(svg, "M340 108 C350 108 350 128 360 128", markerId, { stroke: route, width: 3.2 });
+	      svgPath(svg, "M500 128 H536", markerId, { stroke: route, width: 3.2 });
+	      svgPath(svg, "M580 162 V204", markerId, { stroke: route, width: 3.2 });
+	      svgPath(svg, "M430 184 V250 H96 V138", markerId, { stroke: alertRoute, width: 2.2, dash: "7 6" });
+	      nodes.slice(0, geoms.length).forEach((node, index) => drawFlowNode(svg, node, geoms[index], { accent, stroke }));
+	      const branchLabels = flowSource.branchLabels || { pass: "pass", review: "review" };
+	      svgText(svg, branchLabels.pass, 506, 116, { size: 11, fill: route, weight: 900 });
+	      svgText(svg, branchLabels.review, 104, 250, { size: 11, fill: alertRoute, weight: 900 });
+	    }
 
     function createSyntaxFlowCard(item, index) {
       const card = document.createElement("article");
@@ -1350,13 +1688,15 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
       heading.innerHTML = `<code>${item.key}</code><span class="tag">${item.kind}</span>`;
       card.appendChild(heading);
 
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-      svg.setAttribute("viewBox", "0 0 640 430");
-      svg.setAttribute("role", "img");
-      svg.setAttribute("aria-label", `${item.key} 語法應用流程圖`);
+	      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+	      svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+	      svg.setAttribute("viewBox", "0 0 640 430");
+	      svg.setAttribute("role", "img");
+	      const titleId = `syntax-flow-title-${item.key}`;
+	      const descId = `syntax-flow-desc-${item.key}`;
+	      appendSvgMetadata(svg, titleId, descId, item.flowTitle || `${item.key} 語法應用流程圖`, `${item.key} 使用標準程式流程圖符號呈現 ${item.kind} 的工程應用。`);
 
-      const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+	      const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
       const arrowId = `flow-arrow-${item.key}`;
       const gridId = `syntax-grid-${item.key}`;
       defs.innerHTML = `
@@ -1371,12 +1711,12 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
       background.setAttribute("id", `flow-background-${item.key}`);
       svg.appendChild(background);
 
-      drawGridBackground(svg, gridId, 640, 430);
-      const accent = ["#eff6ff", "#ecfdf5", "#fffbeb", "#f5f3ff", "#fff1f2"][index % 5];
-      const stroke = ["#bfdbfe", "#99f6e4", "#fde68a", "#ddd6fe", "#fecdd3"][index % 5];
-      svgText(svg, `${item.key} 對應流程`, 24, 34, { weight: 900, size: 17 });
-      svgWrappedText(svg, item.kind, 616, 34, { anchor: "end", weight: 900, size: 12, fill: "#0f766e", maxChars: 12, maxLines: 1 });
-      drawStepChain(svg, item.steps, { markerId: arrowId, accent, stroke, mode: "syntax" });
+	      drawGridBackground(svg, gridId, 640, 430);
+	      const accent = ["#eff6ff", "#ecfdf5", "#fffbeb", "#f5f3ff", "#fff1f2"][index % 5];
+	      const stroke = ["#bfdbfe", "#99f6e4", "#fde68a", "#ddd6fe", "#fecdd3"][index % 5];
+	      svgText(svg, item.flowTitle || `${item.key} 對應流程`, 24, 34, { weight: 900, size: 17 });
+	      svgWrappedText(svg, item.kind, 616, 34, { anchor: "end", weight: 900, size: 12, fill: "#0f766e", maxChars: 12, maxLines: 1 });
+	      drawStepChain(svg, item, { markerId: arrowId, accent, stroke, mode: "syntax" });
 
       drawCodeSnippet(svg, item.code, 24, 284, 340, 116, "Go 實作片段");
       svgRect(svg, 390, 284, 226, 116, "#ffffff");
@@ -1409,11 +1749,13 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
       const body = document.createElement("div");
       body.className = "domain-card-body";
 
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-      svg.setAttribute("viewBox", "0 0 760 430");
-      svg.setAttribute("role", "img");
-      svg.setAttribute("aria-label", `${item.domain} 語法域應用流程圖`);
+	      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+	      svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+	      svg.setAttribute("viewBox", "0 0 760 430");
+	      svg.setAttribute("role", "img");
+	      const titleId = `domain-flow-title-${index + 1}`;
+	      const descId = `domain-flow-desc-${index + 1}`;
+	      appendSvgMetadata(svg, titleId, descId, `${item.domain} 語法域應用流程圖`, `${item.domain} 使用 Start、Input、Decision、Process、End 標準節點呈現語法域在專案中的應用。`);
       const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
       const arrowId = `domain-arrow-${index}`;
       const gridId = `domain-grid-${index}`;

@@ -23,6 +23,7 @@ if (shouldSyncSource) {
 }
 
 const replacements = [
+  ["../docs/index.html", "index.html"],
   ["../docs/golang-syntax-application-svg.html", "golang-syntax-application-svg.html"],
   ["../docs/golang-third-party-modules.html", "golang-third-party-modules.html"],
   ["../docs/c-python-go-performance-supplement.html", "c-python-go-performance-supplement.html"],
