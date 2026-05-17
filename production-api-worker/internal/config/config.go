@@ -24,6 +24,8 @@ type Config struct {
 	QueueSize               int
 	Workers                 int
 	APIKey                  string
+	PprofEnabled            bool
+	PprofToken              string
 	DatabaseURL             string
 	DatabaseMaxOpenConns    int
 	DatabaseMaxIdleConns    int
@@ -77,12 +79,23 @@ func LoadFromLookup(lookup func(string) (string, bool)) (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
+	pprofEnabled, err := parseBool("ENABLE_PPROF", readString(lookup, "ENABLE_PPROF", "false"))
+	if err != nil {
+		return Config{}, err
+	}
+	apiKey := strings.TrimSpace(readString(lookup, "API_KEY", ""))
+	pprofToken := strings.TrimSpace(readString(lookup, "PPROF_TOKEN", ""))
+	if pprofEnabled && apiKey == "" && pprofToken == "" {
+		return Config{}, fmt.Errorf("ENABLE_PPROF requires PPROF_TOKEN or API_KEY")
+	}
 
 	return Config{
 		Port:                    port,
 		QueueSize:               queueSize,
 		Workers:                 workers,
-		APIKey:                  strings.TrimSpace(readString(lookup, "API_KEY", "")),
+		APIKey:                  apiKey,
+		PprofEnabled:            pprofEnabled,
+		PprofToken:              pprofToken,
 		DatabaseURL:             strings.TrimSpace(readString(lookup, "DATABASE_URL", "")),
 		DatabaseMaxOpenConns:    databaseMaxOpenConns,
 		DatabaseMaxIdleConns:    databaseMaxIdleConns,
@@ -144,6 +157,14 @@ func parsePositiveDuration(name, value string) (time.Duration, error) {
 	parsed, err := time.ParseDuration(value)
 	if err != nil || parsed <= 0 {
 		return 0, fmt.Errorf("%s must be a positive duration such as 30m or 1h, got %q", name, value)
+	}
+	return parsed, nil
+}
+
+func parseBool(name, value string) (bool, error) {
+	parsed, err := strconv.ParseBool(value)
+	if err != nil {
+		return false, fmt.Errorf("%s must be a boolean such as true or false, got %q", name, value)
 	}
 	return parsed, nil
 }

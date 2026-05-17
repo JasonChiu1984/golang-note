@@ -1,4 +1,4 @@
-.PHONY: test test-race ci ci-contract openapi-check runbook-check prometheus-check docker-build compose-smoke run migrate docker-up docker-down
+.PHONY: test test-race ci ci-contract openapi-check runbook-check prometheus-check pprof-check docker-build compose-smoke run migrate docker-up docker-down
 
 test:
 	go test ./...
@@ -25,6 +25,9 @@ runbook-check:
 
 prometheus-check:
 	cd .. && node scripts/check-prometheus-config.mjs
+
+pprof-check:
+	cd .. && node scripts/check-pprof-contract.mjs
 
 docker-build:
 	docker build -t production-api-worker:local .

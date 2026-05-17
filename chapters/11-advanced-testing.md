@@ -225,6 +225,7 @@ func TestCreateJobContract(t *testing.T) {
 | Startup / DB pool config | 不合法 `PORT`、`QUEUE_SIZE`、`WORKERS`、DB pool size 或 DB pool duration 應 fail fast，不可 silent fallback |
 | Migration contract | migration env、timeout、SQL 檔排序與 version 命名應固定，避免 release pipeline 漂移 |
 | API security | `API_KEY` 啟用後 `/jobs`、`/metrics` 需 Bearer token；`/livez`、`/readyz` 不應被認證擋住 |
+| Pprof diagnostics | `ENABLE_PPROF` 預設關閉；啟用 `/debug/pprof/` 時必須要求 Bearer token，避免 debug endpoint 公開 |
 | Security headers | `X-Content-Type-Options`、`X-Frame-Options`、`Referrer-Policy` 應由 middleware 固定 |
 
 對 `production-api-worker` 這類 service，建議把合約測試獨立命名，讓 release gate 可以聚焦執行：
@@ -233,6 +234,7 @@ func TestCreateJobContract(t *testing.T) {
 cd production-api-worker
 go test ./internal/api -run 'Test.*Contract' -count=1
 go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1
+go test ./internal/api -run 'TestPprofDiagnosticsContract' -count=1
 ```
 
 > 合約測試不應過度綁定內部 struct；它要固定「外部看見的行為」，例如 JSON 欄位與錯誤 code，而不是 service 裡用了哪個 repository 實作。
@@ -262,6 +264,32 @@ func TestAPIKeyAuthContract(t *testing.T) {
 ```
 
 安全標頭也適合放在合約測試中，因為它們應由 middleware 統一套用，不應依賴每個 handler 手動設定。
+
+### Pprof Diagnostics Contract Test
+
+pprof 是事故診斷工具，不是公開 API。測試要固定三個外部行為：預設不註冊 `/debug/pprof/`、啟用後未帶 token 回 `401 unauthorized`、合法 Bearer token 才能讀 profile index。
+
+```go
+func TestPprofDiagnosticsContract(t *testing.T) {
+    disabled := NewHandler(service, obs).Routes()
+    req := httptest.NewRequest(http.MethodGet, "/debug/pprof/", nil)
+    rec := httptest.NewRecorder()
+    disabled.ServeHTTP(rec, req)
+    if rec.Code != http.StatusNotFound {
+        t.Fatalf("status = %d, want 404", rec.Code)
+    }
+
+    enabled := NewHandler(service, obs, WithPprof(true, "debug-token")).Routes()
+    req.Header.Set("Authorization", "Bearer debug-token")
+    rec = httptest.NewRecorder()
+    enabled.ServeHTTP(rec, req)
+    if rec.Code != http.StatusOK {
+        t.Fatalf("status = %d, want 200", rec.Code)
+    }
+}
+```
+
+設定測試也要擋住 `ENABLE_PPROF=true` 但未提供 `PPROF_TOKEN` / `API_KEY` 的部署錯誤，讓 diagnostics endpoint 不會因設定疏忽而裸露。
 
 ### Request Decoding Contract
 

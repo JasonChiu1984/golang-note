@@ -60,7 +60,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           api.NewHandler(service, obs, api.WithReadiness(readiness.Ready), api.WithAuthToken(cfg.APIKey)).Routes(),
+		Handler:           api.NewHandler(service, obs, api.WithReadiness(readiness.Ready), api.WithAuthToken(cfg.APIKey), api.WithPprof(cfg.PprofEnabled, pprofToken(cfg))).Routes(),
 		ReadHeaderTimeout: 3 * time.Second,
 	}
 
@@ -93,6 +93,13 @@ func main() {
 	if ctx.Err() != nil {
 		<-shutdownDone
 	}
+}
+
+func pprofToken(cfg config.Config) string {
+	if cfg.PprofToken != "" {
+		return cfg.PprofToken
+	}
+	return cfg.APIKey
 }
 
 func openStore(ctx context.Context, cfg config.Config) (repository.Store, func(), error) {

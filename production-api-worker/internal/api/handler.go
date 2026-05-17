@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/pprof"
 	"strings"
 	"time"
 
@@ -21,9 +22,15 @@ type Handler struct {
 	obs       *observability.Observability
 	ready     func() bool
 	authToken string
+	pprof     pprofConfig
 }
 
 type Option func(*Handler)
+
+type pprofConfig struct {
+	enabled bool
+	token   string
+}
 
 func WithReadiness(ready func() bool) Option {
 	return func(h *Handler) {
@@ -36,6 +43,15 @@ func WithReadiness(ready func() bool) Option {
 func WithAuthToken(token string) Option {
 	return func(h *Handler) {
 		h.authToken = strings.TrimSpace(token)
+	}
+}
+
+func WithPprof(enabled bool, token string) Option {
+	return func(h *Handler) {
+		h.pprof = pprofConfig{
+			enabled: enabled,
+			token:   strings.TrimSpace(token),
+		}
 	}
 }
 
@@ -58,6 +74,14 @@ func (h *Handler) Routes() http.Handler {
 	mux.Handle("GET /metrics", h.obs.MetricsHandler())
 	mux.HandleFunc("GET /livez", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
 	mux.HandleFunc("GET /readyz", h.readyz)
+	if h.pprof.enabled {
+		mux.HandleFunc("GET /debug/pprof/", pprof.Index)
+		mux.HandleFunc("GET /debug/pprof/cmdline", pprof.Cmdline)
+		mux.HandleFunc("GET /debug/pprof/profile", pprof.Profile)
+		mux.HandleFunc("GET /debug/pprof/symbol", pprof.Symbol)
+		mux.HandleFunc("GET /debug/pprof/trace", pprof.Trace)
+		mux.HandleFunc("GET /debug/pprof/{name}", pprof.Index)
+	}
 	return h.securityHeadersMiddleware(h.requestContextMiddleware(h.metricsMiddleware(h.recoverMiddleware(h.authMiddleware(mux)))))
 }
 
@@ -153,7 +177,17 @@ func (h *Handler) securityHeadersMiddleware(next http.Handler) http.Handler {
 
 func (h *Handler) authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if h.authToken == "" || !requiresAuth(r) {
+		if h.pprof.enabled && isPprofPath(r.URL.Path) {
+			if h.pprof.token == "" || r.Header.Get("Authorization") != "Bearer "+h.pprof.token {
+				writeJSON(w, http.StatusUnauthorized, errorResponse{
+					Error: errorBody{Code: "unauthorized", Message: "unauthorized"},
+				})
+				return
+			}
+			next.ServeHTTP(w, r)
+			return
+		}
+		if h.authToken == "" || !requiresAuth(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -167,14 +201,18 @@ func (h *Handler) authMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func requiresAuth(r *http.Request) bool {
-	if r.URL.Path == "/metrics" {
+func requiresAuth(path string) bool {
+	if path == "/metrics" {
 		return true
 	}
-	if r.URL.Path == "/jobs" || strings.HasPrefix(r.URL.Path, "/jobs/") {
+	if path == "/jobs" || strings.HasPrefix(path, "/jobs/") {
 		return true
 	}
 	return false
+}
+
+func isPprofPath(path string) bool {
+	return path == "/debug/pprof" || strings.HasPrefix(path, "/debug/pprof/")
 }
 
 func (h *Handler) metricsMiddleware(next http.Handler) http.Handler {

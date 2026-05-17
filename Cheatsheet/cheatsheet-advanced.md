@@ -430,9 +430,15 @@ go tool trace trace.out
 go test -race ./...
 go run -race .
 
-# HTTP pprof（生產環境）
+# HTTP pprof（本機教學）
 import _ "net/http/pprof"
 go tool pprof http://localhost:6060/debug/pprof/heap
+
+# production diagnostics：預設關閉，短期啟用時需 token
+ENABLE_PPROF=true PPROF_TOKEN=debug-token go run ./cmd/api-worker
+curl -H 'Authorization: Bearer debug-token' \
+  'http://localhost:8080/debug/pprof/profile?seconds=30' -o profile.pb.gz
+go tool pprof profile.pb.gz
 
 # Benchmark A/B
 go test -run='^$' -bench=. -benchmem -count=10 ./... > old.txt
@@ -473,6 +479,7 @@ benchstat old.txt new.txt
 | GC 壓力 | runtime metrics / gctrace | `/gc/heap/live:bytes`、`GODEBUG=gctrace=1` |
 
 > 正式效能結論要附修改前後資料；單次 benchmark 或只看平均值不足以支撐 release decision。
+> `/debug/pprof/` 不應常態公開；`production-api-worker` 用 `ENABLE_PPROF`、`PPROF_TOKEN` 與 `TestPprofDiagnosticsContract` 固定 diagnostics 安全邊界。
 
 ---
 
@@ -788,6 +795,7 @@ synctest.Test(t, func(t *testing.T) {
 | Assembly hot path | `go test ./internal/compute -bench=. -benchmem -count=10` + `go tool objdump -s 'score' ./bin/server` | 只在 pprof 證明 CPU hot path 時使用，且必須有 pure Go fallback |
 | CI workflow | `ruby -e 'require "yaml"; YAML.load_file(".github/workflows/ci.yml")'` + GitHub Actions run | workflow 必須真的存在於 repo，並固定 root test、production contract、race/coverage、govulncheck、Docker build 與 Compose smoke |
 | Compose smoke | `cd production-api-worker && docker compose up -d --build && make compose-smoke && docker compose down -v` | 驗證 livez、readyz、job create/read 與 metrics，不只確認 image build 成功 |
-| CPU 熱點 | `go tool pprof http://localhost:6060/debug/pprof/profile?seconds=30` | 適合 CPU-bound，不適合直接判斷 I/O wait |
+| Pprof diagnostics | `ENABLE_PPROF=true PPROF_TOKEN=debug-token go run ./cmd/api-worker` + `curl -H 'Authorization: Bearer debug-token' .../debug/pprof/profile?seconds=30 -o profile.pb.gz` | 預設關閉，短期事故診斷後關閉，profile 檔案不要提交 repo |
+| CPU 熱點 | `go tool pprof http://localhost:6060/debug/pprof/profile?seconds=30` | 本機教學用；適合 CPU-bound，不適合直接判斷 I/O wait |
 | Runtime metrics | `/gc/*`、`/sched/*`、RSS、scrape payload | 升級 Go runtime / GC 前後要用同一組 dashboard threshold |
 | 工業通訊效能 | polling interval、timeout、retry、設備回應時間、queue backlog | PLC / DDC / SCADA 場景常被 I/O wait 主導，不能只看語言層 CPU |

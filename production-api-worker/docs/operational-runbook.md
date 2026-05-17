@@ -2,7 +2,7 @@
 
 > 文件日期：2026-05-17
 > 完整日期時間：2026-05-17 11:02:15 CST +0800
-> 適用範圍：`production-api-worker` API、worker queue、Postgres migration、Prometheus metrics、OpenTelemetry trace、Docker Compose smoke gate。
+> 適用範圍：`production-api-worker` API、worker queue、Postgres migration、Prometheus metrics、OpenTelemetry trace、pprof diagnostics、Docker Compose smoke gate。
 
 ## 1. Overview
 
@@ -13,6 +13,7 @@
 | SLI / SLO | 定義 API availability、request error rate、worker latency、queue depth 與 readiness 狀態 |
 | Alert rule | 提供 Prometheus rule 檔，可由 CI 與人工審查檢查 |
 | Prometheus scrape config | 提供本地 scrape job 與 rule_files 載入範本 |
+| pprof diagnostics | 預設關閉 `/debug/pprof/`；事故期間短期啟用時強制 Bearer token |
 | Incident workflow | 從告警、分級、初判、緩解、驗證到復盤 |
 | Verification | 對應 repo 內可重跑命令，避免 runbook 只停在文字 |
 
@@ -74,6 +75,18 @@ docker compose down -v
 
 若設定 `API_KEY`，`/metrics` 會要求 `Authorization: Bearer <token>`。正式環境應改用 Prometheus bearer token file、secret mount 或平台原生 scrape auth，不要把 secret 寫入 repo 內的 `prometheus.yml`。
 
+pprof diagnostics 預設關閉。只有需要 CPU、heap、goroutine 或 trace 證據時才短期啟用：
+
+```bash
+cd production-api-worker
+ENABLE_PPROF=true PPROF_TOKEN=debug-token go run ./cmd/api-worker
+curl -H 'Authorization: Bearer debug-token' http://localhost:8080/debug/pprof/
+curl -H 'Authorization: Bearer debug-token' 'http://localhost:8080/debug/pprof/profile?seconds=30' -o profile.pb.gz
+go tool pprof profile.pb.gz
+```
+
+正式環境應同時限制來源網段或經由 VPN / gateway 存取。診斷完成後關閉 `ENABLE_PPROF`，並把採集到的 profile 當作 incident evidence 保存，不要提交到 repo。
+
 ## 4. Configuration
 
 | 類型 | 建議值 | 說明 |
@@ -84,6 +97,7 @@ docker compose down -v
 | Worker latency warning | p95 > 2s for 10m | 檢查 DB、queue、CPU throttling 與 worker 數 |
 | Queue depth warning | depth > 50 for 10m | 接近預設 queue size `64` 時需立即判斷壅塞來源 |
 | Readiness critical | `/readyz` 非 200 或服務 scrape 失敗 | LB / orchestrator 應停止導流 |
+| Diagnostics access | disabled by default | `ENABLE_PPROF=true` 只允許短期事故診斷，且必須帶 `Authorization: Bearer <token>` |
 
 ## 5. Example
 
@@ -126,6 +140,18 @@ docker compose logs --no-color
 docker compose down -v
 ```
 
+### Incident diagnostics：需要 CPU / heap / goroutine 證據
+
+1. 先確認 metrics 已指出異常範圍，例如 CPU 飆高、worker latency 上升或 goroutine 疑似累積。
+2. 短期啟用 `ENABLE_PPROF=true`，並設定 `PPROF_TOKEN` 或沿用 `API_KEY`。
+3. 使用 Bearer token 抓取 profile，保存為 incident artifact。
+4. 診斷完成後關閉 `ENABLE_PPROF`，再回補測試、runbook 或容量設定。
+
+```bash
+curl -H 'Authorization: Bearer debug-token' 'http://localhost:8080/debug/pprof/goroutine?debug=1' > goroutine.txt
+curl -H 'Authorization: Bearer debug-token' 'http://localhost:8080/debug/pprof/heap' -o heap.pb.gz
+```
+
 ## 6. Verification
 
 | 檢查 | 指令 | 預期結果 |
@@ -133,6 +159,8 @@ docker compose down -v
 | Runbook 文件完整性 | `node scripts/check-operational-runbook.mjs` | runbook、alert rules、README 與 CI 入口都存在 |
 | Prometheus rule 語法層級檢查 | `node scripts/check-operational-runbook.mjs` | rule group、alert、expr、for、severity、runbook_url 皆存在 |
 | Prometheus scrape config | `node scripts/check-prometheus-config.mjs` | scrape job、rule_files、Compose monitoring profile、README 與 CI 入口一致 |
+| pprof diagnostics contract | `node scripts/check-pprof-contract.mjs` | `ENABLE_PPROF`、`PPROF_TOKEN`、Go tests、runbook、README 與 CI 入口一致 |
+| pprof Go contract | `cd production-api-worker && go test ./internal/config ./internal/api -run 'Test.*Pprof|TestPprofDiagnosticsContract' -count=1` | pprof 預設關閉，啟用時要求 token，合法 token 才能讀 profile index |
 | Production contract | `cd production-api-worker && make ci-contract` | API / config / migration / retry / worker 合約通過 |
 | Compose smoke | `cd production-api-worker && API_KEY=dev-secret docker compose up -d --build && API_KEY=dev-secret make compose-smoke` | ready、live、job create/read、metrics 通過 |
 | Compose monitoring profile | `cd production-api-worker && docker compose --profile monitoring up -d --build` | Prometheus 於 `http://localhost:9090` 載入 scrape config 與 alert rules |
@@ -142,6 +170,8 @@ docker compose down -v
 | 症狀 | 可能原因 | 處置 |
 |---|---|---|
 | `/metrics` 回 401 | 啟用 `API_KEY` 但 scrape 未帶 Bearer token | 調整 Prometheus scrape config 或暫用 local teaching mode |
+| `/debug/pprof/` 回 404 | `ENABLE_PPROF` 未啟用 | 只有 incident diagnostics 期間才短期設定 `ENABLE_PPROF=true` |
+| `/debug/pprof/` 回 401 | 未帶 Bearer token 或 token 不符 | 帶 `Authorization: Bearer <PPROF_TOKEN>`，不要把 token 寫入文件或 repo |
 | Prometheus targets 顯示 down | API 未啟動、Compose profile 未啟用或 scrape auth 未同步 | 查 `docker compose ps`、`/readyz`、`/metrics` 與 Prometheus targets |
 | 5xx 集中在 `/jobs` | request decoding、DB transaction、queue enqueue 或 retry timeout | 先跑 API contract，再查 request id 對應 trace |
 | queue depth 不下降 | worker 卡住、DB 慢、downstream 慢或 worker 數不足 | 查 worker duration histogram、DB pool、CPU throttling |
@@ -156,6 +186,7 @@ docker compose down -v
 | 不把 health endpoint 上鎖 | `/livez`、`/readyz` 保持公開供 LB / orchestrator 使用 |
 | 控制 label cardinality | route label 使用 `/jobs/{id}`，避免 job id 進入 metrics label |
 | 告警要能行動 | 每條 alert 必須有 summary、description、severity 與 runbook link |
+| pprof 短期啟用 | profile 可能暴露 memory、cmdline、goroutine 與 route 資訊，診斷完成後必須關閉 |
 | 復盤要回到測試 | incident 後補 contract test、smoke gate 或 runbook 檢查，不只修文字 |
 
 ## 9. Risk Notes
@@ -165,4 +196,5 @@ docker compose down -v
 | 教學閾值不等於正式 SLA | 2%、5%、2s、50 queue depth 是教材 baseline；正式環境需依流量重算 |
 | Prometheus rule 未接真實 Alertmanager | 本 repo 提供 rule 與檢查腳本，不代表已部署告警平台 |
 | Trace backend 未固定 | `OTEL_EXPORTER_OTLP_ENDPOINT` 可接 collector；未設定時用 stdout exporter |
+| pprof profile 敏感 | heap、goroutine、cmdline、trace 可能含環境與請求資訊；只保存於受控 incident artifact |
 | Docker Compose 不是 Kubernetes | Compose smoke 可證明端到端最小流程，不取代 K8s readiness/liveness/rollout policy |

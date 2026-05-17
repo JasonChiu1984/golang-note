@@ -169,6 +169,7 @@ flowchart TD
 | `configs/prometheus/prometheus.yml` | 固定本地 Prometheus scrape job、`/metrics` path 與 `rule_files` 載入 |
 | `node scripts/check-operational-runbook.mjs` | 確認 runbook、alert rules、README 與 CI 入口沒有被移除 |
 | `node scripts/check-prometheus-config.mjs` | 確認 Prometheus config、Compose monitoring profile、README、runbook 與 CI 入口一致 |
+| `node scripts/check-pprof-contract.mjs` | 確認 pprof diagnostics 預設關閉、啟用時要求 token，並同步 README、runbook、測試與 CI |
 
 | 告警 | 初判方向 |
 |---|---|
@@ -284,7 +285,7 @@ python3 python/bench.py
 
 ### 內建 HTTP pprof
 
-在長時間執行的服務（如 Web API）中，引入 `net/http/pprof`：
+在長時間執行的服務（如 Web API）中，引入 `net/http/pprof`。本機教學可以用獨立 debug port；production service 則應像 `production-api-worker` 一樣預設關閉，只有 `ENABLE_PPROF=true` 且有 `PPROF_TOKEN` / `API_KEY` 時才註冊 `/debug/pprof/`。
 
 ```go
 import _ "net/http/pprof"
@@ -304,6 +305,7 @@ func main() {
 
 | 指令 | 用途 |
 |---|---|
+| `curl -H 'Authorization: Bearer debug-token' 'http://localhost:8080/debug/pprof/profile?seconds=30' -o profile.pb.gz && go tool pprof profile.pb.gz` | 受控 production diagnostics：帶 Bearer token 擷取 30 秒 CPU profile |
 | `go tool pprof http://localhost:6060/debug/pprof/profile?seconds=30` | 擷取 30 秒的 **CPU 瓶頸** |
 | `go tool pprof http://localhost:6060/debug/pprof/heap` | 查看目前 **記憶體用量** 與分配熱點 |
 | `go tool pprof http://localhost:6060/debug/pprof/goroutine` | 查看目前的 **goroutine 數量與狀態** |
@@ -380,11 +382,14 @@ pprof 可以在 production 使用，但要有邊界。CPU profile、block profil
 
 | 做法 | 原因 |
 |---|---|
+| 預設關閉 `/debug/pprof/` | 避免 heap、goroutine、cmdline、trace 資訊常態暴露 |
+| 啟用時要求 Bearer token | 讓 diagnostics endpoint 也有明確存取合約 |
 | pprof 綁 `localhost` 或管理網段 | 避免公開 debug endpoint |
 | 隨機挑單一 replica 取樣 | 避免整個服務同時承受 profiling 成本 |
 | CPU profile 設短時間窗口 | 降低對 latency 的影響 |
 | 不同 profile 分開收集 | profiling 工具可能互相干擾 |
 | 保存 profile 檔案與 commit SHA | 讓效能結論可追溯 |
+| 診斷完成後關閉 `ENABLE_PPROF` | 避免短期事故設定變成永久攻擊面 |
 
 ## 常見陷阱
 

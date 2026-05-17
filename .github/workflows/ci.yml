@@ -54,6 +54,9 @@ jobs:
       - name: Check OpenAPI contract
         run: node scripts/check-openapi-contract.mjs
 
+      - name: Check pprof diagnostics contract
+        run: node scripts/check-pprof-contract.mjs
+
   production-contract:
     name: Production API worker contracts
     runs-on: ubuntu-latest

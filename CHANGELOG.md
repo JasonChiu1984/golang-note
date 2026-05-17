@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.32 - 2026-05-17
+
+- 新增 2026-05-17 14:02 資深工程師審查報告，確認 v1.0.31 已補齊 Prometheus / OpenAPI 合約，但 production diagnostics / pprof 仍缺少可測的啟用條件、認證邊界與 runbook 流程。
+- `production-api-worker` 新增 `ENABLE_PPROF` 與 `PPROF_TOKEN` 設定；pprof 預設關閉，啟用時必須提供 `PPROF_TOKEN` 或 `API_KEY`，否則啟動 fail fast。
+- API handler 新增受控 `/debug/pprof/` route，只有合法 `Authorization: Bearer <token>` 才能讀取 profile index、CPU profile、heap、goroutine 與 trace endpoint。
+- 新增 `TestPprofDiagnosticsContract` 與 config 測試，固定 pprof 預設 404、未授權 401、合法 token 200，以及 `ENABLE_PPROF=true` 未設定 token 的錯誤部署。
+- 新增 `scripts/check-pprof-contract.mjs`、`make pprof-check` 與 GitHub Actions root-course gate，讓 README、runbook、Go tests、CI 與實作保持一致。
+- README、`production-api-worker/README.md`、operational runbook、第 10 / 11 章、進階 Cheat Sheet 與整合視覺課程同步加入 pprof diagnostics contract。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.31 - 2026-05-17
 
 - 新增 2026-05-17 13:40 資深工程師審查報告，確認 v1.0.30 已補齊 operational runbook，但 API 合約仍缺少可供前端、SDK、測試工具與文件生成共用的 machine-readable OpenAPI artifact。

@@ -33,6 +33,9 @@ func TestLoadFromLookupDefaults(t *testing.T) {
 	if cfg.APIKey != "" || cfg.DatabaseURL != "" || cfg.OTLPEndpoint != "" {
 		t.Fatalf("unexpected optional config: %+v", cfg)
 	}
+	if cfg.PprofEnabled || cfg.PprofToken != "" {
+		t.Fatalf("unexpected pprof config: %+v", cfg)
+	}
 }
 
 func TestLoadFromLookupUsesEnvironment(t *testing.T) {
@@ -41,6 +44,8 @@ func TestLoadFromLookupUsesEnvironment(t *testing.T) {
 		"QUEUE_SIZE":                  "128",
 		"WORKERS":                     "8",
 		"API_KEY":                     " secret-token ",
+		"ENABLE_PPROF":                " true ",
+		"PPROF_TOKEN":                 " debug-token ",
 		"DATABASE_URL":                " postgres://app:app@localhost:5432/app?sslmode=disable ",
 		"DATABASE_MAX_OPEN_CONNS":     "40",
 		"DATABASE_MAX_IDLE_CONNS":     "12",
@@ -56,6 +61,9 @@ func TestLoadFromLookupUsesEnvironment(t *testing.T) {
 	}
 	if cfg.APIKey != "secret-token" {
 		t.Fatalf("APIKey = %q", cfg.APIKey)
+	}
+	if !cfg.PprofEnabled || cfg.PprofToken != "debug-token" {
+		t.Fatalf("unexpected pprof config: %+v", cfg)
 	}
 	if cfg.DatabaseURL != "postgres://app:app@localhost:5432/app?sslmode=disable" {
 		t.Fatalf("DatabaseURL = %q", cfg.DatabaseURL)
@@ -111,6 +119,16 @@ func TestLoadFromLookupRejectsInvalidRequiredConfig(t *testing.T) {
 			name:      "database connection max lifetime is not a duration",
 			env:       map[string]string{"DATABASE_CONN_MAX_LIFETIME": "soon"},
 			wantError: "DATABASE_CONN_MAX_LIFETIME must be a positive duration",
+		},
+		{
+			name:      "pprof enabled without token",
+			env:       map[string]string{"ENABLE_PPROF": "true"},
+			wantError: "ENABLE_PPROF requires PPROF_TOKEN or API_KEY",
+		},
+		{
+			name:      "pprof flag is not boolean",
+			env:       map[string]string{"ENABLE_PPROF": "sometimes"},
+			wantError: "ENABLE_PPROF must be a boolean",
 		},
 	}
 

@@ -18,7 +18,7 @@ const requiredFiles = [
 const specTerms = [
   "openapi: 3.1.0",
   "title: production-api-worker API",
-  "version: v1.0.31",
+  "version: v1.0.32",
   "/jobs:",
   "post:",
   "/jobs/{id}:",

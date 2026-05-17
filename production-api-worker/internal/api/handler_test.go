@@ -313,6 +313,34 @@ func TestAPIKeyAuthContract(t *testing.T) {
 	}
 }
 
+func TestPprofDiagnosticsContract(t *testing.T) {
+	disabled := newContractHandler(t, nil)
+	req := httptest.NewRequest(http.MethodGet, "/debug/pprof/", nil)
+	rec := httptest.NewRecorder()
+	disabled.ServeHTTP(rec, req)
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("disabled pprof status = %d, want %d", rec.Code, http.StatusNotFound)
+	}
+
+	enabled := newContractHandlerWithOptions(t, nil, WithPprof(true, "debug-token"))
+	rec = httptest.NewRecorder()
+	enabled.ServeHTTP(rec, req)
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("pprof without token status = %d, want %d", rec.Code, http.StatusUnauthorized)
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/debug/pprof/", nil)
+	req.Header.Set("Authorization", "Bearer debug-token")
+	rec = httptest.NewRecorder()
+	enabled.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("pprof with token status = %d, want %d: %s", rec.Code, http.StatusOK, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "Types of profiles available") {
+		t.Fatalf("pprof response missing profile index: %s", rec.Body.String())
+	}
+}
+
 func TestErrorContract(t *testing.T) {
 	tests := []struct {
 		name       string

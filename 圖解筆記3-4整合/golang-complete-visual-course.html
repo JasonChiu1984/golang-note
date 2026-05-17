@@ -1563,6 +1563,7 @@ docker compose down -v</code></pre>
       ["Observability", "Observability", "logger.InfoContext(ctx, \"job processed\", \"job_id\", id, \"trace_id\", traceID)", ["log 帶 trace_id", "metrics 記 latency", "trace 跨 service/repo/worker"], "任一失敗 job 可從 metric 找到 log。"],
       ["Operational runbook", "Observability", "node scripts/check-operational-runbook.mjs", ["SLI/SLO", "Prometheus alert rules", "incident workflow", "runbook link"], "告警規則與排障文件可被 CI gate 固定。"],
       ["Prometheus config", "Observability", "node scripts/check-prometheus-config.mjs\ndocker compose --profile monitoring up -d --build", ["scrape job", "rule_files", "monitoring profile", "API_KEY 風險"], "Prometheus 設定、告警規則與 Compose profile 可被檢查。"],
+      ["Pprof diagnostics", "Observability", "ENABLE_PPROF=true PPROF_TOKEN=debug-token go run ./cmd/api-worker", ["預設關閉", "Bearer token", "短期 incident diagnostics", "診斷後關閉"], "debug endpoint 不常態公開，並由 TestPprofDiagnosticsContract 固定安全邊界。"],
       ["Testing gate", "Testing", "go test ./...\ngo test -race ./...\ngo build ./cmd/api-worker", ["unit test", "httptest", "race test", "build gate"], "CI gate 全部通過才合併。"]
     ];
 
@@ -1571,7 +1572,7 @@ docker compose down -v</code></pre>
       ["併發深度", "9/10", "以教材深度評估：goroutine、channel、select、context、worker pool、shutdown 都有專案化說明。", "若作為 runbook，需再補 leak detection、壓測腳本與事故操作流程。"],
       ["API 工程化", "8/10", "以教材深度評估：handler、ServeMux、錯誤分類、httptest 與 production flow 已串起。", "若作為 runbook，需再補 middleware chain、auth、idempotency、灰度發布。"],
       ["DB Transaction", "8/10", "以教材深度評估：database/sql、pool、transaction、repository 與 Postgres 範例已具備。", "若作為 runbook，需再補 isolation level、deadlock retry、migration rollback 操作手冊。"],
-      ["Observability", "8.7/10", "以教材深度評估：slog、Prometheus、OpenTelemetry、health、pprof，加上 operational runbook、alert rules、scrape config 與 Compose monitoring profile。", "若作為企業 runbook，需再補正式 Alertmanager、OTLP backend 與平台部署範本。"],
+      ["Observability", "8.9/10", "以教材深度評估：slog、Prometheus、OpenTelemetry、health、pprof diagnostics contract，加上 operational runbook、alert rules、scrape config 與 Compose monitoring profile。", "若作為企業 runbook，需再補正式 Alertmanager、OTLP backend、平台部署範本與 profile artifact 管理。"],
       ["Testing", "9/10", "以教材深度評估：testing、table-driven、benchmark、fuzz、race、httptest 都已納入。", "若作為 runbook，需再補 contract test、integration test、測試資料治理。"],
       ["CI/CD", "8/10", "以教材深度評估：有 Docker、migration、GitHub Actions gate 與可執行 production-api-worker。", "若作為 runbook，需再補 release promotion、rollback drill、SBOM、簽章與供應鏈掃描。"],
       ["可執行專案", "9/10", "以教材深度評估：production-api-worker 已有 cmd/internal/service/repository/worker/observability。", "若作為 runbook，需再補 DB integration test、load test、容量規劃與部署拓撲。"]
