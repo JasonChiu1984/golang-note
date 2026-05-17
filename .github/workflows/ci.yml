@@ -45,6 +45,9 @@ jobs:
           test -f docs/c-python-go-performance-supplement.html
           grep -E "ReleaseNote/index.html|c-python-go-performance-supplement" docs/index.html
 
+      - name: Check operational runbook
+        run: node scripts/check-operational-runbook.mjs
+
   production-contract:
     name: Production API worker contracts
     runs-on: ubuntu-latest

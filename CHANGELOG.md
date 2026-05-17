@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.30 - 2026-05-17
+
+- 新增 2026-05-17 11:02 資深工程師審查報告，確認 v1.0.29 已補齊語法應用 SVG 流程圖品質門檻，但 production observability 仍缺少可交付的 SLI/SLO、告警規則與事故處理 runbook。
+- 新增 `production-api-worker/docs/operational-runbook.md`，固定 API availability、5xx error rate、worker latency、queue depth、readiness、incident triage、verification、troubleshooting 與 risk notes。
+- 新增 `configs/prometheus/production-api-worker-alerts.yml`，提供 5xx warning/critical、queue depth、worker p95 latency 與 metrics missing 的 Prometheus alert rule 範例。
+- 新增 `scripts/check-operational-runbook.mjs`，檢查 runbook、alert rules、README 與 CI workflow 都保留必要 SLI/SLO、alert、runbook link 與驗證入口。
+- README、`production-api-worker/README.md`、第 10 / 11 章、整合視覺課程與 CI workflow 同步加入 operational runbook gate。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.29 - 2026-05-17
 
 - 新增 2026-05-17 10:31 資深工程師審查報告，確認 v1.0.28 已補齊 production API security contract，但語法應用圖解仍缺少可重跑的 SVG 流程圖品質門檻。

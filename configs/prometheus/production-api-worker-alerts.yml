@@ -1,0 +1,65 @@
+groups:
+  - name: production-api-worker.slo
+    rules:
+      - alert: ProductionAPIWorkerHigh5xxRate
+        expr: |
+          sum(rate(api_requests_total{status=~"5.."}[5m]))
+            /
+          clamp_min(sum(rate(api_requests_total[5m])), 1)
+            > 0.02
+        for: 10m
+        labels:
+          severity: warning
+          service: production-api-worker
+        annotations:
+          summary: "production-api-worker 5xx error rate is above 2%"
+          description: "Check route, method, status labels, then correlate X-Request-ID with logs and traces."
+          runbook_url: "production-api-worker/docs/operational-runbook.md#alert-1api-5xx-error-rate-升高"
+
+      - alert: ProductionAPIWorkerCritical5xxRate
+        expr: |
+          sum(rate(api_requests_total{status=~"5.."}[5m]))
+            /
+          clamp_min(sum(rate(api_requests_total[5m])), 1)
+            > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: production-api-worker
+        annotations:
+          summary: "production-api-worker 5xx error rate is above 5%"
+          description: "Treat as an incident. Consider rollback or traffic drain before deeper debugging."
+          runbook_url: "production-api-worker/docs/operational-runbook.md#alert-1api-5xx-error-rate-升高"
+
+      - alert: ProductionAPIWorkerQueueDepthHigh
+        expr: worker_queue_depth > 50
+        for: 10m
+        labels:
+          severity: warning
+          service: production-api-worker
+        annotations:
+          summary: "production-api-worker queue depth is near the default queue limit"
+          description: "Check worker job duration, DB latency, WORKERS, QUEUE_SIZE and downstream health."
+          runbook_url: "production-api-worker/docs/operational-runbook.md#alert-2worker-queue-depth-長時間偏高"
+
+      - alert: ProductionAPIWorkerWorkerLatencyHigh
+        expr: histogram_quantile(0.95, sum(rate(worker_job_duration_seconds_bucket[5m])) by (le)) > 2
+        for: 10m
+        labels:
+          severity: warning
+          service: production-api-worker
+        annotations:
+          summary: "production-api-worker worker p95 latency is above 2 seconds"
+          description: "Check DB pool, queue depth, CPU throttling and worker count before changing capacity."
+          runbook_url: "production-api-worker/docs/operational-runbook.md#alert-2worker-queue-depth-長時間偏高"
+
+      - alert: ProductionAPIWorkerMetricsMissing
+        expr: absent(api_requests_total)
+        for: 5m
+        labels:
+          severity: critical
+          service: production-api-worker
+        annotations:
+          summary: "production-api-worker metrics are missing"
+          description: "Check service readiness, scrape auth, /metrics access and deployment state."
+          runbook_url: "production-api-worker/docs/operational-runbook.md#alert-3readiness-失敗"

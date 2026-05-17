@@ -739,7 +739,7 @@ docker compose down -v</code></pre>
         <p><strong>整合版已符合「Go 語法到資深工程 production 專案實戰主教材」定位。</strong> 它同時覆蓋語法、併發、worker、API、DB transaction、Observability、testing、CI/CD 與可執行專案 walkthrough。</p>
         <div class="acceptance"><strong>評分邊界：</strong>下方 8/10、9/10 評分代表「教材深度與專案設計討論深度」，不是完整 production runbook、SRE playbook 或企業級部署手冊的完成度。</div>
         <div class="acceptance"><strong>適合作為：</strong>有程式基礎的新手進階到能參與 Go production 專案設計、code review 與常見 production 問題討論的主教材。</div>
-        <div class="anti"><strong>剩餘提升項：</strong>若要再升級為 production expert handbook / runbook，可再加 OAuth2/mTLS/API Gateway、DB isolation/deadlock 深講、OTel/Prometheus 真實部署與告警規則、更多完整 production incident 題型。</div>
+        <div class="anti"><strong>剩餘提升項：</strong>若要再升級為 production expert handbook / runbook，可再加 OAuth2/mTLS/API Gateway、DB isolation/deadlock 深講、正式 Alertmanager 部署、更多完整 production incident 題型。</div>
       </div>
     </section>
   </main>
@@ -1560,6 +1560,7 @@ docker compose down -v</code></pre>
       ["Bounded queue", "併發/Worker", "select {\ncase jobs <- task:\ncase <-ctx.Done(): return ctx.Err()\ndefault: return ErrQueueFull\n}", ["queue 有容量", "滿載策略明確", "drop/backpressure 有 metric"], "queue 滿載得到 ErrQueueFull。"],
       ["Worker retry", "併發/Worker", "if IsTemporary(err) && attempts < 3 { retry(task) }", ["temporary 才 retry", "永久錯誤進 failed/dead-letter", "retry 有上限"], "temporary retry 三次，permanent 不重試。"],
       ["Observability", "Observability", "logger.InfoContext(ctx, \"job processed\", \"job_id\", id, \"trace_id\", traceID)", ["log 帶 trace_id", "metrics 記 latency", "trace 跨 service/repo/worker"], "任一失敗 job 可從 metric 找到 log。"],
+      ["Operational runbook", "Observability", "node scripts/check-operational-runbook.mjs", ["SLI/SLO", "Prometheus alert rules", "incident workflow", "runbook link"], "告警規則與排障文件可被 CI gate 固定。"],
       ["Testing gate", "Testing", "go test ./...\ngo test -race ./...\ngo build ./cmd/api-worker", ["unit test", "httptest", "race test", "build gate"], "CI gate 全部通過才合併。"]
     ];
 
@@ -1568,7 +1569,7 @@ docker compose down -v</code></pre>
       ["併發深度", "9/10", "以教材深度評估：goroutine、channel、select、context、worker pool、shutdown 都有專案化說明。", "若作為 runbook，需再補 leak detection、壓測腳本與事故操作流程。"],
       ["API 工程化", "8/10", "以教材深度評估：handler、ServeMux、錯誤分類、httptest 與 production flow 已串起。", "若作為 runbook，需再補 middleware chain、auth、idempotency、灰度發布。"],
       ["DB Transaction", "8/10", "以教材深度評估：database/sql、pool、transaction、repository 與 Postgres 範例已具備。", "若作為 runbook，需再補 isolation level、deadlock retry、migration rollback 操作手冊。"],
-      ["Observability", "8/10", "以教材深度評估：slog、Prometheus、OpenTelemetry、health、pprof 概念完整。", "若作為 runbook，需再補 Prometheus alert rules、OTLP backend、值班排障流程。"],
+      ["Observability", "8.5/10", "以教材深度評估：slog、Prometheus、OpenTelemetry、health、pprof，加上 operational runbook 與 Prometheus alert rules。", "若作為企業 runbook，需再補正式 Alertmanager、OTLP backend 與平台部署範本。"],
       ["Testing", "9/10", "以教材深度評估：testing、table-driven、benchmark、fuzz、race、httptest 都已納入。", "若作為 runbook，需再補 contract test、integration test、測試資料治理。"],
       ["CI/CD", "8/10", "以教材深度評估：有 Docker、migration、GitHub Actions gate 與可執行 production-api-worker。", "若作為 runbook，需再補 release promotion、rollback drill、SBOM、簽章與供應鏈掃描。"],
       ["可執行專案", "9/10", "以教材深度評估：production-api-worker 已有 cmd/internal/service/repository/worker/observability。", "若作為 runbook，需再補 DB integration test、load test、容量規劃與部署拓撲。"]

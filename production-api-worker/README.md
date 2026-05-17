@@ -15,6 +15,7 @@
 - Panic recovery：handler 未預期 panic 時回穩定 `internal_error` JSON
 - Request timeout：handler deadline exceeded 時回穩定 `request_timeout` JSON
 - Observability：Prometheus client、OpenTelemetry OTLP/stdout exporter、slog、`X-Request-ID`
+- Operational runbook：SLI/SLO、Prometheus alert rules、incident workflow、verification、troubleshooting
 - Pipeline：migration CLI、Docker Compose、GitHub Actions workflow、Docker image build gate、Compose smoke gate
 
 ## Local Memory Mode
@@ -75,6 +76,7 @@ go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract'
 go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
 go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1
 go test -race -cover ./...
+make runbook-check
 go test -run='^$' -bench=. -benchmem -count=10 ./... > bench.txt
 docker compose up --build
 make compose-smoke
@@ -98,6 +100,7 @@ make compose-smoke
 | `go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1` | 固定 deadlock retry backoff 會尊重 request cancellation / shutdown deadline |
 | `go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1` | 固定 queue close/enqueue 同步邊界，避免 shutdown race panic |
 | `go test -race -cover ./...` | 驗證 service、handler、queue 與併發安全 |
+| `make runbook-check` | 固定 SLI/SLO、Prometheus alert rules、incident workflow 與 runbook link 不被移除 |
 | `go test -run='^$' -bench=. -benchmem -count=10 ./...` | API / worker 效能改動需保留 benchmark 證據 |
 | `docker compose up --build` | 啟動 Postgres、migration、API、worker 與 metrics 整體鏈路 |
 | `make compose-smoke` | 用主機端 curl 驗證 `/livez`、`/readyz`、job create/read 與 `/metrics` |
@@ -112,6 +115,8 @@ make compose-smoke
 | `production-contract` | production-api-worker config、migration、API contract、retry、worker shutdown、`-race -cover` | 對外 API / shutdown / migration / 併發合約漂移 |
 | `vulnerability-scan` | root module 與 production module 的 `govulncheck ./...` | 已知漏洞進入 release |
 | `docker-build` | `production-api-worker` Docker image build + Compose smoke | Dockerfile、migration binary、runtime image 或端到端啟動流程回歸 |
+
+`production-api-worker/docs/operational-runbook.md` 是值班與 incident review 的教學入口；`configs/prometheus/production-api-worker-alerts.yml` 是對應的 Prometheus alert rule 範例。兩者由根目錄 `node scripts/check-operational-runbook.mjs` 固定，避免 observability 只剩 log / metrics 概念而沒有可操作告警與排障流程。
 
 本機修改 production 行為前，至少先跑：
 
@@ -269,3 +274,15 @@ Production shutdown 不是單純收到 signal 就結束 process。`api-worker` �
 | worker goroutine 數量異常 | goroutine profile + `/sched/goroutines:goroutines` |
 | repository lock contention | mutex profile |
 | request latency 長尾 | OpenTelemetry span + execution trace |
+
+## Operational Runbook
+
+| 項目 | 文件 / 設定 |
+|---|---|
+| Runbook | `docs/operational-runbook.md` |
+| Prometheus alert rules | `../configs/prometheus/production-api-worker-alerts.yml` |
+| Runbook check | `make runbook-check` 或從 repo root 執行 `node scripts/check-operational-runbook.mjs` |
+| 主要 SLI | API 5xx rate、worker p95 latency、queue depth、readiness、metrics scrape |
+| Incident correlation | `X-Request-ID`、route label、structured log、OpenTelemetry span |
+
+告警觸發時先用 `api_requests_total`、`worker_queue_depth`、`worker_job_duration_seconds` 判斷影響範圍，再用 `X-Request-ID` 追 log / trace。若行為涉及外部合約，先重跑 `make ci-contract` 與 compose smoke，再決定 rollback、drain 或容量調整。

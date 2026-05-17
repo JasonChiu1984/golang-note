@@ -145,6 +145,8 @@ flowchart TD
   J --> K["benchmark A/B 或 production 指標驗證"]
 ```
 
+若效能問題已經進入 production 值班流程，請先對照 `production-api-worker/docs/operational-runbook.md`。runbook 會把 `api_requests_total`、`worker_queue_depth`、`worker_job_duration_seconds` 與 `X-Request-ID` 連到告警、分級、排障與復盤，避免只拿 pprof 或 log 單點猜測。
+
 | 症狀 | 第一工具 | 不適合用 |
 |---|---|---|
 | 某段 CPU 飆高 | CPU profile | execution trace 不是 hot spot 工具 |
@@ -155,6 +157,23 @@ flowchart TD
 | GC pause 或記憶體壓力 | `/gc/*` runtime metrics、gctrace、heap profile | 只調 `GOGC` 不量測 |
 
 > **工程經驗**：效能 PR 應該附「修改前資料、修改後資料、判讀結論」。如果只有 `快很多` 這種描述，reviewer 無法判斷是否只是測試雜訊。
+
+## Operational Runbook 與告警基線
+
+效能診斷進入 production 後，第一層訊號應該是 SLI / SLO，而不是直接進程式碼。`production-api-worker` 目前提供教學用 runbook 與 Prometheus alert rules：
+
+| Artifact | 用途 |
+|---|---|
+| `production-api-worker/docs/operational-runbook.md` | 定義 API 5xx、worker latency、queue depth、readiness、incident triage 與復盤流程 |
+| `configs/prometheus/production-api-worker-alerts.yml` | 固定 warning / critical alert rule 範例與 runbook link |
+| `node scripts/check-operational-runbook.mjs` | 確認 runbook、alert rules、README 與 CI 入口沒有被移除 |
+
+| 告警 | 初判方向 |
+|---|---|
+| 5xx rate 升高 | 先用 `route` / `method` / `status` 找出 API 合約是否回歸，再用 request id 查 log / trace |
+| worker p95 latency 升高 | 檢查 DB pool、queue depth、CPU throttling 與 worker 數，不先盲目加 goroutine |
+| queue depth 接近容量 | 判斷 downstream 慢、worker 卡住或 backpressure 策略不足 |
+| metrics missing | 檢查 `/metrics` 認證、scrape config、readiness 與 deployment 狀態 |
 
 ## Benchmark A/B 與 `benchstat`
 
