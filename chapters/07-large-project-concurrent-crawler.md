@@ -256,7 +256,7 @@ production-api-worker/
 
 | 對比面向 | `project-concurrent-crawler` | `production-api-worker` |
 |---|---|---|
-| 學習重點 | worker pool、parser、retry | API、API key security contract、transaction、context-aware retry、request timeout contract、queue shutdown safety、observability、部署 |
+| 學習重點 | worker pool、parser、retry | API、API key security contract、rate limit contract、transaction、context-aware retry、request timeout contract、queue shutdown safety、observability、部署 |
 | 外部依賴 | 幾乎沒有 | Postgres、OTLP、Docker Compose |
 | 驗證方式 | `go test` 為主 | `go test` + `docker compose up --build` |
 | 專案階段 | 教學型大型專案 | 接近 production 的服務骨架 |
@@ -274,6 +274,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Observability | route label、trace span name、metrics label、`X-Request-ID` | dashboard、alert 與 incident log 無法對照 |
 | OTLP collector contract | `production-api-worker/otel-collector.yaml`、OTLP gRPC `0.0.0.0:4317`、`debug exporter`、Compose endpoint | trace 程式碼存在，但 collector pipeline 或 Compose endpoint 漂移後無法收 span |
 | API security | `API_KEY`、Bearer token、公開 health endpoint、安全標頭 | 業務 endpoint 或 metrics 無條件公開，或 health check 被認證擋住 |
+| Rate limit contract | `RATE_LIMIT_REQUESTS_PER_MINUTE`、per-client IP、`429 rate_limited`、`Retry-After` | 單一 client 持續打爆 handler、queue 或 DB，或 health check 被錯誤限速 |
 | OpenAPI contract | `api/openapi.yaml`、request/response schema、error code、auth scheme | Markdown 文件與前端 mock / SDK / API gateway review 漂移 |
 | Panic recovery | `500 internal_error` JSON、request id header | panic 造成連線中斷、非 JSON 錯誤或洩漏內部細節 |
 | Request timeout | `504 request_timeout` JSON、request id header | handler deadline exceeded 被誤分類成 `500 internal_error`，client 無法區分 timeout 與 bug |
@@ -339,6 +340,7 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 | Request ID | client header 原樣回傳；未提供時產生 `req-*` |
 | API security | `API_KEY` 啟用後 `/jobs`、`/metrics` 未帶 token 回 `401 unauthorized`，health endpoint 仍公開 |
 | Security headers | 所有 response 保留 `X-Content-Type-Options`、`X-Frame-Options`、`Referrer-Policy` |
+| Rate limit | 每個 client IP 超過 `RATE_LIMIT_REQUESTS_PER_MINUTE` 時回 `429 rate_limited` 與 `Retry-After` |
 | Panic recovery | handler panic 仍回 `500`、`error.code=internal_error` 與原 `X-Request-ID` |
 | Request timeout | handler deadline exceeded 仍回 `504`、`error.code=request_timeout` 與原 `X-Request-ID` |
 

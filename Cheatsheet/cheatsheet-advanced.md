@@ -363,6 +363,7 @@ ENTRYPOINT ["/app"]
 | Response schema | status code、JSON 欄位、enum 是否仍可被舊 client decode |
 | Error envelope | 是否維持穩定 `error.code` 與 `error.message` |
 | OpenAPI contract | `api/openapi.yaml` 是否同步 endpoint、schema、error code、Bearer auth 與 `X-Request-ID` |
+| Rate limit | `RATE_LIMIT_REQUESTS_PER_MINUTE` 是否固定 per-client IP、`429 rate_limited`、`Retry-After` 與 health endpoint 不限速 |
 | Request ID | `X-Request-ID` 是否會回傳，client 提供時是否原樣保留 |
 | Observability label | route label、span name、metrics label、`request.id` 是否會破壞 dashboard |
 | Worker shutdown | concurrent enqueue + shutdown 是否不 panic，close 後是否回穩定錯誤 |
@@ -378,6 +379,7 @@ go test ./internal/api -run 'TestRequestIDContract|TestCreateJobContract' -count
 go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1
 go test ./internal/api -run 'TestPanicRecoveryContract' -count=1
 go test ./internal/api -run 'TestRequestTimeoutContract' -count=1
+go test ./internal/api -run 'TestRateLimitContract' -count=1
 go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
 ```
 

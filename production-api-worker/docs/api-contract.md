@@ -59,6 +59,7 @@ X-Request-ID: request-from-client
 | `not_found` | 404 | 查詢不存在的 job |
 | `queue_full` | 503 | bounded queue 無法接受新工作 |
 | `request_timeout` | 504 | request context deadline exceeded |
+| `rate_limited` | 429 | 同一 client IP 超過 `RATE_LIMIT_REQUESTS_PER_MINUTE` |
 | `unauthorized` | 401 | `API_KEY` 已設定但缺少或送錯 `Authorization: Bearer <token>` |
 | `internal_error` | 500 | 未分類的伺服器錯誤或 handler panic recovery |
 
@@ -187,7 +188,7 @@ Content-Type: application/json
 | `API_KEY` | 空字串 | 空值停用 API key；有值時保護 `/jobs` 與 `/metrics` |
 | `RATE_LIMIT_REQUESTS_PER_MINUTE` | `120` | 正整數；每個 client IP 每分鐘業務 endpoint 呼叫上限 |
 
-錯誤設定必須讓 process fail fast，例如 `PORT=http`、`QUEUE_SIZE=0`、`WORKERS=-1`、`DATABASE_MAX_IDLE_CONNS > DATABASE_MAX_OPEN_CONNS` 或 `DATABASE_CONN_MAX_LIFETIME=soon` 不應被靜默改成預設值。
+錯誤設定必須讓 process fail fast，例如 `PORT=http`、`QUEUE_SIZE=0`、`WORKERS=-1`、`DATABASE_MAX_IDLE_CONNS > DATABASE_MAX_OPEN_CONNS`、`DATABASE_CONN_MAX_LIFETIME=soon` 或 `RATE_LIMIT_REQUESTS_PER_MINUTE=0` 不應被靜默改成預設值。
 
 ## Rate Limit
 
@@ -214,7 +215,7 @@ Retry-After: 60
 | 設定 | `RATE_LIMIT_REQUESTS_PER_MINUTE`，預設 `120` |
 | Key | client IP；正式反向代理環境需明確管理 `X-Forwarded-For` 信任邊界 |
 | Protected routes | `/jobs`、`/jobs/{id}` |
-| Public routes | `/livez`、`/readyz` |
+| Public routes | `/livez`、`/readyz`、`/metrics` |
 | Test gate | `go test ./internal/api -run 'TestRateLimitContract' -count=1` |
 
 ## Migration Operation Contract

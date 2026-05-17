@@ -226,6 +226,7 @@ func TestCreateJobContract(t *testing.T) {
 | Migration contract | migration env、timeout、SQL 檔排序與 version 命名應固定，避免 release pipeline 漂移 |
 | API security | `API_KEY` 啟用後 `/jobs`、`/metrics` 需 Bearer token；`/livez`、`/readyz` 不應被認證擋住 |
 | Pprof diagnostics | `ENABLE_PPROF` 預設關閉；啟用 `/debug/pprof/` 時必須要求 Bearer token，避免 debug endpoint 公開 |
+| Rate limit | 每個 client IP 超過 `RATE_LIMIT_REQUESTS_PER_MINUTE` 時需回 `429 rate_limited`，且 health endpoint 不應被限速 |
 | Security headers | `X-Content-Type-Options`、`X-Frame-Options`、`Referrer-Policy` 應由 middleware 固定 |
 
 對 `production-api-worker` 這類 service，建議把合約測試獨立命名，讓 release gate 可以聚焦執行：
@@ -235,6 +236,7 @@ cd production-api-worker
 go test ./internal/api -run 'Test.*Contract' -count=1
 go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1
 go test ./internal/api -run 'TestPprofDiagnosticsContract' -count=1
+go test ./internal/api -run 'TestRateLimitContract' -count=1
 ```
 
 > 合約測試不應過度綁定內部 struct；它要固定「外部看見的行為」，例如 JSON 欄位與錯誤 code，而不是 service 裡用了哪個 repository 實作。

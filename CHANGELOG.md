@@ -2,7 +2,7 @@
 
 ## v1.0.34 - 2026-05-17
 
-- 新增 2026-05-17 18:32:16 CST +0800 資深工程師審查報告，確認 v1.0.33 已補齊 OTLP collector contract，但 production API 仍缺少可測的 per-client rate limit 防護。
+- 新增 2026-05-17 20:42:15 CST +0800 資深工程師審查報告，確認 v1.0.33 已補齊 OTLP collector contract，但 production API 仍缺少可測的 per-client rate limit 防護。
 - `production-api-worker` 新增 `RATE_LIMIT_REQUESTS_PER_MINUTE` 設定，預設每個 client IP 每分鐘 120 次；設定錯誤會在啟動設定載入階段 fail fast。
 - API handler 新增 rate limit middleware，保護 `/jobs` 與 `/jobs/{id}`；超限時回 `429 rate_limited` JSON，保留 `X-Request-ID`，並設定 `Retry-After: 60`。
 - 新增 `internal/api/rate_limit.go`、`TestRateLimitContract` 與 config 測試，固定 per-IP window、錯誤碼、header 與設定驗證。
