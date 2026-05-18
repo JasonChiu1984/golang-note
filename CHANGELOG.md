@@ -1,8 +1,14 @@
 # Changelog
 
+## v1.0.36 - 2026-05-18
+
+- 新增 2026-05-18 06:51:09 CST +0800 本輪資深工程師審查報告、內容需要更新的部分與更新紀錄，修正自動化產物日期需符合本次環境目前日期的交付要求。
+- 保留 v1.0.35 已完成的 Trusted proxy client IP 與 Shutdown signal contract：`TRUSTED_PROXY_CIDRS`、`X-Forwarded-For` 信任邊界、`TestRateLimitTrustedProxyContract`、`monitoredSignals()` 與 `TestMonitoredSignalsContract`。
+- 更新 README / VERSION 標示為 v1.0.36，並重新同步 `docs/index.html`，讓 GitHub Pages 首頁與 source course 一致。
+
 ## v1.0.35 - 2026-05-18
 
-- 新增 2026-05-18 06:25:05 CST +0800 資深工程師審查報告，確認 v1.0.34 已補齊 Rate limit contract，但 shutdown signal 與 trusted proxy client IP 邊界需被版本、文件、CI 與 Pages 入口完整收斂。
+- 新增 2026-05-18 06:51:09 CST +0800 資深工程師審查報告，確認 v1.0.34 已補齊 Rate limit contract，但 shutdown signal 與 trusted proxy client IP 邊界需被版本、文件、CI 與 Pages 入口完整收斂。
 - `production-api-worker/cmd/api-worker` 新增 `monitoredSignals()`，明確監聽 `SIGINT` 與 `SIGTERM`，讓 local Ctrl+C 與 Kubernetes / Compose rolling deploy 的 shutdown contract 對齊。
 - 新增 `TestMonitoredSignalsContract` 與 `TestRateLimitTrustedProxyContract`，固定 signal set 不可退化成只處理 SIGINT，且未信任來源不可用 `X-Forwarded-For` 偽造 rate limit key。
 - `production-api-worker` 新增 `TRUSTED_PROXY_CIDRS` 設定，只有 trusted proxy 的 `RemoteAddr` 才能採用 `X-Forwarded-For` 第一個 IP 作為 rate limit key。

@@ -2,9 +2,9 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
-> 教材版本：`v1.0.35`
+> 教材版本：`v1.0.36`
 > 教材基準：`Go 1.26.3`
-> 這次更新重點：補上 Shutdown signal contract 與 trusted proxy client IP 邊界，讓 production API 同時監聽 SIGINT / SIGTERM，並避免未信任來源用 `X-Forwarded-For` 偽造 rate limit key。
+> 這次更新重點：補齊 2026-05-18 06:51:09 本輪自動化審查、更新清單與更新紀錄，並維持 v1.0.35 已完成的 Shutdown signal contract 與 trusted proxy client IP 邊界。
 
 ## 版本策略
 
