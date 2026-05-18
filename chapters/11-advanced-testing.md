@@ -225,6 +225,7 @@ func TestCreateJobContract(t *testing.T) {
 | Startup / DB pool config | 不合法 `PORT`、`QUEUE_SIZE`、`WORKERS`、DB pool size 或 DB pool duration 應 fail fast，不可 silent fallback |
 | Migration contract | migration env、timeout、SQL 檔排序與 version 命名應固定，避免 release pipeline 漂移 |
 | API security | `API_KEY` 啟用後 `/jobs`、`/metrics` 需 Bearer token；`/livez`、`/readyz` 不應被認證擋住 |
+| CORS allowlist | `CORS_ALLOWED_ORIGINS` 只接受 exact `http` / `https` origin；allowed preflight 回 `204`，blocked preflight 回 `403` |
 | Pprof diagnostics | `ENABLE_PPROF` 預設關閉；啟用 `/debug/pprof/` 時必須要求 Bearer token，避免 debug endpoint 公開 |
 | Rate limit | 每個 client IP 超過 `RATE_LIMIT_REQUESTS_PER_MINUTE` 時需回 `429 rate_limited`，且 health endpoint 不應被限速 |
 | Shutdown signal | `api-worker` 必須同時監聽 `SIGINT` / `SIGTERM`，並由 `TestMonitoredSignalsContract` 固定，避免正式部署訊號繞過 graceful shutdown |
@@ -236,6 +237,7 @@ func TestCreateJobContract(t *testing.T) {
 cd production-api-worker
 go test ./internal/api -run 'Test.*Contract' -count=1
 go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1
+go test ./internal/api -run 'TestCORSAllowedOriginsContract' -count=1
 go test ./internal/api -run 'TestPprofDiagnosticsContract' -count=1
 go test ./internal/api -run 'TestRateLimitContract' -count=1
 go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1
@@ -500,6 +502,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | Startup / DB pool config | `cd production-api-worker && go test ./internal/config -count=1` | 固定設定預設值、合法 env、DB pool 關係與錯誤設定 fail-fast 行為 |
 | Migration contract | `cd production-api-worker && go test ./internal/config ./internal/migration -count=1` | 固定 migration env、timeout、SQL 檔排序與 version 命名規則 |
 | OpenAPI contract gate | `node scripts/check-openapi-contract.mjs` | 固定 OpenAPI spec、endpoint、schema、error code、Bearer auth 與文件入口 |
+| CORS allowlist gate | `node scripts/check-cors-contract.mjs` | 固定 `CORS_ALLOWED_ORIGINS`、allowlist middleware、preflight 測試與 CI 入口 |
 | Compose smoke gate | `cd production-api-worker && docker compose up -d --build && make compose-smoke && docker compose down -v` | 固定 Docker Compose 啟動後 `/livez`、`/readyz`、job create/read 與 metrics |
 | Operational runbook gate | `node scripts/check-operational-runbook.mjs` | 固定 runbook、Prometheus alert rules、README 與 CI 入口，避免 incident workflow 被文件更新移除 |
 | Prometheus config gate | `node scripts/check-prometheus-config.mjs` | 固定 Prometheus scrape job、rule_files、Compose monitoring profile 與 API key 風險說明 |

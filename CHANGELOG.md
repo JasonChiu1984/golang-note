@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.0.37 - 2026-05-18
+
+- 新增 2026-05-18 14:52:25 CST +0800 資深工程師審查報告，確認 `v1.0.36` tag 已完成版本/CI 標示，但 CORS allowlist 的實作、測試、合約文件與靜態檢查仍停留在本地工作樹，需以新版本正式發布。
+- `production-api-worker` 正式納入 `CORS_ALLOWED_ORIGINS` 設定、allowlist middleware、preflight `204`、blocked origin `403`、actual request CORS header 與 `Vary: Origin` 行為。
+- 新增並發布 `TestCORSAllowedOriginsContract`、config invalid-origin fail-fast 測試、`scripts/check-cors-contract.mjs`、`make cors-check` 與 GitHub Actions CORS gate。
+- README、`production-api-worker/README.md`、API contract、第 7 / 11 章、進階 Cheat Sheet、OpenAPI 與整合視覺課程同步標示 CORS allowlist contract；`docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.36 - 2026-05-18
 
 - 新增 2026-05-18 06:51:09 CST +0800 本輪資深工程師審查報告、內容需要更新的部分與更新紀錄，修正自動化產物日期需符合本次環境目前日期的交付要求。

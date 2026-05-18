@@ -42,6 +42,9 @@ func TestLoadFromLookupDefaults(t *testing.T) {
 	if len(cfg.TrustedProxyCIDRs) != 0 {
 		t.Fatalf("TrustedProxyCIDRs = %v, want empty", cfg.TrustedProxyCIDRs)
 	}
+	if len(cfg.CORSAllowedOrigins) != 0 {
+		t.Fatalf("CORSAllowedOrigins = %v, want empty", cfg.CORSAllowedOrigins)
+	}
 }
 
 func TestLoadFromLookupUsesEnvironment(t *testing.T) {
@@ -54,6 +57,7 @@ func TestLoadFromLookupUsesEnvironment(t *testing.T) {
 		"PPROF_TOKEN":                    " debug-token ",
 		"RATE_LIMIT_REQUESTS_PER_MINUTE": "240",
 		"TRUSTED_PROXY_CIDRS":            " 10.0.0.0/8, 192.168.10.0/24 ",
+		"CORS_ALLOWED_ORIGINS":           " https://app.example.com/, http://localhost:5173 ",
 		"DATABASE_URL":                   " postgres://app:app@localhost:5432/app?sslmode=disable ",
 		"DATABASE_MAX_OPEN_CONNS":        "40",
 		"DATABASE_MAX_IDLE_CONNS":        "12",
@@ -78,6 +82,9 @@ func TestLoadFromLookupUsesEnvironment(t *testing.T) {
 	}
 	if got := strings.Join(cfg.TrustedProxyCIDRs, ","); got != "10.0.0.0/8,192.168.10.0/24" {
 		t.Fatalf("TrustedProxyCIDRs = %q", got)
+	}
+	if got := strings.Join(cfg.CORSAllowedOrigins, ","); got != "https://app.example.com,http://localhost:5173" {
+		t.Fatalf("CORSAllowedOrigins = %q", got)
 	}
 	if cfg.DatabaseURL != "postgres://app:app@localhost:5432/app?sslmode=disable" {
 		t.Fatalf("DatabaseURL = %q", cfg.DatabaseURL)
@@ -153,6 +160,26 @@ func TestLoadFromLookupRejectsInvalidRequiredConfig(t *testing.T) {
 			name:      "trusted proxy cidr is invalid",
 			env:       map[string]string{"TRUSTED_PROXY_CIDRS": "10.0.0.0/8,not-a-cidr"},
 			wantError: "TRUSTED_PROXY_CIDRS must contain comma-separated CIDR ranges",
+		},
+		{
+			name:      "cors origin is not http or https",
+			env:       map[string]string{"CORS_ALLOWED_ORIGINS": "file://app"},
+			wantError: "CORS_ALLOWED_ORIGINS must contain comma-separated exact http/https origins",
+		},
+		{
+			name:      "cors origin contains path",
+			env:       map[string]string{"CORS_ALLOWED_ORIGINS": "https://app.example.com/path"},
+			wantError: "CORS_ALLOWED_ORIGINS must contain comma-separated exact http/https origins",
+		},
+		{
+			name:      "cors origin contains user info",
+			env:       map[string]string{"CORS_ALLOWED_ORIGINS": "https://user@app.example.com"},
+			wantError: "CORS_ALLOWED_ORIGINS must contain comma-separated exact http/https origins",
+		},
+		{
+			name:      "cors origin contains empty query marker",
+			env:       map[string]string{"CORS_ALLOWED_ORIGINS": "https://app.example.com?"},
+			wantError: "CORS_ALLOWED_ORIGINS must contain comma-separated exact http/https origins",
 		},
 	}
 

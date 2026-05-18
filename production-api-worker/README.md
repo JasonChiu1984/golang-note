@@ -6,6 +6,7 @@
 - API contract：穩定 request/response/error schema，文件在 `docs/api-contract.md`
 - OpenAPI contract：machine-readable schema 位於 `api/openapi.yaml`，用來對齊文件、測試、SDK 與前端 mock
 - API security：可用 `API_KEY` 啟用 Bearer token 保護 `/jobs` 與 `/metrics`，health endpoint 保持公開
+- CORS Allowlist Contract：`CORS_ALLOWED_ORIGINS` 預設空值；只有明確列入的 exact origin 才回 CORS header
 - Diagnostics / pprof contract：`ENABLE_PPROF` 預設關閉；啟用 `/debug/pprof/` 時必須提供 `PPROF_TOKEN` 或沿用 `API_KEY`
 - Rate limit contract：`RATE_LIMIT_REQUESTS_PER_MINUTE` 依 client IP 保護 `/jobs` 與 `/jobs/{id}`，超限回 `429 rate_limited`
 - Trusted proxy client IP：`TRUSTED_PROXY_CIDRS` 預設空值；只有信任代理來源才採用 `X-Forwarded-For`
@@ -78,6 +79,7 @@ go test ./internal/config -count=1
 go test ./internal/migration -count=1
 go test ./internal/api -run 'Test.*Contract|TestReadinessContract|TestPanicRecoveryContract|TestRequestDecodingContract' -count=1
 go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1
+go test ./internal/api -run 'TestCORSAllowedOriginsContract' -count=1
 go test ./internal/api -run 'TestPprofDiagnosticsContract' -count=1
 go test ./internal/api -run 'TestRateLimitContract' -count=1
 go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1
@@ -89,6 +91,7 @@ make runbook-check
 make prometheus-check
 make pprof-check
 make rate-limit-check
+make cors-check
 make shutdown-signal-check
 go test -run='^$' -bench=. -benchmem -count=10 ./... > bench.txt
 docker compose up --build
@@ -110,6 +113,7 @@ make compose-smoke
 | `go test ./internal/api -run 'TestPanicRecoveryContract' -count=1` | 固定 handler panic 時的 `500 internal_error` JSON 與 request id 行為 |
 | `go test ./internal/api -run 'TestRequestTimeoutContract' -count=1` | 固定 handler timeout 時的 `504 request_timeout` JSON 與 request id 行為 |
 | `go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1` | 固定 API key 認證邊界、公開 health endpoint 與安全標頭 |
+| `go test ./internal/api -run 'TestCORSAllowedOriginsContract' -count=1` | 固定 CORS allowlist、allowed preflight、actual request header 與 blocked preflight |
 | `go test ./internal/api -run 'TestPprofDiagnosticsContract' -count=1` | 固定 pprof 預設關閉、啟用後要求 Bearer token、合法 token 才能讀 `/debug/pprof/` |
 | `go test ./internal/api -run 'TestRateLimitContract' -count=1` | 固定 per-client request limit、`429 rate_limited`、`Retry-After` 與 request id 行為 |
 | `go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1` | 固定 SIGINT/SIGTERM shutdown signal set，避免只處理 local Ctrl+C |
@@ -121,6 +125,7 @@ make compose-smoke
 | `make prometheus-check` | 固定 Prometheus scrape config、rule_files、Compose monitoring profile 與 README/runbook 入口 |
 | `make pprof-check` | 固定 pprof diagnostics contract、`ENABLE_PPROF`、`PPROF_TOKEN`、runbook、Go tests 與 CI 入口 |
 | `make rate-limit-check` | 固定 rate limit contract、`RATE_LIMIT_REQUESTS_PER_MINUTE`、OpenAPI、Go tests、README 與 CI 入口 |
+| `make cors-check` | 固定 CORS allowlist contract、`CORS_ALLOWED_ORIGINS`、OpenAPI、Go tests、README 與 CI 入口 |
 | `make shutdown-signal-check` | 固定 shutdown signal contract、SIGINT/SIGTERM、main test、README、API contract 與 CI 入口 |
 | `go test -run='^$' -bench=. -benchmem -count=10 ./...` | API / worker 效能改動需保留 benchmark 證據 |
 | `docker compose up --build` | 啟動 Postgres、migration、API、worker 與 metrics 整體鏈路 |
@@ -191,6 +196,7 @@ cd .. && node scripts/check-openapi-contract.mjs
 | `DATABASE_CONN_MAX_LIFETIME` | `30m0s` | 正數 duration，例如 `30m`、`1h` | Postgres connection 最大生命週期 |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | 空字串 | 空字串時只用 stdout trace exporter | OTLP collector endpoint |
 | `API_KEY` | 空字串 | 空字串時不啟用 API key；有值時 trim 後要求 Bearer token | 保護 `/jobs` 與 `/metrics` |
+| `CORS_ALLOWED_ORIGINS` | 空字串 | comma-separated exact `http` / `https` origins；不可含 path / query / fragment | 瀏覽器前端跨域存取 allowlist |
 | `ENABLE_PPROF` | `false` | boolean；`true` 時必須同時有 `PPROF_TOKEN` 或 `API_KEY` | 短期啟用 `/debug/pprof/` diagnostics endpoint |
 | `PPROF_TOKEN` | 空字串 | trim；空值時可沿用 `API_KEY`，但 `ENABLE_PPROF=true` 不可兩者皆空 | 保護 `/debug/pprof/` |
 | `RATE_LIMIT_REQUESTS_PER_MINUTE` | `120` | 正整數 | 每個 client IP 每分鐘可呼叫業務 endpoint 的次數 |

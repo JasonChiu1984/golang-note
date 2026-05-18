@@ -8,75 +8,61 @@ const files = [
   "production-api-worker/internal/config/config_test.go",
   "production-api-worker/internal/api/handler.go",
   "production-api-worker/internal/api/handler_test.go",
-  "production-api-worker/internal/api/rate_limit.go",
   "production-api-worker/docker-compose.yml",
   "production-api-worker/api/openapi.yaml",
   "production-api-worker/docs/api-contract.md",
-  "production-api-worker/docs/operational-runbook.md",
   ".github/workflows/ci.yml",
 ];
 
 const required = {
   "README.md": [
-    "Rate limit contract",
-    "RATE_LIMIT_REQUESTS_PER_MINUTE",
-    "node scripts/check-rate-limit-contract.mjs",
+    "CORS allowlist contract",
+    "CORS_ALLOWED_ORIGINS",
+    "node scripts/check-cors-contract.mjs",
   ],
   "production-api-worker/README.md": [
-    "Rate Limit Contract",
-    "RATE_LIMIT_REQUESTS_PER_MINUTE",
-    "TestRateLimitContract",
+    "CORS Allowlist Contract",
+    "CORS_ALLOWED_ORIGINS",
+    "TestCORSAllowedOriginsContract",
   ],
   "production-api-worker/internal/config/config.go": [
-    "DefaultRateLimitPerMinute",
-    "RateLimitPerMinute",
-    "RATE_LIMIT_REQUESTS_PER_MINUTE",
-    "TRUSTED_PROXY_CIDRS",
+    "CORSAllowedOrigins",
+    "CORS_ALLOWED_ORIGINS",
+    "parseOrigins",
   ],
   "production-api-worker/internal/config/config_test.go": [
-    "RateLimitPerMinute",
-    "rate limit is not positive",
-    "trusted proxy cidr is invalid",
+    "CORSAllowedOrigins",
+    "cors origin is not http or https",
+    "cors origin contains path",
+    "cors origin contains user info",
+    "cors origin contains empty query marker",
   ],
   "production-api-worker/internal/api/handler.go": [
-    "WithRateLimit",
-    "WithTrustedProxyCIDRs",
-    "rateLimitMiddleware",
-    "rate_limited",
+    "WithCORSAllowedOrigins",
+    "corsMiddleware",
+    "Access-Control-Allow-Origin",
   ],
   "production-api-worker/internal/api/handler_test.go": [
-    "TestRateLimitContract",
-    "TestRateLimitTrustedProxyContract",
-    "http.StatusTooManyRequests",
-  ],
-  "production-api-worker/internal/api/rate_limit.go": [
-    "type rateLimiter struct",
-    "func clientIP",
-    "type trustedProxyConfig",
+    "TestCORSAllowedOriginsContract",
+    "http.StatusNoContent",
+    "http.StatusForbidden",
   ],
   "production-api-worker/docker-compose.yml": [
-    "RATE_LIMIT_REQUESTS_PER_MINUTE",
-    "TRUSTED_PROXY_CIDRS",
+    "CORS_ALLOWED_ORIGINS",
   ],
   "production-api-worker/api/openapi.yaml": [
     "version: v1.0.37",
-    "429",
-    "rate_limited",
+    "CORS allowlist",
+    "CORS_ALLOWED_ORIGINS",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "Rate limit",
-    "429 rate_limited",
-    "RATE_LIMIT_REQUESTS_PER_MINUTE",
-    "TRUSTED_PROXY_CIDRS",
-  ],
-  "production-api-worker/docs/operational-runbook.md": [
-    "TRUSTED_PROXY_CIDRS",
-    "X-Forwarded-For",
-    "trusted proxy",
+    "CORS allowlist",
+    "CORS_ALLOWED_ORIGINS",
+    "Access-Control-Allow-Origin",
   ],
   ".github/workflows/ci.yml": [
-    "Check rate limit contract",
-    "node scripts/check-rate-limit-contract.mjs",
+    "Check CORS contract",
+    "node scripts/check-cors-contract.mjs",
   ],
 };
 
@@ -96,7 +82,7 @@ for (const file of files) {
 }
 
 if (missing.length > 0) {
-  console.error("rate limit contract check failed:");
+  console.error("cors contract check failed:");
   for (const item of missing) console.error(`- ${item}`);
   process.exit(1);
 }
@@ -104,5 +90,5 @@ if (missing.length > 0) {
 console.log(JSON.stringify({
   status: "ok",
   files: files.length,
-  contract: "rate limit",
+  contract: "cors allowlist",
 }, null, 2));

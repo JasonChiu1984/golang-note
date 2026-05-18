@@ -363,6 +363,7 @@ ENTRYPOINT ["/app"]
 | Response schema | status code、JSON 欄位、enum 是否仍可被舊 client decode |
 | Error envelope | 是否維持穩定 `error.code` 與 `error.message` |
 | OpenAPI contract | `api/openapi.yaml` 是否同步 endpoint、schema、error code、Bearer auth 與 `X-Request-ID` |
+| CORS allowlist | `CORS_ALLOWED_ORIGINS` 是否只允許 exact origin，並固定 preflight `204` / blocked `403` |
 | Rate limit | `RATE_LIMIT_REQUESTS_PER_MINUTE` 是否固定 per-client IP、`429 rate_limited`、`Retry-After` 與 health endpoint 不限速 |
 | Shutdown signal | SIGINT/SIGTERM 是否都會進入 graceful shutdown，並由 `TestMonitoredSignalsContract` 固定 |
 | Request ID | `X-Request-ID` 是否會回傳，client 提供時是否原樣保留 |
@@ -378,6 +379,7 @@ cd production-api-worker
 go test ./internal/api -run 'Test.*Contract' -count=1
 go test ./internal/api -run 'TestRequestDecodingContract' -count=1
 go test ./internal/api -run 'TestRequestIDContract|TestCreateJobContract' -count=1
+go test ./internal/api -run 'TestCORSAllowedOriginsContract' -count=1
 go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1
 go test ./internal/api -run 'TestPanicRecoveryContract' -count=1
 go test ./internal/api -run 'TestRequestTimeoutContract' -count=1

@@ -25,6 +25,7 @@ type Handler struct {
 	pprof     pprofConfig
 	limiter   *rateLimiter
 	proxies   trustedProxyConfig
+	cors      corsConfig
 }
 
 type Option func(*Handler)
@@ -69,6 +70,12 @@ func WithTrustedProxyCIDRs(cidrs []string) Option {
 	}
 }
 
+func WithCORSAllowedOrigins(origins []string) Option {
+	return func(h *Handler) {
+		h.cors = newCORSConfig(origins)
+	}
+}
+
 func NewHandler(service *app.Service, obs *observability.Observability, options ...Option) *Handler {
 	handler := &Handler{
 		service: service,
@@ -97,7 +104,7 @@ func (h *Handler) Routes() http.Handler {
 		mux.HandleFunc("GET /debug/pprof/trace", pprof.Trace)
 		mux.HandleFunc("GET /debug/pprof/{name}", pprof.Index)
 	}
-	return h.securityHeadersMiddleware(h.requestContextMiddleware(h.metricsMiddleware(h.recoverMiddleware(h.authMiddleware(h.rateLimitMiddleware(mux))))))
+	return h.securityHeadersMiddleware(h.corsMiddleware(h.requestContextMiddleware(h.metricsMiddleware(h.recoverMiddleware(h.authMiddleware(h.rateLimitMiddleware(mux)))))))
 }
 
 func (h *Handler) readyz(w http.ResponseWriter, r *http.Request) {
@@ -186,6 +193,56 @@ func (h *Handler) securityHeadersMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "DENY")
 		w.Header().Set("Referrer-Policy", "no-referrer")
+		next.ServeHTTP(w, r)
+	})
+}
+
+type corsConfig struct {
+	allowed map[string]struct{}
+}
+
+func newCORSConfig(origins []string) corsConfig {
+	allowed := make(map[string]struct{}, len(origins))
+	for _, origin := range origins {
+		origin = strings.TrimRight(strings.TrimSpace(origin), "/")
+		if origin == "" {
+			continue
+		}
+		allowed[origin] = struct{}{}
+	}
+	return corsConfig{allowed: allowed}
+}
+
+func (c corsConfig) allows(origin string) bool {
+	_, ok := c.allowed[strings.TrimRight(strings.TrimSpace(origin), "/")]
+	return ok
+}
+
+func (h *Handler) corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		origin := strings.TrimRight(strings.TrimSpace(r.Header.Get("Origin")), "/")
+		if origin == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+		if !h.cors.allows(origin) {
+			if r.Method == http.MethodOptions {
+				http.Error(w, "cors origin is not allowed", http.StatusForbidden)
+				return
+			}
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		w.Header().Set("Access-Control-Allow-Origin", origin)
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Request-ID")
+		w.Header().Set("Access-Control-Max-Age", "300")
+		w.Header().Add("Vary", "Origin")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
 		next.ServeHTTP(w, r)
 	})
 }

@@ -61,7 +61,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           api.NewHandler(service, obs, api.WithReadiness(readiness.Ready), api.WithAuthToken(cfg.APIKey), api.WithPprof(cfg.PprofEnabled, pprofToken(cfg)), api.WithRateLimit(cfg.RateLimitPerMinute, time.Minute), api.WithTrustedProxyCIDRs(cfg.TrustedProxyCIDRs)).Routes(),
+		Handler:           api.NewHandler(service, obs, api.WithReadiness(readiness.Ready), api.WithAuthToken(cfg.APIKey), api.WithPprof(cfg.PprofEnabled, pprofToken(cfg)), api.WithRateLimit(cfg.RateLimitPerMinute, time.Minute), api.WithTrustedProxyCIDRs(cfg.TrustedProxyCIDRs), api.WithCORSAllowedOrigins(cfg.CORSAllowedOrigins)).Routes(),
 		ReadHeaderTimeout: 3 * time.Second,
 	}
 

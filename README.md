@@ -2,9 +2,9 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
-> 教材版本：`v1.0.36`
+> 教材版本：`v1.0.37`
 > 教材基準：`Go 1.26.3`
-> 這次更新重點：補齊 2026-05-18 06:51:09 本輪自動化審查、更新清單與更新紀錄，並維持 v1.0.35 已完成的 Shutdown signal contract 與 trusted proxy client IP 邊界。
+> 這次更新重點：正式發布 CORS allowlist contract，讓 production API 預設不開跨域，只有 `CORS_ALLOWED_ORIGINS` 明確列入的 exact origin 才回 CORS header。
 
 ## 版本策略
 
@@ -25,6 +25,7 @@
 | Operational runbook | `production-api-worker/docs/operational-runbook.md` 與 `configs/prometheus/production-api-worker-alerts.yml` 需固定 SLI/SLO、告警、incident workflow、verification 與 risk notes |
 | Prometheus config gate | `configs/prometheus/prometheus.yml`、Compose `monitoring` profile 與 `node scripts/check-prometheus-config.mjs` 需固定 scrape job、rule_files、alert rules 載入與 API key 風險說明 |
 | OpenAPI contract | `production-api-worker/api/openapi.yaml` 需同步 `docs/api-contract.md` 與 Go contract tests，並由 `node scripts/check-openapi-contract.mjs` 固定 endpoint、schema、error code 與 auth 邊界 |
+| CORS allowlist contract | `CORS_ALLOWED_ORIGINS` 預設空值；只允許 exact `http` / `https` origin，preflight 與實際 request 由 `TestCORSAllowedOriginsContract` 和 `node scripts/check-cors-contract.mjs` 固定 |
 | Pprof diagnostics contract | `ENABLE_PPROF=false` 為預設；啟用 `/debug/pprof/` 時必須設定 `PPROF_TOKEN` 或 `API_KEY`，並由 `node scripts/check-pprof-contract.mjs` 固定文件、測試與 CI 入口 |
 | OTLP collector contract | `production-api-worker/otel-collector.yaml` 需固定 OTLP gRPC receiver `0.0.0.0:4317`、`debug` exporter、Compose endpoint 與 `node scripts/check-otel-collector-contract.mjs` CI gate |
 | Rate limit contract | `RATE_LIMIT_REQUESTS_PER_MINUTE=120` 為預設；`/jobs` 與 `/jobs/{id}` 依 client IP 限速，超限回 `429 rate_limited` 與 `Retry-After`，並由 `node scripts/check-rate-limit-contract.mjs` 固定文件、OpenAPI、測試與 CI 入口 |
@@ -47,6 +48,7 @@
 | Database pool | Postgres 連線池容量與生命週期需由 env 設定並驗證，避免 repository 內硬編碼造成部署容量不可控 |
 | Migration contract | DB schema migration 需有 `DATABASE_URL`、`MIGRATIONS_DIR`、`MIGRATION_TIMEOUT` 設定驗證、`schema_migrations` 版本紀錄與重複執行保護 |
 | API security contract | 若設定 `API_KEY`，`/jobs` 與 `/metrics` 必須要求 `Authorization: Bearer <token>`；`/livez`、`/readyz` 保持公開供 LB / orchestrator 使用，所有 response 保留基本安全標頭 |
+| CORS policy | 瀏覽器跨域存取不可使用 `*`；應以 `CORS_ALLOWED_ORIGINS=https://app.example.com,http://localhost:5173` 明確列出前端 origin |
 | Diagnostics security | `/debug/pprof/` 必須預設關閉；開啟時只能作為短期事故診斷工具，並以 Bearer token、網路層限制與事後關閉流程保護 |
 | API rate limiting | 業務 endpoint 需有 per-client 保護，避免單一 client 壓垮 queue / DB；health endpoint 不應被限速影響部署探測 |
 
@@ -128,7 +130,7 @@ go test ./project-concurrent-crawler/...
 | 專案 | 目標 | 建議時機 | 入口 |
 |---|---|---|---|
 | `project-concurrent-crawler` | 練習 worker pool、retry、parser/store 抽象 | 第一次完成第 7 章後 | `go test ./project-concurrent-crawler/...` |
-| `production-api-worker` | 練習 HTTP API、OpenAPI contract、API key security contract、diagnostics / pprof contract、OTLP collector contract、rate limit contract、shutdown signal contract、startup config、DB pool contract、migration contract、strict request decoding、transaction、context-aware retry、request timeout contract、queue shutdown safety、observability、operational runbook、Prometheus monitoring profile、panic recovery、graceful shutdown、Docker Compose | 完成第 5、7、9、11 章後 | `cd production-api-worker && go test ./...` |
+| `production-api-worker` | 練習 HTTP API、OpenAPI contract、API key security contract、CORS allowlist contract、diagnostics / pprof contract、OTLP collector contract、rate limit contract、shutdown signal contract、startup config、DB pool contract、migration contract、strict request decoding、transaction、context-aware retry、request timeout contract、queue shutdown safety、observability、operational runbook、Prometheus monitoring profile、panic recovery、graceful shutdown、Docker Compose | 完成第 5、7、9、11 章後 | `cd production-api-worker && go test ./...` |
 
 `production-api-worker` 也附上 [API 合約文件](production-api-worker/docs/api-contract.md)，用來示範 production service 不只要能跑，也要把 endpoint、錯誤格式、相容性規則與 release gate 寫清楚。
 
@@ -150,6 +152,7 @@ go test ./project-concurrent-crawler/...
 | Operational runbook gate | `node scripts/check-operational-runbook.mjs` | 確認 `production-api-worker/docs/operational-runbook.md`、`configs/prometheus/production-api-worker-alerts.yml`、README 與 CI 都保留 SLI/SLO、告警、incident workflow 與驗證入口 |
 | Prometheus config gate | `node scripts/check-prometheus-config.mjs` | 確認 `configs/prometheus/prometheus.yml`、alert rules、Compose monitoring profile、README、runbook 與 CI 入口一致 |
 | OpenAPI contract gate | `node scripts/check-openapi-contract.mjs` | 確認 `production-api-worker/api/openapi.yaml` 保留 endpoint、request/response schema、error code、Bearer auth 與 `X-Request-ID` |
+| CORS allowlist gate | `node scripts/check-cors-contract.mjs` | 確認 `CORS_ALLOWED_ORIGINS`、allowlist middleware、preflight 測試、OpenAPI、README 與 CI 入口一致 |
 | Pprof diagnostics gate | `node scripts/check-pprof-contract.mjs` | 確認 `ENABLE_PPROF`、`PPROF_TOKEN`、`/debug/pprof/`、Go tests、runbook、README 與 CI 入口一致 |
 | OTLP collector gate | `node scripts/check-otel-collector-contract.mjs` | 確認 `production-api-worker/otel-collector.yaml`、Compose OTLP endpoint、debug exporter、runbook、README 與 CI 入口一致 |
 | Rate limit contract gate | `node scripts/check-rate-limit-contract.mjs` | 確認 `RATE_LIMIT_REQUESTS_PER_MINUTE`、`TRUSTED_PROXY_CIDRS`、`429 rate_limited`、Go tests、OpenAPI、README 與 CI 入口一致 |
@@ -177,6 +180,7 @@ go test ./project-concurrent-crawler/...
 | Startup / DB pool 合約 | `cd production-api-worker && go test ./internal/config -count=1` | 驗證 `PORT`、`QUEUE_SIZE`、`WORKERS`、`DATABASE_MAX_OPEN_CONNS`、`DATABASE_MAX_IDLE_CONNS` 與 `DATABASE_CONN_MAX_LIFETIME` 預設值、合法 env 與錯誤設定 fail-fast 行為 |
 | Migration 合約 | `cd production-api-worker && go test ./internal/config ./internal/migration -count=1` | 驗證 migration env、timeout、SQL 檔排序與 migration version 命名規則 |
 | API security 合約 | `cd production-api-worker && go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1` | 驗證 API key 啟用後保護 `/jobs`、`/metrics`，health endpoint 保持公開，response 有安全標頭 |
+| CORS allowlist 合約 | `cd production-api-worker && go test ./internal/api -run 'TestCORSAllowedOriginsContract' -count=1` | 驗證允許來源 preflight、實際 request CORS header 與未允許來源 blocked preflight |
 | Pprof diagnostics 合約 | `cd production-api-worker && go test ./internal/config ./internal/api -run 'Test.*Pprof|TestPprofDiagnosticsContract' -count=1` | 驗證 pprof 預設關閉，啟用時缺 token fail fast，`/debug/pprof/` 未帶 Bearer token 回 401 |
 | Rate limit 合約 | `cd production-api-worker && go test ./internal/config ./internal/api -run 'TestRateLimitContract|TestRateLimitTrustedProxyContract|TestLoadFromLookup' -count=1` | 驗證每個 client IP 超限回 `429 rate_limited`，且只有 trusted proxy 來源可採用 `X-Forwarded-For` |
 | Shutdown signal 合約 | `cd production-api-worker && go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1` | 驗證 `api-worker` 同時監聽 SIGINT/SIGTERM，避免 rolling deploy 收到 SIGTERM 時無法進入 graceful shutdown |

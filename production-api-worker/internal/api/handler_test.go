@@ -243,6 +243,64 @@ func TestSecurityHeadersContract(t *testing.T) {
 	}
 }
 
+func TestCORSAllowedOriginsContract(t *testing.T) {
+	handler := newContractHandlerWithOptions(t, nil, WithCORSAllowedOrigins([]string{"https://app.example.com", "http://localhost:5173"}))
+
+	req := httptest.NewRequest(http.MethodOptions, "/jobs", nil)
+	req.Header.Set("Origin", "https://app.example.com")
+	req.Header.Set("Access-Control-Request-Method", "POST")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("allowed preflight status = %d, want %d: %s", rec.Code, http.StatusNoContent, rec.Body.String())
+	}
+	if got := rec.Header().Get("Access-Control-Allow-Origin"); got != "https://app.example.com" {
+		t.Fatalf("Access-Control-Allow-Origin = %q, want https://app.example.com", got)
+	}
+	if got := rec.Header().Get("Access-Control-Allow-Methods"); !strings.Contains(got, "POST") || !strings.Contains(got, "OPTIONS") {
+		t.Fatalf("Access-Control-Allow-Methods = %q, want POST and OPTIONS", got)
+	}
+	if got := rec.Header().Get("Access-Control-Allow-Headers"); !strings.Contains(got, "Authorization") || !strings.Contains(got, requestIDHeader) {
+		t.Fatalf("Access-Control-Allow-Headers = %q, want Authorization and %s", got, requestIDHeader)
+	}
+	if got := rec.Header().Values("Vary"); !containsHeaderValue(got, "Origin") {
+		t.Fatalf("Vary = %v, want Origin", got)
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/jobs", strings.NewReader(`{"name":"resize","payload":"image"}`))
+	req.Header.Set("Origin", "https://app.example.com")
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("allowed actual request status = %d, want %d: %s", rec.Code, http.StatusAccepted, rec.Body.String())
+	}
+	if got := rec.Header().Get("Access-Control-Allow-Origin"); got != "https://app.example.com" {
+		t.Fatalf("actual Access-Control-Allow-Origin = %q", got)
+	}
+
+	req = httptest.NewRequest(http.MethodOptions, "/jobs", nil)
+	req.Header.Set("Origin", "https://evil.example")
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("blocked preflight status = %d, want %d", rec.Code, http.StatusForbidden)
+	}
+	if got := rec.Header().Get("Access-Control-Allow-Origin"); got != "" {
+		t.Fatalf("blocked Access-Control-Allow-Origin = %q, want empty", got)
+	}
+}
+
+func containsHeaderValue(values []string, want string) bool {
+	for _, value := range values {
+		for _, part := range strings.Split(value, ",") {
+			if strings.TrimSpace(part) == want {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func TestAPIKeyAuthContract(t *testing.T) {
 	handler := newContractHandlerWithOptions(t, nil, WithAuthToken("secret-token"))
 

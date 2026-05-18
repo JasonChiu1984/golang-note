@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"net"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -30,6 +31,7 @@ type Config struct {
 	PprofToken              string
 	RateLimitPerMinute      int
 	TrustedProxyCIDRs       []string
+	CORSAllowedOrigins      []string
 	DatabaseURL             string
 	DatabaseMaxOpenConns    int
 	DatabaseMaxIdleConns    int
@@ -100,6 +102,10 @@ func LoadFromLookup(lookup func(string) (string, bool)) (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
+	corsAllowedOrigins, err := parseOrigins("CORS_ALLOWED_ORIGINS", readString(lookup, "CORS_ALLOWED_ORIGINS", ""))
+	if err != nil {
+		return Config{}, err
+	}
 
 	return Config{
 		Port:                    port,
@@ -110,6 +116,7 @@ func LoadFromLookup(lookup func(string) (string, bool)) (Config, error) {
 		PprofToken:              pprofToken,
 		RateLimitPerMinute:      rateLimitPerMinute,
 		TrustedProxyCIDRs:       trustedProxyCIDRs,
+		CORSAllowedOrigins:      corsAllowedOrigins,
 		DatabaseURL:             strings.TrimSpace(readString(lookup, "DATABASE_URL", "")),
 		DatabaseMaxOpenConns:    databaseMaxOpenConns,
 		DatabaseMaxIdleConns:    databaseMaxIdleConns,
@@ -200,4 +207,27 @@ func parseCIDRList(name, value string) ([]string, error) {
 		cidrs = append(cidrs, cidr)
 	}
 	return cidrs, nil
+}
+
+func parseOrigins(name, value string) ([]string, error) {
+	if strings.TrimSpace(value) == "" {
+		return nil, nil
+	}
+	parts := strings.Split(value, ",")
+	origins := make([]string, 0, len(parts))
+	for _, part := range parts {
+		origin := strings.TrimRight(strings.TrimSpace(part), "/")
+		if origin == "" {
+			continue
+		}
+		parsed, err := url.Parse(origin)
+		if err != nil || parsed.Scheme == "" || parsed.Host == "" || parsed.User != nil || parsed.Path != "" || parsed.RawQuery != "" || parsed.ForceQuery || parsed.Fragment != "" {
+			return nil, fmt.Errorf("%s must contain comma-separated exact http/https origins, got %q", name, origin)
+		}
+		if parsed.Scheme != "http" && parsed.Scheme != "https" {
+			return nil, fmt.Errorf("%s must contain comma-separated exact http/https origins, got %q", name, origin)
+		}
+		origins = append(origins, origin)
+	}
+	return origins, nil
 }

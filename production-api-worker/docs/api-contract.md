@@ -1,6 +1,6 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.35 ｜ 基準日期：2026-05-18 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract
+> 版本：v1.0.37 ｜ 基準日期：2026-05-18 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract
 
 這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery、retry 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 cancellation 行為需要透過 contract test 保護。
 
@@ -21,6 +21,7 @@ Machine-readable contract 位於 `production-api-worker/api/openapi.yaml`。此 
 | Startup configuration | `PORT`、`QUEUE_SIZE`、`WORKERS` 與 DB pool 設定必須先驗證；錯誤設定 fail fast，不可 silent fallback |
 | API security | `API_KEY` 有值時，`/jobs` 與 `/metrics` 必須要求 Bearer token；health endpoint 仍需公開供部署系統探測 |
 | Security headers | 所有 response 應回 `X-Content-Type-Options`、`X-Frame-Options` 與 `Referrer-Policy` |
+| CORS allowlist | 預設不回 CORS header；只有 `CORS_ALLOWED_ORIGINS` 明確列入的 exact origin 才回 `Access-Control-Allow-Origin` |
 | Rate limit | `/jobs` 與 `/jobs/{id}` 需有 per-client IP 限速；超限回 `429 rate_limited`，health endpoint 不限速 |
 | Trusted proxy | 只有 `RemoteAddr` 落在 `TRUSTED_PROXY_CIDRS` 時才採用 `X-Forwarded-For` 第一個 IP；未信任來源不可用 header 偽造 client IP |
 | Shutdown signal | `api-worker` 必須同時監聽 SIGINT 與 SIGTERM，讓 local Ctrl+C、Docker stop 與 Kubernetes rolling deploy 都進入 draining |
@@ -188,10 +189,30 @@ Content-Type: application/json
 | `DATABASE_CONN_MAX_LIFETIME` | `30m0s` | 正數 duration，例如 `30m` 或 `1h` |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | 空字串 | 空字串時使用 stdout trace exporter |
 | `API_KEY` | 空字串 | 空值停用 API key；有值時保護 `/jobs` 與 `/metrics` |
+| `CORS_ALLOWED_ORIGINS` | 空字串 | comma-separated exact `http` / `https` origins；不可使用 wildcard、path、query 或 fragment |
 | `RATE_LIMIT_REQUESTS_PER_MINUTE` | `120` | 正整數；每個 client IP 每分鐘業務 endpoint 呼叫上限 |
 | `TRUSTED_PROXY_CIDRS` | 空字串 | comma-separated CIDR；空值時不信任 `X-Forwarded-For` |
 
-錯誤設定必須讓 process fail fast，例如 `PORT=http`、`QUEUE_SIZE=0`、`WORKERS=-1`、`DATABASE_MAX_IDLE_CONNS > DATABASE_MAX_OPEN_CONNS`、`DATABASE_CONN_MAX_LIFETIME=soon`、`RATE_LIMIT_REQUESTS_PER_MINUTE=0` 或 `TRUSTED_PROXY_CIDRS=not-a-cidr` 不應被靜默改成預設值。
+錯誤設定必須讓 process fail fast，例如 `PORT=http`、`QUEUE_SIZE=0`、`WORKERS=-1`、`DATABASE_MAX_IDLE_CONNS > DATABASE_MAX_OPEN_CONNS`、`DATABASE_CONN_MAX_LIFETIME=soon`、`RATE_LIMIT_REQUESTS_PER_MINUTE=0`、`TRUSTED_PROXY_CIDRS=not-a-cidr` 或 `CORS_ALLOWED_ORIGINS=https://app.example.com/path` 不應被靜默改成預設值。
+
+## CORS Allowlist
+
+CORS 是瀏覽器同源政策的瀏覽器端合約，不是 API 認證。`production-api-worker` 預設不回 `Access-Control-Allow-Origin`，避免教學範例被誤解成可對任意網站開放。只有明確設定 `CORS_ALLOWED_ORIGINS` 時，server 才會對符合 allowlist 的 exact origin 回 CORS headers。
+
+```bash
+CORS_ALLOWED_ORIGINS=https://app.example.com,http://localhost:5173 go run ./cmd/api-worker
+```
+
+| 項目 | 合約 |
+|---|---|
+| 設定 | `CORS_ALLOWED_ORIGINS`，預設空值 |
+| Origin 格式 | exact `http` / `https` origin，例如 `https://app.example.com` 或 `http://localhost:5173` |
+| 禁止格式 | wildcard `*`、path、query、fragment、`file://` |
+| Allowed preflight | `OPTIONS` 回 `204`、`Access-Control-Allow-Origin`、`Access-Control-Allow-Methods`、`Access-Control-Allow-Headers`、`Vary: Origin` |
+| Blocked preflight | 未列入 allowlist 的 origin 回 `403`，且不回 `Access-Control-Allow-Origin` |
+| Test gate | `go test ./internal/api -run 'TestCORSAllowedOriginsContract' -count=1` |
+
+正式部署仍應讓 API Gateway、Ingress 或 WAF 管理外部 TLS、認證與跨域政策；此合約只固定 Go service 在需要被瀏覽器前端呼叫時的最小安全邊界。
 
 ## Rate Limit
 
