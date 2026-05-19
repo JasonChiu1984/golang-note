@@ -39,6 +39,9 @@ func TestLoadFromLookupDefaults(t *testing.T) {
 	if cfg.RateLimitPerMinute != DefaultRateLimitPerMinute {
 		t.Fatalf("RateLimitPerMinute = %d, want %d", cfg.RateLimitPerMinute, DefaultRateLimitPerMinute)
 	}
+	if cfg.RequestBodyLimitBytes != DefaultRequestBodyLimitBytes {
+		t.Fatalf("RequestBodyLimitBytes = %d, want %d", cfg.RequestBodyLimitBytes, DefaultRequestBodyLimitBytes)
+	}
 	if len(cfg.TrustedProxyCIDRs) != 0 {
 		t.Fatalf("TrustedProxyCIDRs = %v, want empty", cfg.TrustedProxyCIDRs)
 	}
@@ -56,6 +59,7 @@ func TestLoadFromLookupUsesEnvironment(t *testing.T) {
 		"ENABLE_PPROF":                   " true ",
 		"PPROF_TOKEN":                    " debug-token ",
 		"RATE_LIMIT_REQUESTS_PER_MINUTE": "240",
+		"REQUEST_BODY_LIMIT_BYTES":       "2097152",
 		"TRUSTED_PROXY_CIDRS":            " 10.0.0.0/8, 192.168.10.0/24 ",
 		"CORS_ALLOWED_ORIGINS":           " https://app.example.com/, http://localhost:5173 ",
 		"DATABASE_URL":                   " postgres://app:app@localhost:5432/app?sslmode=disable ",
@@ -79,6 +83,9 @@ func TestLoadFromLookupUsesEnvironment(t *testing.T) {
 	}
 	if cfg.RateLimitPerMinute != 240 {
 		t.Fatalf("RateLimitPerMinute = %d", cfg.RateLimitPerMinute)
+	}
+	if cfg.RequestBodyLimitBytes != 2097152 {
+		t.Fatalf("RequestBodyLimitBytes = %d", cfg.RequestBodyLimitBytes)
 	}
 	if got := strings.Join(cfg.TrustedProxyCIDRs, ","); got != "10.0.0.0/8,192.168.10.0/24" {
 		t.Fatalf("TrustedProxyCIDRs = %q", got)
@@ -155,6 +162,11 @@ func TestLoadFromLookupRejectsInvalidRequiredConfig(t *testing.T) {
 			name:      "rate limit is not positive",
 			env:       map[string]string{"RATE_LIMIT_REQUESTS_PER_MINUTE": "0"},
 			wantError: "RATE_LIMIT_REQUESTS_PER_MINUTE must be a positive integer",
+		},
+		{
+			name:      "request body limit is not positive",
+			env:       map[string]string{"REQUEST_BODY_LIMIT_BYTES": "0"},
+			wantError: "REQUEST_BODY_LIMIT_BYTES must be a positive integer",
 		},
 		{
 			name:      "trusted proxy cidr is invalid",

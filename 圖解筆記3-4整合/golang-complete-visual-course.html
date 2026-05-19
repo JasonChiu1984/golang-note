@@ -1569,6 +1569,7 @@ docker compose down -v</code></pre>
       ["Rate limit contract", "API", "RATE_LIMIT_REQUESTS_PER_MINUTE=120 go run ./cmd/api-worker\nnode scripts/check-rate-limit-contract.mjs", ["per-client IP", "429 rate_limited", "Retry-After", "health endpoint 不限速"], "API backpressure 不只靠 queue 滿載，也先在 HTTP 邊界擋住單一 client 過量請求。"],
       ["Trusted proxy client IP", "API", "TRUSTED_PROXY_CIDRS=10.0.0.0/8 go run ./cmd/api-worker", ["X-Forwarded-For", "trusted CIDR", "RemoteAddr fallback", "rate limit key"], "只有信任代理來源可覆寫 client IP，避免外部直連偽造 rate limit key。"],
       ["CORS allowlist contract", "API", "CORS_ALLOWED_ORIGINS=https://app.example.com,http://localhost:5173 go run ./cmd/api-worker\nnode scripts/check-cors-contract.mjs", ["exact origin", "preflight 204", "blocked 403", "Vary: Origin"], "瀏覽器前端跨域存取要明確列入 allowlist，不以 Access-Control-Allow-Origin: * 解決部署問題。"],
+      ["Request body limit contract", "API", "REQUEST_BODY_LIMIT_BYTES=1048576 go run ./cmd/api-worker\nnode scripts/check-request-body-limit-contract.mjs", ["http.MaxBytesReader", "413 payload_too_large", "request id", "config fail-fast"], "大型 payload 先在 HTTP 邊界被拒絕，不進入 JSON decoder、service 或 worker queue。"],
       ["Shutdown signal contract", "Lifecycle", "go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1\nnode scripts/check-shutdown-signal-contract.mjs", ["SIGINT", "SIGTERM", "readiness draining", "queue drain"], "local Ctrl+C、Docker stop 與 Kubernetes rolling deploy 都進入同一套 graceful shutdown。"],
       ["Testing gate", "Testing", "go test ./...\ngo test -race ./...\ngo build ./cmd/api-worker", ["unit test", "httptest", "race test", "build gate"], "CI gate 全部通過才合併。"]
     ];
@@ -1576,7 +1577,7 @@ docker compose down -v</code></pre>
     const reviewItems = [
       ["語法完整度", "9/10", "以教材深度評估：40 張單一語法卡 + 200 語法範例，足以支撐日常 Go 開發。", "若作為 runbook，仍可補 unsafe/cgo/build tag 與版本升級策略。"],
       ["併發深度", "9/10", "以教材深度評估：goroutine、channel、select、context、worker pool、shutdown 都有專案化說明。", "若作為 runbook，需再補 leak detection、壓測腳本與事故操作流程。"],
-      ["API 工程化", "8.4/10", "以教材深度評估：handler、ServeMux、錯誤分類、httptest、API security、CORS allowlist 與 rate limit contract 已串起。", "若作為 runbook，需再補 idempotency、灰度發布與 API gateway policy。"],
+      ["API 工程化", "8.6/10", "以教材深度評估：handler、ServeMux、錯誤分類、httptest、API security、CORS allowlist、request body limit 與 rate limit contract 已串起。", "若作為 runbook，需再補 idempotency、灰度發布與 API gateway policy。"],
       ["DB Transaction", "8/10", "以教材深度評估：database/sql、pool、transaction、repository 與 Postgres 範例已具備。", "若作為 runbook，需再補 isolation level、deadlock retry、migration rollback 操作手冊。"],
       ["Observability", "9.0/10", "以教材深度評估：slog、Prometheus、OpenTelemetry、OTLP collector contract、health、pprof diagnostics contract，加上 operational runbook、alert rules、scrape config 與 Compose monitoring profile。", "若作為企業 runbook，需再補正式 Alertmanager、OTLP backend、平台部署範本、取樣策略與 profile artifact 管理。"],
       ["Testing", "9/10", "以教材深度評估：testing、table-driven、benchmark、fuzz、race、httptest 都已納入。", "若作為 runbook，需再補 contract test、integration test、測試資料治理。"],

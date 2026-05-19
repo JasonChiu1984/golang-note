@@ -24,6 +24,7 @@ type Handler struct {
 	authToken string
 	pprof     pprofConfig
 	limiter   *rateLimiter
+	bodyLimit int64
 	proxies   trustedProxyConfig
 	cors      corsConfig
 }
@@ -34,6 +35,8 @@ type pprofConfig struct {
 	enabled bool
 	token   string
 }
+
+var errPayloadTooLarge = errors.New("payload too large")
 
 func WithReadiness(ready func() bool) Option {
 	return func(h *Handler) {
@@ -64,6 +67,14 @@ func WithRateLimit(limit int, window time.Duration) Option {
 	}
 }
 
+func WithRequestBodyLimitBytes(limit int64) Option {
+	return func(h *Handler) {
+		if limit > 0 {
+			h.bodyLimit = limit
+		}
+	}
+}
+
 func WithTrustedProxyCIDRs(cidrs []string) Option {
 	return func(h *Handler) {
 		h.proxies = newTrustedProxyConfig(cidrs)
@@ -78,10 +89,11 @@ func WithCORSAllowedOrigins(origins []string) Option {
 
 func NewHandler(service *app.Service, obs *observability.Observability, options ...Option) *Handler {
 	handler := &Handler{
-		service: service,
-		obs:     obs,
-		ready:   func() bool { return true },
-		limiter: newRateLimiter(120, time.Minute),
+		service:   service,
+		obs:       obs,
+		ready:     func() bool { return true },
+		limiter:   newRateLimiter(120, time.Minute),
+		bodyLimit: 1 << 20,
 	}
 	for _, option := range options {
 		option(handler)
@@ -126,7 +138,7 @@ func (h *Handler) createJob(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := contextWithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	input, err := decodeJobInput(w, r)
+	input, err := decodeJobInput(w, r, h.bodyLimit)
 	if err != nil {
 		h.writeError(w, r, err)
 		return
@@ -155,13 +167,17 @@ func (h *Handler) getJob(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, job)
 }
 
-func decodeJobInput(w http.ResponseWriter, r *http.Request) (domain.JobInput, error) {
-	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+func decodeJobInput(w http.ResponseWriter, r *http.Request, bodyLimit int64) (domain.JobInput, error) {
+	r.Body = http.MaxBytesReader(w, r.Body, bodyLimit)
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 
 	var input domain.JobInput
 	if err := decoder.Decode(&input); err != nil {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			return domain.JobInput{}, fmt.Errorf("decode job input: request body larger than %d bytes: %w", maxBytesErr.Limit, errPayloadTooLarge)
+		}
 		return domain.JobInput{}, fmt.Errorf("decode job input: %v: %w", err, domain.ErrInvalidInput)
 	}
 	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
@@ -360,6 +376,10 @@ func (h *Handler) writeError(w http.ResponseWriter, r *http.Request, err error) 
 		status = http.StatusBadRequest
 		code = "invalid_input"
 		message = "invalid input"
+	case errors.Is(err, errPayloadTooLarge):
+		status = http.StatusRequestEntityTooLarge
+		code = "payload_too_large"
+		message = "payload too large"
 	case errors.Is(err, domain.ErrQueueFull):
 		status = http.StatusServiceUnavailable
 		code = "queue_full"

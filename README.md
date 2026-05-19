@@ -2,9 +2,9 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
-> 教材版本：`v1.0.37`
+> 教材版本：`v1.0.38`
 > 教材基準：`Go 1.26.3`
-> 這次更新重點：正式發布 CORS allowlist contract，讓 production API 預設不開跨域，只有 `CORS_ALLOWED_ORIGINS` 明確列入的 exact origin 才回 CORS header。
+> 這次更新重點：正式發布 Request body limit contract，讓 `POST /jobs` 以 `REQUEST_BODY_LIMIT_BYTES` 固定 request body 上限，超限回 `413 payload_too_large`，避免大型 payload 壓垮 handler / queue 邊界。
 
 ## 版本策略
 
@@ -26,6 +26,7 @@
 | Prometheus config gate | `configs/prometheus/prometheus.yml`、Compose `monitoring` profile 與 `node scripts/check-prometheus-config.mjs` 需固定 scrape job、rule_files、alert rules 載入與 API key 風險說明 |
 | OpenAPI contract | `production-api-worker/api/openapi.yaml` 需同步 `docs/api-contract.md` 與 Go contract tests，並由 `node scripts/check-openapi-contract.mjs` 固定 endpoint、schema、error code 與 auth 邊界 |
 | CORS allowlist contract | `CORS_ALLOWED_ORIGINS` 預設空值；只允許 exact `http` / `https` origin，preflight 與實際 request 由 `TestCORSAllowedOriginsContract` 和 `node scripts/check-cors-contract.mjs` 固定 |
+| Request body limit contract | `REQUEST_BODY_LIMIT_BYTES=1048576` 為預設；`POST /jobs` 超過上限回 `413 payload_too_large`，並由 `TestRequestBodyLimitContract` 和 `node scripts/check-request-body-limit-contract.mjs` 固定 |
 | Pprof diagnostics contract | `ENABLE_PPROF=false` 為預設；啟用 `/debug/pprof/` 時必須設定 `PPROF_TOKEN` 或 `API_KEY`，並由 `node scripts/check-pprof-contract.mjs` 固定文件、測試與 CI 入口 |
 | OTLP collector contract | `production-api-worker/otel-collector.yaml` 需固定 OTLP gRPC receiver `0.0.0.0:4317`、`debug` exporter、Compose endpoint 與 `node scripts/check-otel-collector-contract.mjs` CI gate |
 | Rate limit contract | `RATE_LIMIT_REQUESTS_PER_MINUTE=120` 為預設；`/jobs` 與 `/jobs/{id}` 依 client IP 限速，超限回 `429 rate_limited` 與 `Retry-After`，並由 `node scripts/check-rate-limit-contract.mjs` 固定文件、OpenAPI、測試與 CI 入口 |
@@ -130,7 +131,7 @@ go test ./project-concurrent-crawler/...
 | 專案 | 目標 | 建議時機 | 入口 |
 |---|---|---|---|
 | `project-concurrent-crawler` | 練習 worker pool、retry、parser/store 抽象 | 第一次完成第 7 章後 | `go test ./project-concurrent-crawler/...` |
-| `production-api-worker` | 練習 HTTP API、OpenAPI contract、API key security contract、CORS allowlist contract、diagnostics / pprof contract、OTLP collector contract、rate limit contract、shutdown signal contract、startup config、DB pool contract、migration contract、strict request decoding、transaction、context-aware retry、request timeout contract、queue shutdown safety、observability、operational runbook、Prometheus monitoring profile、panic recovery、graceful shutdown、Docker Compose | 完成第 5、7、9、11 章後 | `cd production-api-worker && go test ./...` |
+| `production-api-worker` | 練習 HTTP API、OpenAPI contract、API key security contract、CORS allowlist contract、request body limit contract、diagnostics / pprof contract、OTLP collector contract、rate limit contract、shutdown signal contract、startup config、DB pool contract、migration contract、strict request decoding、transaction、context-aware retry、request timeout contract、queue shutdown safety、observability、operational runbook、Prometheus monitoring profile、panic recovery、graceful shutdown、Docker Compose | 完成第 5、7、9、11 章後 | `cd production-api-worker && go test ./...` |
 
 `production-api-worker` 也附上 [API 合約文件](production-api-worker/docs/api-contract.md)，用來示範 production service 不只要能跑，也要把 endpoint、錯誤格式、相容性規則與 release gate 寫清楚。
 
@@ -153,6 +154,7 @@ go test ./project-concurrent-crawler/...
 | Prometheus config gate | `node scripts/check-prometheus-config.mjs` | 確認 `configs/prometheus/prometheus.yml`、alert rules、Compose monitoring profile、README、runbook 與 CI 入口一致 |
 | OpenAPI contract gate | `node scripts/check-openapi-contract.mjs` | 確認 `production-api-worker/api/openapi.yaml` 保留 endpoint、request/response schema、error code、Bearer auth 與 `X-Request-ID` |
 | CORS allowlist gate | `node scripts/check-cors-contract.mjs` | 確認 `CORS_ALLOWED_ORIGINS`、allowlist middleware、preflight 測試、OpenAPI、README 與 CI 入口一致 |
+| Request body limit gate | `node scripts/check-request-body-limit-contract.mjs` | 確認 `REQUEST_BODY_LIMIT_BYTES`、`payload_too_large`、Go tests、OpenAPI、README 與 CI 入口一致 |
 | Pprof diagnostics gate | `node scripts/check-pprof-contract.mjs` | 確認 `ENABLE_PPROF`、`PPROF_TOKEN`、`/debug/pprof/`、Go tests、runbook、README 與 CI 入口一致 |
 | OTLP collector gate | `node scripts/check-otel-collector-contract.mjs` | 確認 `production-api-worker/otel-collector.yaml`、Compose OTLP endpoint、debug exporter、runbook、README 與 CI 入口一致 |
 | Rate limit contract gate | `node scripts/check-rate-limit-contract.mjs` | 確認 `RATE_LIMIT_REQUESTS_PER_MINUTE`、`TRUSTED_PROXY_CIDRS`、`429 rate_limited`、Go tests、OpenAPI、README 與 CI 入口一致 |
@@ -171,6 +173,7 @@ go test ./project-concurrent-crawler/...
 | 依賴供應鏈檢查 | `go mod tidy && go mod verify && go list -m -u all && govulncheck ./...` | 第 8 / 9 / 11 章的依賴治理與 release gate 基線 |
 | API 合約回歸 | `cd production-api-worker && go test ./internal/api -run 'Test.*Contract' -count=1` | 驗證 HTTP status、JSON schema 與錯誤 code 沒有意外改變 |
 | Request decoding 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestDecodingContract' -count=1` | 驗證 malformed JSON、unknown field、trailing JSON 與空白 name 都回 `400 invalid_input` |
+| Request body limit 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestBodyLimitContract' -count=1` | 驗證 oversized `POST /jobs` request body 會回 `413 payload_too_large` |
 | Request ID 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestIDContract|TestCreateJobContract' -count=1` | 驗證 `X-Request-ID` 會回傳並進入 request context |
 | Readiness / drain 合約 | `cd production-api-worker && go test ./internal/api -run 'TestReadinessContract' -count=1` | 驗證 draining 時 `/readyz` 會回 503，讓 LB / orchestrator 停止導流 |
 | Worker shutdown 安全 | `cd production-api-worker && go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1` | 驗證 queue 關閉後 enqueue 回穩定錯誤，shutdown 期間不會送入已關閉 channel |

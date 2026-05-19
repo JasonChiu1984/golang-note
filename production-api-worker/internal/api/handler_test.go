@@ -192,6 +192,30 @@ func TestRequestDecodingContract(t *testing.T) {
 	}
 }
 
+func TestRequestBodyLimitContract(t *testing.T) {
+	handler := newContractHandlerWithOptions(t, nil, WithRequestBodyLimitBytes(32))
+	req := httptest.NewRequest(http.MethodPost, "/jobs", strings.NewReader(`{"name":"resize","payload":"payload-larger-than-limit"}`))
+	req.Header.Set(requestIDHeader, "body-limit-request")
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusRequestEntityTooLarge {
+		t.Fatalf("status = %d, want %d: %s", rec.Code, http.StatusRequestEntityTooLarge, rec.Body.String())
+	}
+	if got := rec.Header().Get(requestIDHeader); got != "body-limit-request" {
+		t.Fatalf("request id header = %q, want body-limit-request", got)
+	}
+
+	var response errorResponse
+	if err := json.NewDecoder(rec.Body).Decode(&response); err != nil {
+		t.Fatal(err)
+	}
+	if response.Error.Code != "payload_too_large" {
+		t.Fatalf("error code = %q, want payload_too_large", response.Error.Code)
+	}
+}
+
 func TestRequestTimeoutContract(t *testing.T) {
 	original := contextWithTimeout
 	t.Cleanup(func() { contextWithTimeout = original })

@@ -217,6 +217,7 @@ func TestCreateJobContract(t *testing.T) {
 | Error code | 比自然語言 message 更適合穩定分支 |
 | Header | `Content-Type`、cache、request id 都可能是 client 依賴 |
 | Request decoding | malformed JSON、unknown field、trailing JSON 與空白必填欄位都應固定為 `400 invalid_input` |
+| Request body limit | oversized request body 應固定為 `413 payload_too_large`，避免大型 payload 進入 decoder / queue |
 | Readiness | draining 時 `/readyz=503` 是部署系統依賴的操作合約 |
 | Worker shutdown | queue 關閉後 enqueue 應回穩定錯誤，concurrent enqueue + shutdown 不應 panic |
 | Panic recovery | 未預期 panic 仍需回穩定 `500 internal_error` JSON |
@@ -237,6 +238,7 @@ func TestCreateJobContract(t *testing.T) {
 cd production-api-worker
 go test ./internal/api -run 'Test.*Contract' -count=1
 go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1
+go test ./internal/api -run 'TestRequestBodyLimitContract' -count=1
 go test ./internal/api -run 'TestCORSAllowedOriginsContract' -count=1
 go test ./internal/api -run 'TestPprofDiagnosticsContract' -count=1
 go test ./internal/api -run 'TestRateLimitContract' -count=1
@@ -339,6 +341,7 @@ func TestRequestDecodingContract(t *testing.T) {
 | Unknown field | 防止 client typo 被靜默忽略 |
 | Trailing JSON value | 防止只 decode 第一個 object 後放過多餘資料 |
 | 空白必填欄位 | `name` 只有空白時仍屬於缺少有效業務輸入 |
+| Request body limit | `REQUEST_BODY_LIMIT_BYTES` 超限時應回 `413 payload_too_large`，不應偽裝成一般 JSON 格式錯誤 |
 
 ### Panic Recovery Contract
 

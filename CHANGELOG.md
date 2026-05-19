@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.38 - 2026-05-19
+
+- 新增 2026-05-19 15:50:00 CST +0800 資深工程師審查報告，確認 v1.0.37 已補齊 CORS allowlist contract，但 production API 仍缺少正式版本化的 request body size limit 合約。
+- `production-api-worker` 新增 `REQUEST_BODY_LIMIT_BYTES` 設定，預設 `1048576` bytes；設定錯誤會在啟動設定載入階段 fail fast。
+- `POST /jobs` 改由設定值驅動 `http.MaxBytesReader`，oversized body 會回 `413 payload_too_large` JSON，並保留 `X-Request-ID`。
+- 新增 `TestRequestBodyLimitContract` 與 config 測試，固定 request body limit 預設值、合法 env override、錯誤設定與超限 HTTP 行為。
+- 新增 `scripts/check-request-body-limit-contract.mjs`、`make request-body-limit-check` 與 GitHub Actions root-course gate，讓 README、production README、API contract、OpenAPI、Go tests 與 CI 入口保持一致。
+- README、`production-api-worker/README.md`、API contract、第 7 / 11 章、進階 Cheat Sheet 與整合視覺課程同步加入 Request body limit contract。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.37 - 2026-05-18
 
 - 新增 2026-05-18 14:52:25 CST +0800 資深工程師審查報告，確認 `v1.0.36` tag 已完成版本/CI 標示，但 CORS allowlist 的實作、測試、合約文件與靜態檢查仍停留在本地工作樹，需以新版本正式發布。

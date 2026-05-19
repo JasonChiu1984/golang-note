@@ -18,6 +18,7 @@ const (
 	DefaultDatabaseMaxIdleConns    = 10
 	DefaultDatabaseConnMaxLifetime = 30 * time.Minute
 	DefaultRateLimitPerMinute      = 120
+	DefaultRequestBodyLimitBytes   = 1 << 20
 	DefaultMigrationsDir           = "migrations"
 	DefaultMigrationTimeout        = 30 * time.Second
 )
@@ -30,6 +31,7 @@ type Config struct {
 	PprofEnabled            bool
 	PprofToken              string
 	RateLimitPerMinute      int
+	RequestBodyLimitBytes   int64
 	TrustedProxyCIDRs       []string
 	CORSAllowedOrigins      []string
 	DatabaseURL             string
@@ -98,6 +100,10 @@ func LoadFromLookup(lookup func(string) (string, bool)) (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
+	requestBodyLimitBytes, err := parsePositiveInt64("REQUEST_BODY_LIMIT_BYTES", readString(lookup, "REQUEST_BODY_LIMIT_BYTES", strconv.FormatInt(DefaultRequestBodyLimitBytes, 10)))
+	if err != nil {
+		return Config{}, err
+	}
 	trustedProxyCIDRs, err := parseCIDRList("TRUSTED_PROXY_CIDRS", readString(lookup, "TRUSTED_PROXY_CIDRS", ""))
 	if err != nil {
 		return Config{}, err
@@ -115,6 +121,7 @@ func LoadFromLookup(lookup func(string) (string, bool)) (Config, error) {
 		PprofEnabled:            pprofEnabled,
 		PprofToken:              pprofToken,
 		RateLimitPerMinute:      rateLimitPerMinute,
+		RequestBodyLimitBytes:   requestBodyLimitBytes,
 		TrustedProxyCIDRs:       trustedProxyCIDRs,
 		CORSAllowedOrigins:      corsAllowedOrigins,
 		DatabaseURL:             strings.TrimSpace(readString(lookup, "DATABASE_URL", "")),
@@ -168,6 +175,14 @@ func parsePort(name, value string) (string, error) {
 
 func parsePositiveInt(name, value string) (int, error) {
 	parsed, err := strconv.Atoi(value)
+	if err != nil || parsed <= 0 {
+		return 0, fmt.Errorf("%s must be a positive integer, got %q", name, value)
+	}
+	return parsed, nil
+}
+
+func parsePositiveInt64(name, value string) (int64, error) {
+	parsed, err := strconv.ParseInt(value, 10, 64)
 	if err != nil || parsed <= 0 {
 		return 0, fmt.Errorf("%s must be a positive integer, got %q", name, value)
 	}
