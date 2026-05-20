@@ -1,6 +1,6 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.38 ｜ 基準日期：2026-05-19 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract
+> 版本：v1.0.39 ｜ 基準日期：2026-05-20 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract
 
 這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery、retry 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 cancellation 行為需要透過 contract test 保護。
 
@@ -13,6 +13,7 @@ Machine-readable contract 位於 `production-api-worker/api/openapi.yaml`。此 
 | 向後相容新增 | 可新增 response 欄位，但不得移除或改名既有欄位 |
 | Request decoding | `POST /jobs` 只接受單一 JSON object；malformed JSON、unknown field、trailing JSON value 與空白 `name` 都必須回 `400 invalid_input` |
 | Request body limit | `POST /jobs` request body 超過 `REQUEST_BODY_LIMIT_BYTES` 時必須回 `413 payload_too_large`，不可繼續 decode 或排入 queue |
+| HTTP server timeout | `HTTP_READ_HEADER_TIMEOUT`、`HTTP_READ_TIMEOUT`、`HTTP_WRITE_TIMEOUT`、`HTTP_IDLE_TIMEOUT`、`HTTP_SHUTDOWN_TIMEOUT`、`QUEUE_DRAIN_TIMEOUT` 必須集中設定並 fail fast |
 | 錯誤分支 | client 應依 `error.code` 判斷，不依自然語言 message |
 | Status enum | `pending`、`processing`、`done`、`failed` 是穩定字串 |
 | Request correlation | server 必須回傳 `X-Request-ID`；client 提供時需原樣保留 |
@@ -193,10 +194,40 @@ Content-Type: application/json
 | `API_KEY` | 空字串 | 空值停用 API key；有值時保護 `/jobs` 與 `/metrics` |
 | `CORS_ALLOWED_ORIGINS` | 空字串 | comma-separated exact `http` / `https` origins；不可使用 wildcard、path、query 或 fragment |
 | `REQUEST_BODY_LIMIT_BYTES` | `1048576` | 正整數 byte 數；限制 `POST /jobs` body |
+| `HTTP_READ_HEADER_TIMEOUT` | `3s` | 正數 duration；限制讀取 request headers 的時間 |
+| `HTTP_READ_TIMEOUT` | `5s` | 正數 duration；限制讀取完整 request 的時間 |
+| `HTTP_WRITE_TIMEOUT` | `10s` | 正數 duration；限制 response 寫出時間 |
+| `HTTP_IDLE_TIMEOUT` | `60s` | 正數 duration；限制 keep-alive idle connection |
+| `HTTP_SHUTDOWN_TIMEOUT` | `5s` | 正數 duration；限制 HTTP server graceful shutdown 等待時間 |
+| `QUEUE_DRAIN_TIMEOUT` | `10s` | 正數 duration；限制 worker queue drain 等待時間 |
 | `RATE_LIMIT_REQUESTS_PER_MINUTE` | `120` | 正整數；每個 client IP 每分鐘業務 endpoint 呼叫上限 |
 | `TRUSTED_PROXY_CIDRS` | 空字串 | comma-separated CIDR；空值時不信任 `X-Forwarded-For` |
 
-錯誤設定必須讓 process fail fast，例如 `PORT=http`、`QUEUE_SIZE=0`、`WORKERS=-1`、`DATABASE_MAX_IDLE_CONNS > DATABASE_MAX_OPEN_CONNS`、`DATABASE_CONN_MAX_LIFETIME=soon`、`RATE_LIMIT_REQUESTS_PER_MINUTE=0`、`REQUEST_BODY_LIMIT_BYTES=0`、`TRUSTED_PROXY_CIDRS=not-a-cidr` 或 `CORS_ALLOWED_ORIGINS=https://app.example.com/path` 不應被靜默改成預設值。
+錯誤設定必須讓 process fail fast，例如 `PORT=http`、`QUEUE_SIZE=0`、`WORKERS=-1`、`DATABASE_MAX_IDLE_CONNS > DATABASE_MAX_OPEN_CONNS`、`DATABASE_CONN_MAX_LIFETIME=soon`、`RATE_LIMIT_REQUESTS_PER_MINUTE=0`、`REQUEST_BODY_LIMIT_BYTES=0`、`HTTP_READ_TIMEOUT=0s`、`QUEUE_DRAIN_TIMEOUT=-5s`、`TRUSTED_PROXY_CIDRS=not-a-cidr` 或 `CORS_ALLOWED_ORIGINS=https://app.example.com/path` 不應被靜默改成預設值。
+
+## HTTP Server Timeout
+
+HTTP timeout 是 server 操作合約，不是單純效能參數。`api-worker` 必須同時設定 request header、request body、response write、keep-alive idle、shutdown 與 queue drain timeout，避免 slow client、卡住的 response 或過長 drain 讓 rolling deploy 無法預測。
+
+```bash
+HTTP_READ_HEADER_TIMEOUT=3s \
+HTTP_READ_TIMEOUT=5s \
+HTTP_WRITE_TIMEOUT=10s \
+HTTP_IDLE_TIMEOUT=60s \
+HTTP_SHUTDOWN_TIMEOUT=5s \
+QUEUE_DRAIN_TIMEOUT=10s \
+go run ./cmd/api-worker
+```
+
+| 項目 | 合約 |
+|---|---|
+| Slow header | `HTTP_READ_HEADER_TIMEOUT` 套用到 `http.Server.ReadHeaderTimeout` |
+| Slow body | `HTTP_READ_TIMEOUT` 套用到 `http.Server.ReadTimeout`，並和 `REQUEST_BODY_LIMIT_BYTES` 一起保護輸入邊界 |
+| Slow response | `HTTP_WRITE_TIMEOUT` 套用到 `http.Server.WriteTimeout` |
+| Keep-alive | `HTTP_IDLE_TIMEOUT` 套用到 `http.Server.IdleTimeout` |
+| Shutdown | `HTTP_SHUTDOWN_TIMEOUT` 控制 `server.Shutdown` 最大等待時間 |
+| Queue drain | `QUEUE_DRAIN_TIMEOUT` 控制 worker queue drain 最大等待時間 |
+| Test gate | `go test ./cmd/api-worker -run 'TestHTTPServerTimeoutContract' -count=1` |
 
 ## Request Body Limit
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.39 - 2026-05-20
+
+- 新增 2026-05-20 15:53:59 CST +0800 資深工程師審查報告，確認 v1.0.38 已補齊 Request body limit contract，但 HTTP server timeout 還缺少正式設定化、測試與 CI gate。
+- `production-api-worker` 新增 `HTTP_READ_HEADER_TIMEOUT`、`HTTP_READ_TIMEOUT`、`HTTP_WRITE_TIMEOUT`、`HTTP_IDLE_TIMEOUT`、`HTTP_SHUTDOWN_TIMEOUT`、`QUEUE_DRAIN_TIMEOUT` 設定，預設分別為 `3s`、`5s`、`10s`、`60s`、`5s`、`10s`。
+- `api-worker` 新增 `serverTimeouts`，將 timeout 集中套用到 `http.Server` 的 read header、read、write、idle timeout，以及 shutdown / queue drain timeout。
+- 新增 `TestHTTPServerTimeoutContract` 與 config 測試，固定 timeout 預設值、合法 env override 與不合法 duration fail-fast。
+- 新增 `scripts/check-http-timeout-contract.mjs`、`make http-timeout-check` 與 GitHub Actions gate，讓 README、production README、API contract、main.go、Go tests 與 CI 入口保持一致。
+- README、`production-api-worker/README.md`、API contract、第 7 / 11 章、進階 Cheat Sheet 與整合視覺課程同步加入 HTTP server timeout contract。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.38 - 2026-05-19
 
 - 新增 2026-05-19 15:50:00 CST +0800 資深工程師審查報告，確認 v1.0.37 已補齊 CORS allowlist contract，但 production API 仍缺少正式版本化的 request body size limit 合約。

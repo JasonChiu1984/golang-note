@@ -8,6 +8,7 @@
 - API security：可用 `API_KEY` 啟用 Bearer token 保護 `/jobs` 與 `/metrics`，health endpoint 保持公開
 - CORS Allowlist Contract：`CORS_ALLOWED_ORIGINS` 預設空值；只有明確列入的 exact origin 才回 CORS header
 - Request Body Limit Contract：`REQUEST_BODY_LIMIT_BYTES` 預設 1048576；`POST /jobs` 超限回 `413 payload_too_large`
+- HTTP Server Timeout Contract：`HTTP_READ_HEADER_TIMEOUT`、`HTTP_READ_TIMEOUT`、`HTTP_WRITE_TIMEOUT`、`HTTP_IDLE_TIMEOUT`、`HTTP_SHUTDOWN_TIMEOUT`、`QUEUE_DRAIN_TIMEOUT` 集中設定並 fail fast
 - Diagnostics / pprof contract：`ENABLE_PPROF` 預設關閉；啟用 `/debug/pprof/` 時必須提供 `PPROF_TOKEN` 或沿用 `API_KEY`
 - Rate limit contract：`RATE_LIMIT_REQUESTS_PER_MINUTE` 依 client IP 保護 `/jobs` 與 `/jobs/{id}`，超限回 `429 rate_limited`
 - Trusted proxy client IP：`TRUSTED_PROXY_CIDRS` 預設空值；只有信任代理來源才採用 `X-Forwarded-For`
@@ -83,7 +84,7 @@ go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract'
 go test ./internal/api -run 'TestCORSAllowedOriginsContract' -count=1
 go test ./internal/api -run 'TestPprofDiagnosticsContract' -count=1
 go test ./internal/api -run 'TestRateLimitContract' -count=1
-go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1
+go test ./cmd/api-worker -run 'TestMonitoredSignalsContract|TestHTTPServerTimeoutContract' -count=1
 go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
 go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1
 go test -race -cover ./...
@@ -94,6 +95,7 @@ make pprof-check
 make rate-limit-check
 make cors-check
 make request-body-limit-check
+make http-timeout-check
 make shutdown-signal-check
 go test -run='^$' -bench=. -benchmem -count=10 ./... > bench.txt
 docker compose up --build
@@ -112,6 +114,7 @@ make compose-smoke
 | `go test ./internal/api -run 'Test.*Contract' -count=1` | 固定 HTTP status、JSON shape、錯誤 code 與 response header |
 | `go test ./internal/api -run 'TestRequestDecodingContract' -count=1` | 固定 malformed JSON、unknown field、trailing JSON 與空白 name 的 `400 invalid_input` |
 | `go test ./internal/api -run 'TestRequestBodyLimitContract' -count=1` | 固定 oversized request body 的 `413 payload_too_large` JSON 與 request id 行為 |
+| `go test ./cmd/api-worker -run 'TestHTTPServerTimeoutContract' -count=1` | 固定 HTTP server read header、read、write、idle、shutdown 與 queue drain timeout 由 config 套用 |
 | `go test ./internal/api -run 'TestReadinessContract' -count=1` | 固定 ready / draining 狀態與 `/readyz` status code |
 | `go test ./internal/api -run 'TestPanicRecoveryContract' -count=1` | 固定 handler panic 時的 `500 internal_error` JSON 與 request id 行為 |
 | `go test ./internal/api -run 'TestRequestTimeoutContract' -count=1` | 固定 handler timeout 時的 `504 request_timeout` JSON 與 request id 行為 |
@@ -130,6 +133,7 @@ make compose-smoke
 | `make rate-limit-check` | 固定 rate limit contract、`RATE_LIMIT_REQUESTS_PER_MINUTE`、OpenAPI、Go tests、README 與 CI 入口 |
 | `make cors-check` | 固定 CORS allowlist contract、`CORS_ALLOWED_ORIGINS`、OpenAPI、Go tests、README 與 CI 入口 |
 | `make request-body-limit-check` | 固定 request body limit contract、`REQUEST_BODY_LIMIT_BYTES`、OpenAPI、Go tests、README 與 CI 入口 |
+| `make http-timeout-check` | 固定 HTTP server timeout contract、timeout env、main server 套用、Go tests、README、API contract 與 CI 入口 |
 | `make shutdown-signal-check` | 固定 shutdown signal contract、SIGINT/SIGTERM、main test、README、API contract 與 CI 入口 |
 | `go test -run='^$' -bench=. -benchmem -count=10 ./...` | API / worker 效能改動需保留 benchmark 證據 |
 | `docker compose up --build` | 啟動 Postgres、migration、API、worker 與 metrics 整體鏈路 |
@@ -203,6 +207,12 @@ cd .. && node scripts/check-openapi-contract.mjs
 | `API_KEY` | 空字串 | 空字串時不啟用 API key；有值時 trim 後要求 Bearer token | 保護 `/jobs` 與 `/metrics` |
 | `CORS_ALLOWED_ORIGINS` | 空字串 | comma-separated exact `http` / `https` origins；不可含 path / query / fragment | 瀏覽器前端跨域存取 allowlist |
 | `REQUEST_BODY_LIMIT_BYTES` | `1048576` | 正整數 byte 數 | 限制 `POST /jobs` request body 大小 |
+| `HTTP_READ_HEADER_TIMEOUT` | `3s` | 正數 duration | 限制讀取 request headers 的時間，降低 slowloris 風險 |
+| `HTTP_READ_TIMEOUT` | `5s` | 正數 duration | 限制讀取整體 request body 的時間 |
+| `HTTP_WRITE_TIMEOUT` | `10s` | 正數 duration | 限制 response 寫出時間 |
+| `HTTP_IDLE_TIMEOUT` | `60s` | 正數 duration | 限制 keep-alive idle connection 佔用時間 |
+| `HTTP_SHUTDOWN_TIMEOUT` | `5s` | 正數 duration | 收到 shutdown signal 後等待 HTTP server 停止的時間 |
+| `QUEUE_DRAIN_TIMEOUT` | `10s` | 正數 duration | 收到 shutdown signal 後等待 worker queue drain 的時間 |
 | `ENABLE_PPROF` | `false` | boolean；`true` 時必須同時有 `PPROF_TOKEN` 或 `API_KEY` | 短期啟用 `/debug/pprof/` diagnostics endpoint |
 | `PPROF_TOKEN` | 空字串 | trim；空值時可沿用 `API_KEY`，但 `ENABLE_PPROF=true` 不可兩者皆空 | 保護 `/debug/pprof/` |
 | `RATE_LIMIT_REQUESTS_PER_MINUTE` | `120` | 正整數 | 每個 client IP 每分鐘可呼叫業務 endpoint 的次數 |
@@ -215,6 +225,8 @@ go test ./internal/config -count=1
 ```
 
 DB pool 設定不可藏在 repository 內硬編碼，因為 production 容量通常同時受 API concurrency、worker 數、Postgres `max_connections`、migration job 與維運連線影響。設定 loader 會先驗證 idle connection 不可大於 open connection，避免部署後才由資料庫壓力或連線耗盡暴露問題。
+
+HTTP timeout 也不可只留在 `main.go` 的硬編碼。`HTTP_READ_HEADER_TIMEOUT` 保護慢速 header；`HTTP_READ_TIMEOUT` 與 request body limit 共同限制大型或慢速 body；`HTTP_WRITE_TIMEOUT` 避免 response 寫出卡住；`HTTP_IDLE_TIMEOUT` 控制 keep-alive 連線佔用；`HTTP_SHUTDOWN_TIMEOUT` 與 `QUEUE_DRAIN_TIMEOUT` 則固定 graceful shutdown 的最大等待時間。
 
 ## Diagnostics / pprof Contract
 

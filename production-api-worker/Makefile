@@ -1,4 +1,4 @@
-.PHONY: test test-race ci ci-contract openapi-check runbook-check prometheus-check pprof-check rate-limit-check cors-check request-body-limit-check shutdown-signal-check otel-check docker-build compose-smoke run migrate docker-up docker-down
+.PHONY: test test-race ci ci-contract openapi-check runbook-check prometheus-check pprof-check rate-limit-check cors-check request-body-limit-check http-timeout-check shutdown-signal-check otel-check docker-build compose-smoke run migrate docker-up docker-down
 
 test:
 	go test ./...
@@ -14,7 +14,7 @@ ci:
 ci-contract:
 	go test ./internal/config ./internal/migration -count=1
 	go test ./internal/api -run 'Test.*Contract|TestReadinessContract|TestPanicRecoveryContract|TestRequestDecodingContract|TestRequestBodyLimitContract|TestRequestTimeoutContract|TestRateLimitContract' -count=1
-	go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1
+	go test ./cmd/api-worker -run 'TestMonitoredSignalsContract|TestHTTPServerTimeoutContract' -count=1
 	go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
 	go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1
 
@@ -38,6 +38,9 @@ cors-check:
 
 request-body-limit-check:
 	cd .. && node scripts/check-request-body-limit-contract.mjs
+
+http-timeout-check:
+	cd .. && node scripts/check-http-timeout-contract.mjs
 
 shutdown-signal-check:
 	cd .. && node scripts/check-shutdown-signal-contract.mjs

@@ -19,6 +19,12 @@ const (
 	DefaultDatabaseConnMaxLifetime = 30 * time.Minute
 	DefaultRateLimitPerMinute      = 120
 	DefaultRequestBodyLimitBytes   = 1 << 20
+	DefaultHTTPReadHeaderTimeout   = 3 * time.Second
+	DefaultHTTPReadTimeout         = 5 * time.Second
+	DefaultHTTPWriteTimeout        = 10 * time.Second
+	DefaultHTTPIdleTimeout         = 60 * time.Second
+	DefaultHTTPShutdownTimeout     = 5 * time.Second
+	DefaultQueueDrainTimeout       = 10 * time.Second
 	DefaultMigrationsDir           = "migrations"
 	DefaultMigrationTimeout        = 30 * time.Second
 )
@@ -32,6 +38,12 @@ type Config struct {
 	PprofToken              string
 	RateLimitPerMinute      int
 	RequestBodyLimitBytes   int64
+	HTTPReadHeaderTimeout   time.Duration
+	HTTPReadTimeout         time.Duration
+	HTTPWriteTimeout        time.Duration
+	HTTPIdleTimeout         time.Duration
+	HTTPShutdownTimeout     time.Duration
+	QueueDrainTimeout       time.Duration
 	TrustedProxyCIDRs       []string
 	CORSAllowedOrigins      []string
 	DatabaseURL             string
@@ -104,6 +116,30 @@ func LoadFromLookup(lookup func(string) (string, bool)) (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
+	httpReadHeaderTimeout, err := parsePositiveDuration("HTTP_READ_HEADER_TIMEOUT", readString(lookup, "HTTP_READ_HEADER_TIMEOUT", DefaultHTTPReadHeaderTimeout.String()))
+	if err != nil {
+		return Config{}, err
+	}
+	httpReadTimeout, err := parsePositiveDuration("HTTP_READ_TIMEOUT", readString(lookup, "HTTP_READ_TIMEOUT", DefaultHTTPReadTimeout.String()))
+	if err != nil {
+		return Config{}, err
+	}
+	httpWriteTimeout, err := parsePositiveDuration("HTTP_WRITE_TIMEOUT", readString(lookup, "HTTP_WRITE_TIMEOUT", DefaultHTTPWriteTimeout.String()))
+	if err != nil {
+		return Config{}, err
+	}
+	httpIdleTimeout, err := parsePositiveDuration("HTTP_IDLE_TIMEOUT", readString(lookup, "HTTP_IDLE_TIMEOUT", DefaultHTTPIdleTimeout.String()))
+	if err != nil {
+		return Config{}, err
+	}
+	httpShutdownTimeout, err := parsePositiveDuration("HTTP_SHUTDOWN_TIMEOUT", readString(lookup, "HTTP_SHUTDOWN_TIMEOUT", DefaultHTTPShutdownTimeout.String()))
+	if err != nil {
+		return Config{}, err
+	}
+	queueDrainTimeout, err := parsePositiveDuration("QUEUE_DRAIN_TIMEOUT", readString(lookup, "QUEUE_DRAIN_TIMEOUT", DefaultQueueDrainTimeout.String()))
+	if err != nil {
+		return Config{}, err
+	}
 	trustedProxyCIDRs, err := parseCIDRList("TRUSTED_PROXY_CIDRS", readString(lookup, "TRUSTED_PROXY_CIDRS", ""))
 	if err != nil {
 		return Config{}, err
@@ -122,6 +158,12 @@ func LoadFromLookup(lookup func(string) (string, bool)) (Config, error) {
 		PprofToken:              pprofToken,
 		RateLimitPerMinute:      rateLimitPerMinute,
 		RequestBodyLimitBytes:   requestBodyLimitBytes,
+		HTTPReadHeaderTimeout:   httpReadHeaderTimeout,
+		HTTPReadTimeout:         httpReadTimeout,
+		HTTPWriteTimeout:        httpWriteTimeout,
+		HTTPIdleTimeout:         httpIdleTimeout,
+		HTTPShutdownTimeout:     httpShutdownTimeout,
+		QueueDrainTimeout:       queueDrainTimeout,
 		TrustedProxyCIDRs:       trustedProxyCIDRs,
 		CORSAllowedOrigins:      corsAllowedOrigins,
 		DatabaseURL:             strings.TrimSpace(readString(lookup, "DATABASE_URL", "")),

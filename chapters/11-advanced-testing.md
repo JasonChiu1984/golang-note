@@ -229,6 +229,7 @@ func TestCreateJobContract(t *testing.T) {
 | CORS allowlist | `CORS_ALLOWED_ORIGINS` 只接受 exact `http` / `https` origin；allowed preflight 回 `204`，blocked preflight 回 `403` |
 | Pprof diagnostics | `ENABLE_PPROF` 預設關閉；啟用 `/debug/pprof/` 時必須要求 Bearer token，避免 debug endpoint 公開 |
 | Rate limit | 每個 client IP 超過 `RATE_LIMIT_REQUESTS_PER_MINUTE` 時需回 `429 rate_limited`，且 health endpoint 不應被限速 |
+| HTTP server timeout | `HTTP_READ_HEADER_TIMEOUT`、`HTTP_READ_TIMEOUT`、`HTTP_WRITE_TIMEOUT`、`HTTP_IDLE_TIMEOUT`、`HTTP_SHUTDOWN_TIMEOUT`、`QUEUE_DRAIN_TIMEOUT` 應由 config 套用並 fail fast |
 | Shutdown signal | `api-worker` 必須同時監聽 `SIGINT` / `SIGTERM`，並由 `TestMonitoredSignalsContract` 固定，避免正式部署訊號繞過 graceful shutdown |
 | Security headers | `X-Content-Type-Options`、`X-Frame-Options`、`Referrer-Policy` 應由 middleware 固定 |
 
@@ -242,7 +243,7 @@ go test ./internal/api -run 'TestRequestBodyLimitContract' -count=1
 go test ./internal/api -run 'TestCORSAllowedOriginsContract' -count=1
 go test ./internal/api -run 'TestPprofDiagnosticsContract' -count=1
 go test ./internal/api -run 'TestRateLimitContract' -count=1
-go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1
+go test ./cmd/api-worker -run 'TestMonitoredSignalsContract|TestHTTPServerTimeoutContract' -count=1
 ```
 
 > 合約測試不應過度綁定內部 struct；它要固定「外部看見的行為」，例如 JSON 欄位與錯誤 code，而不是 service 裡用了哪個 repository 實作。
@@ -342,6 +343,7 @@ func TestRequestDecodingContract(t *testing.T) {
 | Trailing JSON value | 防止只 decode 第一個 object 後放過多餘資料 |
 | 空白必填欄位 | `name` 只有空白時仍屬於缺少有效業務輸入 |
 | Request body limit | `REQUEST_BODY_LIMIT_BYTES` 超限時應回 `413 payload_too_large`，不應偽裝成一般 JSON 格式錯誤 |
+| HTTP server timeout | server read header、read、write、idle、shutdown 與 queue drain timeout 應有 contract test，避免重構時退回硬編碼或漏設 |
 
 ### Panic Recovery Contract
 

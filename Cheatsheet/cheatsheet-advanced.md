@@ -365,6 +365,7 @@ ENTRYPOINT ["/app"]
 | OpenAPI contract | `api/openapi.yaml` 是否同步 endpoint、schema、error code、Bearer auth 與 `X-Request-ID` |
 | CORS allowlist | `CORS_ALLOWED_ORIGINS` 是否只允許 exact origin，並固定 preflight `204` / blocked `403` |
 | Request body limit | `REQUEST_BODY_LIMIT_BYTES` 是否固定 oversized body 的 `413 payload_too_large` |
+| HTTP server timeout | `HTTP_READ_HEADER_TIMEOUT`、`HTTP_READ_TIMEOUT`、`HTTP_WRITE_TIMEOUT`、`HTTP_IDLE_TIMEOUT`、`HTTP_SHUTDOWN_TIMEOUT`、`QUEUE_DRAIN_TIMEOUT` 是否由 config 套用 |
 | Rate limit | `RATE_LIMIT_REQUESTS_PER_MINUTE` 是否固定 per-client IP、`429 rate_limited`、`Retry-After` 與 health endpoint 不限速 |
 | Shutdown signal | SIGINT/SIGTERM 是否都會進入 graceful shutdown，並由 `TestMonitoredSignalsContract` 固定 |
 | Request ID | `X-Request-ID` 是否會回傳，client 提供時是否原樣保留 |
@@ -382,6 +383,7 @@ go test ./internal/api -run 'TestRequestDecodingContract' -count=1
 go test ./internal/api -run 'TestRequestBodyLimitContract' -count=1
 go test ./internal/api -run 'TestRequestIDContract|TestCreateJobContract' -count=1
 go test ./internal/api -run 'TestCORSAllowedOriginsContract' -count=1
+go test ./cmd/api-worker -run 'TestHTTPServerTimeoutContract' -count=1
 go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1
 go test ./internal/api -run 'TestPanicRecoveryContract' -count=1
 go test ./internal/api -run 'TestRequestTimeoutContract' -count=1
@@ -404,6 +406,8 @@ go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled'
 > Request decoder 錯誤也屬於 API 合約：malformed JSON、unknown field、trailing JSON value 與空白必填欄位都應回 `400 invalid_input`，不能漂移成 `500 internal_error`。
 
 > Request body limit 是 HTTP 邊界保護：`POST /jobs` 超過 `REQUEST_BODY_LIMIT_BYTES` 應回 `413 payload_too_large`，避免大型 payload 進入 JSON decoder 或 worker queue。
+
+> HTTP server timeout 是連線生命週期保護：read header、read、write、idle、shutdown 與 queue drain timeout 都應集中設定並 fail fast，避免 slow client 或部署 drain 時間不可控。
 
 ```json
 {

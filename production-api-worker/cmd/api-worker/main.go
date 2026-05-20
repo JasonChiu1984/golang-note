@@ -59,10 +59,14 @@ func main() {
 	queue.Start(workerCtx, cfg.Workers)
 	defer queue.Shutdown()
 
+	timeouts := serverTimeouts(cfg)
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
 		Handler:           api.NewHandler(service, obs, api.WithReadiness(readiness.Ready), api.WithAuthToken(cfg.APIKey), api.WithPprof(cfg.PprofEnabled, pprofToken(cfg)), api.WithRateLimit(cfg.RateLimitPerMinute, time.Minute), api.WithRequestBodyLimitBytes(cfg.RequestBodyLimitBytes), api.WithTrustedProxyCIDRs(cfg.TrustedProxyCIDRs), api.WithCORSAllowedOrigins(cfg.CORSAllowedOrigins)).Routes(),
-		ReadHeaderTimeout: 3 * time.Second,
+		ReadHeaderTimeout: timeouts.ReadHeader,
+		ReadTimeout:       timeouts.Read,
+		WriteTimeout:      timeouts.Write,
+		IdleTimeout:       timeouts.Idle,
 	}
 
 	shutdownDone := make(chan struct{})
@@ -72,13 +76,13 @@ func main() {
 		readiness.MarkDraining()
 		obs.Logger.Info("shutdown signal received, draining service")
 
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), timeouts.Shutdown)
 		if err := server.Shutdown(shutdownCtx); err != nil {
 			obs.Logger.Error("http server shutdown failed", "error", err)
 		}
 		cancel()
 
-		queueCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		queueCtx, cancel := context.WithTimeout(context.Background(), timeouts.QueueDrain)
 		if err := queue.ShutdownContext(queueCtx); err != nil {
 			obs.Logger.Error("worker queue drain timed out", "error", err)
 			cancelWorkers()
@@ -98,6 +102,26 @@ func main() {
 
 func monitoredSignals() []os.Signal {
 	return []os.Signal{os.Interrupt, syscall.SIGTERM}
+}
+
+type httpServerTimeouts struct {
+	ReadHeader time.Duration
+	Read       time.Duration
+	Write      time.Duration
+	Idle       time.Duration
+	Shutdown   time.Duration
+	QueueDrain time.Duration
+}
+
+func serverTimeouts(cfg config.Config) httpServerTimeouts {
+	return httpServerTimeouts{
+		ReadHeader: cfg.HTTPReadHeaderTimeout,
+		Read:       cfg.HTTPReadTimeout,
+		Write:      cfg.HTTPWriteTimeout,
+		Idle:       cfg.HTTPIdleTimeout,
+		Shutdown:   cfg.HTTPShutdownTimeout,
+		QueueDrain: cfg.QueueDrainTimeout,
+	}
 }
 
 func pprofToken(cfg config.Config) string {

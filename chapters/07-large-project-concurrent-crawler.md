@@ -256,7 +256,7 @@ production-api-worker/
 
 | 對比面向 | `project-concurrent-crawler` | `production-api-worker` |
 |---|---|---|
-| 學習重點 | worker pool、parser、retry | API、API key security contract、rate limit contract、request body limit contract、transaction、context-aware retry、request timeout contract、queue shutdown safety、observability、部署 |
+| 學習重點 | worker pool、parser、retry | API、API key security contract、rate limit contract、request body limit contract、HTTP server timeout contract、transaction、context-aware retry、request timeout contract、queue shutdown safety、observability、部署 |
 | 外部依賴 | 幾乎沒有 | Postgres、OTLP、Docker Compose |
 | 驗證方式 | `go test` 為主 | `go test` + `docker compose up --build` |
 | 專案階段 | 教學型大型專案 | 接近 production 的服務骨架 |
@@ -276,6 +276,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | API security | `API_KEY`、Bearer token、公開 health endpoint、安全標頭 | 業務 endpoint 或 metrics 無條件公開，或 health check 被認證擋住 |
 | CORS allowlist contract | `CORS_ALLOWED_ORIGINS`、exact origin、preflight `204`、blocked origin `403` | 為了讓瀏覽器前端能呼叫 API 而誤開 `Access-Control-Allow-Origin: *` |
 | Request body limit contract | `REQUEST_BODY_LIMIT_BYTES`、`http.MaxBytesReader`、`413 payload_too_large` | 大型 payload 或誤用 client 直接消耗 handler memory / decode 時間 |
+| HTTP server timeout contract | `HTTP_READ_HEADER_TIMEOUT`、`HTTP_READ_TIMEOUT`、`HTTP_WRITE_TIMEOUT`、`HTTP_IDLE_TIMEOUT`、`HTTP_SHUTDOWN_TIMEOUT`、`QUEUE_DRAIN_TIMEOUT` | slow client、卡住的 response 或過長 drain 讓部署與容量行為不可預測 |
 | Rate limit contract | `RATE_LIMIT_REQUESTS_PER_MINUTE`、per-client IP、`429 rate_limited`、`Retry-After` | 單一 client 持續打爆 handler、queue 或 DB，或 health check 被錯誤限速 |
 | OpenAPI contract | `api/openapi.yaml`、request/response schema、error code、auth scheme | Markdown 文件與前端 mock / SDK / API gateway review 漂移 |
 | Panic recovery | `500 internal_error` JSON、request id header | panic 造成連線中斷、非 JSON 錯誤或洩漏內部細節 |
@@ -356,6 +357,7 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 | Security headers | 所有 response 保留 `X-Content-Type-Options`、`X-Frame-Options`、`Referrer-Policy` |
 | CORS allowlist | allowed origin preflight 回 `204` 與 `Access-Control-Allow-Origin`；blocked origin preflight 回 `403` 且不回 CORS header |
 | Request body limit | oversized `POST /jobs` 回 `413 payload_too_large` 並保留 `X-Request-ID` |
+| HTTP server timeout | server read header / read / write / idle / shutdown / queue drain timeout 由 config 集中套用 |
 | Rate limit | 每個 client IP 超過 `RATE_LIMIT_REQUESTS_PER_MINUTE` 時回 `429 rate_limited` 與 `Retry-After` |
 | Panic recovery | handler panic 仍回 `500`、`error.code=internal_error` 與原 `X-Request-ID` |
 | Request timeout | handler deadline exceeded 仍回 `504`、`error.code=request_timeout` 與原 `X-Request-ID` |

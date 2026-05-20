@@ -66,6 +66,9 @@ jobs:
       - name: Check request body limit contract
         run: node scripts/check-request-body-limit-contract.mjs
 
+      - name: Check HTTP timeout contract
+        run: node scripts/check-http-timeout-contract.mjs
+
       - name: Check shutdown signal contract
         run: node scripts/check-shutdown-signal-contract.mjs
 
@@ -98,7 +101,7 @@ jobs:
         run: |
           go test ./internal/config ./internal/migration -count=1
           go test ./internal/api -run 'Test.*Contract|TestReadinessContract|TestPanicRecoveryContract|TestRequestDecodingContract|TestRequestBodyLimitContract|TestRequestTimeoutContract|TestRateLimitContract|TestCORSAllowedOriginsContract' -count=1
-          go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1
+          go test ./cmd/api-worker -run 'TestMonitoredSignalsContract|TestHTTPServerTimeoutContract' -count=1
           go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
           go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1
 

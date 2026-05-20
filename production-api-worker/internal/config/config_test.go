@@ -42,6 +42,24 @@ func TestLoadFromLookupDefaults(t *testing.T) {
 	if cfg.RequestBodyLimitBytes != DefaultRequestBodyLimitBytes {
 		t.Fatalf("RequestBodyLimitBytes = %d, want %d", cfg.RequestBodyLimitBytes, DefaultRequestBodyLimitBytes)
 	}
+	if cfg.HTTPReadHeaderTimeout != DefaultHTTPReadHeaderTimeout {
+		t.Fatalf("HTTPReadHeaderTimeout = %s, want %s", cfg.HTTPReadHeaderTimeout, DefaultHTTPReadHeaderTimeout)
+	}
+	if cfg.HTTPReadTimeout != DefaultHTTPReadTimeout {
+		t.Fatalf("HTTPReadTimeout = %s, want %s", cfg.HTTPReadTimeout, DefaultHTTPReadTimeout)
+	}
+	if cfg.HTTPWriteTimeout != DefaultHTTPWriteTimeout {
+		t.Fatalf("HTTPWriteTimeout = %s, want %s", cfg.HTTPWriteTimeout, DefaultHTTPWriteTimeout)
+	}
+	if cfg.HTTPIdleTimeout != DefaultHTTPIdleTimeout {
+		t.Fatalf("HTTPIdleTimeout = %s, want %s", cfg.HTTPIdleTimeout, DefaultHTTPIdleTimeout)
+	}
+	if cfg.HTTPShutdownTimeout != DefaultHTTPShutdownTimeout {
+		t.Fatalf("HTTPShutdownTimeout = %s, want %s", cfg.HTTPShutdownTimeout, DefaultHTTPShutdownTimeout)
+	}
+	if cfg.QueueDrainTimeout != DefaultQueueDrainTimeout {
+		t.Fatalf("QueueDrainTimeout = %s, want %s", cfg.QueueDrainTimeout, DefaultQueueDrainTimeout)
+	}
 	if len(cfg.TrustedProxyCIDRs) != 0 {
 		t.Fatalf("TrustedProxyCIDRs = %v, want empty", cfg.TrustedProxyCIDRs)
 	}
@@ -60,6 +78,12 @@ func TestLoadFromLookupUsesEnvironment(t *testing.T) {
 		"PPROF_TOKEN":                    " debug-token ",
 		"RATE_LIMIT_REQUESTS_PER_MINUTE": "240",
 		"REQUEST_BODY_LIMIT_BYTES":       "2097152",
+		"HTTP_READ_HEADER_TIMEOUT":       "4s",
+		"HTTP_READ_TIMEOUT":              "6s",
+		"HTTP_WRITE_TIMEOUT":             "12s",
+		"HTTP_IDLE_TIMEOUT":              "90s",
+		"HTTP_SHUTDOWN_TIMEOUT":          "7s",
+		"QUEUE_DRAIN_TIMEOUT":            "15s",
 		"TRUSTED_PROXY_CIDRS":            " 10.0.0.0/8, 192.168.10.0/24 ",
 		"CORS_ALLOWED_ORIGINS":           " https://app.example.com/, http://localhost:5173 ",
 		"DATABASE_URL":                   " postgres://app:app@localhost:5432/app?sslmode=disable ",
@@ -86,6 +110,12 @@ func TestLoadFromLookupUsesEnvironment(t *testing.T) {
 	}
 	if cfg.RequestBodyLimitBytes != 2097152 {
 		t.Fatalf("RequestBodyLimitBytes = %d", cfg.RequestBodyLimitBytes)
+	}
+	if cfg.HTTPReadHeaderTimeout != 4*time.Second || cfg.HTTPReadTimeout != 6*time.Second || cfg.HTTPWriteTimeout != 12*time.Second {
+		t.Fatalf("unexpected HTTP request timeout config: %+v", cfg)
+	}
+	if cfg.HTTPIdleTimeout != 90*time.Second || cfg.HTTPShutdownTimeout != 7*time.Second || cfg.QueueDrainTimeout != 15*time.Second {
+		t.Fatalf("unexpected HTTP lifecycle timeout config: %+v", cfg)
 	}
 	if got := strings.Join(cfg.TrustedProxyCIDRs, ","); got != "10.0.0.0/8,192.168.10.0/24" {
 		t.Fatalf("TrustedProxyCIDRs = %q", got)
@@ -167,6 +197,36 @@ func TestLoadFromLookupRejectsInvalidRequiredConfig(t *testing.T) {
 			name:      "request body limit is not positive",
 			env:       map[string]string{"REQUEST_BODY_LIMIT_BYTES": "0"},
 			wantError: "REQUEST_BODY_LIMIT_BYTES must be a positive integer",
+		},
+		{
+			name:      "read header timeout is not a duration",
+			env:       map[string]string{"HTTP_READ_HEADER_TIMEOUT": "soon"},
+			wantError: "HTTP_READ_HEADER_TIMEOUT must be a positive duration",
+		},
+		{
+			name:      "read timeout is not positive",
+			env:       map[string]string{"HTTP_READ_TIMEOUT": "0s"},
+			wantError: "HTTP_READ_TIMEOUT must be a positive duration",
+		},
+		{
+			name:      "write timeout is not positive",
+			env:       map[string]string{"HTTP_WRITE_TIMEOUT": "-1s"},
+			wantError: "HTTP_WRITE_TIMEOUT must be a positive duration",
+		},
+		{
+			name:      "idle timeout is not a duration",
+			env:       map[string]string{"HTTP_IDLE_TIMEOUT": "idle"},
+			wantError: "HTTP_IDLE_TIMEOUT must be a positive duration",
+		},
+		{
+			name:      "shutdown timeout is not positive",
+			env:       map[string]string{"HTTP_SHUTDOWN_TIMEOUT": "0s"},
+			wantError: "HTTP_SHUTDOWN_TIMEOUT must be a positive duration",
+		},
+		{
+			name:      "queue drain timeout is not positive",
+			env:       map[string]string{"QUEUE_DRAIN_TIMEOUT": "-5s"},
+			wantError: "QUEUE_DRAIN_TIMEOUT must be a positive duration",
 		},
 		{
 			name:      "trusted proxy cidr is invalid",
