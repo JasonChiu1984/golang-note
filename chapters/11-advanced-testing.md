@@ -216,6 +216,7 @@ func TestCreateJobContract(t *testing.T) {
 | Response JSON shape | 防止 rename / nesting 造成 decode 失敗 |
 | Error code | 比自然語言 message 更適合穩定分支 |
 | Header | `Content-Type`、cache、request id 都可能是 client 依賴 |
+| Request correlation contract gate | `X-Request-ID` 需同時固定 response header、request context、structured log `request_id`、trace attribute `request.id` 與 `node scripts/check-request-correlation-contract.mjs` |
 | Request decoding | malformed JSON、unknown field、trailing JSON 與空白必填欄位都應固定為 `400 invalid_input` |
 | Request body limit | oversized request body 應固定為 `413 payload_too_large`，避免大型 payload 進入 decoder / queue |
 | Readiness | draining 時 `/readyz=503` 是部署系統依賴的操作合約 |
@@ -238,6 +239,7 @@ func TestCreateJobContract(t *testing.T) {
 ```bash
 cd production-api-worker
 go test ./internal/api -run 'Test.*Contract' -count=1
+node ../scripts/check-request-correlation-contract.mjs
 go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1
 go test ./internal/api -run 'TestRequestBodyLimitContract' -count=1
 go test ./internal/api -run 'TestCORSAllowedOriginsContract' -count=1
@@ -498,6 +500,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | API 合約測試 | `cd production-api-worker && go test ./internal/api -run 'Test.*Contract' -count=1` | 固定 status、JSON schema、錯誤 code 與 header |
 | Request decoding 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestDecodingContract' -count=1` | 固定 malformed JSON、unknown field、trailing JSON 與空白 name 的 `400 invalid_input` |
 | Request ID 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestIDContract|TestCreateJobContract' -count=1` | 固定 `X-Request-ID` 保留與自動產生行為 |
+| Request correlation contract gate | `node scripts/check-request-correlation-contract.mjs` | 固定 `X-Request-ID`、request context、structured log、trace attribute、OpenAPI、章節與 CI 入口 |
 | Readiness 合約 | `cd production-api-worker && go test ./internal/api -run 'TestReadinessContract' -count=1` | 固定 ready / draining 對 `/readyz` 的 status code |
 | Worker shutdown 安全 | `cd production-api-worker && go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1` | 固定 queue close/enqueue 同步邊界，避免 shutdown race |
 | Shutdown signal contract | `cd production-api-worker && go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1` | 固定 Shutdown signal 入口，確認 SIGINT/SIGTERM 都會進入 graceful shutdown |

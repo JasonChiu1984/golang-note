@@ -1,6 +1,6 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.39 ｜ 基準日期：2026-05-20 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract
+> 版本：v1.0.40 ｜ 基準日期：2026-05-21 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Request correlation contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract
 
 這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery、retry 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 cancellation 行為需要透過 contract test 保護。
 
@@ -17,6 +17,7 @@ Machine-readable contract 位於 `production-api-worker/api/openapi.yaml`。此 
 | 錯誤分支 | client 應依 `error.code` 判斷，不依自然語言 message |
 | Status enum | `pending`、`processing`、`done`、`failed` 是穩定字串 |
 | Request correlation | server 必須回傳 `X-Request-ID`；client 提供時需原樣保留 |
+| Request correlation gate | `node scripts/check-request-correlation-contract.mjs` 必須固定 `X-Request-ID`、request context、structured log、trace attribute、OpenAPI 與 CI 入口 |
 | Readiness lifecycle | draining 時 `/readyz` 必須回 `503`，讓外部導流系統停止送新 request |
 | Panic recovery | 未預期 panic 必須回 `500` 與穩定 `internal_error` JSON，不暴露 panic 細節 |
 | Request timeout | handler deadline exceeded 必須回 `504 request_timeout`，不得漂移成 `500 internal_error` |
@@ -40,6 +41,7 @@ Machine-readable contract 位於 `production-api-worker/api/openapi.yaml`。此 
 - Client 提供 `X-Request-ID` 時，server 原樣回傳同一個值。
 - Client 未提供時，server 產生 `req-*` 格式 ID。
 - 同一個 ID 會放進 request context、structured log 欄位 `request_id` 與 trace attribute `request.id`。
+- Release gate 需包含 `TestRequestIDContract`、`TestCreateJobContract` 與 `node scripts/check-request-correlation-contract.mjs`，避免 middleware 或 OpenAPI 重構時漏掉 request id。
 
 ```http
 X-Request-ID: request-from-client

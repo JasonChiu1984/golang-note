@@ -369,6 +369,7 @@ ENTRYPOINT ["/app"]
 | Rate limit | `RATE_LIMIT_REQUESTS_PER_MINUTE` 是否固定 per-client IP、`429 rate_limited`、`Retry-After` 與 health endpoint 不限速 |
 | Shutdown signal | SIGINT/SIGTERM 是否都會進入 graceful shutdown，並由 `TestMonitoredSignalsContract` 固定 |
 | Request ID | `X-Request-ID` 是否會回傳，client 提供時是否原樣保留 |
+| Request correlation contract | 是否由 `node scripts/check-request-correlation-contract.mjs` 固定 request context、structured log `request_id`、trace attribute `request.id`、OpenAPI 與 CI 入口 |
 | Observability label | route label、span name、metrics label、`request.id` 是否會破壞 dashboard |
 | Worker shutdown | concurrent enqueue + shutdown 是否不 panic，close 後是否回穩定錯誤 |
 | Panic recovery | 未預期 panic 是否仍回 `500 internal_error` JSON 與原 request id |
@@ -382,6 +383,7 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 go test ./internal/api -run 'TestRequestDecodingContract' -count=1
 go test ./internal/api -run 'TestRequestBodyLimitContract' -count=1
 go test ./internal/api -run 'TestRequestIDContract|TestCreateJobContract' -count=1
+node ../scripts/check-request-correlation-contract.mjs
 go test ./internal/api -run 'TestCORSAllowedOriginsContract' -count=1
 go test ./cmd/api-worker -run 'TestHTTPServerTimeoutContract' -count=1
 go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1

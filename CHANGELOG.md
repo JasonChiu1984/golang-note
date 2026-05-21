@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.40 - 2026-05-21
+
+- 新增 2026-05-21 07:52:54 CST +0800 資深工程師審查報告，確認 v1.0.39 已補齊 HTTP server timeout contract，但 `X-Request-ID` 仍缺少獨立 request correlation 靜態 gate。
+- 新增 `scripts/check-request-correlation-contract.mjs`，固定 README、production README、OpenAPI、API contract、handler middleware、Go tests、第 7 / 11 章、進階 Cheat Sheet、整合視覺課程、Makefile 與 GitHub Actions 都保留 request correlation contract。
+- `.github/workflows/ci.yml` 新增 `Check request correlation contract`；`production-api-worker/Makefile` 新增 `request-correlation-check`。
+- `production-api-worker/api/openapi.yaml` 與 `scripts/check-openapi-contract.mjs` 版本標記更新為 `v1.0.40`，並在 OpenAPI description 補上 `X-Request-ID`、request context、structured log 與 trace attribute `request.id` 關聯說明。
+- README、`production-api-worker/README.md`、API contract、第 7 / 11 章、進階 Cheat Sheet 與整合視覺課程同步加入 Request correlation contract gate。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.39 - 2026-05-20
 
 - 新增 2026-05-20 15:53:59 CST +0800 資深工程師審查報告，確認 v1.0.38 已補齊 Request body limit contract，但 HTTP server timeout 還缺少正式設定化、測試與 CI gate。
