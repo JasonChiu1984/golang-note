@@ -226,7 +226,7 @@ func TestCreateJobContract(t *testing.T) {
 | Retry cancellation | retry backoff 遇到 `ctx.Done()` 時應停止，不再重試交易或 enqueue |
 | Startup / DB pool config | 不合法 `PORT`、`QUEUE_SIZE`、`WORKERS`、DB pool size 或 DB pool duration 應 fail fast，不可 silent fallback |
 | Migration contract | migration env、timeout、SQL 檔排序與 version 命名應固定，避免 release pipeline 漂移 |
-| API security | `API_KEY` 啟用後 `/jobs`、`/metrics` 需 Bearer token；`/livez`、`/readyz` 不應被認證擋住 |
+| API security contract gate | `API_KEY` 啟用後 `/jobs`、`/metrics` 需 Bearer token；`/livez`、`/readyz` 不應被認證擋住，並由 `node scripts/check-api-security-contract.mjs` 固定文件、OpenAPI、測試與 CI |
 | CORS allowlist | `CORS_ALLOWED_ORIGINS` 只接受 exact `http` / `https` origin；allowed preflight 回 `204`，blocked preflight 回 `403` |
 | Pprof diagnostics | `ENABLE_PPROF` 預設關閉；啟用 `/debug/pprof/` 時必須要求 Bearer token，避免 debug endpoint 公開 |
 | Rate limit | 每個 client IP 超過 `RATE_LIMIT_REQUESTS_PER_MINUTE` 時需回 `429 rate_limited`，且 health endpoint 不應被限速 |
@@ -240,6 +240,7 @@ func TestCreateJobContract(t *testing.T) {
 cd production-api-worker
 go test ./internal/api -run 'Test.*Contract' -count=1
 node ../scripts/check-request-correlation-contract.mjs
+node ../scripts/check-api-security-contract.mjs
 go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1
 go test ./internal/api -run 'TestRequestBodyLimitContract' -count=1
 go test ./internal/api -run 'TestCORSAllowedOriginsContract' -count=1
@@ -264,6 +265,7 @@ func TestMonitoredSignalsContract(t *testing.T) {
 ### API Security Contract Test
 
 API security 的測試重點不是把 token 寫死在所有測試裡，而是固定安全邊界：業務 endpoint 與 metrics endpoint 在啟用 `API_KEY` 後需要 Bearer token；health endpoint 仍保持公開，避免 Kubernetes、Docker Compose 或 load balancer 探測被擋住。
+這個邊界也需要 `node scripts/check-api-security-contract.mjs` 做靜態 gate，確保 OpenAPI `bearerAuth`、contract tests、章節、Makefile 與 CI workflow 不會在文件重整時掉線。
 
 ```go
 func TestAPIKeyAuthContract(t *testing.T) {
@@ -501,6 +503,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | Request decoding 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestDecodingContract' -count=1` | 固定 malformed JSON、unknown field、trailing JSON 與空白 name 的 `400 invalid_input` |
 | Request ID 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestIDContract|TestCreateJobContract' -count=1` | 固定 `X-Request-ID` 保留與自動產生行為 |
 | Request correlation contract gate | `node scripts/check-request-correlation-contract.mjs` | 固定 `X-Request-ID`、request context、structured log、trace attribute、OpenAPI、章節與 CI 入口 |
+| API security contract gate | `node scripts/check-api-security-contract.mjs` | 固定 `API_KEY`、Bearer auth、公開 health probes、安全標頭、Go tests、OpenAPI、章節與 CI 入口 |
 | Readiness 合約 | `cd production-api-worker && go test ./internal/api -run 'TestReadinessContract' -count=1` | 固定 ready / draining 對 `/readyz` 的 status code |
 | Worker shutdown 安全 | `cd production-api-worker && go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1` | 固定 queue close/enqueue 同步邊界，避免 shutdown race |
 | Shutdown signal contract | `cd production-api-worker && go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1` | 固定 Shutdown signal 入口，確認 SIGINT/SIGTERM 都會進入 graceful shutdown |

@@ -274,6 +274,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Observability | route label、trace span name、metrics label、`X-Request-ID` | dashboard、alert 與 incident log 無法對照 |
 | OTLP collector contract | `production-api-worker/otel-collector.yaml`、OTLP gRPC `0.0.0.0:4317`、`debug exporter`、Compose endpoint | trace 程式碼存在，但 collector pipeline 或 Compose endpoint 漂移後無法收 span |
 | API security | `API_KEY`、Bearer token、公開 health endpoint、安全標頭 | 業務 endpoint 或 metrics 無條件公開，或 health check 被認證擋住 |
+| API security contract gate | `node scripts/check-api-security-contract.mjs`、`TestAPIKeyAuthContract`、`TestSecurityHeadersContract`、OpenAPI `bearerAuth`、CI 入口 | 文件寫了 API key，但測試、OpenAPI 或 workflow 漂移後無法阻擋 regression |
 | CORS allowlist contract | `CORS_ALLOWED_ORIGINS`、exact origin、preflight `204`、blocked origin `403` | 為了讓瀏覽器前端能呼叫 API 而誤開 `Access-Control-Allow-Origin: *` |
 | Request body limit contract | `REQUEST_BODY_LIMIT_BYTES`、`http.MaxBytesReader`、`413 payload_too_large` | 大型 payload 或誤用 client 直接消耗 handler memory / decode 時間 |
 | HTTP server timeout contract | `HTTP_READ_HEADER_TIMEOUT`、`HTTP_READ_TIMEOUT`、`HTTP_WRITE_TIMEOUT`、`HTTP_IDLE_TIMEOUT`、`HTTP_SHUTDOWN_TIMEOUT`、`QUEUE_DRAIN_TIMEOUT` | slow client、卡住的 response 或過長 drain 讓部署與容量行為不可預測 |
@@ -354,7 +355,7 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 | Queue full | `503 Service Unavailable`、`error.code=queue_full` |
 | Request ID | client header 原樣回傳；未提供時產生 `req-*` |
 | Request correlation contract | `X-Request-ID`、request context、structured log `request_id`、trace attribute `request.id` 與 `node scripts/check-request-correlation-contract.mjs` |
-| API security | `API_KEY` 啟用後 `/jobs`、`/metrics` 未帶 token 回 `401 unauthorized`，health endpoint 仍公開 |
+| API security contract gate | `API_KEY` 啟用後 `/jobs`、`/metrics` 未帶 token 回 `401 unauthorized`，health endpoint 仍公開，並由 `node scripts/check-api-security-contract.mjs` 固定 |
 | Security headers | 所有 response 保留 `X-Content-Type-Options`、`X-Frame-Options`、`Referrer-Policy` |
 | CORS allowlist | allowed origin preflight 回 `204` 與 `Access-Control-Allow-Origin`；blocked origin preflight 回 `403` 且不回 CORS header |
 | Request body limit | oversized `POST /jobs` 回 `413 payload_too_large` 並保留 `X-Request-ID` |
@@ -482,7 +483,7 @@ Deadlock retry 是 production service 常見的保護機制，但 backoff 不能
 2. 再看 `production-api-worker/internal/app/service.go`，理解 service transaction boundary。
 3. 對照 `internal/app/service_test.go`，理解 deadlock retry 如何被 context cancellation 中斷。
 4. 接著讀 `internal/api/handler.go` 與 `internal/observability/observability.go`，把 HTTP、metrics、tracing 與 panic recovery 串起來。
-5. 對照 `TestAPIKeyAuthContract` 與 `TestSecurityHeadersContract`，理解 security middleware 如何保護業務 endpoint 並保留 health probe。
+5. 對照 `TestAPIKeyAuthContract`、`TestSecurityHeadersContract` 與 `node scripts/check-api-security-contract.mjs`，理解 security middleware 如何保護業務 endpoint 並保留 health probe。
 6. 再看 `internal/lifecycle/readiness.go` 與 `cmd/api-worker/main.go`，理解 ready / draining / queue drain。
 7. 對照 `docs/api-contract.md` 與 `internal/api/handler_test.go`，理解合約文件如何被測試守住。
 8. 再看 `internal/migration/migration.go` 與 `cmd/migrate/main.go`，理解 schema migration 如何被 version table 與 timeout 保護。

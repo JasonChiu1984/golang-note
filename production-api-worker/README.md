@@ -6,7 +6,7 @@
 - API contract：穩定 request/response/error schema，文件在 `docs/api-contract.md`
 - OpenAPI contract：machine-readable schema 位於 `api/openapi.yaml`，用來對齊文件、測試、SDK 與前端 mock
 - Request correlation contract：`X-Request-ID` 需同時進入 response header、request context、structured log 與 trace attribute
-- API security：可用 `API_KEY` 啟用 Bearer token 保護 `/jobs` 與 `/metrics`，health endpoint 保持公開
+- API Security Contract：可用 `API_KEY` 啟用 Bearer token 保護 `/jobs` 與 `/metrics`，health endpoint 保持公開，並由靜態 gate 固定文件、OpenAPI、Go tests 與 CI 入口
 - CORS Allowlist Contract：`CORS_ALLOWED_ORIGINS` 預設空值；只有明確列入的 exact origin 才回 CORS header
 - Request Body Limit Contract：`REQUEST_BODY_LIMIT_BYTES` 預設 1048576；`POST /jobs` 超限回 `413 payload_too_large`
 - HTTP Server Timeout Contract：`HTTP_READ_HEADER_TIMEOUT`、`HTTP_READ_TIMEOUT`、`HTTP_WRITE_TIMEOUT`、`HTTP_IDLE_TIMEOUT`、`HTTP_SHUTDOWN_TIMEOUT`、`QUEUE_DRAIN_TIMEOUT` 集中設定並 fail fast
@@ -98,6 +98,7 @@ make cors-check
 make request-body-limit-check
 make http-timeout-check
 make request-correlation-check
+make api-security-check
 make shutdown-signal-check
 go test -run='^$' -bench=. -benchmem -count=10 ./... > bench.txt
 docker compose up --build
@@ -130,6 +131,7 @@ make compose-smoke
 | `go test -race -cover ./...` | 驗證 service、handler、queue 與併發安全 |
 | `make openapi-check` | 固定 OpenAPI contract、endpoint、schema、error code、Bearer auth 與 README/API 文件入口 |
 | `make request-correlation-check` | 固定 Request correlation contract、`X-Request-ID`、request context、structured log、trace attribute、Go tests、OpenAPI 與 CI 入口 |
+| `make api-security-check` | 固定 API security contract、`API_KEY`、Bearer auth、公開 health endpoint、安全標頭、Go tests、OpenAPI 與 CI 入口 |
 | `make runbook-check` | 固定 SLI/SLO、Prometheus alert rules、incident workflow 與 runbook link 不被移除 |
 | `make prometheus-check` | 固定 Prometheus scrape config、rule_files、Compose monitoring profile 與 README/runbook 入口 |
 | `make pprof-check` | 固定 pprof diagnostics contract、`ENABLE_PPROF`、`PPROF_TOKEN`、runbook、Go tests 與 CI 入口 |
@@ -138,6 +140,7 @@ make compose-smoke
 | `make request-body-limit-check` | 固定 request body limit contract、`REQUEST_BODY_LIMIT_BYTES`、OpenAPI、Go tests、README 與 CI 入口 |
 | `make http-timeout-check` | 固定 HTTP server timeout contract、timeout env、main server 套用、Go tests、README、API contract 與 CI 入口 |
 | `make request-correlation-check` | 固定 request id middleware、OpenAPI request id header、contract tests、章節與 CI 靜態檢查入口 |
+| `make api-security-check` | 固定 API key auth middleware、security headers、OpenAPI bearerAuth、contract tests、章節與 CI 靜態檢查入口 |
 | `make shutdown-signal-check` | 固定 shutdown signal contract、SIGINT/SIGTERM、main test、README、API contract 與 CI 入口 |
 | `go test -run='^$' -bench=. -benchmem -count=10 ./...` | API / worker 效能改動需保留 benchmark 證據 |
 | `docker compose up --build` | 啟動 Postgres、migration、API、worker 與 metrics 整體鏈路 |

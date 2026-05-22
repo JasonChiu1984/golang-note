@@ -1,6 +1,6 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.40 ｜ 基準日期：2026-05-21 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Request correlation contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract
+> 版本：v1.0.41 ｜ 基準日期：2026-05-22 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Request correlation contract、API security contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract
 
 這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery、retry 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 cancellation 行為需要透過 contract test 保護。
 
@@ -23,6 +23,7 @@ Machine-readable contract 位於 `production-api-worker/api/openapi.yaml`。此 
 | Request timeout | handler deadline exceeded 必須回 `504 request_timeout`，不得漂移成 `500 internal_error` |
 | Startup configuration | `PORT`、`QUEUE_SIZE`、`WORKERS` 與 DB pool 設定必須先驗證；錯誤設定 fail fast，不可 silent fallback |
 | API security | `API_KEY` 有值時，`/jobs` 與 `/metrics` 必須要求 Bearer token；health endpoint 仍需公開供部署系統探測 |
+| API security gate | `node scripts/check-api-security-contract.mjs` 必須固定 `API_KEY`、Bearer auth、公開 health probes、安全標頭、Go tests、OpenAPI 與 CI 入口 |
 | Security headers | 所有 response 應回 `X-Content-Type-Options`、`X-Frame-Options` 與 `Referrer-Policy` |
 | CORS allowlist | 預設不回 CORS header；只有 `CORS_ALLOWED_ORIGINS` 明確列入的 exact origin 才回 `Access-Control-Allow-Origin` |
 | Rate limit | `/jobs` 與 `/jobs/{id}` 需有 per-client IP 限速；超限回 `429 rate_limited`，health endpoint 不限速 |
@@ -93,6 +94,13 @@ Authorization: Bearer dev-secret
 X-Content-Type-Options: nosniff
 X-Frame-Options: DENY
 Referrer-Policy: no-referrer
+```
+
+Release gate 需包含：
+
+```bash
+go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1
+node scripts/check-api-security-contract.mjs
 ```
 
 ## POST /jobs

@@ -2,9 +2,9 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
-> 教材版本：`v1.0.40`
+> 教材版本：`v1.0.41`
 > 教材基準：`Go 1.26.3`
-> 這次更新重點：正式發布 Request correlation contract gate，讓 `X-Request-ID` 從 response header、request context、structured log 到 trace attribute 都有文件、測試、OpenAPI 與 CI 靜態檢查固定。
+> 這次更新重點：正式發布 API security contract gate，讓 `API_KEY`、Bearer token、公開 health probes、安全標頭、OpenAPI、Go tests 與 CI 靜態檢查固定。
 
 ## 版本策略
 
@@ -26,6 +26,7 @@
 | Prometheus config gate | `configs/prometheus/prometheus.yml`、Compose `monitoring` profile 與 `node scripts/check-prometheus-config.mjs` 需固定 scrape job、rule_files、alert rules 載入與 API key 風險說明 |
 | OpenAPI contract | `production-api-worker/api/openapi.yaml` 需同步 `docs/api-contract.md` 與 Go contract tests，並由 `node scripts/check-openapi-contract.mjs` 固定 endpoint、schema、error code 與 auth 邊界 |
 | Request correlation contract | `X-Request-ID` 必須回傳給 client、寫入 request context、structured log 欄位 `request_id` 與 trace attribute `request.id`，並由 `TestRequestIDContract` 和 `node scripts/check-request-correlation-contract.mjs` 固定 |
+| API security contract | `API_KEY` 啟用後 `/jobs`、`/jobs/{id}`、`/metrics` 必須要求 Bearer token；`/livez`、`/readyz` 保持公開，安全標頭由 `TestAPIKeyAuthContract`、`TestSecurityHeadersContract` 與 `node scripts/check-api-security-contract.mjs` 固定 |
 | CORS allowlist contract | `CORS_ALLOWED_ORIGINS` 預設空值；只允許 exact `http` / `https` origin，preflight 與實際 request 由 `TestCORSAllowedOriginsContract` 和 `node scripts/check-cors-contract.mjs` 固定 |
 | Request body limit contract | `REQUEST_BODY_LIMIT_BYTES=1048576` 為預設；`POST /jobs` 超過上限回 `413 payload_too_large`，並由 `TestRequestBodyLimitContract` 和 `node scripts/check-request-body-limit-contract.mjs` 固定 |
 | HTTP server timeout contract | `HTTP_READ_HEADER_TIMEOUT=3s`、`HTTP_READ_TIMEOUT=5s`、`HTTP_WRITE_TIMEOUT=10s`、`HTTP_IDLE_TIMEOUT=60s`、`HTTP_SHUTDOWN_TIMEOUT=5s`、`QUEUE_DRAIN_TIMEOUT=10s` 為預設，並由 `TestHTTPServerTimeoutContract` 和 `node scripts/check-http-timeout-contract.mjs` 固定 |
@@ -50,7 +51,6 @@
 | Startup config | `PORT`、`QUEUE_SIZE`、`WORKERS` 等啟動設定需先驗證；錯誤設定應 fail fast，不可靜默套用預設值 |
 | Database pool | Postgres 連線池容量與生命週期需由 env 設定並驗證，避免 repository 內硬編碼造成部署容量不可控 |
 | Migration contract | DB schema migration 需有 `DATABASE_URL`、`MIGRATIONS_DIR`、`MIGRATION_TIMEOUT` 設定驗證、`schema_migrations` 版本紀錄與重複執行保護 |
-| API security contract | 若設定 `API_KEY`，`/jobs` 與 `/metrics` 必須要求 `Authorization: Bearer <token>`；`/livez`、`/readyz` 保持公開供 LB / orchestrator 使用，所有 response 保留基本安全標頭 |
 | CORS policy | 瀏覽器跨域存取不可使用 `*`；應以 `CORS_ALLOWED_ORIGINS=https://app.example.com,http://localhost:5173` 明確列出前端 origin |
 | Diagnostics security | `/debug/pprof/` 必須預設關閉；開啟時只能作為短期事故診斷工具，並以 Bearer token、網路層限制與事後關閉流程保護 |
 | API rate limiting | 業務 endpoint 需有 per-client 保護，避免單一 client 壓垮 queue / DB；health endpoint 不應被限速影響部署探測 |
@@ -156,6 +156,7 @@ go test ./project-concurrent-crawler/...
 | Prometheus config gate | `node scripts/check-prometheus-config.mjs` | 確認 `configs/prometheus/prometheus.yml`、alert rules、Compose monitoring profile、README、runbook 與 CI 入口一致 |
 | OpenAPI contract gate | `node scripts/check-openapi-contract.mjs` | 確認 `production-api-worker/api/openapi.yaml` 保留 endpoint、request/response schema、error code、Bearer auth 與 `X-Request-ID` |
 | Request correlation gate | `node scripts/check-request-correlation-contract.mjs` | 確認 `X-Request-ID`、request context、structured log、trace attribute、Go tests、OpenAPI、README 與 CI 入口一致 |
+| API security gate | `node scripts/check-api-security-contract.mjs` | 確認 `API_KEY`、Bearer auth、public health probes、security headers、Go tests、OpenAPI、README 與 CI 入口一致 |
 | CORS allowlist gate | `node scripts/check-cors-contract.mjs` | 確認 `CORS_ALLOWED_ORIGINS`、allowlist middleware、preflight 測試、OpenAPI、README 與 CI 入口一致 |
 | Request body limit gate | `node scripts/check-request-body-limit-contract.mjs` | 確認 `REQUEST_BODY_LIMIT_BYTES`、`payload_too_large`、Go tests、OpenAPI、README 與 CI 入口一致 |
 | HTTP timeout gate | `node scripts/check-http-timeout-contract.mjs` | 確認 `HTTP_READ_HEADER_TIMEOUT`、`HTTP_READ_TIMEOUT`、`HTTP_WRITE_TIMEOUT`、`HTTP_IDLE_TIMEOUT`、`HTTP_SHUTDOWN_TIMEOUT`、`QUEUE_DRAIN_TIMEOUT`、Go tests、README、API contract 與 CI 入口一致 |

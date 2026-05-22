@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.40
+  version: v1.0.41
   description: >
     Machine-readable contract for the Go teaching production API worker.
     This file mirrors docs/api-contract.md and the Go contract tests,
@@ -12,6 +12,9 @@ info:
     read header, read, write, idle, shutdown, and queue drain timeouts.
     Request correlation uses X-Request-ID across response headers, request
     context, structured logs, and trace attribute request.id.
+    API security uses optional API_KEY Bearer authentication for jobs and
+    metrics while liveness and readiness probes remain public for deployment
+    systems.
 servers:
   - url: http://localhost:8080
     description: Local memory or Docker Compose mode

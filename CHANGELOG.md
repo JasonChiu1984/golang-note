@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.41 - 2026-05-22
+
+- 新增 2026-05-22 08:39:49 CST +0800 資深工程師審查報告，確認 v1.0.40 已補齊 Request correlation contract gate，但 API security 仍缺少獨立靜態 gate 來保護 `API_KEY`、Bearer token、公開 health probes 與安全標頭教學邊界。
+- 新增 `scripts/check-api-security-contract.mjs`，固定 README、production README、OpenAPI、API contract、handler middleware、Go tests、第 7 / 11 章、進階 Cheat Sheet、整合視覺課程、Makefile 與 GitHub Actions 都保留 API security contract。
+- `.github/workflows/ci.yml` 新增 `Check API security contract`；`production-api-worker/Makefile` 新增 `api-security-check`。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 `scripts/check-openapi-contract.mjs` 版本標記更新為 `v1.0.41`，並在 OpenAPI description 補上 optional `API_KEY` security boundary。
+- README、`production-api-worker/README.md`、API contract、第 7 / 11 章、進階 Cheat Sheet 與整合視覺課程同步加入 API security contract gate。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.40 - 2026-05-21
 
 - 新增 2026-05-21 07:52:54 CST +0800 資深工程師審查報告，確認 v1.0.39 已補齊 HTTP server timeout contract，但 `X-Request-ID` 仍缺少獨立 request correlation 靜態 gate。

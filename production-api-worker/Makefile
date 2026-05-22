@@ -1,4 +1,4 @@
-.PHONY: test test-race ci ci-contract openapi-check request-correlation-check runbook-check prometheus-check pprof-check rate-limit-check cors-check request-body-limit-check http-timeout-check shutdown-signal-check otel-check docker-build compose-smoke run migrate docker-up docker-down
+.PHONY: test test-race ci ci-contract openapi-check request-correlation-check api-security-check runbook-check prometheus-check pprof-check rate-limit-check cors-check request-body-limit-check http-timeout-check shutdown-signal-check otel-check docker-build compose-smoke run migrate docker-up docker-down
 
 test:
 	go test ./...
@@ -23,6 +23,9 @@ openapi-check:
 
 request-correlation-check:
 	cd .. && node scripts/check-request-correlation-contract.mjs
+
+api-security-check:
+	cd .. && node scripts/check-api-security-contract.mjs
 
 runbook-check:
 	cd .. && node scripts/check-operational-runbook.mjs

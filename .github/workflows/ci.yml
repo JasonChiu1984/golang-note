@@ -57,6 +57,9 @@ jobs:
       - name: Check request correlation contract
         run: node scripts/check-request-correlation-contract.mjs
 
+      - name: Check API security contract
+        run: node scripts/check-api-security-contract.mjs
+
       - name: Check pprof diagnostics contract
         run: node scripts/check-pprof-contract.mjs
 

@@ -233,6 +233,7 @@ func FetchUser(ctx context.Context, id int) (*User, error) {
 | Error code | 認證失敗回 `401 unauthorized`，不要回 HTML 或自然語言錯誤頁 |
 | Security headers | middleware 統一設定 `nosniff`、`DENY`、`no-referrer` |
 | Smoke test | `compose-smoke.sh` 要能帶 `API_KEY`，避免啟用認證後 smoke gate 失效 |
+| API security contract gate | `node scripts/check-api-security-contract.mjs` 固定 README、OpenAPI、Go tests、Makefile 與 CI |
 | 測試 | `go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1` |
 
 ---
@@ -370,6 +371,7 @@ ENTRYPOINT ["/app"]
 | Shutdown signal | SIGINT/SIGTERM 是否都會進入 graceful shutdown，並由 `TestMonitoredSignalsContract` 固定 |
 | Request ID | `X-Request-ID` 是否會回傳，client 提供時是否原樣保留 |
 | Request correlation contract | 是否由 `node scripts/check-request-correlation-contract.mjs` 固定 request context、structured log `request_id`、trace attribute `request.id`、OpenAPI 與 CI 入口 |
+| API security contract gate | 是否由 `node scripts/check-api-security-contract.mjs` 固定 `API_KEY`、Bearer auth、公開 health probes、安全標頭、OpenAPI 與 CI 入口 |
 | Observability label | route label、span name、metrics label、`request.id` 是否會破壞 dashboard |
 | Worker shutdown | concurrent enqueue + shutdown 是否不 panic，close 後是否回穩定錯誤 |
 | Panic recovery | 未預期 panic 是否仍回 `500 internal_error` JSON 與原 request id |
