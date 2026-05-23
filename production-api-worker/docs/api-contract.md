@@ -1,6 +1,6 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.41 ｜ 基準日期：2026-05-22 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Request correlation contract、API security contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract
+> 版本：v1.0.42 ｜ 基準日期：2026-05-23 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Request correlation contract、API security contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract、Worker failure contract
 
 這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery、retry 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 cancellation 行為需要透過 contract test 保護。
 
@@ -14,6 +14,7 @@ Machine-readable contract 位於 `production-api-worker/api/openapi.yaml`。此 
 | Request decoding | `POST /jobs` 只接受單一 JSON object；malformed JSON、unknown field、trailing JSON value 與空白 `name` 都必須回 `400 invalid_input` |
 | Request body limit | `POST /jobs` request body 超過 `REQUEST_BODY_LIMIT_BYTES` 時必須回 `413 payload_too_large`，不可繼續 decode 或排入 queue |
 | HTTP server timeout | `HTTP_READ_HEADER_TIMEOUT`、`HTTP_READ_TIMEOUT`、`HTTP_WRITE_TIMEOUT`、`HTTP_IDLE_TIMEOUT`、`HTTP_SHUTDOWN_TIMEOUT`、`QUEUE_DRAIN_TIMEOUT` 必須集中設定並 fail fast |
+| Worker failure contract | worker processor 回錯時仍需記錄 duration，並把結果標記為 `failed`；成功路徑需標記 `success`，避免 queue failure 只存在於 log |
 | 錯誤分支 | client 應依 `error.code` 判斷，不依自然語言 message |
 | Status enum | `pending`、`processing`、`done`、`failed` 是穩定字串 |
 | Request correlation | server 必須回傳 `X-Request-ID`；client 提供時需原樣保留 |
@@ -31,6 +32,7 @@ Machine-readable contract 位於 `production-api-worker/api/openapi.yaml`。此 
 | Shutdown signal | `api-worker` 必須同時監聽 SIGINT 與 SIGTERM，讓 local Ctrl+C、Docker stop 與 Kubernetes rolling deploy 都進入 draining |
 | OpenAPI sync | endpoint、request schema、response schema、error code、Bearer auth 與 `X-Request-ID` 需同步 `api/openapi.yaml` |
 | Worker shutdown | queue close 與 enqueue send 必須同步，shutdown 後新 enqueue 回穩定錯誤 |
+| Worker result metric | `TestWorkerFailureResultContract` 需固定 `worker_jobs_total{result="success"}` / `worker_jobs_total{result="failed"}` 的分類邊界 |
 | Retry cancellation | deadlock retry 的 backoff 必須尊重 `context` cancellation / deadline |
 | Breaking change | 需新增版本路由或遷移期，不能直接覆蓋既有合約 |
 | Release gate | 任何 handler、service retry 或 queue lifecycle 改動都要跑 contract / cancellation / shutdown safety test |

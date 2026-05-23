@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.42 - 2026-05-23
+
+- 新增 2026-05-23 06:26:02 CST +0800 資深工程師審查報告，確認 v1.0.41 已補齊 API security contract gate，但 worker processor failure 仍缺少獨立靜態 gate 來固定 `failed` / `success` result metric 與 duration 行為。
+- 新增 `TestWorkerFailureResultContract`，固定 worker processor 成功與失敗都會記錄 duration，且分別寫入 `worker_jobs_total{result="success"}` 與 `worker_jobs_total{result="failed"}`。
+- 新增 `scripts/check-worker-failure-contract.mjs`、`make worker-failure-check` 與 GitHub Actions `Check worker failure contract`，讓 README、production README、API contract、OpenAPI、章節、Cheat Sheet、整合視覺課程、Go tests、Makefile 與 CI 入口一致。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md`、OpenAPI / request correlation / API security 靜態檢查版本標記更新為 `v1.0.42`。
+- README、`production-api-worker/README.md`、第 7 / 11 章、進階 Cheat Sheet 與整合視覺課程同步加入 Worker failure contract gate。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.41 - 2026-05-22
 
 - 新增 2026-05-22 08:39:49 CST +0800 資深工程師審查報告，確認 v1.0.40 已補齊 Request correlation contract gate，但 API security 仍缺少獨立靜態 gate 來保護 `API_KEY`、Bearer token、公開 health probes 與安全標頭教學邊界。

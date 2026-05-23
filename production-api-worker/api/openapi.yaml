@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.41
+  version: v1.0.42
   description: >
     Machine-readable contract for the Go teaching production API worker.
     This file mirrors docs/api-contract.md and the Go contract tests,
@@ -15,6 +15,8 @@ info:
     API security uses optional API_KEY Bearer authentication for jobs and
     metrics while liveness and readiness probes remain public for deployment
     systems.
+    Worker failure handling keeps failed jobs visible through worker_jobs_total
+    result labels and worker duration metrics.
 servers:
   - url: http://localhost:8080
     description: Local memory or Docker Compose mode
