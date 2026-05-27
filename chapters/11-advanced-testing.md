@@ -224,7 +224,7 @@ func TestCreateJobContract(t *testing.T) {
 | Worker failure contract | worker processor 成功/失敗都需記錄 result metric 與 duration，並由 `node scripts/check-worker-failure-contract.mjs` 固定 |
 | Panic recovery | 未預期 panic 仍需回穩定 `500 internal_error` JSON |
 | Request timeout | handler deadline exceeded 應回 `504 request_timeout`，不可漂移成 `500 internal_error` |
-| Retry cancellation | retry backoff 遇到 `ctx.Done()` 時應停止，不再重試交易或 enqueue |
+| Retry cancellation contract | retry backoff 遇到 `ctx.Done()` 時應停止，不再重試交易或 enqueue，並由 `node scripts/check-retry-cancellation-contract.mjs` 固定 |
 | Startup / DB pool config | 不合法 `PORT`、`QUEUE_SIZE`、`WORKERS`、DB pool size 或 DB pool duration 應 fail fast，不可 silent fallback |
 | Migration contract | migration env、timeout、SQL 檔排序與 version 命名應固定，避免 release pipeline 漂移 |
 | API security contract gate | `API_KEY` 啟用後 `/jobs`、`/metrics` 需 Bearer token；`/livez`、`/readyz` 不應被認證擋住，並由 `node scripts/check-api-security-contract.mjs` 固定文件、OpenAPI、測試與 CI |
@@ -243,6 +243,7 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 node ../scripts/check-request-correlation-contract.mjs
 node ../scripts/check-api-security-contract.mjs
 node ../scripts/check-worker-failure-contract.mjs
+node ../scripts/check-retry-cancellation-contract.mjs
 go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1
 go test ./internal/api -run 'TestRequestBodyLimitContract' -count=1
 go test ./internal/api -run 'TestCORSAllowedOriginsContract' -count=1
@@ -507,6 +508,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | Request correlation contract gate | `node scripts/check-request-correlation-contract.mjs` | 固定 `X-Request-ID`、request context、structured log、trace attribute、OpenAPI、章節與 CI 入口 |
 | API security contract gate | `node scripts/check-api-security-contract.mjs` | 固定 `API_KEY`、Bearer auth、公開 health probes、安全標頭、Go tests、OpenAPI、章節與 CI 入口 |
 | Worker failure contract gate | `node scripts/check-worker-failure-contract.mjs` | 固定 worker result metric、duration、Go tests、章節與 CI 入口 |
+| Retry cancellation contract gate | `node scripts/check-retry-cancellation-contract.mjs` | 固定 deadlock retry backoff、context cancellation、Go test、章節與 CI 入口 |
 | Readiness 合約 | `cd production-api-worker && go test ./internal/api -run 'TestReadinessContract' -count=1` | 固定 ready / draining 對 `/readyz` 的 status code |
 | Worker shutdown 安全 | `cd production-api-worker && go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1` | 固定 queue close/enqueue 同步邊界，避免 shutdown race |
 | Shutdown signal contract | `cd production-api-worker && go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1` | 固定 Shutdown signal 入口，確認 SIGINT/SIGTERM 都會進入 graceful shutdown |

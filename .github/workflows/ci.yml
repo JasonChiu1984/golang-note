@@ -63,6 +63,9 @@ jobs:
       - name: Check worker failure contract
         run: node scripts/check-worker-failure-contract.mjs
 
+      - name: Check retry cancellation contract
+        run: node scripts/check-retry-cancellation-contract.mjs
+
       - name: Check pprof diagnostics contract
         run: node scripts/check-pprof-contract.mjs
 

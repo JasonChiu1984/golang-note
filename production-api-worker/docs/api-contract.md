@@ -1,6 +1,6 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.42 ｜ 基準日期：2026-05-23 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Request correlation contract、API security contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract、Worker failure contract
+> 版本：v1.0.43 ｜ 基準日期：2026-05-27 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Request correlation contract、API security contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract、Worker failure contract、Retry cancellation contract
 
 這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery、retry 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 cancellation 行為需要透過 contract test 保護。
 
@@ -33,7 +33,7 @@ Machine-readable contract 位於 `production-api-worker/api/openapi.yaml`。此 
 | OpenAPI sync | endpoint、request schema、response schema、error code、Bearer auth 與 `X-Request-ID` 需同步 `api/openapi.yaml` |
 | Worker shutdown | queue close 與 enqueue send 必須同步，shutdown 後新 enqueue 回穩定錯誤 |
 | Worker result metric | `TestWorkerFailureResultContract` 需固定 `worker_jobs_total{result="success"}` / `worker_jobs_total{result="failed"}` 的分類邊界 |
-| Retry cancellation | deadlock retry 的 backoff 必須尊重 `context` cancellation / deadline |
+| Retry cancellation contract | deadlock retry 的 backoff 必須尊重 `context` cancellation / deadline，並由 `node scripts/check-retry-cancellation-contract.mjs` 固定文件、Go test、Makefile 與 CI 入口 |
 | Breaking change | 需新增版本路由或遷移期，不能直接覆蓋既有合約 |
 | Release gate | 任何 handler、service retry 或 queue lifecycle 改動都要跑 contract / cancellation / shutdown safety test |
 

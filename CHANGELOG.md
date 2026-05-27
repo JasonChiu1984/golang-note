@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.43 - 2026-05-27
+
+- 新增 2026-05-27 08:01:25 CST +0800 資深工程師審查報告，確認 v1.0.42 已補齊 Worker failure contract gate，但 Retry cancellation 仍缺少獨立靜態 gate 來固定 deadlock retry backoff 與 `context` cancellation 行為。
+- 新增 `scripts/check-retry-cancellation-contract.mjs`，固定 README、production README、API contract、service retry implementation、Go tests、第 7 / 11 章、進階 Cheat Sheet、整合視覺課程、Makefile 與 GitHub Actions 都保留 Retry cancellation contract。
+- `.github/workflows/ci.yml` 新增 `Check retry cancellation contract`；`production-api-worker/Makefile` 新增 `retry-cancellation-check`。
+- `production-api-worker/docs/api-contract.md`、OpenAPI 與既有 version-sensitive contract checks 版本標記更新為 `v1.0.43`。
+- README、`production-api-worker/README.md`、第 7 / 11 章、進階 Cheat Sheet 與整合視覺課程同步加入 Retry cancellation contract gate。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.42 - 2026-05-23
 
 - 新增 2026-05-23 06:26:02 CST +0800 資深工程師審查報告，確認 v1.0.41 已補齊 API security contract gate，但 worker processor failure 仍缺少獨立靜態 gate 來固定 `failed` / `success` result metric 與 duration 行為。

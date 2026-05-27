@@ -378,7 +378,7 @@ ENTRYPOINT ["/app"]
 | Worker shutdown | concurrent enqueue + shutdown 是否不 panic，close 後是否回穩定錯誤 |
 | Panic recovery | 未預期 panic 是否仍回 `500 internal_error` JSON 與原 request id |
 | Request timeout | `context.DeadlineExceeded` 是否回 `504 request_timeout`，而不是漂移成 `500 internal_error` |
-| Retry cancellation | deadlock backoff 是否尊重 `ctx.Done()`，取消後是否停止交易與 enqueue |
+| Retry cancellation contract | deadlock backoff 是否由 `node scripts/check-retry-cancellation-contract.mjs` 固定尊重 `ctx.Done()`，取消後是否停止交易與 enqueue |
 | Shutdown signal | `api-worker` 是否同時監聽 SIGINT/SIGTERM，確保 local Ctrl+C 與 rolling deploy 都進入 draining |
 
 ```bash
@@ -396,6 +396,7 @@ go test ./internal/api -run 'TestRequestTimeoutContract' -count=1
 go test ./internal/api -run 'TestRateLimitContract' -count=1
 go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1
 go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
+node ../scripts/check-retry-cancellation-contract.mjs
 ```
 
 ```json

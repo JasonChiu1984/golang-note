@@ -18,9 +18,10 @@ const requiredFiles = [
 const specTerms = [
   "openapi: 3.1.0",
   "title: production-api-worker API",
-  "version: v1.0.42",
+  "version: v1.0.43",
   "API security uses optional API_KEY",
   "Worker failure handling keeps failed jobs visible through worker_jobs_total",
+  "Retry cancellation keeps deadlock retry backoff bound to request or shutdown context",
   "CORS allowlist",
   "CORS_ALLOWED_ORIGINS",
   "REQUEST_BODY_LIMIT_BYTES",

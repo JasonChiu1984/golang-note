@@ -1,4 +1,4 @@
-.PHONY: test test-race ci ci-contract openapi-check request-correlation-check api-security-check worker-failure-check runbook-check prometheus-check pprof-check rate-limit-check cors-check request-body-limit-check http-timeout-check shutdown-signal-check otel-check docker-build compose-smoke run migrate docker-up docker-down
+.PHONY: test test-race ci ci-contract openapi-check request-correlation-check api-security-check worker-failure-check retry-cancellation-check runbook-check prometheus-check pprof-check rate-limit-check cors-check request-body-limit-check http-timeout-check shutdown-signal-check otel-check docker-build compose-smoke run migrate docker-up docker-down
 
 test:
 	go test ./...
@@ -29,6 +29,9 @@ api-security-check:
 
 worker-failure-check:
 	cd .. && node scripts/check-worker-failure-contract.mjs
+
+retry-cancellation-check:
+	cd .. && node scripts/check-retry-cancellation-contract.mjs
 
 runbook-check:
 	cd .. && node scripts/check-operational-runbook.mjs

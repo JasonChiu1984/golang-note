@@ -283,7 +283,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | OpenAPI contract | `api/openapi.yaml`、request/response schema、error code、auth scheme | Markdown 文件與前端 mock / SDK / API gateway review 漂移 |
 | Panic recovery | `500 internal_error` JSON、request id header | panic 造成連線中斷、非 JSON 錯誤或洩漏內部細節 |
 | Request timeout | `504 request_timeout` JSON、request id header | handler deadline exceeded 被誤分類成 `500 internal_error`，client 無法區分 timeout 與 bug |
-| Retry cancellation | deadlock backoff、request context、shutdown deadline | request 已取消後仍繼續重試 DB 交易或排入 queue |
+| Retry cancellation contract | deadlock backoff、request context、shutdown deadline、`node scripts/check-retry-cancellation-contract.mjs` | request 已取消後仍繼續重試 DB 交易或排入 queue |
 | Startup config | port、queue size、worker count、optional endpoint | 錯誤 env 被 silent fallback，容量與部署設定不一致 |
 | Migration contract | migration env、timeout、schema version、SQL 檔命名 | 重複套用 schema、release 後無法追蹤 DB 版本 |
 | Queue shutdown | enqueue 與 close 的同步邊界 | shutdown 期間可能送入已關閉 channel，造成 panic |
@@ -358,6 +358,7 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 | Request correlation contract | `X-Request-ID`、request context、structured log `request_id`、trace attribute `request.id` 與 `node scripts/check-request-correlation-contract.mjs` |
 | API security contract gate | `API_KEY` 啟用後 `/jobs`、`/metrics` 未帶 token 回 `401 unauthorized`，health endpoint 仍公開，並由 `node scripts/check-api-security-contract.mjs` 固定 |
 | Worker failure contract | worker processor 成功/失敗都寫入 `worker_jobs_total` result label，並由 `node scripts/check-worker-failure-contract.mjs` 固定 |
+| Retry cancellation contract | deadlock retry backoff 遇到 `ctx.Done()` 需停止，並由 `node scripts/check-retry-cancellation-contract.mjs` 固定 |
 | Security headers | 所有 response 保留 `X-Content-Type-Options`、`X-Frame-Options`、`Referrer-Policy` |
 | CORS allowlist | allowed origin preflight 回 `204` 與 `Access-Control-Allow-Origin`；blocked origin preflight 回 `403` 且不回 CORS header |
 | Request body limit | oversized `POST /jobs` 回 `413 payload_too_large` 並保留 `X-Request-ID` |
@@ -475,7 +476,7 @@ Deadlock retry 是 production service 常見的保護機制，但 backoff 不能
 | 第一次交易遇到 `domain.ErrDeadlock` | 記錄 warning，短暫 backoff 後重試 |
 | Backoff 期間 `ctx.Done()` | 立即回傳 `context.Canceled` 或 `context.DeadlineExceeded` |
 | Context 已取消 | 不再呼叫下一次 `WithTx`，也不 enqueue job |
-| 測試保護 | `TestCreateJobStopsDeadlockRetryWhenContextCanceled` 固定取消語意 |
+| 測試保護 | `TestCreateJobStopsDeadlockRetryWhenContextCanceled` 與 `node scripts/check-retry-cancellation-contract.mjs` 固定取消語意 |
 
 這個案例適合放在第 7 章，因為它同時連到 service transaction boundary、context 傳遞、錯誤分類與 worker queue 的副作用控制。
 
