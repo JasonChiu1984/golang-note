@@ -256,7 +256,7 @@ production-api-worker/
 
 | 對比面向 | `project-concurrent-crawler` | `production-api-worker` |
 |---|---|---|
-| 學習重點 | worker pool、parser、retry | API、API key security contract、rate limit contract、request body limit contract、HTTP server timeout contract、worker failure contract、transaction、context-aware retry、request timeout contract、queue shutdown safety、observability、部署 |
+| 學習重點 | worker pool、parser、retry | API、API key security contract、rate limit contract、request body limit contract、HTTP server timeout contract、worker failure contract、queue backpressure contract、transaction、context-aware retry、request timeout contract、queue shutdown safety、observability、部署 |
 | 外部依賴 | 幾乎沒有 | Postgres、OTLP、Docker Compose |
 | 驗證方式 | `go test` 為主 | `go test` + `docker compose up --build` |
 | 專案階段 | 教學型大型專案 | 接近 production 的服務骨架 |
@@ -279,6 +279,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Request body limit contract | `REQUEST_BODY_LIMIT_BYTES`、`http.MaxBytesReader`、`413 payload_too_large` | 大型 payload 或誤用 client 直接消耗 handler memory / decode 時間 |
 | HTTP server timeout contract | `HTTP_READ_HEADER_TIMEOUT`、`HTTP_READ_TIMEOUT`、`HTTP_WRITE_TIMEOUT`、`HTTP_IDLE_TIMEOUT`、`HTTP_SHUTDOWN_TIMEOUT`、`QUEUE_DRAIN_TIMEOUT` | slow client、卡住的 response 或過長 drain 讓部署與容量行為不可預測 |
 | Worker failure contract | `TestWorkerFailureResultContract`、`worker_jobs_total{result="failed"}`、duration metric、`node scripts/check-worker-failure-contract.mjs` | worker processor 失敗只留在 log，無法用 metrics 或 CI gate 發現 |
+| Queue backpressure contract | `TestQueueBackpressureContract`、`domain.ErrQueueFull`、`503 queue_full`、`worker_jobs_total{result="dropped"}`、`node scripts/check-queue-backpressure-contract.mjs` | queue 滿載行為分散在 handler / service / worker，重構後可能錯回 500 或漏記 dropped metric |
 | Rate limit contract | `RATE_LIMIT_REQUESTS_PER_MINUTE`、per-client IP、`429 rate_limited`、`Retry-After` | 單一 client 持續打爆 handler、queue 或 DB，或 health check 被錯誤限速 |
 | OpenAPI contract | `api/openapi.yaml`、request/response schema、error code、auth scheme | Markdown 文件與前端 mock / SDK / API gateway review 漂移 |
 | Panic recovery | `500 internal_error` JSON、request id header | panic 造成連線中斷、非 JSON 錯誤或洩漏內部細節 |
@@ -358,6 +359,7 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 | Request correlation contract | `X-Request-ID`、request context、structured log `request_id`、trace attribute `request.id` 與 `node scripts/check-request-correlation-contract.mjs` |
 | API security contract gate | `API_KEY` 啟用後 `/jobs`、`/metrics` 未帶 token 回 `401 unauthorized`，health endpoint 仍公開，並由 `node scripts/check-api-security-contract.mjs` 固定 |
 | Worker failure contract | worker processor 成功/失敗都寫入 `worker_jobs_total` result label，並由 `node scripts/check-worker-failure-contract.mjs` 固定 |
+| Queue backpressure contract | bounded queue 滿載時回 `domain.ErrQueueFull`，API 對外回 `503 queue_full`，並由 `node scripts/check-queue-backpressure-contract.mjs` 固定 |
 | Retry cancellation contract | deadlock retry backoff 遇到 `ctx.Done()` 需停止，並由 `node scripts/check-retry-cancellation-contract.mjs` 固定 |
 | Security headers | 所有 response 保留 `X-Content-Type-Options`、`X-Frame-Options`、`Referrer-Policy` |
 | CORS allowlist | allowed origin preflight 回 `204` 與 `Access-Control-Allow-Origin`；blocked origin preflight 回 `403` 且不回 CORS header |

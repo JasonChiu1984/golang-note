@@ -208,6 +208,7 @@ func FetchUser(ctx context.Context, id int) (*User, error) {
 | HTTP shutdown | `http.Server.Shutdown(ctx)` 停止接新連線並等待既有 request |
 | Worker drain | close queue 並用 `WaitGroup` 等待已排入 task 完成 |
 | Queue close/send | close 與 enqueue send 需共用 mutex 或單一 owner，避免送入已關閉 channel |
+| Queue backpressure contract | `node scripts/check-queue-backpressure-contract.mjs` 固定 bounded queue 滿載、`domain.ErrQueueFull`、`503 queue_full`、dropped metric 與 Go test |
 | Timeout | drain deadline 到期才 cancel worker context |
 
 ### Startup Config Contract
@@ -374,6 +375,7 @@ ENTRYPOINT ["/app"]
 | Request correlation contract | 是否由 `node scripts/check-request-correlation-contract.mjs` 固定 request context、structured log `request_id`、trace attribute `request.id`、OpenAPI 與 CI 入口 |
 | API security contract gate | 是否由 `node scripts/check-api-security-contract.mjs` 固定 `API_KEY`、Bearer auth、公開 health probes、安全標頭、OpenAPI 與 CI 入口 |
 | Worker failure contract | 是否由 `node scripts/check-worker-failure-contract.mjs` 固定 worker 成功/失敗 result metric 與 duration |
+| Queue backpressure contract | 是否由 `node scripts/check-queue-backpressure-contract.mjs` 固定 queue 滿載 error、HTTP `503 queue_full` 與 dropped metric |
 | Observability label | route label、span name、metrics label、`request.id` 是否會破壞 dashboard |
 | Worker shutdown | concurrent enqueue + shutdown 是否不 panic，close 後是否回穩定錯誤 |
 | Panic recovery | 未預期 panic 是否仍回 `500 internal_error` JSON 與原 request id |
@@ -430,6 +432,8 @@ node ../scripts/check-retry-cancellation-contract.mjs
 > Request timeout 是 HTTP 合約保護：handler deadline exceeded 要回 `504 request_timeout`，讓 client 能把 timeout 與未知伺服器錯誤分開處理。
 
 > Retry cancellation 是 service 邊界保護：deadlock backoff 要用 `select` 監聽 `ctx.Done()`，request 已取消後不得繼續重試 DB 或 enqueue job。
+
+> Queue backpressure 是 overload 邊界保護：bounded queue 滿載時要回 `domain.ErrQueueFull`，HTTP API 對外回 `503 queue_full`，並用 `node scripts/check-queue-backpressure-contract.mjs` 固定 dropped metric 與 queue depth。
 
 ---
 

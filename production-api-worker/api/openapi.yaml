@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.43
+  version: v1.0.44
   description: >
     Machine-readable contract for the Go teaching production API worker.
     This file mirrors docs/api-contract.md and the Go contract tests,
@@ -17,7 +17,8 @@ info:
     systems.
     Worker failure handling keeps failed jobs visible through worker_jobs_total.
     Retry cancellation keeps deadlock retry backoff bound to request or shutdown context.
-    result labels and worker duration metrics.
+    Queue backpressure returns 503 queue_full while preserving dropped result labels,
+    queue depth, and worker duration metrics.
 servers:
   - url: http://localhost:8080
     description: Local memory or Docker Compose mode

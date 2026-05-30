@@ -66,6 +66,9 @@ jobs:
       - name: Check retry cancellation contract
         run: node scripts/check-retry-cancellation-contract.mjs
 
+      - name: Check queue backpressure contract
+        run: node scripts/check-queue-backpressure-contract.mjs
+
       - name: Check pprof diagnostics contract
         run: node scripts/check-pprof-contract.mjs
 
@@ -115,7 +118,7 @@ jobs:
           go test ./internal/api -run 'Test.*Contract|TestReadinessContract|TestPanicRecoveryContract|TestRequestDecodingContract|TestRequestBodyLimitContract|TestRequestTimeoutContract|TestRateLimitContract|TestCORSAllowedOriginsContract' -count=1
           go test ./cmd/api-worker -run 'TestMonitoredSignalsContract|TestHTTPServerTimeoutContract' -count=1
           go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
-          go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic|TestWorkerFailureResultContract' -count=1
+          go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic|TestWorkerFailureResultContract|TestQueueBackpressureContract' -count=1
 
       - name: Run full test suite with race detector
         run: go test -race -cover ./... -count=1

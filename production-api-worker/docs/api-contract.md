@@ -1,6 +1,6 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.43 ｜ 基準日期：2026-05-27 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Request correlation contract、API security contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract、Worker failure contract、Retry cancellation contract
+> 版本：v1.0.44 ｜ 基準日期：2026-05-31 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Request correlation contract、API security contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract、Worker failure contract、Retry cancellation contract、Queue backpressure contract
 
 這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery、retry 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 cancellation 行為需要透過 contract test 保護。
 
@@ -401,4 +401,5 @@ go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownD
 - shutdown signal set 需同時包含 SIGINT 與 SIGTERM，避免正式部署收到 SIGTERM 時跳過 draining。
 - 啟動設定需固定預設值、合法 env 與錯誤設定 fail-fast 行為。
 - deadlock retry backoff 遇到 context cancellation / deadline 時需停止，不得繼續重試或 enqueue。
+- Queue backpressure contract 需由 `node scripts/check-queue-backpressure-contract.mjs` 固定 bounded queue 滿載、`domain.ErrQueueFull`、`503 queue_full`、dropped metric 與 queue depth。
 - queue shutdown 期間不可發生 `send on closed channel`；close 後新 enqueue 需回穩定錯誤。

@@ -12,6 +12,7 @@
 - HTTP Server Timeout Contract：`HTTP_READ_HEADER_TIMEOUT`、`HTTP_READ_TIMEOUT`、`HTTP_WRITE_TIMEOUT`、`HTTP_IDLE_TIMEOUT`、`HTTP_SHUTDOWN_TIMEOUT`、`QUEUE_DRAIN_TIMEOUT` 集中設定並 fail fast
 - Worker Failure Contract：worker processor 成功/失敗都記錄 duration，並以 `worker_jobs_total{result="success|failed"}` 固定可觀測結果
 - Retry Cancellation Contract：deadlock retry backoff 必須尊重 `context` cancellation / deadline，取消後不得繼續交易或 enqueue
+- Queue Backpressure Contract：bounded queue 滿載時回 `domain.ErrQueueFull`，API 對外回 `503 queue_full`，並記錄 `worker_jobs_total{result="dropped"}`
 - Diagnostics / pprof contract：`ENABLE_PPROF` 預設關閉；啟用 `/debug/pprof/` 時必須提供 `PPROF_TOKEN` 或沿用 `API_KEY`
 - Rate limit contract：`RATE_LIMIT_REQUESTS_PER_MINUTE` 依 client IP 保護 `/jobs` 與 `/jobs/{id}`，超限回 `429 rate_limited`
 - Trusted proxy client IP：`TRUSTED_PROXY_CIDRS` 預設空值；只有信任代理來源才採用 `X-Forwarded-For`
@@ -89,7 +90,7 @@ go test ./internal/api -run 'TestPprofDiagnosticsContract' -count=1
 go test ./internal/api -run 'TestRateLimitContract' -count=1
 go test ./cmd/api-worker -run 'TestMonitoredSignalsContract|TestHTTPServerTimeoutContract' -count=1
 go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
-go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1
+go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic|TestQueueBackpressureContract' -count=1
 go test -race -cover ./...
 make openapi-check
 make runbook-check
@@ -103,6 +104,7 @@ make request-correlation-check
 make api-security-check
 make worker-failure-check
 make retry-cancellation-check
+make queue-backpressure-check
 make shutdown-signal-check
 go test -run='^$' -bench=. -benchmem -count=10 ./... > bench.txt
 docker compose up --build
@@ -132,6 +134,7 @@ make compose-smoke
 | `go test ./internal/worker -run 'TestWorkerFailureResultContract' -count=1` | 固定 worker processor 成功/失敗都會記錄 result metric 與 duration |
 | `go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1` | 固定 SIGINT/SIGTERM shutdown signal set，避免只處理 local Ctrl+C |
 | `go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1` | 固定 deadlock retry backoff 會尊重 request cancellation / shutdown deadline |
+| `go test ./internal/worker -run 'TestQueueBackpressureContract' -count=1` | 固定 bounded queue 滿載時回 `domain.ErrQueueFull`、記錄 dropped result 並維持 queue depth |
 | `go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1` | 固定 queue close/enqueue 同步邊界，避免 shutdown race panic |
 | `go test -race -cover ./...` | 驗證 service、handler、queue 與併發安全 |
 | `make openapi-check` | 固定 OpenAPI contract、endpoint、schema、error code、Bearer auth 與 README/API 文件入口 |
@@ -146,6 +149,7 @@ make compose-smoke
 | `make http-timeout-check` | 固定 HTTP server timeout contract、timeout env、main server 套用、Go tests、README、API contract 與 CI 入口 |
 | `make worker-failure-check` | 固定 worker failure contract、result metric、duration、Go tests、README 與 CI 入口 |
 | `make retry-cancellation-check` | 固定 retry cancellation contract、deadlock backoff、context cancellation、Go test、README 與 CI 入口 |
+| `make queue-backpressure-check` | 固定 queue backpressure contract、`domain.ErrQueueFull`、`503 queue_full`、dropped metric、Go tests、README 與 CI 入口 |
 | `make request-correlation-check` | 固定 request id middleware、OpenAPI request id header、contract tests、章節與 CI 靜態檢查入口 |
 | `make api-security-check` | 固定 API key auth middleware、security headers、OpenAPI bearerAuth、contract tests、章節與 CI 靜態檢查入口 |
 | `make shutdown-signal-check` | 固定 shutdown signal contract、SIGINT/SIGTERM、main test、README、API contract 與 CI 入口 |
@@ -193,6 +197,7 @@ Machine-readable contract 位於 `api/openapi.yaml`。它不是取代 Go contrac
 | Success response | 保持 `id`、`name`、`payload`、`status` 欄位向後相容 |
 | Request decoding | 只接受單一 JSON object；unknown field、trailing JSON value 與空白 `name` 都回 `invalid_input` |
 | Request body limit | `POST /jobs` body 由 `REQUEST_BODY_LIMIT_BYTES` 限制；超限回 `413 payload_too_large` |
+| Queue backpressure | bounded queue 滿載時 service 回 `domain.ErrQueueFull`，HTTP API 對外回 `503 queue_full` |
 | Error response | 統一使用 `{"error":{"code":"...","message":"..."}}` |
 | Request timeout | `context.DeadlineExceeded` 對外回 `504 request_timeout`，避免被誤分類成 `internal_error` |
 | Status enum | `pending`、`processing`、`done`、`failed` 不任意改名 |

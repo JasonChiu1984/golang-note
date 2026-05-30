@@ -5,6 +5,8 @@ import (
 	"errors"
 	"sync"
 	"testing"
+
+	"golang-learning-notes/production-api-worker/internal/domain"
 )
 
 func TestEnqueueAfterShutdownReturnsClosedError(t *testing.T) {
@@ -70,6 +72,27 @@ func TestWorkerFailureResultContract(t *testing.T) {
 	}
 }
 
+func TestQueueBackpressureContract(t *testing.T) {
+	obs := &recordingObserver{}
+	queue := New(1, func(ctx context.Context, task Task) error { return nil }, obs)
+
+	if err := queue.Enqueue(context.Background(), Task{JobID: "queued"}); err != nil {
+		t.Fatalf("first enqueue returned error: %v", err)
+	}
+
+	err := queue.Enqueue(context.Background(), Task{JobID: "dropped"})
+	if !errors.Is(err, domain.ErrQueueFull) {
+		t.Fatalf("second enqueue error = %v, want %v", err, domain.ErrQueueFull)
+	}
+
+	if got := obs.resultCount("dropped"); got != 1 {
+		t.Fatalf("dropped result count = %d, want 1", got)
+	}
+	if got := obs.lastDepth(); got != 1 {
+		t.Fatalf("last queue depth = %d, want 1", got)
+	}
+}
+
 type recordingObserver struct {
 	mu        sync.Mutex
 	results   []string
@@ -105,4 +128,13 @@ func (o *recordingObserver) resultCount(result string) int {
 		}
 	}
 	return count
+}
+
+func (o *recordingObserver) lastDepth() int {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	if len(o.depths) == 0 {
+		return 0
+	}
+	return o.depths[len(o.depths)-1]
 }

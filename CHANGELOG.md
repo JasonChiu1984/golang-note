@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.44 - 2026-05-31
+
+- 新增 2026-05-31 06:02:30 CST +0800 資深工程師審查報告，確認 v1.0.43 已補齊 Retry cancellation contract gate，但 bounded queue backpressure 還缺少獨立靜態 gate 來固定 `503 queue_full`、`domain.ErrQueueFull`、`dropped` metric 與 queue depth 行為。
+- 新增 `TestQueueBackpressureContract`，固定 queue 容量滿載時第二個 enqueue 會回 `domain.ErrQueueFull`，同時記錄 `worker_jobs_total{result="dropped"}` 並保留 queue depth。
+- 新增 `scripts/check-queue-backpressure-contract.mjs`、`make queue-backpressure-check` 與 GitHub Actions `Check queue backpressure contract`，讓 README、production README、API contract、OpenAPI、章節、Cheat Sheet、整合視覺課程、Go tests、Makefile 與 CI 入口一致。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與既有 version-sensitive contract checks 版本標記更新為 `v1.0.44`。
+- README、`production-api-worker/README.md`、第 7 / 11 章、進階 Cheat Sheet 與整合視覺課程同步加入 Queue backpressure contract gate。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.43 - 2026-05-27
 
 - 新增 2026-05-27 08:01:25 CST +0800 資深工程師審查報告，確認 v1.0.42 已補齊 Worker failure contract gate，但 Retry cancellation 仍缺少獨立靜態 gate 來固定 deadlock retry backoff 與 `context` cancellation 行為。
