@@ -69,6 +69,9 @@ jobs:
       - name: Check queue backpressure contract
         run: node scripts/check-queue-backpressure-contract.mjs
 
+      - name: Check migration contract
+        run: node scripts/check-migration-contract.mjs
+
       - name: Check pprof diagnostics contract
         run: node scripts/check-pprof-contract.mjs
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.45 - 2026-06-01
+
+- 新增 2026-06-01 06:03:07 CST +0800 資深工程師審查報告，確認 v1.0.44 已補齊 Queue backpressure contract gate，但 Migration contract 仍缺少獨立靜態 gate 來固定 env、timeout、version table、transaction apply、Go tests、Makefile 與 CI 入口。
+- 新增 `scripts/check-migration-contract.mjs`，固定 README、production README、API contract、config loader、migration runner、`cmd/migrate`、Go tests、第 7 / 11 章、進階 Cheat Sheet、整合視覺課程、Makefile 與 GitHub Actions 都保留 Migration contract gate。
+- `.github/workflows/ci.yml` 新增 `Check migration contract`；`production-api-worker/Makefile` 新增 `migration-check`。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與既有 version-sensitive contract checks 版本標記更新為 `v1.0.45`。
+- README、`production-api-worker/README.md`、第 7 / 11 章、進階 Cheat Sheet 與整合視覺課程同步加入 Migration contract gate。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.44 - 2026-05-31
 
 - 新增 2026-05-31 06:02:30 CST +0800 資深工程師審查報告，確認 v1.0.43 已補齊 Retry cancellation contract gate，但 bounded queue backpressure 還缺少獨立靜態 gate 來固定 `503 queue_full`、`domain.ErrQueueFull`、`dropped` metric 與 queue depth 行為。

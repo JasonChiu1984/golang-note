@@ -227,7 +227,7 @@ func TestCreateJobContract(t *testing.T) {
 | Request timeout | handler deadline exceeded 應回 `504 request_timeout`，不可漂移成 `500 internal_error` |
 | Retry cancellation contract | retry backoff 遇到 `ctx.Done()` 時應停止，不再重試交易或 enqueue，並由 `node scripts/check-retry-cancellation-contract.mjs` 固定 |
 | Startup / DB pool config | 不合法 `PORT`、`QUEUE_SIZE`、`WORKERS`、DB pool size 或 DB pool duration 應 fail fast，不可 silent fallback |
-| Migration contract | migration env、timeout、SQL 檔排序與 version 命名應固定，避免 release pipeline 漂移 |
+| Migration contract gate | migration env、timeout、SQL 檔排序、version 命名與 `node scripts/check-migration-contract.mjs` 應固定，避免 release pipeline 漂移 |
 | API security contract gate | `API_KEY` 啟用後 `/jobs`、`/metrics` 需 Bearer token；`/livez`、`/readyz` 不應被認證擋住，並由 `node scripts/check-api-security-contract.mjs` 固定文件、OpenAPI、測試與 CI |
 | CORS allowlist | `CORS_ALLOWED_ORIGINS` 只接受 exact `http` / `https` origin；allowed preflight 回 `204`，blocked preflight 回 `403` |
 | Pprof diagnostics | `ENABLE_PPROF` 預設關閉；啟用 `/debug/pprof/` 時必須要求 Bearer token，避免 debug endpoint 公開 |
@@ -461,6 +461,8 @@ func TestLoadFromLookupRejectsInvalidRequiredConfig(t *testing.T) {
 
 Migration 測試要固定兩類行為：一是設定合約，例如 `DATABASE_URL` 必填與 `MIGRATION_TIMEOUT` 必須是正數 duration；二是 migration 檔案規則，例如只收 `.sql`、依檔名排序、version 不可空白或含 whitespace。這些測試不需要先啟動 Postgres，就能保護 release pipeline 的前置規則。
 
+`node scripts/check-migration-contract.mjs` 是這些 Go 測試之外的靜態 gate，會檢查 README、API contract、config loader、migration runner、`cmd/migrate`、Makefile、GitHub Actions 與整合教程是否仍保留 Migration contract gate。這讓教學文件、測試與 CI 入口不會各自漂移。
+
 ```go
 func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 	dir := t.TempDir()
@@ -518,7 +520,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | Request timeout 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestTimeoutContract' -count=1` | 固定 handler timeout 的 `504 request_timeout` JSON 與 request id |
 | Retry cancellation | `cd production-api-worker && go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1` | 固定 deadlock retry backoff 會尊重 context cancellation / deadline |
 | Startup / DB pool config | `cd production-api-worker && go test ./internal/config -count=1` | 固定設定預設值、合法 env、DB pool 關係與錯誤設定 fail-fast 行為 |
-| Migration contract | `cd production-api-worker && go test ./internal/config ./internal/migration -count=1` | 固定 migration env、timeout、SQL 檔排序與 version 命名規則 |
+| Migration contract gate | `cd production-api-worker && go test ./internal/config ./internal/migration -count=1 && node scripts/check-migration-contract.mjs` | 固定 migration env、timeout、SQL 檔排序、version 命名、靜態文件與 CI 入口 |
 | OpenAPI contract gate | `node scripts/check-openapi-contract.mjs` | 固定 OpenAPI spec、endpoint、schema、error code、Bearer auth 與文件入口 |
 | CORS allowlist gate | `node scripts/check-cors-contract.mjs` | 固定 `CORS_ALLOWED_ORIGINS`、allowlist middleware、preflight 測試與 CI 入口 |
 | Compose smoke gate | `cd production-api-worker && docker compose up -d --build && make compose-smoke && docker compose down -v` | 固定 Docker Compose 啟動後 `/livez`、`/readyz`、job create/read 與 metrics |

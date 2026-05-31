@@ -286,7 +286,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Request timeout | `504 request_timeout` JSON、request id header | handler deadline exceeded 被誤分類成 `500 internal_error`，client 無法區分 timeout 與 bug |
 | Retry cancellation contract | deadlock backoff、request context、shutdown deadline、`node scripts/check-retry-cancellation-contract.mjs` | request 已取消後仍繼續重試 DB 交易或排入 queue |
 | Startup config | port、queue size、worker count、optional endpoint | 錯誤 env 被 silent fallback，容量與部署設定不一致 |
-| Migration contract | migration env、timeout、schema version、SQL 檔命名 | 重複套用 schema、release 後無法追蹤 DB 版本 |
+| Migration contract gate | migration env、timeout、schema version、SQL 檔命名、`node scripts/check-migration-contract.mjs` | 重複套用 schema、release 後無法追蹤 DB 版本，或文件 / CI / Go tests 漂移 |
 | Queue shutdown | enqueue 與 close 的同步邊界 | shutdown 期間可能送入已關閉 channel，造成 panic |
 | Shutdown signal contract | `SIGINT`、`SIGTERM`、readiness draining、HTTP shutdown、queue drain | Docker / Kubernetes 發出 `SIGTERM` 時未進入 graceful shutdown |
 
@@ -451,6 +451,8 @@ DB connection pool 也是啟動合約的一部分。若 `SetMaxOpenConns(25)`、
 | `MIGRATION_TIMEOUT` | `30s` | 必須是正數 duration |
 
 Migration 檔名就是版本 key：`001_init.sql` 會記成 `001_init`。檔名不可空白、不可含 whitespace，避免 release 後出現難以引用的 schema version。每個新 migration 在 transaction 內執行 SQL 並寫入 `schema_migrations`；重跑時若版本已存在，就略過該檔案。
+
+本教材用 `node scripts/check-migration-contract.mjs` 把 migration contract gate 固定在 release flow 內：README、API contract、config loader、migration runner、`cmd/migrate`、Go tests、Makefile 與 GitHub Actions 都必須同時保留，避免 migration 只剩章節說明而沒有可重跑的驗證入口。
 
 ### Service Lifecycle：ready、draining、shutdown
 

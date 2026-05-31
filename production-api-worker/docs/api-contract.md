@@ -1,6 +1,6 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.44 ｜ 基準日期：2026-05-31 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Request correlation contract、API security contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract、Worker failure contract、Retry cancellation contract、Queue backpressure contract
+> 版本：v1.0.45 ｜ 基準日期：2026-06-01 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Request correlation contract、API security contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract、Worker failure contract、Retry cancellation contract、Queue backpressure contract、Migration Operation Contract
 
 這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery、retry 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 cancellation 行為需要透過 contract test 保護。
 
@@ -334,6 +334,7 @@ Retry-After: 60
 | Re-run | 已存在於 `schema_migrations` 的 version 會被略過 |
 | Apply | 每個新 SQL 檔在 transaction 內執行並記錄版本 |
 | Test gate | `go test ./internal/config ./internal/migration -count=1` |
+| Static gate | `node scripts/check-migration-contract.mjs` |
 
 ## Panic Recovery
 
