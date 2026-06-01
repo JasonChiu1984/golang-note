@@ -54,6 +54,9 @@ jobs:
       - name: Check OpenAPI contract
         run: node scripts/check-openapi-contract.mjs
 
+      - name: Check request decoding contract
+        run: node scripts/check-request-decoding-contract.mjs
+
       - name: Check request correlation contract
         run: node scripts/check-request-correlation-contract.mjs
 

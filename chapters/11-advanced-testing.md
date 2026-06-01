@@ -217,7 +217,7 @@ func TestCreateJobContract(t *testing.T) {
 | Error code | 比自然語言 message 更適合穩定分支 |
 | Header | `Content-Type`、cache、request id 都可能是 client 依賴 |
 | Request correlation contract gate | `X-Request-ID` 需同時固定 response header、request context、structured log `request_id`、trace attribute `request.id` 與 `node scripts/check-request-correlation-contract.mjs` |
-| Request decoding | malformed JSON、unknown field、trailing JSON 與空白必填欄位都應固定為 `400 invalid_input` |
+| Request decoding contract gate | malformed JSON、unknown field、trailing JSON 與空白必填欄位都應固定為 `400 invalid_input`，並由 `node scripts/check-request-decoding-contract.mjs` 固定文件、OpenAPI、測試與 CI |
 | Request body limit | oversized request body 應固定為 `413 payload_too_large`，避免大型 payload 進入 decoder / queue |
 | Readiness | draining 時 `/readyz=503` 是部署系統依賴的操作合約 |
 | Worker shutdown | queue 關閉後 enqueue 應回穩定錯誤，concurrent enqueue + shutdown 不應 panic |
@@ -242,6 +242,7 @@ func TestCreateJobContract(t *testing.T) {
 cd production-api-worker
 go test ./internal/api -run 'Test.*Contract' -count=1
 node ../scripts/check-request-correlation-contract.mjs
+node ../scripts/check-request-decoding-contract.mjs
 node ../scripts/check-api-security-contract.mjs
 node ../scripts/check-worker-failure-contract.mjs
 node ../scripts/check-retry-cancellation-contract.mjs
@@ -507,6 +508,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | Go 1.26 artifact 測試 | `go test -artifacts -outputdir ./test-artifacts ./...` | 搭配 CI 收集 `T.ArtifactDir` 產物 |
 | API 合約測試 | `cd production-api-worker && go test ./internal/api -run 'Test.*Contract' -count=1` | 固定 status、JSON schema、錯誤 code 與 header |
 | Request decoding 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestDecodingContract' -count=1` | 固定 malformed JSON、unknown field、trailing JSON 與空白 name 的 `400 invalid_input` |
+| Request decoding contract gate | `node scripts/check-request-decoding-contract.mjs` | 固定 strict decoder、Go test、OpenAPI、README、章節、Makefile 與 CI 入口 |
 | Request ID 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestIDContract|TestCreateJobContract' -count=1` | 固定 `X-Request-ID` 保留與自動產生行為 |
 | Request correlation contract gate | `node scripts/check-request-correlation-contract.mjs` | 固定 `X-Request-ID`、request context、structured log、trace attribute、OpenAPI、章節與 CI 入口 |
 | API security contract gate | `node scripts/check-api-security-contract.mjs` | 固定 `API_KEY`、Bearer auth、公開 health probes、安全標頭、Go tests、OpenAPI、章節與 CI 入口 |

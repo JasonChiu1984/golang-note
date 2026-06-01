@@ -1,6 +1,6 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.45 ｜ 基準日期：2026-06-01 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Request correlation contract、API security contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract、Worker failure contract、Retry cancellation contract、Queue backpressure contract、Migration Operation Contract
+> 版本：v1.0.46 ｜ 基準日期：2026-06-02 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Request decoding contract、Request correlation contract、API security contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract、Worker failure contract、Retry cancellation contract、Queue backpressure contract、Migration Operation Contract
 
 這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery、retry 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 cancellation 行為需要透過 contract test 保護。
 
@@ -12,6 +12,7 @@ Machine-readable contract 位於 `production-api-worker/api/openapi.yaml`。此 
 |---|---|
 | 向後相容新增 | 可新增 response 欄位，但不得移除或改名既有欄位 |
 | Request decoding | `POST /jobs` 只接受單一 JSON object；malformed JSON、unknown field、trailing JSON value 與空白 `name` 都必須回 `400 invalid_input` |
+| Request decoding gate | `node scripts/check-request-decoding-contract.mjs` 必須固定 `DisallowUnknownFields`、單一 JSON value 檢查、`TestRequestDecodingContract`、OpenAPI、README、章節、Makefile 與 CI 入口 |
 | Request body limit | `POST /jobs` request body 超過 `REQUEST_BODY_LIMIT_BYTES` 時必須回 `413 payload_too_large`，不可繼續 decode 或排入 queue |
 | HTTP server timeout | `HTTP_READ_HEADER_TIMEOUT`、`HTTP_READ_TIMEOUT`、`HTTP_WRITE_TIMEOUT`、`HTTP_IDLE_TIMEOUT`、`HTTP_SHUTDOWN_TIMEOUT`、`QUEUE_DRAIN_TIMEOUT` 必須集中設定並 fail fast |
 | Worker failure contract | worker processor 回錯時仍需記錄 duration，並把結果標記為 `failed`；成功路徑需標記 `success`，避免 queue failure 只存在於 log |

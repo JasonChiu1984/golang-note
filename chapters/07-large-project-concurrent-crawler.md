@@ -269,6 +269,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 |---|---|---|
 | Endpoint | method、path、path parameter | client 找不到路由或誤用動詞 |
 | Request schema | 必填欄位、型別、大小限制、unknown field、trailing JSON | 舊 client 送出的 payload 被拒絕，或錯誤 request 被誤當 500 |
+| Request decoding contract | `TestRequestDecodingContract`、`DisallowUnknownFields`、單一 JSON value、`node scripts/check-request-decoding-contract.mjs` | handler 重構後可能重新接受 typo 欄位、trailing JSON 或把 client error 誤分類成 500 |
 | Response schema | HTTP status、JSON 欄位、狀態 enum | client decode 失敗或狀態判斷錯誤 |
 | Error envelope | `error.code`、`error.message` | client 無法用穩定 code 做分支 |
 | Observability | route label、trace span name、metrics label、`X-Request-ID` | dashboard、alert 與 incident log 無法對照 |
@@ -353,6 +354,7 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 |---|---|
 | 成功建立 job | `202 Accepted`、`Content-Type: application/json`、`id/name/payload/status` |
 | 不合法 request | malformed JSON、unknown field、trailing JSON、空白 name 都回 `400 Bad Request`、`error.code=invalid_input` |
+| Request decoding contract | `TestRequestDecodingContract` 與 `node scripts/check-request-decoding-contract.mjs` 固定 strict decoder、OpenAPI、README、章節與 CI 入口 |
 | 找不到資源 | `404 Not Found`、`error.code=not_found` |
 | Queue full | `503 Service Unavailable`、`error.code=queue_full` |
 | Request ID | client header 原樣回傳；未提供時產生 `req-*` |

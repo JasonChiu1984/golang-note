@@ -1,11 +1,11 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.45
+  version: v1.0.46
   description: >
     Machine-readable contract for the Go teaching production API worker.
     This file mirrors docs/api-contract.md and the Go contract tests,
-    including rate limit, trusted proxy client IP behavior, and CORS allowlist
+    including strict request decoding, rate limit, trusted proxy client IP behavior, and CORS allowlist
     behavior controlled by CORS_ALLOWED_ORIGINS. POST /jobs request bodies are
     bounded by REQUEST_BODY_LIMIT_BYTES and return payload_too_large when they
     exceed the configured limit. The runtime server also uses explicit HTTP
@@ -20,7 +20,8 @@ info:
     Queue backpressure returns 503 queue_full while preserving dropped result labels,
     queue depth, and worker duration metrics. Migration contract keeps DATABASE_URL,
     MIGRATIONS_DIR, MIGRATION_TIMEOUT, schema_migrations, transaction apply, Go tests,
-    Makefile, and CI static gates aligned.
+    Makefile, and CI static gates aligned. Request decoding rejects malformed JSON,
+    unknown fields, trailing JSON values, and blank job names with invalid_input.
 servers:
   - url: http://localhost:8080
     description: Local memory or Docker Compose mode

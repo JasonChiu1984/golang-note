@@ -17,7 +17,7 @@
 - Rate limit contract：`RATE_LIMIT_REQUESTS_PER_MINUTE` 依 client IP 保護 `/jobs` 與 `/jobs/{id}`，超限回 `429 rate_limited`
 - Trusted proxy client IP：`TRUSTED_PROXY_CIDRS` 預設空值；只有信任代理來源才採用 `X-Forwarded-For`
 - Shutdown Signal Contract：`api-worker` 同時監聽 SIGINT / SIGTERM，收到訊號後才進入 draining、HTTP shutdown 與 queue drain
-- Request decoding：拒絕 malformed JSON、unknown field、trailing JSON value 與空白 name
+- Request Decoding Contract：拒絕 malformed JSON、unknown field、trailing JSON value 與空白 name，並由 `make request-decoding-check` 固定文件、OpenAPI、測試與 CI 入口
 - Service transaction boundary：`sql.TxOptions`、context-aware deadlock retry、queue enqueue
 - Startup configuration：集中驗證 `PORT`、`QUEUE_SIZE`、`WORKERS` 與 DB pool 設定，錯誤設定 fail fast
 - Migration Contract：集中驗證 migration env、timeout、SQL version，並用 `schema_migrations` 記錄已套用版本；`make migration-check` / `node scripts/check-migration-contract.mjs` 固定文件、測試與 CI 入口
@@ -94,6 +94,7 @@ go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled'
 go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic|TestQueueBackpressureContract' -count=1
 go test -race -cover ./...
 make openapi-check
+make request-decoding-check
 make runbook-check
 make prometheus-check
 make pprof-check
@@ -124,6 +125,7 @@ make compose-smoke
 | `make migration-check` | 固定 Migration Contract、env、timeout、version table、transaction apply、Go tests、文件與 CI 入口 |
 | `go test ./internal/api -run 'Test.*Contract' -count=1` | 固定 HTTP status、JSON shape、錯誤 code 與 response header |
 | `go test ./internal/api -run 'TestRequestDecodingContract' -count=1` | 固定 malformed JSON、unknown field、trailing JSON 與空白 name 的 `400 invalid_input` |
+| `make request-decoding-check` | 固定 Request Decoding Contract、Go tests、OpenAPI、README、章節、整合教程與 CI 入口 |
 | `go test ./internal/api -run 'TestRequestBodyLimitContract' -count=1` | 固定 oversized request body 的 `413 payload_too_large` JSON 與 request id 行為 |
 | `go test ./cmd/api-worker -run 'TestHTTPServerTimeoutContract' -count=1` | 固定 HTTP server read header、read、write、idle、shutdown 與 queue drain timeout 由 config 套用 |
 | `go test ./internal/api -run 'TestReadinessContract' -count=1` | 固定 ready / draining 狀態與 `/readyz` status code |
@@ -198,7 +200,7 @@ Machine-readable contract 位於 `api/openapi.yaml`。它不是取代 Go contrac
 | 合約項 | 目前策略 |
 |---|---|
 | Success response | 保持 `id`、`name`、`payload`、`status` 欄位向後相容 |
-| Request decoding | 只接受單一 JSON object；unknown field、trailing JSON value 與空白 `name` 都回 `invalid_input` |
+| Request decoding | 只接受單一 JSON object；unknown field、trailing JSON value 與空白 `name` 都回 `invalid_input`，並由 `make request-decoding-check` 固定 |
 | Request body limit | `POST /jobs` body 由 `REQUEST_BODY_LIMIT_BYTES` 限制；超限回 `413 payload_too_large` |
 | Queue backpressure | bounded queue 滿載時 service 回 `domain.ErrQueueFull`，HTTP API 對外回 `503 queue_full` |
 | Error response | 統一使用 `{"error":{"code":"...","message":"..."}}` |

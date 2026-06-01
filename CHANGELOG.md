@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.46 - 2026-06-02
+
+- 新增 2026-06-02 06:01:49 CST +0800 資深工程師審查報告，確認 v1.0.45 已補齊 Migration contract gate，但 Request decoding contract 仍缺少獨立靜態 gate 來固定 malformed JSON、unknown field、trailing JSON value、空白 `name`、OpenAPI、Makefile 與 CI 入口。
+- 新增 `scripts/check-request-decoding-contract.mjs`，固定 README、production README、API contract、OpenAPI、handler strict decoder、Go tests、第 7 / 11 章、整合視覺課程、Makefile 與 GitHub Actions 都保留 Request decoding contract gate。
+- `.github/workflows/ci.yml` 新增 `Check request decoding contract`；`production-api-worker/Makefile` 新增 `request-decoding-check`。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與既有 version-sensitive contract checks 版本標記更新為 `v1.0.46`。
+- README、`production-api-worker/README.md`、第 7 / 11 章與整合視覺課程同步加入 Request decoding contract gate。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.45 - 2026-06-01
 
 - 新增 2026-06-01 06:03:07 CST +0800 資深工程師審查報告，確認 v1.0.44 已補齊 Queue backpressure contract gate，但 Migration contract 仍缺少獨立靜態 gate 來固定 env、timeout、version table、transaction apply、Go tests、Makefile 與 CI 入口。
