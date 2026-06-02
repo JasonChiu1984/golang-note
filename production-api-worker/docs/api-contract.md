@@ -1,6 +1,6 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.46 ｜ 基準日期：2026-06-02 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Request decoding contract、Request correlation contract、API security contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract、Worker failure contract、Retry cancellation contract、Queue backpressure contract、Migration Operation Contract
+> 版本：v1.0.47 ｜ 基準日期：2026-06-03 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Request decoding contract、Panic recovery contract、Request correlation contract、API security contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract、Worker failure contract、Retry cancellation contract、Queue backpressure contract、Migration Operation Contract
 
 這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery、retry 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 cancellation 行為需要透過 contract test 保護。
 
@@ -22,6 +22,7 @@ Machine-readable contract 位於 `production-api-worker/api/openapi.yaml`。此 
 | Request correlation gate | `node scripts/check-request-correlation-contract.mjs` 必須固定 `X-Request-ID`、request context、structured log、trace attribute、OpenAPI 與 CI 入口 |
 | Readiness lifecycle | draining 時 `/readyz` 必須回 `503`，讓外部導流系統停止送新 request |
 | Panic recovery | 未預期 panic 必須回 `500` 與穩定 `internal_error` JSON，不暴露 panic 細節 |
+| Panic recovery gate | `node scripts/check-panic-recovery-contract.mjs` 必須固定 `recoverMiddleware`、`TestPanicRecoveryContract`、OpenAPI、README、章節、Makefile 與 CI 入口 |
 | Request timeout | handler deadline exceeded 必須回 `504 request_timeout`，不得漂移成 `500 internal_error` |
 | Startup configuration | `PORT`、`QUEUE_SIZE`、`WORKERS` 與 DB pool 設定必須先驗證；錯誤設定 fail fast，不可 silent fallback |
 | API security | `API_KEY` 有值時，`/jobs` 與 `/metrics` 必須要求 Bearer token；health endpoint 仍需公開供部署系統探測 |

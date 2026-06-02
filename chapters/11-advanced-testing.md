@@ -223,7 +223,7 @@ func TestCreateJobContract(t *testing.T) {
 | Worker shutdown | queue 關閉後 enqueue 應回穩定錯誤，concurrent enqueue + shutdown 不應 panic |
 | Worker failure contract | worker processor 成功/失敗都需記錄 result metric 與 duration，並由 `node scripts/check-worker-failure-contract.mjs` 固定 |
 | Queue backpressure contract | bounded queue 滿載時需回 `domain.ErrQueueFull`、API 回 `503 queue_full`、記錄 dropped metric，並由 `node scripts/check-queue-backpressure-contract.mjs` 固定 |
-| Panic recovery | 未預期 panic 仍需回穩定 `500 internal_error` JSON |
+| Panic recovery contract gate | 未預期 panic 仍需回穩定 `500 internal_error` JSON，並由 `node scripts/check-panic-recovery-contract.mjs` 固定文件、OpenAPI、測試與 CI |
 | Request timeout | handler deadline exceeded 應回 `504 request_timeout`，不可漂移成 `500 internal_error` |
 | Retry cancellation contract | retry backoff 遇到 `ctx.Done()` 時應停止，不再重試交易或 enqueue，並由 `node scripts/check-retry-cancellation-contract.mjs` 固定 |
 | Startup / DB pool config | 不合法 `PORT`、`QUEUE_SIZE`、`WORKERS`、DB pool size 或 DB pool duration 應 fail fast，不可 silent fallback |
@@ -519,6 +519,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | Worker shutdown 安全 | `cd production-api-worker && go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1` | 固定 queue close/enqueue 同步邊界，避免 shutdown race |
 | Shutdown signal contract | `cd production-api-worker && go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1` | 固定 Shutdown signal 入口，確認 SIGINT/SIGTERM 都會進入 graceful shutdown |
 | Panic recovery 合約 | `cd production-api-worker && go test ./internal/api -run 'TestPanicRecoveryContract' -count=1` | 固定 panic path 的 `500 internal_error` JSON 與 request id |
+| Panic recovery contract gate | `node scripts/check-panic-recovery-contract.mjs` | 固定 recover middleware、Go test、OpenAPI、README、章節、Makefile 與 CI 入口 |
 | Request timeout 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestTimeoutContract' -count=1` | 固定 handler timeout 的 `504 request_timeout` JSON 與 request id |
 | Retry cancellation | `cd production-api-worker && go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1` | 固定 deadlock retry backoff 會尊重 context cancellation / deadline |
 | Startup / DB pool config | `cd production-api-worker && go test ./internal/config -count=1` | 固定設定預設值、合法 env、DB pool 關係與錯誤設定 fail-fast 行為 |

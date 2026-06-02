@@ -57,6 +57,9 @@ jobs:
       - name: Check request decoding contract
         run: node scripts/check-request-decoding-contract.mjs
 
+      - name: Check panic recovery contract
+        run: node scripts/check-panic-recovery-contract.mjs
+
       - name: Check request correlation contract
         run: node scripts/check-request-correlation-contract.mjs
 

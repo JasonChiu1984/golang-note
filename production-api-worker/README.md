@@ -384,7 +384,7 @@ docker compose down -v
 
 若啟用 `API_KEY`，Prometheus scrape 必須同步設計 Bearer token 或 bearer token file。教學 profile 預設使用未設定 `API_KEY` 的 local mode，避免把密碼寫進 `prometheus.yml`。
 
-## Panic Recovery
+## Panic Recovery Contract
 
 Production API 不能讓未預期 panic 直接中斷連線或回傳非 JSON 錯誤頁。Routes 會先建立 request context，再經過 metrics 與 recover middleware；若 handler、service 或 queue 發生 panic，server 會記錄 structured log，保留原 `X-Request-ID`，並回傳穩定錯誤 envelope。
 
@@ -395,6 +395,7 @@ Production API 不能讓未預期 panic 直接中斷連線或回傳非 JSON 錯�
 | Request ID | client 提供的 `X-Request-ID` 仍會原樣回傳 |
 | Metrics | 仍可記錄 `/jobs`、method 與 `Internal Server Error` status label |
 | Contract test | `TestPanicRecoveryContract` 固定 panic recovery 行為 |
+| Static gate | `make panic-recovery-check` / `node scripts/check-panic-recovery-contract.mjs` 固定文件、OpenAPI、測試與 CI 入口 |
 
 ## Request Timeout Contract
 

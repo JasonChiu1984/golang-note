@@ -283,7 +283,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Queue backpressure contract | `TestQueueBackpressureContract`、`domain.ErrQueueFull`、`503 queue_full`、`worker_jobs_total{result="dropped"}`、`node scripts/check-queue-backpressure-contract.mjs` | queue 滿載行為分散在 handler / service / worker，重構後可能錯回 500 或漏記 dropped metric |
 | Rate limit contract | `RATE_LIMIT_REQUESTS_PER_MINUTE`、per-client IP、`429 rate_limited`、`Retry-After` | 單一 client 持續打爆 handler、queue 或 DB，或 health check 被錯誤限速 |
 | OpenAPI contract | `api/openapi.yaml`、request/response schema、error code、auth scheme | Markdown 文件與前端 mock / SDK / API gateway review 漂移 |
-| Panic recovery | `500 internal_error` JSON、request id header | panic 造成連線中斷、非 JSON 錯誤或洩漏內部細節 |
+| Panic recovery contract | `TestPanicRecoveryContract`、`500 internal_error` JSON、request id header、`node scripts/check-panic-recovery-contract.mjs` | panic 造成連線中斷、非 JSON 錯誤、洩漏內部細節，或文件 / CI 入口漂移 |
 | Request timeout | `504 request_timeout` JSON、request id header | handler deadline exceeded 被誤分類成 `500 internal_error`，client 無法區分 timeout 與 bug |
 | Retry cancellation contract | deadlock backoff、request context、shutdown deadline、`node scripts/check-retry-cancellation-contract.mjs` | request 已取消後仍繼續重試 DB 交易或排入 queue |
 | Startup config | port、queue size、worker count、optional endpoint | 錯誤 env 被 silent fallback，容量與部署設定不一致 |
@@ -368,7 +368,7 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 | Request body limit | oversized `POST /jobs` 回 `413 payload_too_large` 並保留 `X-Request-ID` |
 | HTTP server timeout | server read header / read / write / idle / shutdown / queue drain timeout 由 config 集中套用 |
 | Rate limit | 每個 client IP 超過 `RATE_LIMIT_REQUESTS_PER_MINUTE` 時回 `429 rate_limited` 與 `Retry-After` |
-| Panic recovery | handler panic 仍回 `500`、`error.code=internal_error` 與原 `X-Request-ID` |
+| Panic recovery contract | handler panic 仍回 `500`、`error.code=internal_error` 與原 `X-Request-ID`，並由 `node scripts/check-panic-recovery-contract.mjs` 固定 |
 | Request timeout | handler deadline exceeded 仍回 `504`、`error.code=request_timeout` 與原 `X-Request-ID` |
 
 > 工程經驗：內部重構可以自由，但外部合約要保守。若需要破壞性變更，先新增新路由或新欄位，讓舊 client 有遷移窗口。
@@ -401,6 +401,7 @@ Go 的 `panic/recover` 不應拿來取代一般錯誤處理，但 production HTT
 | Client response | 固定 `500 Internal Server Error` 與 `error.code=internal_error` |
 | Request correlation | 原本的 `X-Request-ID` 仍回傳，方便排障 |
 | 測試保護 | `TestPanicRecoveryContract` 固定外部錯誤格式 |
+| Static gate | `node scripts/check-panic-recovery-contract.mjs` 固定 README、OpenAPI、章節、Makefile 與 CI 入口 |
 
 ### Request Timeout 與錯誤分類
 

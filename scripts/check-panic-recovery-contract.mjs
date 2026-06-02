@@ -17,67 +17,69 @@ const files = [
 
 const required = {
   "README.md": [
-    "Request decoding contract",
-    "TestRequestDecodingContract",
-    "node scripts/check-request-decoding-contract.mjs",
+    "Panic recovery contract",
+    "TestPanicRecoveryContract",
+    "node scripts/check-panic-recovery-contract.mjs",
   ],
   "production-api-worker/README.md": [
-    "Request Decoding Contract",
-    "TestRequestDecodingContract",
-    "make request-decoding-check",
+    "Panic Recovery Contract",
+    "make panic-recovery-check",
+    "TestPanicRecoveryContract",
   ],
   "production-api-worker/internal/api/handler.go": [
-    "DisallowUnknownFields",
-    "multiple JSON values",
-    "decodeJobInput",
+    "recoverMiddleware",
+    "panic recovered",
+    '"internal_error"',
   ],
   "production-api-worker/internal/api/handler_test.go": [
-    "TestRequestDecodingContract",
-    "unknown field",
-    "trailing json value",
-    "invalid_input",
+    "TestPanicRecoveryContract",
+    "panic-request",
+    '"internal_error"',
   ],
   "production-api-worker/api/openapi.yaml": [
     "version: v1.0.47",
-    "unknown field",
-    "trailing JSON value",
-    "invalid_input",
+    "panic recovery",
+    "internal_error",
   ],
   "production-api-worker/docs/api-contract.md": [
     "版本：v1.0.47",
-    "Request decoding gate",
-    "node scripts/check-request-decoding-contract.mjs",
+    "Panic recovery gate",
+    "node scripts/check-panic-recovery-contract.mjs",
   ],
   "chapters/07-large-project-concurrent-crawler.md": [
-    "Request decoding contract",
-    "node scripts/check-request-decoding-contract.mjs",
+    "Panic recovery contract",
+    "node scripts/check-panic-recovery-contract.mjs",
   ],
   "chapters/11-advanced-testing.md": [
-    "Request decoding contract gate",
-    "node scripts/check-request-decoding-contract.mjs",
+    "Panic recovery contract gate",
+    "node scripts/check-panic-recovery-contract.mjs",
   ],
   "圖解筆記3-4整合/golang-complete-visual-course.html": [
-    "Request decoding contract",
-    "check-request-decoding-contract.mjs",
+    "Panic recovery contract",
+    "check-panic-recovery-contract.mjs",
   ],
   "production-api-worker/Makefile": [
-    "request-decoding-check",
-    "node scripts/check-request-decoding-contract.mjs",
+    "panic-recovery-check",
+    "node scripts/check-panic-recovery-contract.mjs",
   ],
   ".github/workflows/ci.yml": [
-    "Check request decoding contract",
-    "node scripts/check-request-decoding-contract.mjs",
+    "Check panic recovery contract",
+    "node scripts/check-panic-recovery-contract.mjs",
   ],
 };
 
 const missing = [];
+
+function read(file) {
+  return existsSync(file) ? readFileSync(file, "utf8") : "";
+}
 
 for (const file of files) {
   if (!existsSync(file)) {
     missing.push(`missing file: ${file}`);
     continue;
   }
-  const text = readFileSync(file, "utf8");
+  const text = read(file);
   for (const term of required[file]) {
     if (!text.includes(term)) {
       missing.push(`${file} missing term: ${term}`);
@@ -85,8 +87,13 @@ for (const file of files) {
   }
 }
 
+const handler = read("production-api-worker/internal/api/handler.go");
+if (!/recoverMiddleware[\s\S]*recover\(\)[\s\S]*panic recovered[\s\S]*internal_error/.test(handler)) {
+  missing.push("production-api-worker/internal/api/handler.go must recover panic and return the stable internal_error envelope");
+}
+
 if (missing.length > 0) {
-  console.error("request decoding contract check failed:");
+  console.error("panic recovery contract check failed:");
   for (const item of missing) console.error(`- ${item}`);
   process.exit(1);
 }
@@ -94,5 +101,5 @@ if (missing.length > 0) {
 console.log(JSON.stringify({
   status: "ok",
   files: files.length,
-  contract: "request decoding",
+  contract: "panic recovery",
 }, null, 2));
