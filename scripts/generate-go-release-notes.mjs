@@ -50,8 +50,8 @@ const roadmapStages = [
 ];
 
 const supportStatus = {
-  asOf: "2026-05-13",
-  latestPatch: "Go 1.26.3",
+  asOf: "2026-06-04",
+  latestPatch: "Go 1.26.4",
   supported: [25, 26],
   unsupportedRange: [1, 24],
   rule: "官方 Release Policy：每個 major release 支援到已有兩個更新 major release 為止。",
@@ -1325,7 +1325,7 @@ function indexHtml(releases) {
 <body>
   <header>
     <h1>Go 1.1-1.26 Release Note 專業整理報告索引</h1>
-    <p class="lead">依官方 Go Release History 與各版本 Release Notes 建立 26 份 major-version 獨立專業整理報告。最新 major 版本為 Go 1.26，最新 patch 狀態記錄至 Go 1.26.3（2026-05-07）。</p>
+    <p class="lead">依官方 Go Release History 與各版本 Release Notes 建立 26 份 major-version 獨立專業整理報告。最新 major 版本為 Go 1.26，最新 patch 狀態記錄至 Go 1.26.4（2026-06-02）。</p>
     <div class="meta-row"><span class="meta">範圍：Go 1.1 - Go 1.26</span><span class="meta">報告數：26</span><span class="meta">生成時間：${GENERATED_AT}</span><span class="meta">來源：go.dev 官方文件</span></div>
   </header>
   <main>

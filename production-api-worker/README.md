@@ -5,6 +5,7 @@
 - HTTP API：`POST /jobs`、`GET /jobs/{id}`、`GET /metrics`
 - API contract：穩定 request/response/error schema，文件在 `docs/api-contract.md`
 - OpenAPI contract：machine-readable schema 位於 `api/openapi.yaml`，用來對齊文件、測試、SDK 與前端 mock
+- Readiness Lifecycle Contract：`/livez` 永遠公開回 `200`；`/readyz` ready 時回 `200`、draining 時回 `503`，並由 `make readiness-check` 固定文件、OpenAPI、Go tests 與 CI 入口
 - Request correlation contract：`X-Request-ID` 需同時進入 response header、request context、structured log 與 trace attribute
 - API Security Contract：可用 `API_KEY` 啟用 Bearer token 保護 `/jobs` 與 `/metrics`，health endpoint 保持公開，並由靜態 gate 固定文件、OpenAPI、Go tests 與 CI 入口
 - CORS Allowlist Contract：`CORS_ALLOWED_ORIGINS` 預設空值；只有明確列入的 exact origin 才回 CORS header
@@ -84,6 +85,7 @@ make ci-contract
 go test ./internal/config -count=1
 go test ./internal/migration -count=1
 make migration-check
+make readiness-check
 go test ./internal/api -run 'Test.*Contract|TestReadinessContract|TestPanicRecoveryContract|TestRequestDecodingContract|TestRequestBodyLimitContract' -count=1
 go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1
 go test ./internal/api -run 'TestCORSAllowedOriginsContract' -count=1
@@ -129,6 +131,7 @@ make compose-smoke
 | `go test ./internal/api -run 'TestRequestBodyLimitContract' -count=1` | 固定 oversized request body 的 `413 payload_too_large` JSON 與 request id 行為 |
 | `go test ./cmd/api-worker -run 'TestHTTPServerTimeoutContract' -count=1` | 固定 HTTP server read header、read、write、idle、shutdown 與 queue drain timeout 由 config 套用 |
 | `go test ./internal/api -run 'TestReadinessContract' -count=1` | 固定 ready / draining 狀態與 `/readyz` status code |
+| `make readiness-check` | 固定 Readiness Lifecycle Contract、`/livez`、`/readyz`、draining 503、public probes、Go tests、OpenAPI、README 與 CI 入口 |
 | `go test ./internal/api -run 'TestPanicRecoveryContract' -count=1` | 固定 handler panic 時的 `500 internal_error` JSON 與 request id 行為 |
 | `go test ./internal/api -run 'TestRequestTimeoutContract' -count=1` | 固定 handler timeout 時的 `504 request_timeout` JSON 與 request id 行為 |
 | `go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1` | 固定 API key 認證邊界、公開 health endpoint 與安全標頭 |
@@ -142,6 +145,7 @@ make compose-smoke
 | `go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1` | 固定 queue close/enqueue 同步邊界，避免 shutdown race panic |
 | `go test -race -cover ./...` | 驗證 service、handler、queue 與併發安全 |
 | `make openapi-check` | 固定 OpenAPI contract、endpoint、schema、error code、Bearer auth 與 README/API 文件入口 |
+| `make readiness-check` | 固定 readiness / liveness route、draining status、contract tests、章節與 CI 靜態檢查入口 |
 | `make request-correlation-check` | 固定 Request correlation contract、`X-Request-ID`、request context、structured log、trace attribute、Go tests、OpenAPI 與 CI 入口 |
 | `make api-security-check` | 固定 API security contract、`API_KEY`、Bearer auth、公開 health endpoint、安全標頭、Go tests、OpenAPI 與 CI 入口 |
 | `make runbook-check` | 固定 SLI/SLO、Prometheus alert rules、incident workflow 與 runbook link 不被移除 |
@@ -420,6 +424,18 @@ Production shutdown 不是單純收到 signal 就結束 process。`api-worker` �
 | HTTP shutdown | `http.Server.Shutdown` 最多等待 5 秒讓既有 request 完成 |
 | Queue drain | `Queue.ShutdownContext` 最多等待 10 秒處理已排入工作 |
 | Forced cancel | drain 超時才取消 worker context，避免 shutdown 無限卡住 |
+
+### Readiness Lifecycle Contract
+
+Readiness contract 是 deployment 的外部合約。`/livez` 表示 process 還活著，必須公開且回 `200`；`/readyz` 表示是否可接新流量，ready 時回 `200`，draining 時回 `503 Service Unavailable`。這讓 load balancer 或 orchestrator 可以在 rolling deploy 時先停止導流，再讓既有 HTTP request 與 queue 工作收斂。
+
+| 項目 | 合約 |
+|---|---|
+| Liveness | `GET /livez` 公開，回 `200` |
+| Readiness ready | `GET /readyz` 公開，ready 時回 `200` |
+| Readiness draining | `GET /readyz` draining 時回 `503`，body 含 `draining` |
+| Go test | `TestReadinessContract`、`TestReadinessSwitchesToDraining` |
+| Static gate | `make readiness-check` 或 repo root 執行 `node scripts/check-readiness-contract.mjs` |
 
 `Queue.Enqueue` 與 `Queue.ShutdownContext` 共用同一個 mutex 保護 `closed` 狀態、channel send 與 channel close。這個邊界確保 shutdown 開始後的新 enqueue 會得到 `worker.ErrClosed`，不會在高併發關閉期間觸發 `send on closed channel` panic。
 

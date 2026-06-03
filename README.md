@@ -2,15 +2,15 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
-> 教材版本：`v1.0.47`
-> 教材基準：`Go 1.26.3`
-> 這次更新重點：正式發布 Panic recovery contract gate，讓 handler panic 的 `500 internal_error` JSON、request id、Go test、Makefile 與 CI 靜態檢查固定。
+> 教材版本：`v1.0.48`
+> 教材基準：`Go 1.26.4`
+> 這次更新重點：正式發布 Readiness lifecycle contract gate，固定 `/livez=200`、`/readyz=200/503`、public probes、Go test、Makefile 與 CI 靜態檢查。
 
 ## 版本策略
 
 | 項目 | 目前策略 |
 |---|---|
-| 教材講解基準 | 以 Go 1.26.3 作為 2026-05 的主教材版本 |
+| 教材講解基準 | 以 Go 1.26.4 作為 2026-06 的主教材版本 |
 | 範例相容層 | 現有 `go.mod` 仍保留 `go 1.22`，避免舊環境無法執行基本範例 |
 | 新特性標示 | Go 1.25 / 1.26 內容會在章節、康乃爾筆記與速查表內明確標示版本 |
 | 實務建議 | 新專案建議直接使用目前受支援的最新 Go 1.26 patch release |
@@ -25,6 +25,7 @@
 | Operational runbook | `production-api-worker/docs/operational-runbook.md` 與 `configs/prometheus/production-api-worker-alerts.yml` 需固定 SLI/SLO、告警、incident workflow、verification 與 risk notes |
 | Prometheus config gate | `configs/prometheus/prometheus.yml`、Compose `monitoring` profile 與 `node scripts/check-prometheus-config.mjs` 需固定 scrape job、rule_files、alert rules 載入與 API key 風險說明 |
 | OpenAPI contract | `production-api-worker/api/openapi.yaml` 需同步 `docs/api-contract.md` 與 Go contract tests，並由 `node scripts/check-openapi-contract.mjs` 固定 endpoint、schema、error code 與 auth 邊界 |
+| Readiness lifecycle contract | `/livez` 必須公開回 `200`；`/readyz` 在 ready 時回 `200`、draining 時回 `503`，並由 `TestReadinessContract` 和 `node scripts/check-readiness-contract.mjs` 固定 |
 | Request decoding contract | `POST /jobs` 只接受單一 JSON object；malformed JSON、unknown field、trailing JSON value 與空白 `name` 都必須回 `400 invalid_input`，並由 `TestRequestDecodingContract` 和 `node scripts/check-request-decoding-contract.mjs` 固定 |
 | Panic recovery contract | handler panic 必須回 `500 internal_error` JSON、保留 `X-Request-ID`，並由 `TestPanicRecoveryContract` 和 `node scripts/check-panic-recovery-contract.mjs` 固定 |
 | Request correlation contract | `X-Request-ID` 必須回傳給 client、寫入 request context、structured log 欄位 `request_id` 與 trace attribute `request.id`，並由 `TestRequestIDContract` 和 `node scripts/check-request-correlation-contract.mjs` 固定 |
@@ -139,7 +140,7 @@ go test ./project-concurrent-crawler/...
 | 專案 | 目標 | 建議時機 | 入口 |
 |---|---|---|---|
 | `project-concurrent-crawler` | 練習 worker pool、retry、parser/store 抽象 | 第一次完成第 7 章後 | `go test ./project-concurrent-crawler/...` |
-| `production-api-worker` | 練習 HTTP API、OpenAPI contract、API key security contract、CORS allowlist contract、request body limit contract、HTTP server timeout contract、worker failure contract、diagnostics / pprof contract、OTLP collector contract、rate limit contract、shutdown signal contract、startup config、DB pool contract、migration contract、strict request decoding、transaction、context-aware retry、request timeout contract、queue shutdown safety、observability、operational runbook、Prometheus monitoring profile、panic recovery、graceful shutdown、Docker Compose | 完成第 5、7、9、11 章後 | `cd production-api-worker && go test ./...` |
+| `production-api-worker` | 練習 HTTP API、OpenAPI contract、readiness lifecycle contract、API key security contract、CORS allowlist contract、request body limit contract、HTTP server timeout contract、worker failure contract、diagnostics / pprof contract、OTLP collector contract、rate limit contract、shutdown signal contract、startup config、DB pool contract、migration contract、strict request decoding、transaction、context-aware retry、request timeout contract、queue shutdown safety、observability、operational runbook、Prometheus monitoring profile、panic recovery、graceful shutdown、Docker Compose | 完成第 5、7、9、11 章後 | `cd production-api-worker && go test ./...` |
 
 `production-api-worker` 也附上 [API 合約文件](production-api-worker/docs/api-contract.md)，用來示範 production service 不只要能跑，也要把 endpoint、錯誤格式、相容性規則與 release gate 寫清楚。
 
@@ -151,8 +152,8 @@ go test ./project-concurrent-crawler/...
 | 爬蟲專案 | `go test ./project-concurrent-crawler/...` | 驗證並發流程與 retry |
 | Production 專案 | `cd production-api-worker && go test ./...` | 驗證 API、service、worker |
 | 受限環境 | `TMPDIR=$PWD/.tmp GOCACHE=$PWD/.gocache GOMODCACHE=$PWD/.gomodcache go test ./...` | 避免使用系統快取路徑 |
-| Go 1.26 新特性 | `go1.26.3 test ./...` 或本機 Go 1.26.3 | 驗證 `new(expression)`、`testing/synctest` 等新版內容 |
-| Go 1.26 test artifact | `go1.26.3 test -artifacts -outputdir ./test-artifacts ./...` | 驗證 `T.ArtifactDir` / `B.ArtifactDir` / `F.ArtifactDir` 並收集輸出產物 |
+| Go 1.26 新特性 | `go1.26.4 test ./...` 或本機 Go 1.26.4 | 驗證 `new(expression)`、`testing/synctest` 等新版內容 |
+| Go 1.26 test artifact | `go1.26.4 test -artifacts -outputdir ./test-artifacts ./...` | 驗證 `T.ArtifactDir` / `B.ArtifactDir` / `F.ArtifactDir` 並收集輸出產物 |
 | Go 1.26 升級盤點 | 對照第 1 / 9 章的支援矩陣 | 確認 macOS、Windows、FreeBSD、Wasm、bootstrap 與容器建置限制 |
 | Go 1.20 效能矩陣 | `rg -n "效能比較|crypto/rsa encryption|runtime/metrics histogram" ReleaseNote/go1.20-release-note.html docs/ReleaseNote/go1.20-release-note.html` | 確認 Release Note 同步記錄官方效能數字與 benchmark / metrics 驗證建議 |
 | Release Note 官方段落覆蓋 | `rg -n "Go 1.1-1.26|support-status-chart|Go 1.25、Go 1.26|go1.1-release-note" ReleaseNote docs/ReleaseNote` | 確認根目錄與 Pages 版都保留 Go 1.1、Roadmap、支援狀態圖與最新 patch 訊號 |
@@ -161,6 +162,7 @@ go test ./project-concurrent-crawler/...
 | Operational runbook gate | `node scripts/check-operational-runbook.mjs` | 確認 `production-api-worker/docs/operational-runbook.md`、`configs/prometheus/production-api-worker-alerts.yml`、README 與 CI 都保留 SLI/SLO、告警、incident workflow 與驗證入口 |
 | Prometheus config gate | `node scripts/check-prometheus-config.mjs` | 確認 `configs/prometheus/prometheus.yml`、alert rules、Compose monitoring profile、README、runbook 與 CI 入口一致 |
 | OpenAPI contract gate | `node scripts/check-openapi-contract.mjs` | 確認 `production-api-worker/api/openapi.yaml` 保留 endpoint、request/response schema、error code、Bearer auth 與 `X-Request-ID` |
+| Readiness lifecycle gate | `node scripts/check-readiness-contract.mjs` | 確認 `/livez`、`/readyz`、draining 503、public probes、Go tests、OpenAPI、README 與 CI 入口一致 |
 | Request decoding gate | `node scripts/check-request-decoding-contract.mjs` | 確認 malformed JSON、unknown field、trailing JSON value、空白 `name`、Go tests、OpenAPI、README 與 CI 入口一致 |
 | Panic recovery gate | `node scripts/check-panic-recovery-contract.mjs` | 確認 recover middleware、`500 internal_error`、request id、Go tests、OpenAPI、README 與 CI 入口一致 |
 | Request correlation gate | `node scripts/check-request-correlation-contract.mjs` | 確認 `X-Request-ID`、request context、structured log、trace attribute、Go tests、OpenAPI、README 與 CI 入口一致 |
@@ -193,7 +195,7 @@ go test ./project-concurrent-crawler/...
 | Request body limit 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestBodyLimitContract' -count=1` | 驗證 oversized `POST /jobs` request body 會回 `413 payload_too_large` |
 | HTTP server timeout 合約 | `cd production-api-worker && go test ./cmd/api-worker -run 'TestHTTPServerTimeoutContract' -count=1` | 驗證 server read header、read、write、idle、shutdown 與 queue drain timeout 由設定集中套用 |
 | Request ID 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestIDContract|TestCreateJobContract' -count=1` | 驗證 `X-Request-ID` 會回傳並進入 request context |
-| Readiness / drain 合約 | `cd production-api-worker && go test ./internal/api -run 'TestReadinessContract' -count=1` | 驗證 draining 時 `/readyz` 會回 503，讓 LB / orchestrator 停止導流 |
+| Readiness / drain 合約 | `cd production-api-worker && go test ./internal/api -run 'TestReadinessContract' -count=1 && node scripts/check-readiness-contract.mjs` | 驗證 `/livez` 公開存活探測、draining 時 `/readyz` 會回 503，且文件 / OpenAPI / CI 入口一致 |
 | Worker shutdown 安全 | `cd production-api-worker && go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1` | 驗證 queue 關閉後 enqueue 回穩定錯誤，shutdown 期間不會送入已關閉 channel |
 | Panic recovery 合約 | `cd production-api-worker && go test ./internal/api -run 'TestPanicRecoveryContract' -count=1 && node scripts/check-panic-recovery-contract.mjs` | 驗證 handler panic 會回 `500`、`internal_error` JSON 與原 request id，且文件 / OpenAPI / CI 入口一致 |
 | Request timeout 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestTimeoutContract' -count=1` | 驗證 handler timeout 會回 `504 request_timeout`，不漂移成 `500 internal_error` |
@@ -214,7 +216,7 @@ go test ./project-concurrent-crawler/...
 > - `project-concurrent-crawler` 可能因本機 `dyld` / test binary 工具鏈異常失敗。
 > - `production-api-worker` 第一次抓依賴需要網路；無法連外時會停在 module download。
 > - `govulncheck` 與 `go list -m -u all` 需要可連線到 module proxy / vulnerability database；離線環境可保留命令與結果待補。
-> - 目前本機若仍是 Go 1.22.x，只能驗證既有相容範例；Go 1.26 新語法與測試 API 需換成 Go 1.26.3 toolchain。
+> - 目前本機若仍是 Go 1.22.x，只能驗證既有相容範例；Go 1.26 新語法與測試 API 需換成 Go 1.26.4 toolchain。
 
 ## 建議讀法
 

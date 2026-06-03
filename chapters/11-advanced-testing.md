@@ -219,7 +219,7 @@ func TestCreateJobContract(t *testing.T) {
 | Request correlation contract gate | `X-Request-ID` 需同時固定 response header、request context、structured log `request_id`、trace attribute `request.id` 與 `node scripts/check-request-correlation-contract.mjs` |
 | Request decoding contract gate | malformed JSON、unknown field、trailing JSON 與空白必填欄位都應固定為 `400 invalid_input`，並由 `node scripts/check-request-decoding-contract.mjs` 固定文件、OpenAPI、測試與 CI |
 | Request body limit | oversized request body 應固定為 `413 payload_too_large`，避免大型 payload 進入 decoder / queue |
-| Readiness | draining 時 `/readyz=503` 是部署系統依賴的操作合約 |
+| Readiness lifecycle contract gate | `/livez=200`、`/readyz=200/503` 與 public probes 是部署系統依賴的操作合約，並由 `node scripts/check-readiness-contract.mjs` 固定文件、OpenAPI、測試與 CI |
 | Worker shutdown | queue 關閉後 enqueue 應回穩定錯誤，concurrent enqueue + shutdown 不應 panic |
 | Worker failure contract | worker processor 成功/失敗都需記錄 result metric 與 duration，並由 `node scripts/check-worker-failure-contract.mjs` 固定 |
 | Queue backpressure contract | bounded queue 滿載時需回 `domain.ErrQueueFull`、API 回 `503 queue_full`、記錄 dropped metric，並由 `node scripts/check-queue-backpressure-contract.mjs` 固定 |
@@ -242,6 +242,7 @@ func TestCreateJobContract(t *testing.T) {
 cd production-api-worker
 go test ./internal/api -run 'Test.*Contract' -count=1
 node ../scripts/check-request-correlation-contract.mjs
+node ../scripts/check-readiness-contract.mjs
 node ../scripts/check-request-decoding-contract.mjs
 node ../scripts/check-api-security-contract.mjs
 node ../scripts/check-worker-failure-contract.mjs
@@ -515,7 +516,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | Worker failure contract gate | `node scripts/check-worker-failure-contract.mjs` | 固定 worker result metric、duration、Go tests、章節與 CI 入口 |
 | Queue backpressure contract gate | `node scripts/check-queue-backpressure-contract.mjs` | 固定 bounded queue 滿載、`domain.ErrQueueFull`、`503 queue_full`、dropped metric、Go test、章節與 CI 入口 |
 | Retry cancellation contract gate | `node scripts/check-retry-cancellation-contract.mjs` | 固定 deadlock retry backoff、context cancellation、Go test、章節與 CI 入口 |
-| Readiness 合約 | `cd production-api-worker && go test ./internal/api -run 'TestReadinessContract' -count=1` | 固定 ready / draining 對 `/readyz` 的 status code |
+| Readiness lifecycle contract gate | `cd production-api-worker && go test ./internal/api -run 'TestReadinessContract' -count=1 && node scripts/check-readiness-contract.mjs` | 固定 `/livez`、ready / draining 對 `/readyz` 的 status code、public probes、OpenAPI、章節與 CI 入口 |
 | Worker shutdown 安全 | `cd production-api-worker && go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1` | 固定 queue close/enqueue 同步邊界，避免 shutdown race |
 | Shutdown signal contract | `cd production-api-worker && go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1` | 固定 Shutdown signal 入口，確認 SIGINT/SIGTERM 都會進入 graceful shutdown |
 | Panic recovery 合約 | `cd production-api-worker && go test ./internal/api -run 'TestPanicRecoveryContract' -count=1` | 固定 panic path 的 `500 internal_error` JSON 與 request id |

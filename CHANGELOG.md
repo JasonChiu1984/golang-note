@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.48 - 2026-06-04
+
+- 新增 2026-06-04 06:02:21 CST +0800 資深工程師審查報告，確認 v1.0.47 已補齊 Panic recovery contract gate，但 Readiness lifecycle contract 仍缺少獨立靜態 gate 來固定 `/livez=200`、`/readyz=200/503`、public probes、OpenAPI、Makefile 與 CI 入口。
+- 新增 `scripts/check-readiness-contract.mjs`，固定 README、production README、API contract、OpenAPI、handler health routes、lifecycle state、Go tests、第 7 / 11 章、整合視覺課程、Makefile 與 GitHub Actions 都保留 Readiness lifecycle contract gate。
+- `.github/workflows/ci.yml` 新增 `Check readiness contract`；`production-api-worker/Makefile` 新增 `readiness-check`。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與既有 version-sensitive contract checks 版本標記更新為 `v1.0.48`。
+- README、`production-api-worker/README.md`、第 7 / 11 章與整合視覺課程同步加入 Readiness lifecycle contract gate。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.47 - 2026-06-03
 
 - 新增 2026-06-03 06:01:33 CST +0800 資深工程師審查報告，確認 v1.0.46 已補齊 Request decoding contract gate，但 Panic recovery contract 仍缺少獨立靜態 gate 來固定 `recoverMiddleware`、`500 internal_error`、request id、OpenAPI、Makefile 與 CI 入口。

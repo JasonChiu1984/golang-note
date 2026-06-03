@@ -283,6 +283,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Queue backpressure contract | `TestQueueBackpressureContract`、`domain.ErrQueueFull`、`503 queue_full`、`worker_jobs_total{result="dropped"}`、`node scripts/check-queue-backpressure-contract.mjs` | queue 滿載行為分散在 handler / service / worker，重構後可能錯回 500 或漏記 dropped metric |
 | Rate limit contract | `RATE_LIMIT_REQUESTS_PER_MINUTE`、per-client IP、`429 rate_limited`、`Retry-After` | 單一 client 持續打爆 handler、queue 或 DB，或 health check 被錯誤限速 |
 | OpenAPI contract | `api/openapi.yaml`、request/response schema、error code、auth scheme | Markdown 文件與前端 mock / SDK / API gateway review 漂移 |
+| Readiness lifecycle contract | `/livez=200`、`/readyz=200/503`、`TestReadinessContract`、`node scripts/check-readiness-contract.mjs` | deployment health probe 漂移，rolling deploy 時導流系統無法正確停止新 request |
 | Panic recovery contract | `TestPanicRecoveryContract`、`500 internal_error` JSON、request id header、`node scripts/check-panic-recovery-contract.mjs` | panic 造成連線中斷、非 JSON 錯誤、洩漏內部細節，或文件 / CI 入口漂移 |
 | Request timeout | `504 request_timeout` JSON、request id header | handler deadline exceeded 被誤分類成 `500 internal_error`，client 無法區分 timeout 與 bug |
 | Retry cancellation contract | deadlock backoff、request context、shutdown deadline、`node scripts/check-retry-cancellation-contract.mjs` | request 已取消後仍繼續重試 DB 交易或排入 queue |
@@ -369,6 +370,7 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 | HTTP server timeout | server read header / read / write / idle / shutdown / queue drain timeout 由 config 集中套用 |
 | Rate limit | 每個 client IP 超過 `RATE_LIMIT_REQUESTS_PER_MINUTE` 時回 `429 rate_limited` 與 `Retry-After` |
 | Panic recovery contract | handler panic 仍回 `500`、`error.code=internal_error` 與原 `X-Request-ID`，並由 `node scripts/check-panic-recovery-contract.mjs` 固定 |
+| Readiness lifecycle contract | `/livez`、`/readyz`、ready/draining status 與 public probes 由 `node scripts/check-readiness-contract.mjs` 固定 |
 | Request timeout | handler deadline exceeded 仍回 `504`、`error.code=request_timeout` 與原 `X-Request-ID` |
 
 > 工程經驗：內部重構可以自由，但外部合約要保守。若需要破壞性變更，先新增新路由或新欄位，讓舊 client 有遷移窗口。
@@ -467,6 +469,8 @@ Production service 的生命週期要分清楚三件事：process 是否活著�
 | Draining | 200 | 503 | 停止對外導流，既有 request 仍可在 deadline 內完成 |
 | Queue drain | 200 | 503 | 不再接新 job，等待已排入 queue 的工作完成 |
 | Forced cancel | 可能結束 | 503 | drain deadline 到期才取消 worker context |
+
+`node scripts/check-readiness-contract.mjs` 會把 README、production README、API contract、OpenAPI、handler route、lifecycle state、Go tests、Makefile、GitHub Actions 與整合教程固定在同一個 Readiness lifecycle contract gate，避免 health probe 只存在於 Compose smoke 或章節描述。
 
 這個流程避免兩種常見錯誤：第一，process 還活著但其實已準備關閉，load balancer 仍繼續送流量；第二，收到 signal 立刻 cancel worker context，導致 queue 裡已接受的 job 被中斷。
 

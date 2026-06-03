@@ -1,6 +1,6 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.47 ｜ 基準日期：2026-06-03 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Request decoding contract、Panic recovery contract、Request correlation contract、API security contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract、Worker failure contract、Retry cancellation contract、Queue backpressure contract、Migration Operation Contract
+> 版本：v1.0.48 ｜ 基準日期：2026-06-04 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Readiness lifecycle contract、Request decoding contract、Panic recovery contract、Request correlation contract、API security contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract、Worker failure contract、Retry cancellation contract、Queue backpressure contract、Migration Operation Contract
 
 這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery、retry 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 cancellation 行為需要透過 contract test 保護。
 
@@ -21,6 +21,7 @@ Machine-readable contract 位於 `production-api-worker/api/openapi.yaml`。此 
 | Request correlation | server 必須回傳 `X-Request-ID`；client 提供時需原樣保留 |
 | Request correlation gate | `node scripts/check-request-correlation-contract.mjs` 必須固定 `X-Request-ID`、request context、structured log、trace attribute、OpenAPI 與 CI 入口 |
 | Readiness lifecycle | draining 時 `/readyz` 必須回 `503`，讓外部導流系統停止送新 request |
+| Readiness lifecycle gate | `node scripts/check-readiness-contract.mjs` 必須固定 `/livez=200`、`/readyz=200/503`、public probes、Go tests、OpenAPI、README、章節、Makefile 與 CI 入口 |
 | Panic recovery | 未預期 panic 必須回 `500` 與穩定 `internal_error` JSON，不暴露 panic 細節 |
 | Panic recovery gate | `node scripts/check-panic-recovery-contract.mjs` 必須固定 `recoverMiddleware`、`TestPanicRecoveryContract`、OpenAPI、README、章節、Makefile 與 CI 入口 |
 | Request timeout | handler deadline exceeded 必須回 `504 request_timeout`，不得漂移成 `500 internal_error` |
@@ -190,6 +191,14 @@ Content-Type: application/json
 | `GET /readyz` | 200 | readiness 檢查，可接新 request |
 | `GET /readyz` | 503 | draining，停止接新流量並等待既有工作收斂 |
 | `GET /metrics` | 200 | Prometheus metrics |
+
+Readiness lifecycle gate 需包含：
+
+```bash
+go test ./internal/api -run 'TestReadinessContract' -count=1
+go test ./internal/lifecycle -run 'TestReadinessSwitchesToDraining' -count=1
+node scripts/check-readiness-contract.mjs
+```
 
 ## Startup Configuration
 
