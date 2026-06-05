@@ -21,6 +21,7 @@
 - Request Decoding Contract：拒絕 malformed JSON、unknown field、trailing JSON value 與空白 name，並由 `make request-decoding-check` 固定文件、OpenAPI、測試與 CI 入口
 - Service transaction boundary：`sql.TxOptions`、context-aware deadlock retry、queue enqueue
 - Startup configuration：集中驗證 `PORT`、`QUEUE_SIZE`、`WORKERS` 與 DB pool 設定，錯誤設定 fail fast
+- DB Pool Contract：`DATABASE_MAX_OPEN_CONNS`、`DATABASE_MAX_IDLE_CONNS`、`DATABASE_CONN_MAX_LIFETIME` 由 config 驅動並套用到 `sql.DB`，由 `make db-pool-check` 固定文件、repository wiring 與 CI 入口
 - Migration Contract：集中驗證 migration env、timeout、SQL version，並用 `schema_migrations` 記錄已套用版本；`make migration-check` / `node scripts/check-migration-contract.mjs` 固定文件、測試與 CI 入口
 - Repository：memory 與 Postgres `database/sql` 版本
 - Worker queue：bounded queue、worker pool、shutdown-safe enqueue / close
@@ -123,6 +124,7 @@ make compose-smoke
 | `go list -m -u all` | 發現可更新依賴並建立維護紀錄 |
 | `govulncheck ./...` | 掃描 API / worker 實際可達的已知漏洞 |
 | `go test ./internal/config -count=1` | 固定啟動設定與 DB pool 預設值、合法 env 與錯誤設定 fail-fast 行為 |
+| `make db-pool-check` | 固定 DB Pool Contract、DB pool env、config validation、repository pool 套用、文件與 CI 入口 |
 | `go test ./internal/migration -count=1` | 固定 migration SQL 檔排序、版本命名與檔案掃描規則 |
 | `make migration-check` | 固定 Migration Contract、env、timeout、version table、transaction apply、Go tests、文件與 CI 入口 |
 | `go test ./internal/api -run 'Test.*Contract' -count=1` | 固定 HTTP status、JSON shape、錯誤 code 與 response header |
@@ -158,6 +160,7 @@ make compose-smoke
 | `make worker-failure-check` | 固定 worker failure contract、result metric、duration、Go tests、README 與 CI 入口 |
 | `make retry-cancellation-check` | 固定 retry cancellation contract、deadlock backoff、context cancellation、Go test、README 與 CI 入口 |
 | `make queue-backpressure-check` | 固定 queue backpressure contract、`domain.ErrQueueFull`、`503 queue_full`、dropped metric、Go tests、README 與 CI 入口 |
+| `make db-pool-check` | 固定 DB Pool Contract、`DATABASE_MAX_OPEN_CONNS`、`DATABASE_MAX_IDLE_CONNS`、`DATABASE_CONN_MAX_LIFETIME`、repository pool 套用與 CI 入口 |
 | `make migration-check` | 固定 Migration Contract、`DATABASE_URL`、`MIGRATIONS_DIR`、`MIGRATION_TIMEOUT`、`schema_migrations`、transaction apply、Go tests 與 CI 入口 |
 | `make request-correlation-check` | 固定 request id middleware、OpenAPI request id header、contract tests、章節與 CI 靜態檢查入口 |
 | `make api-security-check` | 固定 API key auth middleware、security headers、OpenAPI bearerAuth、contract tests、章節與 CI 靜態檢查入口 |
@@ -253,6 +256,8 @@ go test ./internal/config -count=1
 ```
 
 DB pool 設定不可藏在 repository 內硬編碼，因為 production 容量通常同時受 API concurrency、worker 數、Postgres `max_connections`、migration job 與維運連線影響。設定 loader 會先驗證 idle connection 不可大於 open connection，避免部署後才由資料庫壓力或連線耗盡暴露問題。
+
+DB Pool Contract 不只檢查 config unit test。`make db-pool-check` 會固定 `OpenPostgresWithPool` 必須呼叫 `SetMaxOpenConns`、`SetMaxIdleConns`、`SetConnMaxLifetime`，且 `api-worker` 必須把 `cfg.DatabaseMaxOpenConns`、`cfg.DatabaseMaxIdleConns`、`cfg.DatabaseConnMaxLifetime` 傳入 repository，避免未來重構時退回 repository hard-code。
 
 HTTP timeout 也不可只留在 `main.go` 的硬編碼。`HTTP_READ_HEADER_TIMEOUT` 保護慢速 header；`HTTP_READ_TIMEOUT` 與 request body limit 共同限制大型或慢速 body；`HTTP_WRITE_TIMEOUT` 避免 response 寫出卡住；`HTTP_IDLE_TIMEOUT` 控制 keep-alive 連線佔用；`HTTP_SHUTDOWN_TIMEOUT` 與 `QUEUE_DRAIN_TIMEOUT` 則固定 graceful shutdown 的最大等待時間。
 

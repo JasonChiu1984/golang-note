@@ -437,6 +437,8 @@ Production API 的 timeout 不是未知錯誤。若 handler 建立的 request de
 
 DB connection pool 也是啟動合約的一部分。若 `SetMaxOpenConns(25)`、`SetMaxIdleConns(10)`、`SetConnMaxLifetime(30*time.Minute)` 直接寫死在 repository，讀者會學到錯誤的維運模型：程式碼編譯值控制 production 容量，而不是部署設定、DB `max_connections` 與 worker 數共同決定。`production-api-worker` 因此把 Postgres pool 參數提升到 config 層，並用 config unit test 固定「idle 不可大於 open」與 duration 格式。
 
+DB pool contract gate 會用 `node scripts/check-db-pool-contract.mjs` 固定 config loader、`OpenPostgresWithPool`、`api-worker` wiring、README、API contract、Makefile 與 CI 入口，避免未來重構只保留文件描述卻漏掉真實 pool 套用。
+
 ### Migration Contract 與 Schema 版本
 
 資料庫 migration 是 deployment pipeline 的一部分，不應只是 `os.ReadDir` 後把 SQL 逐檔 `Exec`。Production service 至少要知道哪個 schema version 已套用、重跑 release job 時要略過已完成版本，並用 timeout 防止 lock wait 或網路問題無限卡住。

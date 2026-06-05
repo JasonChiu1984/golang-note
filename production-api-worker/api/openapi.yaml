@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.48
+  version: v1.0.49
   description: >
     Machine-readable contract for the Go teaching production API worker.
     This file mirrors docs/api-contract.md and the Go contract tests,
@@ -21,7 +21,9 @@ info:
     Worker failure handling keeps failed jobs visible through worker_jobs_total.
     Retry cancellation keeps deadlock retry backoff bound to request or shutdown context.
     Queue backpressure returns 503 queue_full while preserving dropped result labels,
-    queue depth, and worker duration metrics. Migration contract keeps DATABASE_URL,
+    queue depth, and worker duration metrics. DB pool contract keeps DATABASE_MAX_OPEN_CONNS,
+    DATABASE_MAX_IDLE_CONNS, DATABASE_CONN_MAX_LIFETIME, repository pool wiring,
+    Makefile, and CI static gates aligned. Migration contract keeps DATABASE_URL,
     MIGRATIONS_DIR, MIGRATION_TIMEOUT, schema_migrations, transaction apply, Go tests,
     Makefile, and CI static gates aligned. Request decoding rejects malformed JSON,
     unknown fields, trailing JSON values, and blank job names with invalid_input.

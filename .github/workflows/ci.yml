@@ -78,6 +78,9 @@ jobs:
       - name: Check queue backpressure contract
         run: node scripts/check-queue-backpressure-contract.mjs
 
+      - name: Check DB pool contract
+        run: node scripts/check-db-pool-contract.mjs
+
       - name: Check migration contract
         run: node scripts/check-migration-contract.mjs
 

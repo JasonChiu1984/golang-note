@@ -524,6 +524,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | Request timeout 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestTimeoutContract' -count=1` | 固定 handler timeout 的 `504 request_timeout` JSON 與 request id |
 | Retry cancellation | `cd production-api-worker && go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1` | 固定 deadlock retry backoff 會尊重 context cancellation / deadline |
 | Startup / DB pool config | `cd production-api-worker && go test ./internal/config -count=1` | 固定設定預設值、合法 env、DB pool 關係與錯誤設定 fail-fast 行為 |
+| DB pool contract gate | `node scripts/check-db-pool-contract.mjs` | 固定 DB pool env、repository pool 套用、`api-worker` wiring、文件、Makefile 與 CI 入口 |
 | Migration contract gate | `cd production-api-worker && go test ./internal/config ./internal/migration -count=1 && node scripts/check-migration-contract.mjs` | 固定 migration env、timeout、SQL 檔排序、version 命名、靜態文件與 CI 入口 |
 | OpenAPI contract gate | `node scripts/check-openapi-contract.mjs` | 固定 OpenAPI spec、endpoint、schema、error code、Bearer auth 與文件入口 |
 | CORS allowlist gate | `node scripts/check-cors-contract.mjs` | 固定 `CORS_ALLOWED_ORIGINS`、allowlist middleware、preflight 測試與 CI 入口 |

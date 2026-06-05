@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.49 - 2026-06-05
+
+- 新增 2026-06-05 06:49:32 CST +0800 資深工程師審查報告，確認 v1.0.48 已補齊 Readiness lifecycle contract gate，但 DB pool contract 仍缺少獨立靜態 gate 來固定 `DATABASE_MAX_OPEN_CONNS`、`DATABASE_MAX_IDLE_CONNS`、`DATABASE_CONN_MAX_LIFETIME`、repository pool 套用、Makefile 與 CI 入口。
+- 新增 `scripts/check-db-pool-contract.mjs`，固定 README、production README、API contract、config loader、config tests、repository `OpenPostgresWithPool`、`api-worker` wiring、第 7 / 11 章、進階 Cheat Sheet、整合視覺課程、Makefile 與 GitHub Actions 都保留 DB pool contract gate。
+- `.github/workflows/ci.yml` 新增 `Check DB pool contract`；`production-api-worker/Makefile` 新增 `db-pool-check`。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與既有 version-sensitive contract checks 版本標記更新為 `v1.0.49`。
+- README、`production-api-worker/README.md`、第 7 / 11 章、進階 Cheat Sheet 與整合視覺課程同步加入 DB pool contract gate。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.48 - 2026-06-04
 
 - 新增 2026-06-04 06:02:21 CST +0800 資深工程師審查報告，確認 v1.0.47 已補齊 Panic recovery contract gate，但 Readiness lifecycle contract 仍缺少獨立靜態 gate 來固定 `/livez=200`、`/readyz=200/503`、public probes、OpenAPI、Makefile 與 CI 入口。

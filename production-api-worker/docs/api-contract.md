@@ -1,6 +1,6 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.48 ｜ 基準日期：2026-06-04 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Readiness lifecycle contract、Request decoding contract、Panic recovery contract、Request correlation contract、API security contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract、Worker failure contract、Retry cancellation contract、Queue backpressure contract、Migration Operation Contract
+> 版本：v1.0.49 ｜ 基準日期：2026-06-05 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Readiness lifecycle contract、Request decoding contract、Panic recovery contract、Request correlation contract、API security contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract、Worker failure contract、Retry cancellation contract、Queue backpressure contract、DB pool contract gate、Migration Operation Contract
 
 這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery、retry 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 cancellation 行為需要透過 contract test 保護。
 
@@ -26,6 +26,7 @@ Machine-readable contract 位於 `production-api-worker/api/openapi.yaml`。此 
 | Panic recovery gate | `node scripts/check-panic-recovery-contract.mjs` 必須固定 `recoverMiddleware`、`TestPanicRecoveryContract`、OpenAPI、README、章節、Makefile 與 CI 入口 |
 | Request timeout | handler deadline exceeded 必須回 `504 request_timeout`，不得漂移成 `500 internal_error` |
 | Startup configuration | `PORT`、`QUEUE_SIZE`、`WORKERS` 與 DB pool 設定必須先驗證；錯誤設定 fail fast，不可 silent fallback |
+| DB pool contract gate | `node scripts/check-db-pool-contract.mjs` 必須固定 DB pool env、config default / override / fail-fast、repository pool 套用、`api-worker` wiring、文件、Makefile 與 CI 入口 |
 | API security | `API_KEY` 有值時，`/jobs` 與 `/metrics` 必須要求 Bearer token；health endpoint 仍需公開供部署系統探測 |
 | API security gate | `node scripts/check-api-security-contract.mjs` 必須固定 `API_KEY`、Bearer auth、公開 health probes、安全標頭、Go tests、OpenAPI 與 CI 入口 |
 | Security headers | 所有 response 應回 `X-Content-Type-Options`、`X-Frame-Options` 與 `Referrer-Policy` |
@@ -227,6 +228,13 @@ node scripts/check-readiness-contract.mjs
 | `TRUSTED_PROXY_CIDRS` | 空字串 | comma-separated CIDR；空值時不信任 `X-Forwarded-For` |
 
 錯誤設定必須讓 process fail fast，例如 `PORT=http`、`QUEUE_SIZE=0`、`WORKERS=-1`、`DATABASE_MAX_IDLE_CONNS > DATABASE_MAX_OPEN_CONNS`、`DATABASE_CONN_MAX_LIFETIME=soon`、`RATE_LIMIT_REQUESTS_PER_MINUTE=0`、`REQUEST_BODY_LIMIT_BYTES=0`、`HTTP_READ_TIMEOUT=0s`、`QUEUE_DRAIN_TIMEOUT=-5s`、`TRUSTED_PROXY_CIDRS=not-a-cidr` 或 `CORS_ALLOWED_ORIGINS=https://app.example.com/path` 不應被靜默改成預設值。
+
+DB pool contract gate 需確認 `OpenPostgresWithPool` 將 `DATABASE_MAX_OPEN_CONNS`、`DATABASE_MAX_IDLE_CONNS`、`DATABASE_CONN_MAX_LIFETIME` 套用到 `sql.DB`，且 `api-worker` 從 config 傳遞 pool 設定到 repository：
+
+```bash
+node scripts/check-db-pool-contract.mjs
+cd production-api-worker && make db-pool-check
+```
 
 ## HTTP Server Timeout
 
