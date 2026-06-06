@@ -220,6 +220,7 @@ func FetchUser(ctx context.Context, id int) (*User, error) {
 | `WORKERS` | 必須是正整數；容量規劃要能被測試固定 |
 | DB pool | `DATABASE_MAX_OPEN_CONNS`、`DATABASE_MAX_IDLE_CONNS`、`DATABASE_CONN_MAX_LIFETIME` 要由 env 驗證；idle 不可大於 open |
 | DB pool contract gate | `node scripts/check-db-pool-contract.mjs` 固定 config、repository pool 套用、`api-worker` wiring、Makefile 與 CI 入口 |
+| Trusted proxy client IP contract gate | `node scripts/check-trusted-proxy-contract.mjs` 固定 `TRUSTED_PROXY_CIDRS`、`X-Forwarded-For`、untrusted `RemoteAddr` fallback、Makefile 與 CI 入口 |
 | Optional endpoint | `DATABASE_URL` 空值時明確進 memory mode；OTLP endpoint 空值時明確使用 stdout exporter |
 | Migration CLI | `DATABASE_URL` 必填；`MIGRATIONS_DIR` 預設 `migrations`；`MIGRATION_TIMEOUT` 預設 `30s` |
 | Migration version | SQL 檔名去掉 `.sql` 後寫入 `schema_migrations.version`；不可空白或含 whitespace |
@@ -372,6 +373,7 @@ ENTRYPOINT ["/app"]
 | Request body limit | `REQUEST_BODY_LIMIT_BYTES` 是否固定 oversized body 的 `413 payload_too_large` |
 | HTTP server timeout | `HTTP_READ_HEADER_TIMEOUT`、`HTTP_READ_TIMEOUT`、`HTTP_WRITE_TIMEOUT`、`HTTP_IDLE_TIMEOUT`、`HTTP_SHUTDOWN_TIMEOUT`、`QUEUE_DRAIN_TIMEOUT` 是否由 config 套用 |
 | Rate limit | `RATE_LIMIT_REQUESTS_PER_MINUTE` 是否固定 per-client IP、`429 rate_limited`、`Retry-After` 與 health endpoint 不限速 |
+| Trusted proxy client IP | `TRUSTED_PROXY_CIDRS` 是否只信任內部 proxy CIDR，未信任來源是否忽略 `X-Forwarded-For` |
 | Shutdown signal | SIGINT/SIGTERM 是否都會進入 graceful shutdown，並由 `TestMonitoredSignalsContract` 固定 |
 | Request ID | `X-Request-ID` 是否會回傳，client 提供時是否原樣保留 |
 | Request correlation contract | 是否由 `node scripts/check-request-correlation-contract.mjs` 固定 request context、structured log `request_id`、trace attribute `request.id`、OpenAPI 與 CI 入口 |

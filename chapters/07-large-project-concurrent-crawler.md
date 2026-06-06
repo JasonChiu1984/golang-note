@@ -282,6 +282,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Worker failure contract | `TestWorkerFailureResultContract`、`worker_jobs_total{result="failed"}`、duration metric、`node scripts/check-worker-failure-contract.mjs` | worker processor 失敗只留在 log，無法用 metrics 或 CI gate 發現 |
 | Queue backpressure contract | `TestQueueBackpressureContract`、`domain.ErrQueueFull`、`503 queue_full`、`worker_jobs_total{result="dropped"}`、`node scripts/check-queue-backpressure-contract.mjs` | queue 滿載行為分散在 handler / service / worker，重構後可能錯回 500 或漏記 dropped metric |
 | Rate limit contract | `RATE_LIMIT_REQUESTS_PER_MINUTE`、per-client IP、`429 rate_limited`、`Retry-After` | 單一 client 持續打爆 handler、queue 或 DB，或 health check 被錯誤限速 |
+| Trusted proxy client IP contract gate | `TRUSTED_PROXY_CIDRS`、`X-Forwarded-For`、untrusted `RemoteAddr` fallback、`node scripts/check-trusted-proxy-contract.mjs` | 服務在 reverse proxy 後方時誤信任外部直連偽造 header，導致 rate limit key 被繞過 |
 | OpenAPI contract | `api/openapi.yaml`、request/response schema、error code、auth scheme | Markdown 文件與前端 mock / SDK / API gateway review 漂移 |
 | Readiness lifecycle contract | `/livez=200`、`/readyz=200/503`、`TestReadinessContract`、`node scripts/check-readiness-contract.mjs` | deployment health probe 漂移，rolling deploy 時導流系統無法正確停止新 request |
 | Panic recovery contract | `TestPanicRecoveryContract`、`500 internal_error` JSON、request id header、`node scripts/check-panic-recovery-contract.mjs` | panic 造成連線中斷、非 JSON 錯誤、洩漏內部細節，或文件 / CI 入口漂移 |
@@ -369,6 +370,7 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 | Request body limit | oversized `POST /jobs` 回 `413 payload_too_large` 並保留 `X-Request-ID` |
 | HTTP server timeout | server read header / read / write / idle / shutdown / queue drain timeout 由 config 集中套用 |
 | Rate limit | 每個 client IP 超過 `RATE_LIMIT_REQUESTS_PER_MINUTE` 時回 `429 rate_limited` 與 `Retry-After` |
+| Trusted proxy client IP contract gate | 只有 `TRUSTED_PROXY_CIDRS` 命中的來源可採用 `X-Forwarded-For` 第一個 IP，並由 `node scripts/check-trusted-proxy-contract.mjs` 固定 |
 | Panic recovery contract | handler panic 仍回 `500`、`error.code=internal_error` 與原 `X-Request-ID`，並由 `node scripts/check-panic-recovery-contract.mjs` 固定 |
 | Readiness lifecycle contract | `/livez`、`/readyz`、ready/draining status 與 public probes 由 `node scripts/check-readiness-contract.mjs` 固定 |
 | Request timeout | handler deadline exceeded 仍回 `504`、`error.code=request_timeout` 與原 `X-Request-ID` |

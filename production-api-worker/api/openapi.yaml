@@ -1,14 +1,15 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.49
+  version: v1.0.50
   description: >
     Machine-readable contract for the Go teaching production API worker.
     This file mirrors docs/api-contract.md and the Go contract tests,
     including readiness lifecycle behavior for public /livez and /readyz
     probes. Readiness lifecycle keeps /livez public with 200 while /readyz
     returns 200 when ready and 503 when draining.
-    including strict request decoding, rate limit, trusted proxy client IP behavior, and CORS allowlist
+    including strict request decoding, rate limit, trusted proxy client IP behavior, TRUSTED_PROXY_CIDRS,
+    and CORS allowlist
     behavior controlled by CORS_ALLOWED_ORIGINS. POST /jobs request bodies are
     bounded by REQUEST_BODY_LIMIT_BYTES and return payload_too_large when they
     exceed the configured limit. The runtime server also uses explicit HTTP

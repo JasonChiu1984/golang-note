@@ -51,7 +51,7 @@ const required = {
     "CORS_ALLOWED_ORIGINS",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.49",
+    "version: v1.0.50",
     "CORS allowlist",
     "CORS_ALLOWED_ORIGINS",
   ],

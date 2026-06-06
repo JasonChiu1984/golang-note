@@ -16,7 +16,7 @@
 - Queue Backpressure Contract：bounded queue 滿載時回 `domain.ErrQueueFull`，API 對外回 `503 queue_full`，並記錄 `worker_jobs_total{result="dropped"}`
 - Diagnostics / pprof contract：`ENABLE_PPROF` 預設關閉；啟用 `/debug/pprof/` 時必須提供 `PPROF_TOKEN` 或沿用 `API_KEY`
 - Rate limit contract：`RATE_LIMIT_REQUESTS_PER_MINUTE` 依 client IP 保護 `/jobs` 與 `/jobs/{id}`，超限回 `429 rate_limited`
-- Trusted proxy client IP：`TRUSTED_PROXY_CIDRS` 預設空值；只有信任代理來源才採用 `X-Forwarded-For`
+- Trusted Proxy Client IP Contract：`TRUSTED_PROXY_CIDRS` 預設空值；只有信任代理來源才採用 `X-Forwarded-For` 第一個 IP，並由 `make trusted-proxy-check` 固定文件、runbook、測試、Makefile 與 CI 入口
 - Shutdown Signal Contract：`api-worker` 同時監聽 SIGINT / SIGTERM，收到訊號後才進入 draining、HTTP shutdown 與 queue drain
 - Request Decoding Contract：拒絕 malformed JSON、unknown field、trailing JSON value 與空白 name，並由 `make request-decoding-check` 固定文件、OpenAPI、測試與 CI 入口
 - Service transaction boundary：`sql.TxOptions`、context-aware deadlock retry、queue enqueue
@@ -102,6 +102,7 @@ make runbook-check
 make prometheus-check
 make pprof-check
 make rate-limit-check
+make trusted-proxy-check
 make cors-check
 make request-body-limit-check
 make http-timeout-check
@@ -299,9 +300,10 @@ RATE_LIMIT_REQUESTS_PER_MINUTE=120 go run ./cmd/api-worker
 TRUSTED_PROXY_CIDRS=10.0.0.0/8 RATE_LIMIT_REQUESTS_PER_MINUTE=120 go run ./cmd/api-worker
 go test ./internal/config ./internal/api -run 'TestLoadFromLookup|TestRateLimitContract|TestRateLimitTrustedProxyContract' -count=1
 make rate-limit-check
+make trusted-proxy-check
 ```
 
-正式環境若位於 Nginx、Envoy、API Gateway 或 Kubernetes ingress 後方，只能把代理所在的內部 CIDR 放進 `TRUSTED_PROXY_CIDRS`。服務直接暴露時保持空值，避免外部 client 自行送 `X-Forwarded-For` 繞過限速。
+正式環境若位於 Nginx、Envoy、API Gateway 或 Kubernetes ingress 後方，只能把代理所在的內部 CIDR 放進 `TRUSTED_PROXY_CIDRS`。服務直接暴露時保持空值，避免外部 client 自行送 `X-Forwarded-For` 繞過限速。Trusted Proxy Client IP Contract 由 `make trusted-proxy-check` / `node scripts/check-trusted-proxy-contract.mjs` 固定 `TRUSTED_PROXY_CIDRS`、`X-Forwarded-For`、untrusted `RemoteAddr` fallback 與 `TestRateLimitTrustedProxyContract`。
 
 ## OTLP Collector Contract
 

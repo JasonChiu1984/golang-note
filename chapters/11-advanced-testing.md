@@ -232,6 +232,7 @@ func TestCreateJobContract(t *testing.T) {
 | CORS allowlist | `CORS_ALLOWED_ORIGINS` 只接受 exact `http` / `https` origin；allowed preflight 回 `204`，blocked preflight 回 `403` |
 | Pprof diagnostics | `ENABLE_PPROF` 預設關閉；啟用 `/debug/pprof/` 時必須要求 Bearer token，避免 debug endpoint 公開 |
 | Rate limit | 每個 client IP 超過 `RATE_LIMIT_REQUESTS_PER_MINUTE` 時需回 `429 rate_limited`，且 health endpoint 不應被限速 |
+| Trusted proxy client IP contract gate | `TRUSTED_PROXY_CIDRS` 命中時才採用 `X-Forwarded-For` 第一個 IP；未信任來源必須回到 `RemoteAddr`，並由 `node scripts/check-trusted-proxy-contract.mjs` 固定 |
 | HTTP server timeout | `HTTP_READ_HEADER_TIMEOUT`、`HTTP_READ_TIMEOUT`、`HTTP_WRITE_TIMEOUT`、`HTTP_IDLE_TIMEOUT`、`HTTP_SHUTDOWN_TIMEOUT`、`QUEUE_DRAIN_TIMEOUT` 應由 config 套用並 fail fast |
 | Shutdown signal | `api-worker` 必須同時監聽 `SIGINT` / `SIGTERM`，並由 `TestMonitoredSignalsContract` 固定，避免正式部署訊號繞過 graceful shutdown |
 | Security headers | `X-Content-Type-Options`、`X-Frame-Options`、`Referrer-Policy` 應由 middleware 固定 |
@@ -527,6 +528,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | DB pool contract gate | `node scripts/check-db-pool-contract.mjs` | 固定 DB pool env、repository pool 套用、`api-worker` wiring、文件、Makefile 與 CI 入口 |
 | Migration contract gate | `cd production-api-worker && go test ./internal/config ./internal/migration -count=1 && node scripts/check-migration-contract.mjs` | 固定 migration env、timeout、SQL 檔排序、version 命名、靜態文件與 CI 入口 |
 | OpenAPI contract gate | `node scripts/check-openapi-contract.mjs` | 固定 OpenAPI spec、endpoint、schema、error code、Bearer auth 與文件入口 |
+| Trusted proxy client IP contract gate | `node scripts/check-trusted-proxy-contract.mjs` | 固定 `TRUSTED_PROXY_CIDRS`、`X-Forwarded-For`、untrusted `RemoteAddr` fallback、runbook、Makefile 與 CI 入口 |
 | CORS allowlist gate | `node scripts/check-cors-contract.mjs` | 固定 `CORS_ALLOWED_ORIGINS`、allowlist middleware、preflight 測試與 CI 入口 |
 | Compose smoke gate | `cd production-api-worker && docker compose up -d --build && make compose-smoke && docker compose down -v` | 固定 Docker Compose 啟動後 `/livez`、`/readyz`、job create/read 與 metrics |
 | Operational runbook gate | `node scripts/check-operational-runbook.mjs` | 固定 runbook、Prometheus alert rules、README 與 CI 入口，避免 incident workflow 被文件更新移除 |

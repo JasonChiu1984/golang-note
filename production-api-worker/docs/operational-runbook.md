@@ -114,7 +114,7 @@ go tool pprof profile.pb.gz
 | Readiness critical | `/readyz` 非 200 或服務 scrape 失敗 | LB / orchestrator 應停止導流 |
 | Diagnostics access | disabled by default | `ENABLE_PPROF=true` 只允許短期事故診斷，且必須帶 `Authorization: Bearer <token>` |
 | Rate limit | `RATE_LIMIT_REQUESTS_PER_MINUTE=120` | 單一 client IP 超限回 `429 rate_limited`；調高前需確認 queue、DB pool 與上游重試行為 |
-| Trusted proxy | `TRUSTED_PROXY_CIDRS` | 只有 trusted proxy 來源才可採用 `X-Forwarded-For` 第一個 IP；外部直連不可用 header 偽造 client IP |
+| Trusted proxy client IP contract gate | `TRUSTED_PROXY_CIDRS` | 只有 trusted proxy 來源才可採用 `X-Forwarded-For` 第一個 IP；外部直連不可用 header 偽造 client IP，並由 `node scripts/check-trusted-proxy-contract.mjs` 固定 |
 
 ## 5. Example
 

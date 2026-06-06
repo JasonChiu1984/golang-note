@@ -29,12 +29,12 @@ const required = {
     "TestRequestIDContract",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.49",
+    "version: v1.0.50",
     "X-Request-ID",
     "request.id",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.49",
+    "版本：v1.0.50",
     "Request correlation",
     "request.id",
     "node scripts/check-request-correlation-contract.mjs",

@@ -1,4 +1,4 @@
-.PHONY: test test-race ci ci-contract openapi-check readiness-check request-decoding-check panic-recovery-check request-correlation-check api-security-check worker-failure-check retry-cancellation-check queue-backpressure-check db-pool-check migration-check runbook-check prometheus-check pprof-check rate-limit-check cors-check request-body-limit-check http-timeout-check shutdown-signal-check otel-check docker-build compose-smoke run migrate docker-up docker-down
+.PHONY: test test-race ci ci-contract openapi-check readiness-check request-decoding-check panic-recovery-check request-correlation-check api-security-check worker-failure-check retry-cancellation-check queue-backpressure-check db-pool-check migration-check runbook-check prometheus-check pprof-check rate-limit-check trusted-proxy-check cors-check request-body-limit-check http-timeout-check shutdown-signal-check otel-check docker-build compose-smoke run migrate docker-up docker-down
 
 test:
 	go test ./...
@@ -62,6 +62,9 @@ pprof-check:
 
 rate-limit-check:
 	cd .. && node scripts/check-rate-limit-contract.mjs
+
+trusted-proxy-check:
+	cd .. && node scripts/check-trusted-proxy-contract.mjs
 
 cors-check:
 	cd .. && node scripts/check-cors-contract.mjs

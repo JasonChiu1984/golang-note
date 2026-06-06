@@ -90,6 +90,9 @@ jobs:
       - name: Check rate limit contract
         run: node scripts/check-rate-limit-contract.mjs
 
+      - name: Check trusted proxy contract
+        run: node scripts/check-trusted-proxy-contract.mjs
+
       - name: Check CORS contract
         run: node scripts/check-cors-contract.mjs
 
