@@ -399,6 +399,9 @@ go test ./cmd/api-worker -run 'TestHTTPServerTimeoutContract' -count=1
 go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1
 go test ./internal/api -run 'TestPanicRecoveryContract' -count=1
 go test ./internal/api -run 'TestRequestTimeoutContract' -count=1
+node scripts/check-request-timeout-contract.mjs
+node ../scripts/check-request-timeout-contract.mjs
+make request-timeout-check
 go test ./internal/api -run 'TestRateLimitContract' -count=1
 go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1
 go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1

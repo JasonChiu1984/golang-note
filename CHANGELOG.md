@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.51 - 2026-06-07
+
+- 新增 2026-06-07 08:50:48 CST +0800 資深工程師審查報告，確認 v1.0.50 已補齊 Trusted proxy client IP contract gate，但 Request timeout 仍缺少獨立靜態 gate 來固定 `context.DeadlineExceeded`、`504 Gateway Timeout`、`request_timeout`、`X-Request-ID`、Makefile 與 CI 入口。
+- 新增 `scripts/check-request-timeout-contract.mjs`，固定 README、production README、API contract、OpenAPI、handler error classification、`TestRequestTimeoutContract`、第 7 / 11 章、進階 Cheat Sheet、整合視覺課程、Makefile 與 GitHub Actions 都保留 Request timeout contract gate。
+- `.github/workflows/ci.yml` 新增 `Check request timeout contract`；`production-api-worker/Makefile` 新增 `request-timeout-check`。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與既有 version-sensitive contract checks 版本標記更新為 `v1.0.51`。
+- README、`production-api-worker/README.md`、第 7 / 11 章、進階 Cheat Sheet 與整合視覺課程同步加入 Request timeout contract gate。
+
 ## v1.0.50 - 2026-06-06
 
 - 新增 2026-06-06 06:08:50 CST +0800 資深工程師審查報告，確認 v1.0.49 已補齊 DB pool contract gate，但 Trusted proxy client IP 仍缺少獨立靜態 gate 來固定 `TRUSTED_PROXY_CIDRS`、`X-Forwarded-For` 第一個 IP、untrusted `RemoteAddr` fallback、Makefile 與 CI 入口。

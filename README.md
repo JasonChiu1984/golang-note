@@ -2,9 +2,9 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
-> 教材版本：`v1.0.50`
+> 教材版本：`v1.0.51`
 > 教材基準：`Go 1.26.4`
-> 這次更新重點：正式發布 Trusted proxy client IP contract gate，固定 `TRUSTED_PROXY_CIDRS`、`X-Forwarded-For` 第一個 IP、untrusted `RemoteAddr` fallback、Go test、Makefile 與 CI 靜態檢查。
+> 這次更新重點：正式發布 Request timeout contract gate，固定 `context.DeadlineExceeded` 對外回 `504 request_timeout`、保留 `X-Request-ID`，並加入 Go test、Makefile 與 CI 靜態檢查。
 
 ## 版本策略
 
@@ -33,6 +33,7 @@
 | CORS allowlist contract | `CORS_ALLOWED_ORIGINS` 預設空值；只允許 exact `http` / `https` origin，preflight 與實際 request 由 `TestCORSAllowedOriginsContract` 和 `node scripts/check-cors-contract.mjs` 固定 |
 | Request body limit contract | `REQUEST_BODY_LIMIT_BYTES=1048576` 為預設；`POST /jobs` 超過上限回 `413 payload_too_large`，並由 `TestRequestBodyLimitContract` 和 `node scripts/check-request-body-limit-contract.mjs` 固定 |
 | HTTP server timeout contract | `HTTP_READ_HEADER_TIMEOUT=3s`、`HTTP_READ_TIMEOUT=5s`、`HTTP_WRITE_TIMEOUT=10s`、`HTTP_IDLE_TIMEOUT=60s`、`HTTP_SHUTDOWN_TIMEOUT=5s`、`QUEUE_DRAIN_TIMEOUT=10s` 為預設，並由 `TestHTTPServerTimeoutContract` 和 `node scripts/check-http-timeout-contract.mjs` 固定 |
+| Request timeout contract gate | Handler 造成的 `context.DeadlineExceeded` 必須回 `504 request_timeout`、保留 `X-Request-ID`，並由 `TestRequestTimeoutContract` 和 `node scripts/check-request-timeout-contract.mjs` 固定 |
 | Worker failure contract | worker processor 成功與失敗都必須記錄 duration，失敗需標記 `worker_jobs_total{result="failed"}`，成功標記 `success`，並由 `TestWorkerFailureResultContract` 和 `node scripts/check-worker-failure-contract.mjs` 固定 |
 | Retry cancellation contract | DB deadlock retry 的 backoff 必須尊重 `context` cancellation / deadline，避免 shutdown 或 request timeout 後繼續重試，並由 `TestCreateJobStopsDeadlockRetryWhenContextCanceled` 和 `node scripts/check-retry-cancellation-contract.mjs` 固定 |
 | Queue backpressure contract | bounded queue 滿載時必須回 `domain.ErrQueueFull`、API 對外回 `503 queue_full`，並記錄 `worker_jobs_total{result="dropped"}` 與 queue depth，由 `TestQueueBackpressureContract` 和 `node scripts/check-queue-backpressure-contract.mjs` 固定 |
@@ -201,7 +202,7 @@ go test ./project-concurrent-crawler/...
 | Readiness / drain 合約 | `cd production-api-worker && go test ./internal/api -run 'TestReadinessContract' -count=1 && node scripts/check-readiness-contract.mjs` | 驗證 `/livez` 公開存活探測、draining 時 `/readyz` 會回 503，且文件 / OpenAPI / CI 入口一致 |
 | Worker shutdown 安全 | `cd production-api-worker && go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1` | 驗證 queue 關閉後 enqueue 回穩定錯誤，shutdown 期間不會送入已關閉 channel |
 | Panic recovery 合約 | `cd production-api-worker && go test ./internal/api -run 'TestPanicRecoveryContract' -count=1 && node scripts/check-panic-recovery-contract.mjs` | 驗證 handler panic 會回 `500`、`internal_error` JSON 與原 request id，且文件 / OpenAPI / CI 入口一致 |
-| Request timeout 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestTimeoutContract' -count=1` | 驗證 handler timeout 會回 `504 request_timeout`，不漂移成 `500 internal_error` |
+| Request timeout 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestTimeoutContract' -count=1 && node scripts/check-request-timeout-contract.mjs` | 驗證 handler timeout 會回 `504 request_timeout`，不漂移成 `500 internal_error`，且文件 / OpenAPI / CI 入口一致 |
 | Retry cancellation 合約 | `cd production-api-worker && go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1 && node scripts/check-retry-cancellation-contract.mjs` | 驗證 deadlock backoff 遇到 request cancel / shutdown context 會立即停止，不再重試或 enqueue |
 | Queue backpressure 合約 | `cd production-api-worker && go test ./internal/worker -run 'TestQueueBackpressureContract' -count=1 && node scripts/check-queue-backpressure-contract.mjs` | 驗證 bounded queue 滿載時回 `domain.ErrQueueFull`、記錄 `dropped` result 並維持 queue depth |
 | Startup / DB pool 合約 | `cd production-api-worker && go test ./internal/config -count=1 && node scripts/check-db-pool-contract.mjs` | 驗證 `PORT`、`QUEUE_SIZE`、`WORKERS`、DB pool 預設值、合法 env、錯誤設定 fail-fast、repository 套用與 CI 入口 |

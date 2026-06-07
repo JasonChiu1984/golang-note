@@ -419,6 +419,7 @@ Production API 的 timeout 不是未知錯誤。若 handler 建立的 request de
 | Error code | `request_timeout` |
 | Request correlation | 原本的 `X-Request-ID` 仍回傳 |
 | 測試保護 | `TestRequestTimeoutContract` 固定 timeout 外部行為 |
+| Request timeout static gate | `node scripts/check-request-timeout-contract.mjs` 與 `make request-timeout-check` 固定文件、OpenAPI、章節、Makefile 與 CI 入口 |
 
 ### Startup Configuration Contract
 

@@ -1,6 +1,6 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.50 ｜ 基準日期：2026-06-06 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Readiness lifecycle contract、Request decoding contract、Panic recovery contract、Request correlation contract、API security contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract、Worker failure contract、Retry cancellation contract、Queue backpressure contract、DB pool contract gate、Migration Operation Contract
+> 版本：v1.0.51 ｜ 基準日期：2026-06-07 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Readiness lifecycle contract、Request decoding contract、Panic recovery contract、Request correlation contract、API security contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract、Worker failure contract、Retry cancellation contract、Queue backpressure contract、DB pool contract gate、Migration Operation Contract
 
 這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery、retry 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 cancellation 行為需要透過 contract test 保護。
 
@@ -25,6 +25,7 @@ Machine-readable contract 位於 `production-api-worker/api/openapi.yaml`。此 
 | Panic recovery | 未預期 panic 必須回 `500` 與穩定 `internal_error` JSON，不暴露 panic 細節 |
 | Panic recovery gate | `node scripts/check-panic-recovery-contract.mjs` 必須固定 `recoverMiddleware`、`TestPanicRecoveryContract`、OpenAPI、README、章節、Makefile 與 CI 入口 |
 | Request timeout | handler deadline exceeded 必須回 `504 request_timeout`，不得漂移成 `500 internal_error` |
+| Request timeout gate | `node scripts/check-request-timeout-contract.mjs` 必須固定 `contextWithTimeout`、`context.DeadlineExceeded`、`TestRequestTimeoutContract`、OpenAPI、README、章節、Makefile 與 CI 入口 |
 | Startup configuration | `PORT`、`QUEUE_SIZE`、`WORKERS` 與 DB pool 設定必須先驗證；錯誤設定 fail fast，不可 silent fallback |
 | DB pool contract gate | `node scripts/check-db-pool-contract.mjs` 必須固定 DB pool env、config default / override / fail-fast、repository pool 套用、`api-worker` wiring、文件、Makefile 與 CI 入口 |
 | API security | `API_KEY` 有值時，`/jobs` 與 `/metrics` 必須要求 Bearer token；health endpoint 仍需公開供部署系統探測 |
@@ -66,6 +67,11 @@ X-Request-ID: request-from-client
     "message": "invalid input"
   }
 }
+```
+
+```bash
+node scripts/check-request-timeout-contract.mjs
+cd production-api-worker && make request-timeout-check
 ```
 
 | Code | HTTP status | 觸發條件 |

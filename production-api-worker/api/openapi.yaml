@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.50
+  version: v1.0.51
   description: >
     Machine-readable contract for the Go teaching production API worker.
     This file mirrors docs/api-contract.md and the Go contract tests,
@@ -14,6 +14,8 @@ info:
     bounded by REQUEST_BODY_LIMIT_BYTES and return payload_too_large when they
     exceed the configured limit. The runtime server also uses explicit HTTP
     read header, read, write, idle, shutdown, and queue drain timeouts.
+    Handler request timeout maps context.DeadlineExceeded to 504 request_timeout
+    while preserving X-Request-ID for client retry and incident correlation.
     Request correlation uses X-Request-ID across response headers, request
     context, structured logs, and trace attribute request.id.
     API security uses optional API_KEY Bearer authentication for jobs and

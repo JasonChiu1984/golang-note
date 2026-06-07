@@ -59,7 +59,7 @@ const required = {
     "TRUSTED_PROXY_CIDRS",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.50",
+    "version: v1.0.51",
     "429",
     "rate_limited",
   ],

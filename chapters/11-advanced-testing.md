@@ -413,6 +413,7 @@ func TestRequestTimeoutContract(t *testing.T) {
 | `504 Gateway Timeout` | client 可把 timeout 與 unknown server fault 分開處理 |
 | `error.code=request_timeout` | release 後仍能用穩定 code 做 retry / 告警分支 |
 | `X-Request-ID` | timeout path 仍可對照 log、trace 與 metrics |
+| Request timeout static gate | `node scripts/check-request-timeout-contract.mjs` 與 `make request-timeout-check` 防止文件、OpenAPI 或 CI 入口漂移 |
 
 ### Retry Cancellation Test
 
@@ -522,7 +523,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | Shutdown signal contract | `cd production-api-worker && go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1` | 固定 Shutdown signal 入口，確認 SIGINT/SIGTERM 都會進入 graceful shutdown |
 | Panic recovery 合約 | `cd production-api-worker && go test ./internal/api -run 'TestPanicRecoveryContract' -count=1` | 固定 panic path 的 `500 internal_error` JSON 與 request id |
 | Panic recovery contract gate | `node scripts/check-panic-recovery-contract.mjs` | 固定 recover middleware、Go test、OpenAPI、README、章節、Makefile 與 CI 入口 |
-| Request timeout 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestTimeoutContract' -count=1` | 固定 handler timeout 的 `504 request_timeout` JSON 與 request id |
+| Request timeout 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestTimeoutContract' -count=1 && node scripts/check-request-timeout-contract.mjs` | 固定 handler timeout 的 `504 request_timeout` JSON、request id、OpenAPI、Makefile 與 CI 入口 |
 | Retry cancellation | `cd production-api-worker && go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1` | 固定 deadlock retry backoff 會尊重 context cancellation / deadline |
 | Startup / DB pool config | `cd production-api-worker && go test ./internal/config -count=1` | 固定設定預設值、合法 env、DB pool 關係與錯誤設定 fail-fast 行為 |
 | DB pool contract gate | `node scripts/check-db-pool-contract.mjs` | 固定 DB pool env、repository pool 套用、`api-worker` wiring、文件、Makefile 與 CI 入口 |

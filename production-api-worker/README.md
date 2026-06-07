@@ -418,6 +418,7 @@ Handler 內部會用 request-scoped timeout 保護 service 呼叫。若 deadline
 | Error envelope | `{"error":{"code":"request_timeout","message":"request timeout"}}` |
 | Request ID | client 提供的 `X-Request-ID` 仍會原樣回傳 |
 | Contract test | `TestRequestTimeoutContract` 固定 timeout 外部行為 |
+| Static gate | `make request-timeout-check` / `node scripts/check-request-timeout-contract.mjs` 固定文件、OpenAPI、測試與 CI 入口 |
 
 ## Service Lifecycle
 

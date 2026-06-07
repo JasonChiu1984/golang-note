@@ -75,6 +75,9 @@ jobs:
       - name: Check retry cancellation contract
         run: node scripts/check-retry-cancellation-contract.mjs
 
+      - name: Check request timeout contract
+        run: node scripts/check-request-timeout-contract.mjs
+
       - name: Check queue backpressure contract
         run: node scripts/check-queue-backpressure-contract.mjs
 
