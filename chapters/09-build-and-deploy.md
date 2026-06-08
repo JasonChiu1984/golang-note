@@ -296,7 +296,7 @@ release:
 
 ## GitHub Actions CI/CD 範例
 
-本教材現在已把 CI/CD 範例落成真實 workflow：`.github/workflows/ci.yml`。它不是展示用 YAML，而是 release gate：root course job 驗證教材範例與 docs 入口，production job 驗證 API / migration / worker 合約與 race/coverage，vulnerability job 執行 `govulncheck`，Docker job 確認 `production-api-worker` image 可建置，並用 Compose smoke 驗證服務真的 ready、可建 job、可讀 job 與可輸出 metrics。
+本教材現在已把 CI/CD 範例落成真實 workflow：`.github/workflows/ci.yml`。它不是展示用 YAML，而是 release gate：root course job 驗證教材範例與 docs 入口，production job 驗證 API / migration / worker 合約與 race/coverage，vulnerability job 執行 `govulncheck`，Docker job 確認 `production-api-worker` image 可建置，並用 Compose smoke 驗證服務真的 ready、可建 job、可讀 job 與可輸出 metrics。Compose smoke static gate 由 `node scripts/check-compose-smoke-contract.mjs` 固定 `docker compose up -d --build`、`make compose-smoke`、`docker compose logs --no-color`、`docker compose down -v`、runbook、Makefile 與 CI 入口。
 
 本機對照指令：
 
@@ -308,6 +308,7 @@ cd production-api-worker
 make ci-contract
 go test -race -cover ./... -count=1
 docker build -t production-api-worker:local .
+node scripts/check-compose-smoke-contract.mjs
 docker compose up -d --build
 make compose-smoke
 docker compose down -v

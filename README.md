@@ -2,9 +2,9 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
-> 教材版本：`v1.0.51`
+> 教材版本：`v1.0.52`
 > 教材基準：`Go 1.26.4`
-> 這次更新重點：正式發布 Request timeout contract gate，固定 `context.DeadlineExceeded` 對外回 `504 request_timeout`、保留 `X-Request-ID`，並加入 Go test、Makefile 與 CI 靜態檢查。
+> 這次更新重點：正式發布 Compose smoke contract gate，固定 Docker Compose 啟動後 `/readyz`、job create/read、`/metrics`、host-side smoke script、失敗 logs、Makefile 與 CI 靜態檢查。
 
 ## 版本策略
 
@@ -48,7 +48,7 @@
 | 微服務教材 | Go 微服務需獨立說明 handler、service、config、timeout、health check、Docker smoke 與 deployment risk |
 | 跨語言 / GPU 效能範例 | C/Python/Go 效能比較需提供可重跑 workload、正式測試 script、compiler flags、語言版本、raw output 與 Markdown 報告；GPU/Metal 比較需分開標示 CPU baseline、GPU kernel time 與 GPU total time |
 | CI release gate | `.github/workflows/ci.yml` 需固定 root module、production-api-worker contract、race/coverage、govulncheck 與 Docker build，避免教材只描述 CI 卻沒有真實 workflow |
-| Compose smoke gate | Docker Compose 不只要 build 成功，還要用主機端 smoke script 驗證 API ready、建立 job、讀回 job 與 metrics 暴露 |
+| Compose smoke contract gate | Docker Compose 不只要 build 成功，還要用主機端 smoke script 驗證 API ready、建立 job、讀回 job 與 metrics 暴露，並由 `node scripts/check-compose-smoke-contract.mjs` 固定文件、Makefile 與 CI 入口 |
 | API 合約 | 對外 HTTP endpoint 需有穩定 request/response/error schema，並用 contract test 阻擋破壞性變更 |
 | Request decoding | JSON request 需拒絕 malformed body、unknown field、trailing JSON value 與空白必填欄位 |
 | 觀測性關聯 | 對外 API 需保留 `X-Request-ID`，並讓 log、trace、metrics 可互相對照 |
@@ -191,7 +191,7 @@ go test ./project-concurrent-crawler/...
 | 微服務補充頁 | `test -f docs/golang-microservice-tutorial.html && rg -n "REQUEST_TIMEOUT|/readyz|Dockerfile|scripts/smoke.sh" docs/golang-microservice-tutorial.html` | 確認微服務教程包含 config、health check、Docker 與 smoke 驗證 |
 | CI workflow 語法 | `ruby -e 'require "yaml"; YAML.load_file(".github/workflows/ci.yml")'` | 確認 GitHub Actions YAML 可解析 |
 | CI release gate | `.github/workflows/ci.yml` | GitHub Actions 會跑 root module、production-api-worker contract、race/coverage、govulncheck、Docker build 與 Compose smoke |
-| Compose smoke gate | `cd production-api-worker && docker compose up -d --build && make compose-smoke && docker compose down -v` | 驗證 Postgres、migration、API、worker、readiness 與 metrics 端到端可用 |
+| Compose smoke contract gate | `node scripts/check-compose-smoke-contract.mjs && cd production-api-worker && docker compose up -d --build && make compose-smoke && docker compose down -v` | 驗證 Postgres、migration、API、worker、readiness、job create/read、metrics、失敗 logs 與 CI 入口端到端可用 |
 | Compose monitoring profile | `cd production-api-worker && docker compose --profile monitoring up -d --build && open http://localhost:9090` | 啟動教學用 Prometheus，載入 scrape config 與 alert rules；若設定 `API_KEY`，需同步規劃 scrape auth |
 | 依賴供應鏈檢查 | `go mod tidy && go mod verify && go list -m -u all && govulncheck ./...` | 第 8 / 9 / 11 章的依賴治理與 release gate 基線 |
 | API 合約回歸 | `cd production-api-worker && go test ./internal/api -run 'Test.*Contract' -count=1` | 驗證 HTTP status、JSON schema 與錯誤 code 沒有意外改變 |

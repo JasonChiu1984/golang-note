@@ -421,6 +421,17 @@ Production API 的 timeout 不是未知錯誤。若 handler 建立的 request de
 | 測試保護 | `TestRequestTimeoutContract` 固定 timeout 外部行為 |
 | Request timeout static gate | `node scripts/check-request-timeout-contract.mjs` 與 `make request-timeout-check` 固定文件、OpenAPI、章節、Makefile 與 CI 入口 |
 
+### Compose Smoke 與端到端啟動合約
+
+`production-api-worker` 的 Docker Compose smoke 不是只確認 image build 成功，而是固定最小 production chain：Postgres、migration、API、worker、readiness 與 metrics 必須一起可用。`scripts/compose-smoke.sh` 保持在 host 端執行，避免把 curl 放進 runtime image，同時驗證 `/livez`、`/readyz`、`POST /jobs`、`GET /jobs/{id}` 與 `/metrics`。
+
+| 邊界 | 做法 |
+|---|---|
+| 啟動流程 | `docker compose up -d --build` |
+| Smoke script | `make compose-smoke` 呼叫 host-side `scripts/compose-smoke.sh` |
+| 失敗診斷 | CI 失敗時保留 `docker compose logs --no-color` |
+| Compose smoke static gate | `node scripts/check-compose-smoke-contract.mjs` 與 `make compose-smoke-check` 固定文件、runbook、章節、Makefile 與 CI 入口 |
+
 ### Startup Configuration Contract
 
 設定錯誤是 deployment fault，不是可忽略的小問題。`production-api-worker/internal/config` 示範把 env 讀取集中到單一 package，先驗證再 wire service。

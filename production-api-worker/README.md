@@ -31,6 +31,7 @@
 - Observability：Prometheus client、OpenTelemetry OTLP/stdout exporter、slog、`X-Request-ID`
 - Operational runbook：SLI/SLO、Prometheus alert rules、scrape config、incident workflow、verification、troubleshooting
 - Pipeline：migration CLI、Docker Compose、GitHub Actions workflow、Docker image build gate、Compose smoke gate
+- Compose Smoke Contract：`docker compose up -d --build` 後必須由 host-side `scripts/compose-smoke.sh` 驗證 `/livez`、`/readyz`、job create/read 與 `/metrics`，並由 `make compose-smoke-check` 固定文件、Makefile 與 CI 入口
 
 ## Local Memory Mode
 
@@ -112,6 +113,7 @@ make worker-failure-check
 make retry-cancellation-check
 make queue-backpressure-check
 make shutdown-signal-check
+make compose-smoke-check
 go test -run='^$' -bench=. -benchmem -count=10 ./... > bench.txt
 docker compose up --build
 make compose-smoke
@@ -166,6 +168,7 @@ make compose-smoke
 | `make request-correlation-check` | 固定 request id middleware、OpenAPI request id header、contract tests、章節與 CI 靜態檢查入口 |
 | `make api-security-check` | 固定 API key auth middleware、security headers、OpenAPI bearerAuth、contract tests、章節與 CI 靜態檢查入口 |
 | `make shutdown-signal-check` | 固定 shutdown signal contract、SIGINT/SIGTERM、main test、README、API contract 與 CI 入口 |
+| `make compose-smoke-check` | 固定 Compose Smoke Contract、host-side smoke script、`/livez`、`/readyz`、job create/read、`/metrics`、失敗 logs、Makefile 與 CI 入口 |
 | `go test -run='^$' -bench=. -benchmem -count=10 ./...` | API / worker 效能改動需保留 benchmark 證據 |
 | `docker compose up --build` | 啟動 Postgres、migration、API、worker 與 metrics 整體鏈路 |
 | `make compose-smoke` | 用主機端 curl 驗證 `/livez`、`/readyz`、job create/read 與 `/metrics` |
@@ -198,6 +201,13 @@ docker compose down -v
 ```
 
 `scripts/compose-smoke.sh` 故意在 host 端執行，而不是把 curl 塞進 distroless runtime image。這保留 runtime image 的最小攻擊面，同時仍能驗證 Compose 啟動後的 `/livez`、`/readyz`、`POST /jobs`、`GET /jobs/{id}` 與 Prometheus metrics。
+
+Compose smoke static gate 需包含：
+
+```bash
+make compose-smoke-check
+cd .. && node scripts/check-compose-smoke-contract.mjs
+```
 
 ## API Contract
 

@@ -415,6 +415,18 @@ func TestRequestTimeoutContract(t *testing.T) {
 | `X-Request-ID` | timeout path 仍可對照 log、trace 與 metrics |
 | Request timeout static gate | `node scripts/check-request-timeout-contract.mjs` 與 `make request-timeout-check` 防止文件、OpenAPI 或 CI 入口漂移 |
 
+### Compose Smoke Static Gate
+
+Compose smoke 測試是部署合約，不是單純 shell convenience。它必須固定 `docker compose up -d --build` 之後的 `/livez`、`/readyz`、`POST /jobs`、`GET /jobs/{id}` 與 `/metrics`，並在 CI 失敗時輸出 `docker compose logs --no-color`。
+
+| 測試項 | 為什麼重要 |
+|---|---|
+| Host-side smoke script | runtime image 保持最小，不把 curl 塞進 container |
+| `/readyz` | migration、DB 連線與 service lifecycle 可接流量 |
+| job create/read | API、service、repository 與 worker queue 端到端可用 |
+| `/metrics` | Prometheus endpoint 與 API security smoke 邊界可用 |
+| Compose smoke static gate | `node scripts/check-compose-smoke-contract.mjs` 與 `make compose-smoke-check` 防止 script、runbook、Makefile 或 CI 入口漂移 |
+
 ### Retry Cancellation Test
 
 重試測試不能只檢查「最後成功」。Production service 也要測取消路徑：request timeout、client disconnect 或 shutdown context 觸發後，deadlock backoff 應立即停止，避免已取消的 request 繼續消耗 DB connection 或把 job 排入 queue。
@@ -531,7 +543,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | OpenAPI contract gate | `node scripts/check-openapi-contract.mjs` | 固定 OpenAPI spec、endpoint、schema、error code、Bearer auth 與文件入口 |
 | Trusted proxy client IP contract gate | `node scripts/check-trusted-proxy-contract.mjs` | 固定 `TRUSTED_PROXY_CIDRS`、`X-Forwarded-For`、untrusted `RemoteAddr` fallback、runbook、Makefile 與 CI 入口 |
 | CORS allowlist gate | `node scripts/check-cors-contract.mjs` | 固定 `CORS_ALLOWED_ORIGINS`、allowlist middleware、preflight 測試與 CI 入口 |
-| Compose smoke gate | `cd production-api-worker && docker compose up -d --build && make compose-smoke && docker compose down -v` | 固定 Docker Compose 啟動後 `/livez`、`/readyz`、job create/read 與 metrics |
+| Compose smoke static gate | `node scripts/check-compose-smoke-contract.mjs && cd production-api-worker && docker compose up -d --build && make compose-smoke && docker compose down -v` | 固定 Docker Compose 啟動後 `/livez`、`/readyz`、job create/read、metrics、失敗 logs、Makefile 與 CI 入口 |
 | Operational runbook gate | `node scripts/check-operational-runbook.mjs` | 固定 runbook、Prometheus alert rules、README 與 CI 入口，避免 incident workflow 被文件更新移除 |
 | Prometheus config gate | `node scripts/check-prometheus-config.mjs` | 固定 Prometheus scrape job、rule_files、Compose monitoring profile 與 API key 風險說明 |
 | OTLP collector gate | `node scripts/check-otel-collector-contract.mjs` | 固定 collector receiver、debug exporter、Compose endpoint、runbook、README 與 CI gate |

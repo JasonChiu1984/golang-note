@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.52 - 2026-06-08
+
+- 新增 2026-06-08 09:17:13 CST +0800 資深工程師審查報告，確認 v1.0.51 已補齊 Request timeout contract gate，但 Compose smoke gate 仍缺少獨立靜態 gate 來固定 `docker compose up -d --build`、`make compose-smoke`、`/readyz`、job create/read、`/metrics`、失敗 logs 與 CI/Makefile 入口。
+- 新增 `scripts/check-compose-smoke-contract.mjs`，固定 README、production README、API contract、OpenAPI、operational runbook、第 7 / 9 / 11 章、進階 Cheat Sheet、整合視覺課程、Makefile 與 GitHub Actions 都保留 Compose smoke contract gate。
+- `.github/workflows/ci.yml` 新增 `Check Compose smoke contract`；`production-api-worker/Makefile` 新增 `compose-smoke-check`。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與既有 version-sensitive contract checks 版本標記更新為 `v1.0.52`。
+- README、`production-api-worker/README.md`、第 7 / 9 / 11 章、進階 Cheat Sheet 與整合視覺課程同步加入 Compose smoke contract gate。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.51 - 2026-06-07
 
 - 新增 2026-06-07 08:50:48 CST +0800 資深工程師審查報告，確認 v1.0.50 已補齊 Trusted proxy client IP contract gate，但 Request timeout 仍缺少獨立靜態 gate 來固定 `context.DeadlineExceeded`、`504 Gateway Timeout`、`request_timeout`、`X-Request-ID`、Makefile 與 CI 入口。

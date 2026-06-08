@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.51
+  version: v1.0.52
   description: >
     Machine-readable contract for the Go teaching production API worker.
     This file mirrors docs/api-contract.md and the Go contract tests,
@@ -30,6 +30,9 @@ info:
     MIGRATIONS_DIR, MIGRATION_TIMEOUT, schema_migrations, transaction apply, Go tests,
     Makefile, and CI static gates aligned. Request decoding rejects malformed JSON,
     unknown fields, trailing JSON values, and blank job names with invalid_input.
+    Compose smoke contract keeps docker compose up -d --build, host-side
+    scripts/compose-smoke.sh, /livez, /readyz, POST /jobs, GET /jobs/{id},
+    /metrics, docker compose logs --no-color, Makefile, and CI static gates aligned.
     Panic recovery keeps handler panics behind a stable 500 internal_error JSON
     response while preserving X-Request-ID for incident review.
 servers:
