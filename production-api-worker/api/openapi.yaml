@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.52
+  version: v1.0.53
   description: >
     Machine-readable contract for the Go teaching production API worker.
     This file mirrors docs/api-contract.md and the Go contract tests,
@@ -33,6 +33,9 @@ info:
     Compose smoke contract keeps docker compose up -d --build, host-side
     scripts/compose-smoke.sh, /livez, /readyz, POST /jobs, GET /jobs/{id},
     /metrics, docker compose logs --no-color, Makefile, and CI static gates aligned.
+    CI quality gate contract keeps go mod verify, production contract tests,
+    go test -race -cover, govulncheck ./..., Docker build, Compose smoke,
+    Makefile, and CI static gates aligned.
     Panic recovery keeps handler panics behind a stable 500 internal_error JSON
     response while preserving X-Request-ID for incident review.
 servers:

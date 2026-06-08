@@ -292,6 +292,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Migration contract gate | migration env、timeout、schema version、SQL 檔命名、`node scripts/check-migration-contract.mjs` | 重複套用 schema、release 後無法追蹤 DB 版本，或文件 / CI / Go tests 漂移 |
 | Queue shutdown | enqueue 與 close 的同步邊界 | shutdown 期間可能送入已關閉 channel，造成 panic |
 | Shutdown signal contract | `SIGINT`、`SIGTERM`、readiness draining、HTTP shutdown、queue drain | Docker / Kubernetes 發出 `SIGTERM` 時未進入 graceful shutdown |
+| CI quality gate static gate | `node scripts/check-ci-quality-gate-contract.mjs`、root course、production contracts、race/coverage、govulncheck、Docker build、Compose smoke | workflow 重整後漏掉 dependency verify、漏洞掃描、競態檢查或部署 smoke |
 
 `production-api-worker/docs/api-contract.md` 示範了最小可維護合約：`POST /jobs`、`GET /jobs/{id}`、health endpoint、metrics endpoint、錯誤格式與 release gate。`production-api-worker/api/openapi.yaml` 則把同一份合約轉成 machine-readable OpenAPI artifact，讓前端 mock、SDK 產生、API gateway review 與 contract diff 可以共用同一份 schema。這不是要把文件寫成百科，而是讓每次 release 都能回答三個問題：
 
@@ -431,6 +432,19 @@ Production API 的 timeout 不是未知錯誤。若 handler 建立的 request de
 | Smoke script | `make compose-smoke` 呼叫 host-side `scripts/compose-smoke.sh` |
 | 失敗診斷 | CI 失敗時保留 `docker compose logs --no-color` |
 | Compose smoke static gate | `node scripts/check-compose-smoke-contract.mjs` 與 `make compose-smoke-check` 固定文件、runbook、章節、Makefile 與 CI 入口 |
+
+### CI Quality Gate Contract
+
+`production-api-worker` 的 release gate 不能只靠「有 GitHub Actions 檔案」。CI quality gate static gate 會固定 root module 測試、production contract tests、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，避免 workflow 重整時只保留快速測試而漏掉部署與安全檢查。
+
+| Gate | 固定內容 |
+|---|---|
+| Root course | 根目錄範例、docs entry、OpenAPI / runbook / Prometheus / contract static checks |
+| Production contracts | `make ci-contract` 對齊 config、migration、API、worker 與 lifecycle contract tests |
+| Race / coverage | `go test -race -cover ./... -count=1` 固定併發與覆蓋率 gate |
+| Vulnerability scan | root module 與 `production-api-worker` 都需跑 `govulncheck ./...` |
+| Docker / smoke | Docker image build 後用 Compose smoke 驗證 `/readyz`、job create/read 與 metrics |
+| Static gate | `node scripts/check-ci-quality-gate-contract.mjs` 與 `make ci-quality-gate-check` 固定文件、Makefile 與 CI 入口 |
 
 ### Startup Configuration Contract
 

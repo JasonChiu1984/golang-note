@@ -427,6 +427,19 @@ Compose smoke 測試是部署合約，不是單純 shell convenience。它必須
 | `/metrics` | Prometheus endpoint 與 API security smoke 邊界可用 |
 | Compose smoke static gate | `node scripts/check-compose-smoke-contract.mjs` 與 `make compose-smoke-check` 防止 script、runbook、Makefile 或 CI 入口漂移 |
 
+### CI Quality Gate Contract
+
+CI quality gate static gate 測的是 release pipeline 是否還完整，不是重新取代單元測試。它固定 `.github/workflows/ci.yml` 必須保留 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，並用 `make ci-quality-gate-check` 讓本機與 CI 的 release 條款一致。
+
+| 層級 | 驗證 |
+|---|---|
+| Dependency integrity | root 與 production module 都需保留 `go mod verify` |
+| Contract tests | production job 需跑 config、migration、API、worker、lifecycle contract tests |
+| Race / coverage | production job 需保留 `go test -race -cover ./... -count=1` |
+| Vulnerability scan | root module 與 production module 都需跑 `govulncheck ./...` |
+| Docker / smoke | image build 後需跑 Compose smoke，失敗時輸出 `docker compose logs --no-color` |
+| Static gate | `node scripts/check-ci-quality-gate-contract.mjs` 與 `make ci-quality-gate-check` 固定 workflow、文件與 Makefile |
+
 ### Retry Cancellation Test
 
 重試測試不能只檢查「最後成功」。Production service 也要測取消路徑：request timeout、client disconnect 或 shutdown context 觸發後，deadlock backoff 應立即停止，避免已取消的 request 繼續消耗 DB connection 或把 job 排入 queue。
@@ -544,6 +557,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | Trusted proxy client IP contract gate | `node scripts/check-trusted-proxy-contract.mjs` | 固定 `TRUSTED_PROXY_CIDRS`、`X-Forwarded-For`、untrusted `RemoteAddr` fallback、runbook、Makefile 與 CI 入口 |
 | CORS allowlist gate | `node scripts/check-cors-contract.mjs` | 固定 `CORS_ALLOWED_ORIGINS`、allowlist middleware、preflight 測試與 CI 入口 |
 | Compose smoke static gate | `node scripts/check-compose-smoke-contract.mjs && cd production-api-worker && docker compose up -d --build && make compose-smoke && docker compose down -v` | 固定 Docker Compose 啟動後 `/livez`、`/readyz`、job create/read、metrics、失敗 logs、Makefile 與 CI 入口 |
+| CI quality gate static gate | `node scripts/check-ci-quality-gate-contract.mjs && cd production-api-worker && make ci-quality-gate-check` | 固定 root course、production contracts、race/coverage、govulncheck、Docker build 與 Compose smoke |
 | Operational runbook gate | `node scripts/check-operational-runbook.mjs` | 固定 runbook、Prometheus alert rules、README 與 CI 入口，避免 incident workflow 被文件更新移除 |
 | Prometheus config gate | `node scripts/check-prometheus-config.mjs` | 固定 Prometheus scrape job、rule_files、Compose monitoring profile 與 API key 風險說明 |
 | OTLP collector gate | `node scripts/check-otel-collector-contract.mjs` | 固定 collector receiver、debug exporter、Compose endpoint、runbook、README 與 CI gate |
