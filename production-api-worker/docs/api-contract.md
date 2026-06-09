@@ -1,6 +1,6 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.53 ｜ 基準日期：2026-06-09 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Readiness lifecycle contract、Request decoding contract、Panic recovery contract、Request correlation contract、API security contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract、Worker failure contract、Retry cancellation contract、Queue backpressure contract、DB pool contract gate、Migration Operation Contract、CI quality gate contract、Compose smoke contract
+> 版本：v1.0.54 ｜ 基準日期：2026-06-10 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Readiness lifecycle contract、Request decoding contract、Panic recovery contract、Request correlation contract、API security contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract、Worker failure contract、Retry cancellation contract、Queue backpressure contract、DB pool contract gate、Migration Operation Contract、CI quality gate contract、CI contract parity gate、Compose smoke contract
 
 這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery、retry 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 cancellation 行為需要透過 contract test 保護。
 
@@ -313,6 +313,16 @@ CORS_ALLOWED_ORIGINS=https://app.example.com,http://localhost:5173 go run ./cmd/
 | Test gate | `go test ./internal/api -run 'TestCORSAllowedOriginsContract' -count=1` |
 
 正式部署仍應讓 API Gateway、Ingress 或 WAF 管理外部 TLS、認證與跨域政策；此合約只固定 Go service 在需要被瀏覽器前端呼叫時的最小安全邊界。
+
+## CI Contract Parity Gate
+
+`make ci-contract` 是本機 release 前最常跑的 production contract bundle，因此它必須和 GitHub Actions `production-contract` job 使用相同的 API contract test selector。此 gate 固定 `TestCORSAllowedOriginsContract` 不可只存在於 CI workflow 或單獨 `make cors-check`，避免本機驗證漏掉瀏覽器跨域安全邊界。
+
+| 項目 | 合約 |
+|---|---|
+| Makefile gate | `make ci-contract` 的 `./internal/api` selector 必須包含 `TestCORSAllowedOriginsContract` |
+| CI gate | `.github/workflows/ci.yml` 的 production contract job 必須使用相同 selector |
+| Static gate | `node scripts/check-ci-contract-parity-contract.mjs` 與 `make ci-contract-parity-check` |
 
 ## Rate Limit
 

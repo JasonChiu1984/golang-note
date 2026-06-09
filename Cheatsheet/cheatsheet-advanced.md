@@ -395,6 +395,7 @@ go test ./internal/api -run 'TestRequestBodyLimitContract' -count=1
 go test ./internal/api -run 'TestRequestIDContract|TestCreateJobContract' -count=1
 node ../scripts/check-request-correlation-contract.mjs
 go test ./internal/api -run 'TestCORSAllowedOriginsContract' -count=1
+node ../scripts/check-ci-contract-parity-contract.mjs
 go test ./cmd/api-worker -run 'TestHTTPServerTimeoutContract' -count=1
 go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic' -count=1
 go test ./internal/api -run 'TestPanicRecoveryContract' -count=1
@@ -407,6 +408,8 @@ go test ./cmd/api-worker -run 'TestMonitoredSignalsContract' -count=1
 go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
 node ../scripts/check-retry-cancellation-contract.mjs
 ```
+
+CI contract parity gate：在 repo root 執行 `node scripts/check-ci-contract-parity-contract.mjs`，固定 `make ci-contract` 與 GitHub Actions production contract job 都涵蓋 `TestCORSAllowedOriginsContract`。
 
 ```json
 {

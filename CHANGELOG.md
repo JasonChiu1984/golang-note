@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.54 - 2026-06-10
+
+- 新增 2026-06-10 06:02:15 CST +0800 資深工程師審查報告，確認 v1.0.53 已補齊 CI quality gate contract，但本機 `make ci-contract` 與 GitHub Actions production contract job 的 API test selector 仍有 parity gap：CI 已跑 `TestCORSAllowedOriginsContract`，Makefile bundle 未明確保留同一 selector。
+- 新增 `scripts/check-ci-contract-parity-contract.mjs`，固定 README、production README、API contract、OpenAPI、第 7 / 9 / 11 章、進階 Cheat Sheet、整合視覺課程、Makefile 與 GitHub Actions 都保留 CI contract parity gate。
+- `production-api-worker/Makefile` 的 `ci-contract` 納入 `TestCORSAllowedOriginsContract`，並新增 `ci-contract-parity-check`；`.github/workflows/ci.yml` 新增 `Check CI contract parity contract`。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與既有 version-sensitive contract checks 版本標記更新為 `v1.0.54`。
+- README、`production-api-worker/README.md`、第 7 / 9 / 11 章、進階 Cheat Sheet 與整合視覺課程同步加入 CI contract parity static gate。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.53 - 2026-06-09
 
 - 新增 2026-06-09 06:02:32 CST +0800 資深工程師審查報告，確認 v1.0.52 已補齊 Compose smoke contract gate，但 CI quality gate 仍缺少獨立靜態 gate 來固定 `go mod verify`、production contract tests、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke。

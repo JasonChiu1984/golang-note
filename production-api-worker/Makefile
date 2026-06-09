@@ -1,4 +1,4 @@
-.PHONY: test test-race ci ci-contract openapi-check readiness-check request-decoding-check panic-recovery-check request-correlation-check api-security-check worker-failure-check retry-cancellation-check request-timeout-check queue-backpressure-check db-pool-check migration-check runbook-check prometheus-check pprof-check rate-limit-check trusted-proxy-check cors-check request-body-limit-check http-timeout-check shutdown-signal-check ci-quality-gate-check compose-smoke-check otel-check docker-build compose-smoke run migrate docker-up docker-down
+.PHONY: test test-race ci ci-contract openapi-check readiness-check request-decoding-check panic-recovery-check request-correlation-check api-security-check worker-failure-check retry-cancellation-check request-timeout-check queue-backpressure-check db-pool-check migration-check runbook-check prometheus-check pprof-check rate-limit-check trusted-proxy-check cors-check request-body-limit-check http-timeout-check shutdown-signal-check ci-quality-gate-check ci-contract-parity-check compose-smoke-check otel-check docker-build compose-smoke run migrate docker-up docker-down
 
 test:
 	go test ./...
@@ -13,7 +13,7 @@ ci:
 
 ci-contract:
 	go test ./internal/config ./internal/migration -count=1
-	go test ./internal/api -run 'Test.*Contract|TestReadinessContract|TestPanicRecoveryContract|TestRequestDecodingContract|TestRequestBodyLimitContract|TestRequestTimeoutContract|TestRateLimitContract' -count=1
+	go test ./internal/api -run 'Test.*Contract|TestReadinessContract|TestPanicRecoveryContract|TestRequestDecodingContract|TestRequestBodyLimitContract|TestRequestTimeoutContract|TestRateLimitContract|TestCORSAllowedOriginsContract' -count=1
 	go test ./cmd/api-worker -run 'TestMonitoredSignalsContract|TestHTTPServerTimeoutContract' -count=1
 	go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
 	go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic|TestWorkerFailureResultContract|TestQueueBackpressureContract' -count=1
@@ -83,6 +83,9 @@ shutdown-signal-check:
 
 ci-quality-gate-check:
 	cd .. && node scripts/check-ci-quality-gate-contract.mjs
+
+ci-contract-parity-check:
+	cd .. && node scripts/check-ci-contract-parity-contract.mjs
 
 compose-smoke-check:
 	cd .. && node scripts/check-compose-smoke-contract.mjs

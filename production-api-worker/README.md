@@ -32,6 +32,7 @@
 - Operational runbook：SLI/SLO、Prometheus alert rules、scrape config、incident workflow、verification、troubleshooting
 - Pipeline：migration CLI、Docker Compose、GitHub Actions workflow、Docker image build gate、Compose smoke gate
 - CI Quality Gate Contract：GitHub Actions 必須保留 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，並由 `make ci-quality-gate-check` 固定文件、Makefile 與 CI 入口
+- CI Contract Parity Gate：`make ci-contract` 與 GitHub Actions production contract job 必須使用相同 API test selector，包含 `TestCORSAllowedOriginsContract`，並由 `make ci-contract-parity-check` 固定
 - Compose Smoke Contract：`docker compose up -d --build` 後必須由 host-side `scripts/compose-smoke.sh` 驗證 `/livez`、`/readyz`、job create/read 與 `/metrics`，並由 `make compose-smoke-check` 固定文件、Makefile 與 CI 入口
 
 ## Local Memory Mode
@@ -115,6 +116,7 @@ make retry-cancellation-check
 make queue-backpressure-check
 make shutdown-signal-check
 make ci-quality-gate-check
+make ci-contract-parity-check
 make compose-smoke-check
 go test -run='^$' -bench=. -benchmem -count=10 ./... > bench.txt
 docker compose up --build
@@ -170,6 +172,7 @@ make compose-smoke
 | `make request-correlation-check` | 固定 request id middleware、OpenAPI request id header、contract tests、章節與 CI 靜態檢查入口 |
 | `make api-security-check` | 固定 API key auth middleware、security headers、OpenAPI bearerAuth、contract tests、章節與 CI 靜態檢查入口 |
 | `make shutdown-signal-check` | 固定 shutdown signal contract、SIGINT/SIGTERM、main test、README、API contract 與 CI 入口 |
+| `make ci-contract-parity-check` | 固定 CI Contract Parity Gate，確認 `make ci-contract` 與 GitHub Actions production contract job 都涵蓋 `TestCORSAllowedOriginsContract` |
 | `make compose-smoke-check` | 固定 Compose Smoke Contract、host-side smoke script、`/livez`、`/readyz`、job create/read、`/metrics`、失敗 logs、Makefile 與 CI 入口 |
 | `go test -run='^$' -bench=. -benchmem -count=10 ./...` | API / worker 效能改動需保留 benchmark 證據 |
 | `docker compose up --build` | 啟動 Postgres、migration、API、worker 與 metrics 整體鏈路 |
@@ -195,6 +198,7 @@ make compose-smoke
 ```bash
 cd production-api-worker
 make ci-contract
+make ci-contract-parity-check
 go test -race -cover ./... -count=1
 docker build -t production-api-worker:local .
 docker compose up -d --build
@@ -210,6 +214,15 @@ Compose smoke static gate 需包含：
 make compose-smoke-check
 cd .. && node scripts/check-compose-smoke-contract.mjs
 ```
+
+CI contract parity gate 需包含：
+
+```bash
+make ci-contract-parity-check
+cd .. && node scripts/check-ci-contract-parity-contract.mjs
+```
+
+這個 gate 固定 `make ci-contract` 和 GitHub Actions `production-contract` job 的 API test selector 完全一致，特別是 `TestCORSAllowedOriginsContract` 不能只存在於 CI workflow 或單獨 `make cors-check`。
 
 ## API Contract
 

@@ -441,6 +441,7 @@ Production API 的 timeout 不是未知錯誤。若 handler 建立的 request de
 |---|---|
 | Root course | 根目錄範例、docs entry、OpenAPI / runbook / Prometheus / contract static checks |
 | Production contracts | `make ci-contract` 對齊 config、migration、API、worker 與 lifecycle contract tests |
+| CI contract parity gate | `node scripts/check-ci-contract-parity-contract.mjs` 固定 `make ci-contract` 與 GitHub Actions production contract job 的 API test selector 一致，避免漏跑 `TestCORSAllowedOriginsContract` |
 | Race / coverage | `go test -race -cover ./... -count=1` 固定併發與覆蓋率 gate |
 | Vulnerability scan | root module 與 `production-api-worker` 都需跑 `govulncheck ./...` |
 | Docker / smoke | Docker image build 後用 Compose smoke 驗證 `/readyz`、job create/read 與 metrics |

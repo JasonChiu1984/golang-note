@@ -306,16 +306,20 @@ go mod verify
 go test ./... -count=1
 cd production-api-worker
 make ci-contract
+make ci-contract-parity-check
 go test -race -cover ./... -count=1
 docker build -t production-api-worker:local .
 cd ..
 node scripts/check-ci-quality-gate-contract.mjs
+node scripts/check-ci-contract-parity-contract.mjs
 cd production-api-worker
 node scripts/check-compose-smoke-contract.mjs
 docker compose up -d --build
 make compose-smoke
 docker compose down -v
 ```
+
+CI contract parity gate 由 `node scripts/check-ci-contract-parity-contract.mjs` 固定：本機 `make ci-contract` 與 GitHub Actions production contract job 必須使用相同 API test selector，包含 `TestCORSAllowedOriginsContract`。
 
 ```yaml
 name: CI
