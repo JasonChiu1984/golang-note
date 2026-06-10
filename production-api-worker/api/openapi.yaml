@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.54
+  version: v1.0.55
   description: >
     Machine-readable contract for the Go teaching production API worker.
     This file mirrors docs/api-contract.md and the Go contract tests,
@@ -38,6 +38,9 @@ info:
     CI quality gate contract keeps go mod verify, production contract tests,
     go test -race -cover, govulncheck ./..., Docker build, Compose smoke,
     Makefile, and CI static gates aligned.
+    Contract gate inventory keeps all 24 root contract checker scripts,
+    check-contract-gate-inventory-contract.mjs, Makefile, README, API contract,
+    chapters, visual course, and GitHub Actions aligned.
     Panic recovery keeps handler panics behind a stable 500 internal_error JSON
     response while preserving X-Request-ID for incident review.
 servers:

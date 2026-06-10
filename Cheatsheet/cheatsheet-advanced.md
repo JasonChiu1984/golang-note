@@ -411,6 +411,8 @@ node ../scripts/check-retry-cancellation-contract.mjs
 
 CI contract parity gate：在 repo root 執行 `node scripts/check-ci-contract-parity-contract.mjs`，固定 `make ci-contract` 與 GitHub Actions production contract job 都涵蓋 `TestCORSAllowedOriginsContract`。
 
+Contract gate inventory：在 repo root 執行 `node scripts/check-contract-gate-inventory-contract.mjs`，固定 24 個 root contract checker 全部被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate。
+
 ```json
 {
   "error": {
@@ -832,6 +834,7 @@ synctest.Test(t, func(t *testing.T) {
 | Assembly hot path | `go test ./internal/compute -bench=. -benchmem -count=10` + `go tool objdump -s 'score' ./bin/server` | 只在 pprof 證明 CPU hot path 時使用，且必須有 pure Go fallback |
 | CI workflow | `ruby -e 'require "yaml"; YAML.load_file(".github/workflows/ci.yml")'` + GitHub Actions run | workflow 必須真的存在於 repo，並固定 root test、production contract、race/coverage、govulncheck、Docker build 與 Compose smoke |
 | CI quality gate static gate | `node scripts/check-ci-quality-gate-contract.mjs && cd production-api-worker && make ci-quality-gate-check` | 固定 `go mod verify`、production contracts、`go test -race -cover`、`govulncheck ./...`、Docker build、Compose smoke、Makefile 與 CI 入口 |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs && cd production-api-worker && make contract-gate-inventory-check` | 固定 24 個 root contract checker 全部被 GitHub Actions 呼叫，並同步 Makefile、README、API contract、章節與整合視覺課程入口 |
 | Compose smoke static gate | `node scripts/check-compose-smoke-contract.mjs && cd production-api-worker && docker compose up -d --build && make compose-smoke && docker compose down -v` | 驗證 livez、readyz、job create/read、metrics、失敗 logs、Makefile 與 CI 入口，不只確認 image build 成功 |
 | Pprof diagnostics | `ENABLE_PPROF=true PPROF_TOKEN=debug-token go run ./cmd/api-worker` + `curl -H 'Authorization: Bearer debug-token' .../debug/pprof/profile?seconds=30 -o profile.pb.gz` | 預設關閉，短期事故診斷後關閉，profile 檔案不要提交 repo |
 | CPU 熱點 | `go tool pprof http://localhost:6060/debug/pprof/profile?seconds=30` | 本機教學用；適合 CPU-bound，不適合直接判斷 I/O wait |

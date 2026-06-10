@@ -33,6 +33,7 @@
 - Pipeline：migration CLI、Docker Compose、GitHub Actions workflow、Docker image build gate、Compose smoke gate
 - CI Quality Gate Contract：GitHub Actions 必須保留 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，並由 `make ci-quality-gate-check` 固定文件、Makefile 與 CI 入口
 - CI Contract Parity Gate：`make ci-contract` 與 GitHub Actions production contract job 必須使用相同 API test selector，包含 `TestCORSAllowedOriginsContract`，並由 `make ci-contract-parity-check` 固定
+- Contract Gate Inventory：24 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
 - Compose Smoke Contract：`docker compose up -d --build` 後必須由 host-side `scripts/compose-smoke.sh` 驗證 `/livez`、`/readyz`、job create/read 與 `/metrics`，並由 `make compose-smoke-check` 固定文件、Makefile 與 CI 入口
 
 ## Local Memory Mode
@@ -223,6 +224,15 @@ cd .. && node scripts/check-ci-contract-parity-contract.mjs
 ```
 
 這個 gate 固定 `make ci-contract` 和 GitHub Actions `production-contract` job 的 API test selector 完全一致，特別是 `TestCORSAllowedOriginsContract` 不能只存在於 CI workflow 或單獨 `make cors-check`。
+
+Contract Gate Inventory 需包含：
+
+```bash
+make contract-gate-inventory-check
+cd .. && node scripts/check-contract-gate-inventory-contract.mjs
+```
+
+這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 24 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
 
 ## API Contract
 

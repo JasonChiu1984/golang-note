@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.55 - 2026-06-11
+
+- 新增 2026-06-11 06:01:26 CST +0800 資深工程師審查報告，確認 v1.0.54 已補齊 CI contract parity gate，且既有 `scripts/check-*-contract.mjs` 全部通過；本輪缺口收斂為 contract checker inventory 缺少總表型 static gate。
+- 新增 `scripts/check-contract-gate-inventory-contract.mjs`，固定 24 個 root contract checker 都必須被 `.github/workflows/ci.yml` 呼叫，並同步 README、production README、API contract、OpenAPI、第 7 / 9 / 11 章、進階 Cheat Sheet、整合視覺課程與 Makefile 入口。
+- `production-api-worker/Makefile` 新增 `contract-gate-inventory-check`；`.github/workflows/ci.yml` 新增 `Check contract gate inventory contract`。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與版本標記更新為 `v1.0.55`。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.54 - 2026-06-10
 
 - 新增 2026-06-10 06:02:15 CST +0800 資深工程師審查報告，確認 v1.0.53 已補齊 CI quality gate contract，但本機 `make ci-contract` 與 GitHub Actions production contract job 的 API test selector 仍有 parity gap：CI 已跑 `TestCORSAllowedOriginsContract`，Makefile bundle 未明確保留同一 selector。

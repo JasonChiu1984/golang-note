@@ -45,7 +45,7 @@ const required = {
     "payload_too_large",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.54",
+    "version: v1.0.55",
     "REQUEST_BODY_LIMIT_BYTES",
     "PayloadTooLarge",
   ],
