@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.56 - 2026-06-12
+
+- 新增 2026-06-12 06:01:19 CST +0800 資深工程師審查報告，確認 v1.0.55 已補齊 Contract gate inventory，但 Startup configuration 仍缺少獨立 static gate 來固定 `PORT`、`QUEUE_SIZE`、`WORKERS` 與 optional endpoint fail-fast 行為。
+- 新增 `scripts/check-startup-config-contract.mjs`，固定 README、production README、API contract、OpenAPI、config loader、config tests、第 7 / 11 章、進階 Cheat Sheet、整合視覺課程、Makefile 與 GitHub Actions 都保留 Startup config contract gate。
+- `production-api-worker/Makefile` 新增 `startup-config-check`；`.github/workflows/ci.yml` 新增 `Check startup config contract`。
+- Contract gate inventory 從 24 個 root contract checker 更新為 25 個，並納入 Startup config checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.56`。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.55 - 2026-06-11
 
 - 新增 2026-06-11 06:01:26 CST +0800 資深工程師審查報告，確認 v1.0.54 已補齊 CI contract parity gate，且既有 `scripts/check-*-contract.mjs` 全部通過；本輪缺口收斂為 contract checker inventory 缺少總表型 static gate。

@@ -11,6 +11,7 @@
 - CORS Allowlist Contract：`CORS_ALLOWED_ORIGINS` 預設空值；只有明確列入的 exact origin 才回 CORS header
 - Request Body Limit Contract：`REQUEST_BODY_LIMIT_BYTES` 預設 1048576；`POST /jobs` 超限回 `413 payload_too_large`
 - HTTP Server Timeout Contract：`HTTP_READ_HEADER_TIMEOUT`、`HTTP_READ_TIMEOUT`、`HTTP_WRITE_TIMEOUT`、`HTTP_IDLE_TIMEOUT`、`HTTP_SHUTDOWN_TIMEOUT`、`QUEUE_DRAIN_TIMEOUT` 集中設定並 fail fast
+- Startup Configuration Contract：`PORT`、`QUEUE_SIZE`、`WORKERS` 與 optional endpoint 集中驗證，錯誤設定 fail fast，並由 `make startup-config-check` 固定文件、測試、Makefile 與 CI 入口
 - Worker Failure Contract：worker processor 成功/失敗都記錄 duration，並以 `worker_jobs_total{result="success|failed"}` 固定可觀測結果
 - Retry Cancellation Contract：deadlock retry backoff 必須尊重 `context` cancellation / deadline，取消後不得繼續交易或 enqueue
 - Queue Backpressure Contract：bounded queue 滿載時回 `domain.ErrQueueFull`，API 對外回 `503 queue_full`，並記錄 `worker_jobs_total{result="dropped"}`
@@ -33,7 +34,7 @@
 - Pipeline：migration CLI、Docker Compose、GitHub Actions workflow、Docker image build gate、Compose smoke gate
 - CI Quality Gate Contract：GitHub Actions 必須保留 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，並由 `make ci-quality-gate-check` 固定文件、Makefile 與 CI 入口
 - CI Contract Parity Gate：`make ci-contract` 與 GitHub Actions production contract job 必須使用相同 API test selector，包含 `TestCORSAllowedOriginsContract`，並由 `make ci-contract-parity-check` 固定
-- Contract Gate Inventory：24 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
+- Contract Gate Inventory：25 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
 - Compose Smoke Contract：`docker compose up -d --build` 後必須由 host-side `scripts/compose-smoke.sh` 驗證 `/livez`、`/readyz`、job create/read 與 `/metrics`，並由 `make compose-smoke-check` 固定文件、Makefile 與 CI 入口
 
 ## Local Memory Mode
@@ -110,6 +111,7 @@ make trusted-proxy-check
 make cors-check
 make request-body-limit-check
 make http-timeout-check
+make startup-config-check
 make request-correlation-check
 make api-security-check
 make worker-failure-check
@@ -165,6 +167,7 @@ make compose-smoke
 | `make cors-check` | 固定 CORS allowlist contract、`CORS_ALLOWED_ORIGINS`、OpenAPI、Go tests、README 與 CI 入口 |
 | `make request-body-limit-check` | 固定 request body limit contract、`REQUEST_BODY_LIMIT_BYTES`、OpenAPI、Go tests、README 與 CI 入口 |
 | `make http-timeout-check` | 固定 HTTP server timeout contract、timeout env、main server 套用、Go tests、README、API contract 與 CI 入口 |
+| `make startup-config-check` | 固定 Startup Configuration Contract、`PORT`、`QUEUE_SIZE`、`WORKERS`、optional endpoint、config tests、README、API contract 與 CI 入口 |
 | `make worker-failure-check` | 固定 worker failure contract、result metric、duration、Go tests、README 與 CI 入口 |
 | `make retry-cancellation-check` | 固定 retry cancellation contract、deadlock backoff、context cancellation、Go test、README 與 CI 入口 |
 | `make queue-backpressure-check` | 固定 queue backpressure contract、`domain.ErrQueueFull`、`503 queue_full`、dropped metric、Go tests、README 與 CI 入口 |
@@ -232,7 +235,7 @@ make contract-gate-inventory-check
 cd .. && node scripts/check-contract-gate-inventory-contract.mjs
 ```
 
-這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 24 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
+這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 25 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
 
 ## API Contract
 

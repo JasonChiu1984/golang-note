@@ -2,9 +2,9 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
-> 教材版本：`v1.0.55`
+> 教材版本：`v1.0.56`
 > 教材基準：`Go 1.26.4`
-> 這次更新重點：正式發布 Contract gate inventory，固定 24 個 root contract checker 都必須進入 GitHub Actions，避免新增 checker 後漏接 CI / Makefile / 教材入口。
+> 這次更新重點：正式發布 Startup config contract gate，固定 `PORT`、`QUEUE_SIZE`、`WORKERS` 與 optional endpoint 的 fail-fast 設定驗證必須進入 GitHub Actions、Makefile 與教材入口。
 
 ## 版本策略
 
@@ -33,6 +33,7 @@
 | CORS allowlist contract | `CORS_ALLOWED_ORIGINS` 預設空值；只允許 exact `http` / `https` origin，preflight 與實際 request 由 `TestCORSAllowedOriginsContract` 和 `node scripts/check-cors-contract.mjs` 固定 |
 | Request body limit contract | `REQUEST_BODY_LIMIT_BYTES=1048576` 為預設；`POST /jobs` 超過上限回 `413 payload_too_large`，並由 `TestRequestBodyLimitContract` 和 `node scripts/check-request-body-limit-contract.mjs` 固定 |
 | HTTP server timeout contract | `HTTP_READ_HEADER_TIMEOUT=3s`、`HTTP_READ_TIMEOUT=5s`、`HTTP_WRITE_TIMEOUT=10s`、`HTTP_IDLE_TIMEOUT=60s`、`HTTP_SHUTDOWN_TIMEOUT=5s`、`QUEUE_DRAIN_TIMEOUT=10s` 為預設，並由 `TestHTTPServerTimeoutContract` 和 `node scripts/check-http-timeout-contract.mjs` 固定 |
+| Startup config contract gate | `PORT`、`QUEUE_SIZE`、`WORKERS` 與 `OTEL_EXPORTER_OTLP_ENDPOINT` 必須集中驗證，錯誤設定 fail fast，不可 silent fallback，並由 `node scripts/check-startup-config-contract.mjs` 固定文件、Go tests、Makefile 與 CI 入口 |
 | Request timeout contract gate | Handler 造成的 `context.DeadlineExceeded` 必須回 `504 request_timeout`、保留 `X-Request-ID`，並由 `TestRequestTimeoutContract` 和 `node scripts/check-request-timeout-contract.mjs` 固定 |
 | Worker failure contract | worker processor 成功與失敗都必須記錄 duration，失敗需標記 `worker_jobs_total{result="failed"}`，成功標記 `success`，並由 `TestWorkerFailureResultContract` 和 `node scripts/check-worker-failure-contract.mjs` 固定 |
 | Retry cancellation contract | DB deadlock retry 的 backoff 必須尊重 `context` cancellation / deadline，避免 shutdown 或 request timeout 後繼續重試，並由 `TestCreateJobStopsDeadlockRetryWhenContextCanceled` 和 `node scripts/check-retry-cancellation-contract.mjs` 固定 |
@@ -50,7 +51,7 @@
 | CI release gate | `.github/workflows/ci.yml` 需固定 root module、production-api-worker contract、race/coverage、govulncheck 與 Docker build，避免教材只描述 CI 卻沒有真實 workflow |
 | CI quality gate contract | GitHub Actions 需同時保留 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，並由 `node scripts/check-ci-quality-gate-contract.mjs` 固定文件、Makefile 與 CI 入口 |
 | CI contract parity gate | `make ci-contract` 的 API contract test selector 必須與 `.github/workflows/ci.yml` production contract job 一致，包含 `TestCORSAllowedOriginsContract`，並由 `node scripts/check-ci-contract-parity-contract.mjs` 固定 |
-| Contract gate inventory | 24 個 root contract checker 必須全部被 `.github/workflows/ci.yml` 呼叫，並由 `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口 |
+| Contract gate inventory | 25 個 root contract checker 必須全部被 `.github/workflows/ci.yml` 呼叫，並由 `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口 |
 | Compose smoke contract gate | Docker Compose 不只要 build 成功，還要用主機端 smoke script 驗證 API ready、建立 job、讀回 job 與 metrics 暴露，並由 `node scripts/check-compose-smoke-contract.mjs` 固定文件、Makefile 與 CI 入口 |
 | API 合約 | 對外 HTTP endpoint 需有穩定 request/response/error schema，並用 contract test 阻擋破壞性變更 |
 | Request decoding | JSON request 需拒絕 malformed body、unknown field、trailing JSON value 與空白必填欄位 |
@@ -60,7 +61,7 @@
 | Panic recovery | HTTP handler 需用 middleware 將未預期 panic 轉成穩定 `internal_error` JSON，並保留 request id |
 | Retry cancellation | DB deadlock retry 的 backoff 必須尊重 `context` cancellation / deadline，避免 shutdown 或 request timeout 後繼續重試 |
 | Request timeout | Handler 造成的 `context.DeadlineExceeded` 應回 `504 request_timeout`，避免 timeout 被誤分類成未知伺服器錯誤 |
-| Startup config | `PORT`、`QUEUE_SIZE`、`WORKERS` 等啟動設定需先驗證；錯誤設定應 fail fast，不可靜默套用預設值 |
+| Startup config | `PORT`、`QUEUE_SIZE`、`WORKERS` 等啟動設定需先驗證；錯誤設定應 fail fast，不可靜默套用預設值，並由 `node scripts/check-startup-config-contract.mjs` 形成 Startup config contract gate |
 | Database pool | Postgres 連線池容量與生命週期需由 env 設定並驗證，避免 repository 內硬編碼造成部署容量不可控 |
 | Migration contract | DB schema migration 需有 `DATABASE_URL`、`MIGRATIONS_DIR`、`MIGRATION_TIMEOUT` 設定驗證、`schema_migrations` 版本紀錄與重複執行保護 |
 | CORS policy | 瀏覽器跨域存取不可使用 `*`；應以 `CORS_ALLOWED_ORIGINS=https://app.example.com,http://localhost:5173` 明確列出前端 origin |
@@ -175,6 +176,7 @@ go test ./project-concurrent-crawler/...
 | CORS allowlist gate | `node scripts/check-cors-contract.mjs` | 確認 `CORS_ALLOWED_ORIGINS`、allowlist middleware、preflight 測試、OpenAPI、README 與 CI 入口一致 |
 | Request body limit gate | `node scripts/check-request-body-limit-contract.mjs` | 確認 `REQUEST_BODY_LIMIT_BYTES`、`payload_too_large`、Go tests、OpenAPI、README 與 CI 入口一致 |
 | HTTP timeout gate | `node scripts/check-http-timeout-contract.mjs` | 確認 `HTTP_READ_HEADER_TIMEOUT`、`HTTP_READ_TIMEOUT`、`HTTP_WRITE_TIMEOUT`、`HTTP_IDLE_TIMEOUT`、`HTTP_SHUTDOWN_TIMEOUT`、`QUEUE_DRAIN_TIMEOUT`、Go tests、README、API contract 與 CI 入口一致 |
+| Startup config gate | `node scripts/check-startup-config-contract.mjs` | 確認 `PORT`、`QUEUE_SIZE`、`WORKERS`、optional endpoint、Go tests、README、API contract、章節、Makefile 與 CI 入口一致 |
 | Worker failure gate | `node scripts/check-worker-failure-contract.mjs` | 確認 worker 成功/失敗 result metric、duration、Go tests、README 與 CI 入口一致 |
 | Retry cancellation gate | `node scripts/check-retry-cancellation-contract.mjs` | 確認 deadlock retry backoff、context cancellation、Go test、README 與 CI 入口一致 |
 | Queue backpressure gate | `node scripts/check-queue-backpressure-contract.mjs` | 確認 bounded queue 滿載時回 `domain.ErrQueueFull`、API `503 queue_full`、dropped metric、Go tests、README 與 CI 入口一致 |
@@ -187,7 +189,7 @@ go test ./project-concurrent-crawler/...
 | Shutdown signal contract gate | `node scripts/check-shutdown-signal-contract.mjs` | 確認 SIGINT/SIGTERM、`TestMonitoredSignalsContract`、README、API contract、章節與 CI 入口一致 |
 | CI quality gate contract | `node scripts/check-ci-quality-gate-contract.mjs` | 確認 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build、Compose smoke、Makefile 與 CI 入口一致 |
 | CI contract parity gate | `node scripts/check-ci-contract-parity-contract.mjs` | 確認 `make ci-contract` 與 GitHub Actions production contract job 的 API test selector 一致，且保留 `TestCORSAllowedOriginsContract` |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` | 確認 24 個 root contract checker 都被 GitHub Actions 呼叫，且 Makefile、README、API contract、章節與整合視覺課程入口一致 |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` | 確認 25 個 root contract checker 都被 GitHub Actions 呼叫，且 Makefile、README、API contract、章節與整合視覺課程入口一致 |
 | Docs index 連結自動修正 | `node scripts/fix-docs-index-links.mjs --sync-source && node scripts/fix-docs-index-links.mjs --check` | 每次重產 `docs/index.html` 後，自動改成 GitHub Pages `docs/` root 可用路徑，避免 `/docs`、`/ReleaseNote` 404 |
 | HTML 回主頁教程檢查 | `node scripts/check-html-home-links.mjs` | 確認 `docs/`、`ReleaseNote/` 與圖解 HTML 頁面都有可解析到 `docs/index.html` 的「主頁教程」入口 |
 | 跨語言效能範例 | `cd examples/performance-comparison && clang -O2 c/bench.c -o /tmp/bench-c && /tmp/bench-c && go test -bench=. -benchmem -count=1 ./go && python3 python/bench.py` | 確認 C/Python/Go 範例可重跑，並保留正式報告所需原始輸出 |

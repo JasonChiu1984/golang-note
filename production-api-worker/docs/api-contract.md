@@ -1,6 +1,6 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.55 ｜ 基準日期：2026-06-11 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Readiness lifecycle contract、Request decoding contract、Panic recovery contract、Request correlation contract、API security contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract、Worker failure contract、Retry cancellation contract、Queue backpressure contract、DB pool contract gate、Migration Operation Contract、CI quality gate contract、CI contract parity gate、Contract gate inventory、Compose smoke contract
+> 版本：v1.0.56 ｜ 基準日期：2026-06-12 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Readiness lifecycle contract、Request decoding contract、Panic recovery contract、Request correlation contract、API security contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract、Startup configuration contract gate、Worker failure contract、Retry cancellation contract、Queue backpressure contract、DB pool contract gate、Migration Operation Contract、CI quality gate contract、CI contract parity gate、Contract gate inventory、Compose smoke contract
 
 這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery、retry 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 cancellation 行為需要透過 contract test 保護。
 
@@ -27,6 +27,7 @@ Machine-readable contract 位於 `production-api-worker/api/openapi.yaml`。此 
 | Request timeout | handler deadline exceeded 必須回 `504 request_timeout`，不得漂移成 `500 internal_error` |
 | Request timeout gate | `node scripts/check-request-timeout-contract.mjs` 必須固定 `contextWithTimeout`、`context.DeadlineExceeded`、`TestRequestTimeoutContract`、OpenAPI、README、章節、Makefile 與 CI 入口 |
 | Startup configuration | `PORT`、`QUEUE_SIZE`、`WORKERS` 與 DB pool 設定必須先驗證；錯誤設定 fail fast，不可 silent fallback |
+| Startup configuration contract gate | `node scripts/check-startup-config-contract.mjs` 必須固定 `PORT`、`QUEUE_SIZE`、`WORKERS`、`OTEL_EXPORTER_OTLP_ENDPOINT`、config loader、Go tests、README、章節、Makefile 與 CI 入口 |
 | DB pool contract gate | `node scripts/check-db-pool-contract.mjs` 必須固定 DB pool env、config default / override / fail-fast、repository pool 套用、`api-worker` wiring、文件、Makefile 與 CI 入口 |
 | API security | `API_KEY` 有值時，`/jobs` 與 `/metrics` 必須要求 Bearer token；health endpoint 仍需公開供部署系統探測 |
 | API security gate | `node scripts/check-api-security-contract.mjs` 必須固定 `API_KEY`、Bearer auth、公開 health probes、安全標頭、Go tests、OpenAPI 與 CI 入口 |
@@ -37,7 +38,7 @@ Machine-readable contract 位於 `production-api-worker/api/openapi.yaml`。此 
 | Trusted proxy client IP contract gate | `node scripts/check-trusted-proxy-contract.mjs` 必須固定 `TRUSTED_PROXY_CIDRS`、`X-Forwarded-For` 第一個 IP、untrusted `RemoteAddr` fallback、Go test、runbook、Makefile 與 CI 入口 |
 | Shutdown signal | `api-worker` 必須同時監聽 SIGINT 與 SIGTERM，讓 local Ctrl+C、Docker stop 與 Kubernetes rolling deploy 都進入 draining |
 | CI quality gate contract | `node scripts/check-ci-quality-gate-contract.mjs` 必須固定 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build、Compose smoke、Makefile 與 CI 入口 |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` 必須固定 24 個 root contract checker 都被 GitHub Actions 呼叫，且 Makefile、README、API contract、章節與整合視覺課程入口一致 |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` 必須固定 25 個 root contract checker 都被 GitHub Actions 呼叫，且 Makefile、README、API contract、章節與整合視覺課程入口一致 |
 | Compose smoke contract | `node scripts/check-compose-smoke-contract.mjs` 必須固定 `docker compose up -d --build`、host-side `scripts/compose-smoke.sh`、`/livez`、`/readyz`、`POST /jobs`、`GET /jobs/{id}`、`/metrics`、`docker compose logs --no-color`、Makefile 與 CI 入口 |
 | OpenAPI sync | endpoint、request schema、response schema、error code、Bearer auth 與 `X-Request-ID` 需同步 `api/openapi.yaml` |
 | Worker shutdown | queue close 與 enqueue send 必須同步，shutdown 後新 enqueue 回穩定錯誤 |

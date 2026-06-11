@@ -105,6 +105,9 @@ jobs:
       - name: Check HTTP timeout contract
         run: node scripts/check-http-timeout-contract.mjs
 
+      - name: Check startup config contract
+        run: node scripts/check-startup-config-contract.mjs
+
       - name: Check shutdown signal contract
         run: node scripts/check-shutdown-signal-contract.mjs
 
