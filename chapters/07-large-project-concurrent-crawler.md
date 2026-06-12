@@ -289,11 +289,12 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Request timeout | `504 request_timeout` JSON、request id header | handler deadline exceeded 被誤分類成 `500 internal_error`，client 無法區分 timeout 與 bug |
 | Retry cancellation contract | deadlock backoff、request context、shutdown deadline、`node scripts/check-retry-cancellation-contract.mjs` | request 已取消後仍繼續重試 DB 交易或排入 queue |
 | Startup config | port、queue size、worker count、optional endpoint | 錯誤 env 被 silent fallback，容量與部署設定不一致 |
+| Operational observability contract gate | `node scripts/check-operational-observability-contract.mjs`、runbook、Prometheus scrape config、alert rules、Compose monitoring profile | observability 只剩 metrics/log 概念，缺少 incident workflow、告警與監控 profile 的 release gate |
 | Migration contract gate | migration env、timeout、schema version、SQL 檔命名、`node scripts/check-migration-contract.mjs` | 重複套用 schema、release 後無法追蹤 DB 版本，或文件 / CI / Go tests 漂移 |
 | Queue shutdown | enqueue 與 close 的同步邊界 | shutdown 期間可能送入已關閉 channel，造成 panic |
 | Shutdown signal contract | `SIGINT`、`SIGTERM`、readiness draining、HTTP shutdown、queue drain | Docker / Kubernetes 發出 `SIGTERM` 時未進入 graceful shutdown |
 | CI quality gate static gate | `node scripts/check-ci-quality-gate-contract.mjs`、root course、production contracts、race/coverage、govulncheck、Docker build、Compose smoke | workflow 重整後漏掉 dependency verify、漏洞掃描、競態檢查或部署 smoke |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs`、25 個 root contract checker、GitHub Actions 呼叫清單 | 新增 checker 後沒有進入 CI、Makefile 或教材入口，導致 release gate 漂移 |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs`、26 個 root contract checker、GitHub Actions 呼叫清單 | 新增 checker 後沒有進入 CI、Makefile 或教材入口，導致 release gate 漂移 |
 
 `production-api-worker/docs/api-contract.md` 示範了最小可維護合約：`POST /jobs`、`GET /jobs/{id}`、health endpoint、metrics endpoint、錯誤格式與 release gate。`production-api-worker/api/openapi.yaml` 則把同一份合約轉成 machine-readable OpenAPI artifact，讓前端 mock、SDK 產生、API gateway review 與 contract diff 可以共用同一份 schema。這不是要把文件寫成百科，而是讓每次 release 都能回答三個問題：
 
@@ -443,7 +444,8 @@ Production API 的 timeout 不是未知錯誤。若 handler 建立的 request de
 | Root course | 根目錄範例、docs entry、OpenAPI / runbook / Prometheus / contract static checks |
 | Production contracts | `make ci-contract` 對齊 config、migration、API、worker 與 lifecycle contract tests |
 | CI contract parity gate | `node scripts/check-ci-contract-parity-contract.mjs` 固定 `make ci-contract` 與 GitHub Actions production contract job 的 API test selector 一致，避免漏跑 `TestCORSAllowedOriginsContract` |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` 固定 25 個 root contract checker 都被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate |
+| Operational observability contract gate | `node scripts/check-operational-observability-contract.mjs` 固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險與 CI 入口 |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` 固定 26 個 root contract checker 都被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate |
 | Race / coverage | `go test -race -cover ./... -count=1` 固定併發與覆蓋率 gate |
 | Vulnerability scan | root module 與 `production-api-worker` 都需跑 `govulncheck ./...` |
 | Docker / smoke | Docker image build 後用 Compose smoke 驗證 `/readyz`、job create/read 與 metrics |

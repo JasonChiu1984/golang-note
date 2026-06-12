@@ -31,10 +31,11 @@
 - Request timeout：handler deadline exceeded 時回穩定 `request_timeout` JSON
 - Observability：Prometheus client、OpenTelemetry OTLP/stdout exporter、slog、`X-Request-ID`
 - Operational runbook：SLI/SLO、Prometheus alert rules、scrape config、incident workflow、verification、troubleshooting
+- Operational Observability Contract：runbook、Prometheus scrape config、alert rules、Compose monitoring profile 與 API key scrape auth risk 需由 `make operational-observability-check` 固定
 - Pipeline：migration CLI、Docker Compose、GitHub Actions workflow、Docker image build gate、Compose smoke gate
 - CI Quality Gate Contract：GitHub Actions 必須保留 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，並由 `make ci-quality-gate-check` 固定文件、Makefile 與 CI 入口
 - CI Contract Parity Gate：`make ci-contract` 與 GitHub Actions production contract job 必須使用相同 API test selector，包含 `TestCORSAllowedOriginsContract`，並由 `make ci-contract-parity-check` 固定
-- Contract Gate Inventory：25 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
+- Contract Gate Inventory：26 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
 - Compose Smoke Contract：`docker compose up -d --build` 後必須由 host-side `scripts/compose-smoke.sh` 驗證 `/livez`、`/readyz`、job create/read 與 `/metrics`，並由 `make compose-smoke-check` 固定文件、Makefile 與 CI 入口
 
 ## Local Memory Mode
@@ -162,6 +163,7 @@ make compose-smoke
 | `make api-security-check` | 固定 API security contract、`API_KEY`、Bearer auth、公開 health endpoint、安全標頭、Go tests、OpenAPI 與 CI 入口 |
 | `make runbook-check` | 固定 SLI/SLO、Prometheus alert rules、incident workflow 與 runbook link 不被移除 |
 | `make prometheus-check` | 固定 Prometheus scrape config、rule_files、Compose monitoring profile 與 README/runbook 入口 |
+| `make operational-observability-check` | 固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險與 CI 入口 |
 | `make pprof-check` | 固定 pprof diagnostics contract、`ENABLE_PPROF`、`PPROF_TOKEN`、runbook、Go tests 與 CI 入口 |
 | `make rate-limit-check` | 固定 rate limit contract、`RATE_LIMIT_REQUESTS_PER_MINUTE`、OpenAPI、Go tests、README 與 CI 入口 |
 | `make cors-check` | 固定 CORS allowlist contract、`CORS_ALLOWED_ORIGINS`、OpenAPI、Go tests、README 與 CI 入口 |
@@ -235,7 +237,7 @@ make contract-gate-inventory-check
 cd .. && node scripts/check-contract-gate-inventory-contract.mjs
 ```
 
-這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 25 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
+這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 26 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
 
 ## API Contract
 
@@ -517,6 +519,7 @@ Readiness contract 是 deployment 的外部合約。`/livez` 表示 process 還�
 | Prometheus scrape config | `../configs/prometheus/prometheus.yml` |
 | Runbook check | `make runbook-check` 或從 repo root 執行 `node scripts/check-operational-runbook.mjs` |
 | Prometheus config check | `make prometheus-check` 或從 repo root 執行 `node scripts/check-prometheus-config.mjs` |
+| Operational observability contract | `make operational-observability-check` 或從 repo root 執行 `node scripts/check-operational-observability-contract.mjs` |
 | 主要 SLI | API 5xx rate、worker p95 latency、queue depth、readiness、metrics scrape |
 | Incident correlation | `X-Request-ID`、route label、structured log、OpenTelemetry span |
 

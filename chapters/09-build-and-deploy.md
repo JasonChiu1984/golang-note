@@ -296,7 +296,7 @@ release:
 
 ## GitHub Actions CI/CD 範例
 
-本教材現在已把 CI/CD 範例落成真實 workflow：`.github/workflows/ci.yml`。它不是展示用 YAML，而是 release gate：root course job 驗證教材範例與 docs 入口，production job 驗證 API / migration / worker 合約與 race/coverage，vulnerability job 執行 `govulncheck`，Docker job 確認 `production-api-worker` image 可建置，並用 Compose smoke 驗證服務真的 ready、可建 job、可讀 job 與可輸出 metrics。CI quality gate static gate 由 `node scripts/check-ci-quality-gate-contract.mjs` 固定 `go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build、Compose smoke、Makefile 與 CI 入口；Contract gate inventory 由 `node scripts/check-contract-gate-inventory-contract.mjs` 固定 24 個 root contract checker 都被 GitHub Actions 呼叫；Compose smoke static gate 則由 `node scripts/check-compose-smoke-contract.mjs` 固定 `docker compose up -d --build`、`make compose-smoke`、`docker compose logs --no-color`、`docker compose down -v`、runbook、Makefile 與 CI 入口。
+本教材現在已把 CI/CD 範例落成真實 workflow：`.github/workflows/ci.yml`。它不是展示用 YAML，而是 release gate：root course job 驗證教材範例與 docs 入口，production job 驗證 API / migration / worker 合約與 race/coverage，vulnerability job 執行 `govulncheck`，Docker job 確認 `production-api-worker` image 可建置，並用 Compose smoke 驗證服務真的 ready、可建 job、可讀 job 與可輸出 metrics。CI quality gate static gate 由 `node scripts/check-ci-quality-gate-contract.mjs` 固定 `go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build、Compose smoke、Makefile 與 CI 入口；Operational observability contract gate 由 `node scripts/check-operational-observability-contract.mjs` 固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile 與 API key scrape auth 風險；Contract gate inventory 由 `node scripts/check-contract-gate-inventory-contract.mjs` 固定 26 個 root contract checker 都被 GitHub Actions 呼叫；Compose smoke static gate 則由 `node scripts/check-compose-smoke-contract.mjs` 固定 `docker compose up -d --build`、`make compose-smoke`、`docker compose logs --no-color`、`docker compose down -v`、runbook、Makefile 與 CI 入口。
 
 本機對照指令：
 
@@ -324,6 +324,8 @@ docker compose down -v
 CI contract parity gate 由 `node scripts/check-ci-contract-parity-contract.mjs` 固定：本機 `make ci-contract` 與 GitHub Actions production contract job 必須使用相同 API test selector，包含 `TestCORSAllowedOriginsContract`。
 
 Contract gate inventory 由 `node scripts/check-contract-gate-inventory-contract.mjs` 固定：所有 root `scripts/check-*-contract.mjs` 都必須被 `.github/workflows/ci.yml` 明確呼叫，避免新增 checker 後未進入 release gate。
+
+Operational observability contract gate 由 `node scripts/check-operational-observability-contract.mjs` 固定：runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險、Makefile 與 CI 入口必須一起存在，避免觀測性只停在概念而沒有 incident-ready release gate。
 
 ```yaml
 name: CI

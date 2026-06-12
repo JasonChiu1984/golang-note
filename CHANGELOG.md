@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.57 - 2026-06-13
+
+- 新增 2026-06-13 06:02:09 CST +0800 資深工程師審查報告，確認 v1.0.56 已補齊 Startup config contract gate，但 Operational runbook 與 Prometheus config 仍缺少單一 formal contract gate 來固定 runbook、scrape config、alert rules、Compose monitoring profile 與 API key scrape auth 風險。
+- 新增 `scripts/check-operational-observability-contract.mjs`，固定 README、production README、API contract、OpenAPI、operational runbook、Prometheus config、alert rules、Docker Compose monitoring profile、第 7 / 9 / 11 章、進階 Cheat Sheet、整合視覺課程、Makefile 與 GitHub Actions 都保留 Operational observability contract gate。
+- `production-api-worker/Makefile` 新增 `operational-observability-check`；`.github/workflows/ci.yml` 新增 `Check operational observability contract`。
+- Contract gate inventory 從 25 個 root contract checker 更新為 26 個，並納入 Operational observability checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.57`。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.56 - 2026-06-12
 
 - 新增 2026-06-12 06:01:19 CST +0800 資深工程師審查報告，確認 v1.0.55 已補齊 Contract gate inventory，但 Startup configuration 仍缺少獨立 static gate 來固定 `PORT`、`QUEUE_SIZE`、`WORKERS` 與 optional endpoint fail-fast 行為。
