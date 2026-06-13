@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.58 - 2026-06-14
+
+- 新增 2026-06-14 06:02:28 CST +0800 資深工程師審查報告，確認 v1.0.57 已補齊 Operational observability contract gate，但 `docs/index.html` 發布同步流程仍缺少正式 static gate 來固定 GitHub Pages link fix 與 HTML 主頁教程回鏈。
+- 新增 `scripts/check-docs-publishing-contract.mjs`，固定 README、production README、API contract、OpenAPI、第 7 / 9 / 11 章、進階 Cheat Sheet、整合視覺課程、`docs/index.html`、Makefile 與 GitHub Actions 都保留 Docs publishing contract gate。
+- `production-api-worker/Makefile` 新增 `docs-publishing-check`；`.github/workflows/ci.yml` 新增 `Check docs publishing contract`。
+- Contract gate inventory 從 26 個 root contract checker 更新為 27 個，並納入 Docs publishing checker。
+- 修正 `production-api-worker/api/openapi.yaml` 殘留的 `all 25 root contract checker scripts`，並將 OpenAPI、API contract 與 version-sensitive contract checks 版本標記更新為 `v1.0.58`。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.57 - 2026-06-13
 
 - 新增 2026-06-13 06:02:09 CST +0800 資深工程師審查報告，確認 v1.0.56 已補齊 Startup config contract gate，但 Operational runbook 與 Prometheus config 仍缺少單一 formal contract gate 來固定 runbook、scrape config、alert rules、Compose monitoring profile 與 API key scrape auth 風險。
