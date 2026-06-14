@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.59 - 2026-06-15
+
+- 新增 2026-06-15 06:01:51 CST +0800 資深工程師審查報告，確認 v1.0.58 已補齊 Docs publishing contract gate，但 tracked standalone workflow `production-api-worker/.github/workflows/production-api-worker.yml` 仍缺少正式 static gate 來固定 production contract、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup。
+- 新增 `scripts/check-production-workflow-contract.mjs`，固定 README、production README、API contract、OpenAPI、第 7 / 9 / 11 章、進階 Cheat Sheet、整合視覺課程、standalone workflow、Makefile 與 GitHub Actions 都保留 Production workflow contract gate。
+- `production-api-worker/.github/workflows/production-api-worker.yml` 補齊 `go mod download`、`go mod verify`、`make ci-contract`、`go test -race -cover ./... -count=1`、`govulncheck ./...`、Docker build、Compose smoke、failure logs 與 cleanup。
+- `production-api-worker/Makefile` 新增 `production-workflow-check`；`.github/workflows/ci.yml` 新增 `Check production workflow contract`。
+- Contract gate inventory 從 27 個 root contract checker 更新為 28 個，並納入 Production workflow checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.59`。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.58 - 2026-06-14
 
 - 新增 2026-06-14 06:02:28 CST +0800 資深工程師審查報告，確認 v1.0.57 已補齊 Operational observability contract gate，但 `docs/index.html` 發布同步流程仍缺少正式 static gate 來固定 GitHub Pages link fix 與 HTML 主頁教程回鏈。

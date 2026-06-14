@@ -35,8 +35,9 @@
 - Pipeline：migration CLI、Docker Compose、GitHub Actions workflow、Docker image build gate、Compose smoke gate
 - CI Quality Gate Contract：GitHub Actions 必須保留 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，並由 `make ci-quality-gate-check` 固定文件、Makefile 與 CI 入口
 - CI Contract Parity Gate：`make ci-contract` 與 GitHub Actions production contract job 必須使用相同 API test selector，包含 `TestCORSAllowedOriginsContract`，並由 `make ci-contract-parity-check` 固定
-- Contract Gate Inventory：27 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
+- Contract Gate Inventory：28 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
 - Docs Publishing Contract：`docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈必須由 `make docs-publishing-check` / `node scripts/check-docs-publishing-contract.mjs` 固定，避免 Pages 首頁與整合課程來源漂移
+- Production Workflow Contract：`production-api-worker/.github/workflows/production-api-worker.yml` 必須保留 `make ci-contract`、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup，並由 `make production-workflow-check` 固定
 - Compose Smoke Contract：`docker compose up -d --build` 後必須由 host-side `scripts/compose-smoke.sh` 驗證 `/livez`、`/readyz`、job create/read 與 `/metrics`，並由 `make compose-smoke-check` 固定文件、Makefile 與 CI 入口
 
 ## Local Memory Mode
@@ -122,6 +123,7 @@ make queue-backpressure-check
 make shutdown-signal-check
 make ci-quality-gate-check
 make ci-contract-parity-check
+make production-workflow-check
 make compose-smoke-check
 go test -run='^$' -bench=. -benchmem -count=10 ./... > bench.txt
 docker compose up --build
@@ -131,6 +133,7 @@ make compose-smoke
 | Gate | 目的 |
 |---|---|
 | `.github/workflows/ci.yml` | 固定 root module、production contract、race/coverage、govulncheck 與 Docker build，避免 release gate 只停在文件 |
+| `production-api-worker/.github/workflows/production-api-worker.yml` | 固定 standalone production workflow 也保留 contract tests、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | `make ci-contract` | 本機快速重跑與 CI 相同的核心 production 合約測試 |
 | `go mod verify` | 確認 module cache 與 `go.sum` hash 一致 |
 | `go list -m -u all` | 發現可更新依賴並建立維護紀錄 |
@@ -181,6 +184,7 @@ make compose-smoke
 | `make shutdown-signal-check` | 固定 shutdown signal contract、SIGINT/SIGTERM、main test、README、API contract 與 CI 入口 |
 | `make ci-contract-parity-check` | 固定 CI Contract Parity Gate，確認 `make ci-contract` 與 GitHub Actions production contract job 都涵蓋 `TestCORSAllowedOriginsContract` |
 | `make docs-publishing-check` | 固定 Docs Publishing Contract、`docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈、Makefile 與 CI 入口 |
+| `make production-workflow-check` | 固定 Production Workflow Contract、standalone workflow、contract tests、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | `make compose-smoke-check` | 固定 Compose Smoke Contract、host-side smoke script、`/livez`、`/readyz`、job create/read、`/metrics`、失敗 logs、Makefile 與 CI 入口 |
 | `go test -run='^$' -bench=. -benchmem -count=10 ./...` | API / worker 效能改動需保留 benchmark 證據 |
 | `docker compose up --build` | 啟動 Postgres、migration、API、worker 與 metrics 整體鏈路 |
@@ -239,7 +243,16 @@ make contract-gate-inventory-check
 cd .. && node scripts/check-contract-gate-inventory-contract.mjs
 ```
 
-這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 27 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
+這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 28 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
+
+Production Workflow Contract 需包含：
+
+```bash
+make production-workflow-check
+cd .. && node scripts/check-production-workflow-contract.mjs
+```
+
+`production-api-worker/.github/workflows/production-api-worker.yml` 是 tracked standalone workflow。若未來把 production worker 抽成獨立 repo，這個 workflow 不應退化成只跑 `go test`；它必須保留 `make ci-contract`、`go test -race -cover ./... -count=1`、`govulncheck ./...`、Docker build、Compose smoke、failure logs 與 cleanup。
 
 Docs Publishing Contract 需包含：
 

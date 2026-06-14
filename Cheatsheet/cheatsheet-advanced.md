@@ -412,9 +412,11 @@ node ../scripts/check-retry-cancellation-contract.mjs
 
 CI contract parity gate：在 repo root 執行 `node scripts/check-ci-contract-parity-contract.mjs`，固定 `make ci-contract` 與 GitHub Actions production contract job 都涵蓋 `TestCORSAllowedOriginsContract`。
 
-Contract gate inventory：在 repo root 執行 `node scripts/check-contract-gate-inventory-contract.mjs`，固定 27 個 root contract checker 全部被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate。
+Contract gate inventory：在 repo root 執行 `node scripts/check-contract-gate-inventory-contract.mjs`，固定 28 個 root contract checker 全部被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate。
 
 Docs publishing contract gate：在 repo root 執行 `node scripts/check-docs-publishing-contract.mjs`，固定 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈、Makefile 與 CI 入口。
+
+Production workflow contract gate：在 repo root 執行 `node scripts/check-production-workflow-contract.mjs`，固定 `production-api-worker/.github/workflows/production-api-worker.yml` 保留 `make ci-contract`、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup。
 
 Operational observability contract gate：在 repo root 執行 `node scripts/check-operational-observability-contract.mjs`，固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險、Makefile 與 CI 入口。
 
@@ -840,8 +842,9 @@ synctest.Test(t, func(t *testing.T) {
 | CI workflow | `ruby -e 'require "yaml"; YAML.load_file(".github/workflows/ci.yml")'` + GitHub Actions run | workflow 必須真的存在於 repo，並固定 root test、production contract、race/coverage、govulncheck、Docker build 與 Compose smoke |
 | CI quality gate static gate | `node scripts/check-ci-quality-gate-contract.mjs && cd production-api-worker && make ci-quality-gate-check` | 固定 `go mod verify`、production contracts、`go test -race -cover`、`govulncheck ./...`、Docker build、Compose smoke、Makefile 與 CI 入口 |
 | Operational observability contract gate | `node scripts/check-operational-observability-contract.mjs && cd production-api-worker && make operational-observability-check` | 固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險、Makefile 與 CI 入口 |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs && cd production-api-worker && make contract-gate-inventory-check` | 固定 27 個 root contract checker 全部被 GitHub Actions 呼叫，並同步 Makefile、README、API contract、章節與整合視覺課程入口 |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs && cd production-api-worker && make contract-gate-inventory-check` | 固定 28 個 root contract checker 全部被 GitHub Actions 呼叫，並同步 Makefile、README、API contract、章節與整合視覺課程入口 |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs && cd production-api-worker && make docs-publishing-check` | 固定 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈、Makefile 與 CI 入口 |
+| Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs && cd production-api-worker && make production-workflow-check` | 固定 standalone production workflow 的 contract、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | Compose smoke static gate | `node scripts/check-compose-smoke-contract.mjs && cd production-api-worker && docker compose up -d --build && make compose-smoke && docker compose down -v` | 驗證 livez、readyz、job create/read、metrics、失敗 logs、Makefile 與 CI 入口，不只確認 image build 成功 |
 | Pprof diagnostics | `ENABLE_PPROF=true PPROF_TOKEN=debug-token go run ./cmd/api-worker` + `curl -H 'Authorization: Bearer debug-token' .../debug/pprof/profile?seconds=30 -o profile.pb.gz` | 預設關閉，短期事故診斷後關閉，profile 檔案不要提交 repo |
 | CPU 熱點 | `go tool pprof http://localhost:6060/debug/pprof/profile?seconds=30` | 本機教學用；適合 CPU-bound，不適合直接判斷 I/O wait |

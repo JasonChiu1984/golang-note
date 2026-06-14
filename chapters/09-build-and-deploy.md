@@ -296,7 +296,7 @@ release:
 
 ## GitHub Actions CI/CD 範例
 
-本教材現在已把 CI/CD 範例落成真實 workflow：`.github/workflows/ci.yml`。它不是展示用 YAML，而是 release gate：root course job 驗證教材範例與 docs 入口，production job 驗證 API / migration / worker 合約與 race/coverage，vulnerability job 執行 `govulncheck`，Docker job 確認 `production-api-worker` image 可建置，並用 Compose smoke 驗證服務真的 ready、可建 job、可讀 job 與可輸出 metrics。CI quality gate static gate 由 `node scripts/check-ci-quality-gate-contract.mjs` 固定 `go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build、Compose smoke、Makefile 與 CI 入口；Operational observability contract gate 由 `node scripts/check-operational-observability-contract.mjs` 固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile 與 API key scrape auth 風險；Contract gate inventory 由 `node scripts/check-contract-gate-inventory-contract.mjs` 固定 27 個 root contract checker 都被 GitHub Actions 呼叫；Docs publishing contract gate 由 `node scripts/check-docs-publishing-contract.mjs` 固定 `docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈；Compose smoke static gate 則由 `node scripts/check-compose-smoke-contract.mjs` 固定 `docker compose up -d --build`、`make compose-smoke`、`docker compose logs --no-color`、`docker compose down -v`、runbook、Makefile 與 CI 入口。
+本教材現在已把 CI/CD 範例落成真實 workflow：`.github/workflows/ci.yml`。它不是展示用 YAML，而是 release gate：root course job 驗證教材範例與 docs 入口，production job 驗證 API / migration / worker 合約與 race/coverage，vulnerability job 執行 `govulncheck`，Docker job 確認 `production-api-worker` image 可建置，並用 Compose smoke 驗證服務真的 ready、可建 job、可讀 job 與可輸出 metrics。CI quality gate static gate 由 `node scripts/check-ci-quality-gate-contract.mjs` 固定 `go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build、Compose smoke、Makefile 與 CI 入口；Operational observability contract gate 由 `node scripts/check-operational-observability-contract.mjs` 固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile 與 API key scrape auth 風險；Contract gate inventory 由 `node scripts/check-contract-gate-inventory-contract.mjs` 固定 28 個 root contract checker 都被 GitHub Actions 呼叫；Docs publishing contract gate 由 `node scripts/check-docs-publishing-contract.mjs` 固定 `docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈；Production workflow contract gate 由 `node scripts/check-production-workflow-contract.mjs` 固定 `production-api-worker/.github/workflows/production-api-worker.yml` 的 `make ci-contract`、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup；Compose smoke static gate 則由 `node scripts/check-compose-smoke-contract.mjs` 固定 `docker compose up -d --build`、`make compose-smoke`、`docker compose logs --no-color`、`docker compose down -v`、runbook、Makefile 與 CI 入口。
 
 本機對照指令：
 
@@ -308,6 +308,7 @@ cd production-api-worker
 make ci-contract
 make ci-contract-parity-check
 make contract-gate-inventory-check
+make production-workflow-check
 go test -race -cover ./... -count=1
 docker build -t production-api-worker:local .
 cd ..
@@ -315,6 +316,7 @@ node scripts/check-ci-quality-gate-contract.mjs
 node scripts/check-ci-contract-parity-contract.mjs
 node scripts/check-contract-gate-inventory-contract.mjs
 node scripts/check-docs-publishing-contract.mjs
+node scripts/check-production-workflow-contract.mjs
 cd production-api-worker
 node scripts/check-compose-smoke-contract.mjs
 docker compose up -d --build
@@ -327,6 +329,8 @@ CI contract parity gate 由 `node scripts/check-ci-contract-parity-contract.mjs`
 Contract gate inventory 由 `node scripts/check-contract-gate-inventory-contract.mjs` 固定：所有 root `scripts/check-*-contract.mjs` 都必須被 `.github/workflows/ci.yml` 明確呼叫，避免新增 checker 後未進入 release gate。
 
 Docs publishing contract gate 由 `node scripts/check-docs-publishing-contract.mjs` 固定：`docs/index.html` 必須保留 GitHub Pages 可用路徑、Release Notes 與補充教材入口，且所有 HTML 教材頁都要保留可回到 `docs/index.html` 的「主頁教程」連結。
+
+Production workflow contract gate 由 `node scripts/check-production-workflow-contract.mjs` 固定：`production-api-worker/.github/workflows/production-api-worker.yml` 是 tracked standalone workflow，需保留 `make ci-contract`、`go test -race -cover ./... -count=1`、`govulncheck ./...`、Docker build、Compose smoke、failure logs 與 cleanup，避免 production worker 抽成獨立 repo 時只剩快速測試。
 
 Operational observability contract gate 由 `node scripts/check-operational-observability-contract.mjs` 固定：runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險、Makefile 與 CI 入口必須一起存在，避免觀測性只停在概念而沒有 incident-ready release gate。
 
