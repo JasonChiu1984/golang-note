@@ -62,12 +62,12 @@ const required = {
     "TRUSTED_PROXY_CIDRS",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.59",
+    "version: v1.0.60",
     "trusted proxy client IP behavior",
     "TRUSTED_PROXY_CIDRS",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.59",
+    "版本：v1.0.60",
     "Trusted proxy client IP contract gate",
     "TRUSTED_PROXY_CIDRS",
     "X-Forwarded-For",

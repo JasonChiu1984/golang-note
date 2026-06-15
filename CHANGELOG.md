@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.60 - 2026-06-16
+
+- 新增 2026-06-16 06:02:47 CST +0800 資深工程師審查報告，確認 v1.0.59 已補齊 Production workflow contract gate，但語法 SVG 流程圖品質門檻仍停留在非 contract checker，未正式進入 Makefile、GitHub Actions 與 contract inventory。
+- 新增 `scripts/check-syntax-flow-svg-contract.mjs`，固定 README、production README、API contract、OpenAPI、第 7 / 9 / 11 章、進階 Cheat Sheet、整合視覺課程、語法 SVG 補充頁、Makefile 與 GitHub Actions 都保留 Syntax flow SVG contract gate。
+- `production-api-worker/Makefile` 新增 `syntax-flow-svg-check`；`.github/workflows/ci.yml` 新增 `Check syntax flow SVG contract`。
+- Contract gate inventory 從 28 個 root contract checker 更新為 29 個，並納入 Syntax flow SVG checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.60`。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.59 - 2026-06-15
 
 - 新增 2026-06-15 06:01:51 CST +0800 資深工程師審查報告，確認 v1.0.58 已補齊 Docs publishing contract gate，但 tracked standalone workflow `production-api-worker/.github/workflows/production-api-worker.yml` 仍缺少正式 static gate 來固定 production contract、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup。

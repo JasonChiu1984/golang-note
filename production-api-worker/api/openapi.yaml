@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.59
+  version: v1.0.60
   description: >
     Machine-readable contract for the Go teaching production API worker.
     This file mirrors docs/api-contract.md and the Go contract tests,
@@ -44,7 +44,7 @@ info:
     Startup configuration contract gate keeps PORT, QUEUE_SIZE, WORKERS,
     OTEL_EXPORTER_OTLP_ENDPOINT, config loader, Go tests, Makefile, and CI
     static gates aligned through check-startup-config-contract.mjs.
-    Contract gate inventory keeps all 28 root contract checker scripts,
+    Contract gate inventory keeps all 29 root contract checker scripts,
     check-contract-gate-inventory-contract.mjs, Makefile, README, API contract,
     chapters, visual course, and GitHub Actions aligned.
     Docs publishing contract gate keeps docs/index.html, GitHub Pages link fix,
@@ -53,6 +53,10 @@ info:
     Production workflow contract gate keeps production-api-worker/.github/workflows/production-api-worker.yml,
     make ci-contract, race coverage, govulncheck, Docker build, Compose smoke,
     failure logs, cleanup, Makefile, and CI static gates aligned.
+    Syntax flow SVG contract gate keeps docs/golang-syntax-application-svg.html,
+    the integrated visual-course source, check-syntax-flow-svg-contract.mjs,
+    25 syntax flows, standard flowchart symbols, SVG metadata, blueprint
+    renderer, Makefile, and CI static gates aligned.
     Panic recovery keeps handler panics behind a stable 500 internal_error JSON
     response while preserving X-Request-ID for incident review.
 servers:

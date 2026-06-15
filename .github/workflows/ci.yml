@@ -129,6 +129,9 @@ jobs:
       - name: Check production workflow contract
         run: node scripts/check-production-workflow-contract.mjs
 
+      - name: Check syntax flow SVG contract
+        run: node scripts/check-syntax-flow-svg-contract.mjs
+
       - name: Check Compose smoke contract
         run: node scripts/check-compose-smoke-contract.mjs
 

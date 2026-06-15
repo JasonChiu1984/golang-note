@@ -1,4 +1,4 @@
-.PHONY: test test-race ci ci-contract openapi-check readiness-check request-decoding-check panic-recovery-check request-correlation-check api-security-check worker-failure-check retry-cancellation-check request-timeout-check queue-backpressure-check db-pool-check migration-check runbook-check prometheus-check operational-observability-check pprof-check rate-limit-check trusted-proxy-check cors-check request-body-limit-check http-timeout-check startup-config-check shutdown-signal-check ci-quality-gate-check ci-contract-parity-check contract-gate-inventory-check docs-publishing-check production-workflow-check compose-smoke-check otel-check docker-build compose-smoke run migrate docker-up docker-down
+.PHONY: test test-race ci ci-contract openapi-check readiness-check request-decoding-check panic-recovery-check request-correlation-check api-security-check worker-failure-check retry-cancellation-check request-timeout-check queue-backpressure-check db-pool-check migration-check runbook-check prometheus-check operational-observability-check pprof-check rate-limit-check trusted-proxy-check cors-check request-body-limit-check http-timeout-check startup-config-check shutdown-signal-check ci-quality-gate-check ci-contract-parity-check contract-gate-inventory-check docs-publishing-check production-workflow-check syntax-flow-svg-check compose-smoke-check otel-check docker-build compose-smoke run migrate docker-up docker-down
 
 test:
 	go test ./...
@@ -101,6 +101,9 @@ docs-publishing-check:
 
 production-workflow-check:
 	cd .. && node scripts/check-production-workflow-contract.mjs
+
+syntax-flow-svg-check:
+	cd .. && node scripts/check-syntax-flow-svg-contract.mjs
 
 compose-smoke-check:
 	cd .. && node scripts/check-compose-smoke-contract.mjs
