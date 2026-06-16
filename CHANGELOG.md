@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.61 - 2026-06-17
+
+- 新增 2026-06-17 06:03:12 CST +0800 資深工程師審查報告，確認 v1.0.60 已補齊 Syntax flow SVG contract gate，但 ReleaseNote generated reports 仍缺少正式 static gate 來固定 Go 1.1-1.26 專業報告、根目錄與 Pages 同步、官方來源、必要報告區塊、支援狀態與最新 patch 訊號。
+- 新增 `scripts/check-go-release-notes-contract.mjs`，固定 `scripts/generate-go-release-notes.mjs`、`ReleaseNote/`、`docs/ReleaseNote/`、Go 1.1-1.26 報告、27 個 HTML、官方來源、Go 1.26.4 / Go 1.25.11 patch revisions 與 Pages 同步。
+- `production-api-worker/Makefile` 新增 `go-release-notes-check`；`.github/workflows/ci.yml` 新增 `Check Go release notes contract`。
+- Contract gate inventory 從 29 個 root contract checker 更新為 30 個，並納入 Go ReleaseNote checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.61`。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.60 - 2026-06-16
 
 - 新增 2026-06-16 06:02:47 CST +0800 資深工程師審查報告，確認 v1.0.59 已補齊 Production workflow contract gate，但語法 SVG 流程圖品質門檻仍停留在非 contract checker，未正式進入 Makefile、GitHub Actions 與 contract inventory。

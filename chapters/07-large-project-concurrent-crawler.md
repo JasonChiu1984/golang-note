@@ -294,10 +294,11 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Queue shutdown | enqueue 與 close 的同步邊界 | shutdown 期間可能送入已關閉 channel，造成 panic |
 | Shutdown signal contract | `SIGINT`、`SIGTERM`、readiness draining、HTTP shutdown、queue drain | Docker / Kubernetes 發出 `SIGTERM` 時未進入 graceful shutdown |
 | CI quality gate static gate | `node scripts/check-ci-quality-gate-contract.mjs`、root course、production contracts、race/coverage、govulncheck、Docker build、Compose smoke | workflow 重整後漏掉 dependency verify、漏洞掃描、競態檢查或部署 smoke |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs`、29 個 root contract checker、GitHub Actions 呼叫清單 | 新增 checker 後沒有進入 CI、Makefile 或教材入口，導致 release gate 漂移 |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs`、30 個 root contract checker、GitHub Actions 呼叫清單 | 新增 checker 後沒有進入 CI、Makefile 或教材入口，導致 release gate 漂移 |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs`、`docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈 | 首頁同步後 Release Notes、補充教材入口或回主頁連結在 Pages 上漂移 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs`、standalone workflow、contract tests、race/coverage、govulncheck、Docker smoke | production worker 抽成獨立 repo 時 workflow 退化成只跑快速測試 |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs`、25 個 syntax flow、標準流程圖符號、SVG metadata、blueprint renderer | 視覺化語法教材退回不可維護圖檔、缺少 accessibility metadata 或 docs/來源漂移 |
+| Go ReleaseNote contract gate | `node scripts/check-go-release-notes-contract.mjs`、Go 1.1-1.26 報告、根目錄與 Pages 同步、最新 patch 訊號 | ReleaseNote 產生器或 Pages 同步後遺失官方來源、支援狀態、必要報告區塊或 Go 1.26.4 / Go 1.25.11 patch revisions |
 
 `production-api-worker/docs/api-contract.md` 示範了最小可維護合約：`POST /jobs`、`GET /jobs/{id}`、health endpoint、metrics endpoint、錯誤格式與 release gate。`production-api-worker/api/openapi.yaml` 則把同一份合約轉成 machine-readable OpenAPI artifact，讓前端 mock、SDK 產生、API gateway review 與 contract diff 可以共用同一份 schema。這不是要把文件寫成百科，而是讓每次 release 都能回答三個問題：
 
@@ -448,10 +449,11 @@ Production API 的 timeout 不是未知錯誤。若 handler 建立的 request de
 | Production contracts | `make ci-contract` 對齊 config、migration、API、worker 與 lifecycle contract tests |
 | CI contract parity gate | `node scripts/check-ci-contract-parity-contract.mjs` 固定 `make ci-contract` 與 GitHub Actions production contract job 的 API test selector 一致，避免漏跑 `TestCORSAllowedOriginsContract` |
 | Operational observability contract gate | `node scripts/check-operational-observability-contract.mjs` 固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險與 CI 入口 |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` 固定 29 個 root contract checker 都被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` 固定 30 個 root contract checker 都被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs` 固定 `docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈，避免 Pages 首頁入口漂移 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs` 固定 `production-api-worker/.github/workflows/production-api-worker.yml` 的 contract、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs` 固定語法流程圖補充頁的 25 個 flow、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口 |
+| Go ReleaseNote contract gate | `node scripts/check-go-release-notes-contract.mjs` 固定 Go 1.1-1.26 專業報告、27 個 ReleaseNote HTML、官方來源、Patch Revisions、支援狀態與 `docs/ReleaseNote/` Pages 同步 |
 | Race / coverage | `go test -race -cover ./... -count=1` 固定併發與覆蓋率 gate |
 | Vulnerability scan | root module 與 `production-api-worker` 都需跑 `govulncheck ./...` |
 | Docker / smoke | Docker image build 後用 Compose smoke 驗證 `/readyz`、job create/read 與 metrics |

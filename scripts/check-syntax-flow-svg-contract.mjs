@@ -20,7 +20,7 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.60`",
+    "教材版本：`v1.0.61`",
     "Syntax flow SVG contract gate",
     "node scripts/check-syntax-flow-svg-contract.mjs",
     "node scripts/check-syntax-flow-svg.mjs",
@@ -31,12 +31,12 @@ const required = {
     "node scripts/check-syntax-flow-svg-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.60",
+    "版本：v1.0.61",
     "Syntax flow SVG contract gate",
     "node scripts/check-syntax-flow-svg-contract.mjs",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.60",
+    "version: v1.0.61",
     "Syntax flow SVG contract gate",
     "check-syntax-flow-svg-contract.mjs",
   ],
@@ -98,8 +98,8 @@ for (const file of files) {
 const contractScripts = readdirSync("scripts")
   .filter((file) => /^check-.*-contract\.mjs$/.test(file))
   .sort();
-if (contractScripts.length !== 29) {
-  missing.push(`expected 29 root contract checker scripts, found ${contractScripts.length}`);
+if (contractScripts.length !== 30) {
+  missing.push(`expected 30 root contract checker scripts, found ${contractScripts.length}`);
 }
 
 if (missing.length > 0) {

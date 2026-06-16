@@ -52,6 +52,7 @@ const roadmapStages = [
 const supportStatus = {
   asOf: "2026-06-04",
   latestPatch: "Go 1.26.4",
+  latestPatchTokens: ["go1.26.4", "go1.25.11"],
   supported: [25, 26],
   unsupportedRange: [1, 24],
   rule: "官方 Release Policy：每個 major release 支援到已有兩個更新 major release 為止。",

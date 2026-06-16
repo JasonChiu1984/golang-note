@@ -444,6 +444,8 @@ Production workflow contract gate 固定 tracked standalone workflow，不讓 `p
 
 Syntax flow SVG contract gate 固定語法流程圖補充頁，不讓 `docs/golang-syntax-application-svg.html` 或整合來源在發布同步後遺失 25 個單語法 flow、標準流程圖符號、SVG metadata 或 blueprint renderer。
 
+Go ReleaseNote contract gate 固定 generated report chain，不讓 `scripts/generate-go-release-notes.mjs`、`ReleaseNote/` 或 `docs/ReleaseNote/` 在重產或發布同步後遺失 Go 1.1-1.26 必要報告區塊、官方來源、支援狀態、Patch Revisions 或 Go 1.26.4 / Go 1.25.11 最新 patch 訊號。
+
 | 條款 | 固定內容 |
 |---|---|
 | Workflow artifact | `production-api-worker/.github/workflows/production-api-worker.yml` |
@@ -573,10 +575,11 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | CI quality gate static gate | `node scripts/check-ci-quality-gate-contract.mjs && cd production-api-worker && make ci-quality-gate-check` | 固定 root course、production contracts、race/coverage、govulncheck、Docker build 與 Compose smoke |
 | Operational observability contract gate | `node scripts/check-operational-observability-contract.mjs && cd production-api-worker && make operational-observability-check` | 固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險與 CI 入口 |
 | CI contract parity gate | `node scripts/check-ci-contract-parity-contract.mjs && cd production-api-worker && make ci-contract-parity-check` | 固定 `make ci-contract` 與 GitHub Actions production contract job 的 API test selector，保留 `TestCORSAllowedOriginsContract` |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs && cd production-api-worker && make contract-gate-inventory-check` | 固定 29 個 root contract checker 都被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs && cd production-api-worker && make contract-gate-inventory-check` | 固定 30 個 root contract checker 都被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs && cd production-api-worker && make docs-publishing-check` | 固定 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈、Makefile 與 CI 入口 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs && cd production-api-worker && make production-workflow-check` | 固定 standalone workflow 的 contract、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs && cd production-api-worker && make syntax-flow-svg-check` | 固定語法流程圖補充頁的 25 個 flow、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口 |
+| Go ReleaseNote contract gate | `node scripts/check-go-release-notes-contract.mjs && cd production-api-worker && make go-release-notes-check` | 固定 Go 1.1-1.26 ReleaseNote、27 個 HTML、官方來源、最新 patch 訊號與 Pages 同步 |
 | Operational runbook gate | `node scripts/check-operational-runbook.mjs` | 固定 runbook、Prometheus alert rules、README 與 CI 入口，避免 incident workflow 被文件更新移除 |
 | Prometheus config gate | `node scripts/check-prometheus-config.mjs` | 固定 Prometheus scrape job、rule_files、Compose monitoring profile 與 API key 風險說明 |
 | Operational observability contract gate | `node scripts/check-operational-observability-contract.mjs` | 確認 runbook、Prometheus scrape config、alert rules、Compose monitoring profile 與 API key scrape auth 風險一起進入 release gate |
@@ -584,10 +587,11 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | CI workflow syntax | `ruby -e 'require "yaml"; YAML.load_file(".github/workflows/ci.yml")'` | 固定 GitHub Actions workflow 至少可被 YAML parser 解析 |
 | CI production gate | `cd production-api-worker && make ci-contract && go test -race -cover ./... -count=1` | 本機重跑與 CI 對齊的核心合約、race 與 coverage gate |
 | CI contract parity gate | `node scripts/check-ci-contract-parity-contract.mjs` | 確認本機與 CI 的 API contract selector 一致，避免只在單一路徑跑到 CORS 合約 |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` | 確認 29 個 root contract checker 全部被 GitHub Actions 呼叫 |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` | 確認 30 個 root contract checker 全部被 GitHub Actions 呼叫 |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs` | 確認 `docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈沒有漂移 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs` | 確認 standalone production workflow 沒有漏掉 production release gate |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs` | 確認語法流程圖補充頁沒有漏掉 flow、標準符號、metadata、renderer 或 CI 入口 |
+| Go ReleaseNote contract gate | `node scripts/check-go-release-notes-contract.mjs` | 確認 ReleaseNote generated reports 與 Pages 版沒有漏掉官方來源、必要區塊或最新 patch 訊號 |
 | Module checksum | `go mod verify` | 確認 module cache 未被竄改 |
 | Dependency updates | `go list -m -u all` | 發現可更新版本，作為維護 PR 依據 |
 | Vulnerability scan | `govulncheck ./...` | 掃描實際可達的 Go 已知漏洞 |
