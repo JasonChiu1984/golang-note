@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.62 - 2026-06-18
+
+- 新增 2026-06-18 06:02:10 CST +0800 資深工程師審查報告，確認 v1.0.61 已補齊 Go ReleaseNote contract gate，但固定發版流程的審查報告、內容需要更新的部分、更新資料與 docs/index 同步仍缺少正式 static gate。
+- 新增 `scripts/check-release-artifact-chain-contract.mjs`，固定 `審查報告/`、`內容需要更新的部分/`、`更新資料/`、`VERSION`、`CHANGELOG.md`、`docs/index.html`、Makefile 與 GitHub Actions 都保留 Release artifact chain contract gate。
+- `production-api-worker/Makefile` 新增 `release-artifact-chain-check`；`.github/workflows/ci.yml` 新增 `Check release artifact chain contract`。
+- Contract gate inventory 從 30 個 root contract checker 更新為 31 個，並納入 Release artifact chain checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.62`。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.61 - 2026-06-17
 
 - 新增 2026-06-17 06:03:12 CST +0800 資深工程師審查報告，確認 v1.0.60 已補齊 Syntax flow SVG contract gate，但 ReleaseNote generated reports 仍缺少正式 static gate 來固定 Go 1.1-1.26 專業報告、根目錄與 Pages 同步、官方來源、必要報告區塊、支援狀態與最新 patch 訊號。
