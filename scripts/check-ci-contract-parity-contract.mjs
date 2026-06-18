@@ -17,7 +17,7 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.62`",
+    "教材版本：`v1.0.63`",
     "CI contract parity gate",
     "node scripts/check-ci-contract-parity-contract.mjs",
     "TestCORSAllowedOriginsContract",
@@ -28,13 +28,13 @@ const required = {
     "TestCORSAllowedOriginsContract",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.62",
+    "版本：v1.0.63",
     "CI contract parity gate",
     "node scripts/check-ci-contract-parity-contract.mjs",
     "TestCORSAllowedOriginsContract",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.62",
+    "version: v1.0.63",
     "CI contract parity gate",
     "TestCORSAllowedOriginsContract",
   ],

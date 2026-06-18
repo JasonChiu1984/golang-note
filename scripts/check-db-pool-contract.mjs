@@ -33,7 +33,7 @@ const required = {
     "DATABASE_CONN_MAX_LIFETIME",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.62",
+    "版本：v1.0.63",
     "DB pool contract gate",
     "node scripts/check-db-pool-contract.mjs",
   ],

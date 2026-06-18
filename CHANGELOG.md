@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.63 - 2026-06-19
+
+- 新增 2026-06-19 06:03:24 CST +0800 資深工程師審查報告，確認 v1.0.62 已補齊 Release artifact chain contract gate，但 Dependency governance contract gate 仍缺少獨立 static gate。
+- 新增 `scripts/check-dependency-governance-contract.mjs`，固定 root module 與 `production-api-worker` 都保留 `go mod tidy`、`go mod verify`、`go list -m -u all`、`govulncheck ./...`、module proxy / vulnerability database 離線限制說明、Makefile 與 GitHub Actions 入口。
+- `production-api-worker/Makefile` 新增 `dependency-governance-check`；`.github/workflows/ci.yml` 新增 `Check dependency governance contract`。
+- Contract gate inventory 從 31 個 root contract checker 更新為 32 個，並納入 Dependency governance checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.63`。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.62 - 2026-06-18
 
 - 新增 2026-06-18 06:02:10 CST +0800 資深工程師審查報告，確認 v1.0.61 已補齊 Go ReleaseNote contract gate，但固定發版流程的審查報告、內容需要更新的部分、更新資料與 docs/index 同步仍缺少正式 static gate。

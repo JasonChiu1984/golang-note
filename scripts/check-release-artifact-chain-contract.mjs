@@ -3,8 +3,8 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename } from "node:path";
 
 const version = readFileSync("VERSION", "utf8").trim();
-const expectedVersion = "v1.0.62";
-const artifactTimestamp = "2026-06-18-060210";
+const expectedVersion = "v1.0.63";
+const artifactTimestamp = "2026-06-19-060324";
 
 const files = [
   "README.md",
@@ -27,14 +27,14 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.62`",
+    "教材版本：`v1.0.63`",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "CHANGELOG.md": [
-    "## v1.0.62 - 2026-06-18",
-    "scripts/check-release-artifact-chain-contract.mjs",
-    "Release artifact chain contract gate",
+    "## v1.0.63 - 2026-06-19",
+    "scripts/check-dependency-governance-contract.mjs",
+    "Dependency governance contract gate",
   ],
   "production-api-worker/README.md": [
     "Release Artifact Chain Contract",
@@ -42,12 +42,12 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.62",
+    "版本：v1.0.63",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.62",
+    "version: v1.0.63",
     "Release artifact chain contract gate",
     "check-release-artifact-chain-contract.mjs",
   ],
@@ -84,18 +84,18 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   [`審查報告/${artifactTimestamp}-資深工程師審查報告.md`]: [
-    "Release artifact chain",
-    "v1.0.62",
-    "2026-06-18 06:02:10 CST +0800",
+    "Dependency governance",
+    "v1.0.63",
+    "2026-06-19 06:03:24 CST +0800",
   ],
   [`內容需要更新的部分/${artifactTimestamp}-內容需要更新的部分.md`]: [
-    "Release artifact chain",
-    "scripts/check-release-artifact-chain-contract.mjs",
-    "v1.0.62",
+    "Dependency governance",
+    "scripts/check-dependency-governance-contract.mjs",
+    "v1.0.63",
   ],
   [`更新資料/${artifactTimestamp}-${expectedVersion}-更新紀錄.md`]: [
-    "Release artifact chain contract gate",
-    "scripts/check-release-artifact-chain-contract.mjs",
+    "Dependency governance contract gate",
+    "scripts/check-dependency-governance-contract.mjs",
     "docs/index.html",
     "git push",
   ],
