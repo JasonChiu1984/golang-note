@@ -1,6 +1,6 @@
 # production-api-worker API Contract
 
-> 版本：v1.0.63 ｜ 基準日期：2026-06-19 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Readiness lifecycle contract、Request decoding contract、Panic recovery contract、Request correlation contract、API security contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract、Startup configuration contract gate、Worker failure contract、Retry cancellation contract、Queue backpressure contract、DB pool contract gate、Migration Operation Contract、Operational observability contract gate、CI quality gate contract、CI contract parity gate、Contract gate inventory、Production workflow contract gate、Syntax flow SVG contract gate、Go ReleaseNote contract gate、Release artifact chain contract gate、Dependency governance contract gate、Compose smoke contract
+> 版本：v1.0.64 ｜ 基準日期：2026-06-20 ｜ 適用範圍：local memory mode、Postgres + OTLP mode、OpenAPI contract、Readiness lifecycle contract、Request decoding contract、Idempotency key contract、Panic recovery contract、Request correlation contract、API security contract、Rate limit contract、Shutdown signal contract、Trusted proxy client IP contract、CORS allowlist contract、Request body limit contract、HTTP server timeout contract、Startup configuration contract gate、Worker failure contract、Retry cancellation contract、Queue backpressure contract、DB pool contract gate、Migration Operation Contract、Operational observability contract gate、CI quality gate contract、CI contract parity gate、Contract gate inventory、Production workflow contract gate、Syntax flow SVG contract gate、Go ReleaseNote contract gate、Release artifact chain contract gate、Dependency governance contract gate、Compose smoke contract
 
 這份文件固定 `production-api-worker` 對外可見的 HTTP 合約。內部 service、repository、queue、lifecycle、panic recovery、retry 或 observability 可以重構，但下列 endpoint、status code、JSON shape、錯誤 code、request correlation header、readiness 與 cancellation 行為需要透過 contract test 保護。
 
@@ -13,6 +13,8 @@ Machine-readable contract 位於 `production-api-worker/api/openapi.yaml`。此 
 | 向後相容新增 | 可新增 response 欄位，但不得移除或改名既有欄位 |
 | Request decoding | `POST /jobs` 只接受單一 JSON object；malformed JSON、unknown field、trailing JSON value 與空白 `name` 都必須回 `400 invalid_input` |
 | Request decoding gate | `node scripts/check-request-decoding-contract.mjs` 必須固定 `DisallowUnknownFields`、單一 JSON value 檢查、`TestRequestDecodingContract`、OpenAPI、README、章節、Makefile 與 CI 入口 |
+| Idempotency key contract | `POST /jobs` 可帶 `Idempotency-Key`；同一 key 的重試必須回同一 job，且不得重複 enqueue |
+| Idempotency key gate | `node scripts/check-idempotency-key-contract.mjs` 必須固定 header、validation、memory/Postgres repository、migration unique index、`TestIdempotencyKeyContract`、`TestCreateJobIdempotencyKeyContract`、OpenAPI、README、章節、Makefile 與 CI 入口 |
 | Request body limit | `POST /jobs` request body 超過 `REQUEST_BODY_LIMIT_BYTES` 時必須回 `413 payload_too_large`，不可繼續 decode 或排入 queue |
 | HTTP server timeout | `HTTP_READ_HEADER_TIMEOUT`、`HTTP_READ_TIMEOUT`、`HTTP_WRITE_TIMEOUT`、`HTTP_IDLE_TIMEOUT`、`HTTP_SHUTDOWN_TIMEOUT`、`QUEUE_DRAIN_TIMEOUT` 必須集中設定並 fail fast |
 | Worker failure contract | worker processor 回錯時仍需記錄 duration，並把結果標記為 `failed`；成功路徑需標記 `success`，避免 queue failure 只存在於 log |
@@ -40,7 +42,7 @@ Machine-readable contract 位於 `production-api-worker/api/openapi.yaml`。此 
 | Operational observability contract gate | `node scripts/check-operational-observability-contract.mjs` 必須固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險、Makefile 與 CI 入口 |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs` 必須固定 `docs/index.html`、`fix-docs-index-links.mjs --check`、`check-html-home-links.mjs`、GitHub Pages link fix、Makefile 與 CI 入口 |
 | CI quality gate contract | `node scripts/check-ci-quality-gate-contract.mjs` 必須固定 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build、Compose smoke、Makefile 與 CI 入口 |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` 必須固定 32 個 root contract checker 都被 GitHub Actions 呼叫，且 Makefile、README、API contract、章節與整合視覺課程入口一致 |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` 必須固定 33 個 root contract checker 都被 GitHub Actions 呼叫，且 Makefile、README、API contract、章節與整合視覺課程入口一致 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs` 必須固定 `production-api-worker/.github/workflows/production-api-worker.yml` 保留 `make ci-contract`、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs` 必須固定語法流程圖補充頁保留 25 個 flow、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口 |
 | Go ReleaseNote contract gate | `node scripts/check-go-release-notes-contract.mjs` 必須固定 `scripts/generate-go-release-notes.mjs`、`ReleaseNote/`、`docs/ReleaseNote/`、Go 1.1-1.26 必要報告區塊、官方來源、支援狀態、Go 1.26.4 / Go 1.25.11 patch 訊號、Makefile 與 CI 入口 |
@@ -128,6 +130,14 @@ node scripts/check-api-security-contract.mjs
 ```
 
 ## POST /jobs
+
+可選 header：
+
+```http
+Idempotency-Key: retry-demo-1
+```
+
+同一個 `Idempotency-Key` 重試時，server 必須回同一個 job，不重新產生 ID，也不再次 enqueue worker task。這個行為由 `TestIdempotencyKeyContract`、`TestCreateJobIdempotencyKeyContract` 與 `node scripts/check-idempotency-key-contract.mjs` 固定；Postgres mode 由 `jobs.idempotency_key` 與 `idx_jobs_idempotency_key` unique index 保護。
 
 建立 job 並排入 worker queue。
 

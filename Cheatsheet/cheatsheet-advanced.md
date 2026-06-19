@@ -370,6 +370,7 @@ ENTRYPOINT ["/app"]
 | Response schema | status code、JSON 欄位、enum 是否仍可被舊 client decode |
 | Error envelope | 是否維持穩定 `error.code` 與 `error.message` |
 | OpenAPI contract | `api/openapi.yaml` 是否同步 endpoint、schema、error code、Bearer auth 與 `X-Request-ID` |
+| Idempotency key contract | 是否由 `node scripts/check-idempotency-key-contract.mjs` 固定 `Idempotency-Key`、重試回同一 job、不重複 enqueue、migration unique index 與 CI 入口 |
 | CORS allowlist | `CORS_ALLOWED_ORIGINS` 是否只允許 exact origin，並固定 preflight `204` / blocked `403` |
 | Request body limit | `REQUEST_BODY_LIMIT_BYTES` 是否固定 oversized body 的 `413 payload_too_large` |
 | HTTP server timeout | `HTTP_READ_HEADER_TIMEOUT`、`HTTP_READ_TIMEOUT`、`HTTP_WRITE_TIMEOUT`、`HTTP_IDLE_TIMEOUT`、`HTTP_SHUTDOWN_TIMEOUT`、`QUEUE_DRAIN_TIMEOUT` 是否由 config 套用 |
@@ -412,7 +413,7 @@ node ../scripts/check-retry-cancellation-contract.mjs
 
 CI contract parity gate：在 repo root 執行 `node scripts/check-ci-contract-parity-contract.mjs`，固定 `make ci-contract` 與 GitHub Actions production contract job 都涵蓋 `TestCORSAllowedOriginsContract`。
 
-Contract gate inventory：在 repo root 執行 `node scripts/check-contract-gate-inventory-contract.mjs`，固定 32 個 root contract checker 全部被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate。
+Contract gate inventory：在 repo root 執行 `node scripts/check-contract-gate-inventory-contract.mjs`，固定 33 個 root contract checker 全部被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate。
 
 Docs publishing contract gate：在 repo root 執行 `node scripts/check-docs-publishing-contract.mjs`，固定 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈、Makefile 與 CI 入口。
 
@@ -425,6 +426,8 @@ Go ReleaseNote contract gate：在 repo root 執行 `node scripts/check-go-relea
 Release artifact chain contract gate：在 repo root 執行 `node scripts/check-release-artifact-chain-contract.mjs`，固定同 timestamp 的 `審查報告/`、`內容需要更新的部分/`、`更新資料/`、版本標記、CHANGELOG 與 docs/index 同步。
 
 Dependency governance static gate：在 repo root 執行 `node scripts/check-dependency-governance-contract.mjs`，固定 root module 與 `production-api-worker` 都保留 `go mod tidy`、`go mod verify`、`go list -m -u all`、`govulncheck ./...`、離線限制說明、Makefile 與 CI 入口。
+
+Idempotency key contract：在 repo root 執行 `node scripts/check-idempotency-key-contract.mjs`，固定 `POST /jobs` 的 `Idempotency-Key` retry-safe 行為、memory/Postgres repository lookup、migration unique index、OpenAPI、Makefile 與 CI 入口。
 
 Operational observability contract gate：在 repo root 執行 `node scripts/check-operational-observability-contract.mjs`，固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險、Makefile 與 CI 入口。
 
@@ -849,8 +852,9 @@ synctest.Test(t, func(t *testing.T) {
 | Assembly hot path | `go test ./internal/compute -bench=. -benchmem -count=10` + `go tool objdump -s 'score' ./bin/server` | 只在 pprof 證明 CPU hot path 時使用，且必須有 pure Go fallback |
 | CI workflow | `ruby -e 'require "yaml"; YAML.load_file(".github/workflows/ci.yml")'` + GitHub Actions run | workflow 必須真的存在於 repo，並固定 root test、production contract、race/coverage、govulncheck、Docker build 與 Compose smoke |
 | CI quality gate static gate | `node scripts/check-ci-quality-gate-contract.mjs && cd production-api-worker && make ci-quality-gate-check` | 固定 `go mod verify`、production contracts、`go test -race -cover`、`govulncheck ./...`、Docker build、Compose smoke、Makefile 與 CI 入口 |
+| Idempotency key contract | `node scripts/check-idempotency-key-contract.mjs && cd production-api-worker && make idempotency-key-check` | 固定 `Idempotency-Key` 重試回同一 job、不重複 enqueue、Postgres unique index、OpenAPI、Makefile 與 CI 入口 |
 | Operational observability contract gate | `node scripts/check-operational-observability-contract.mjs && cd production-api-worker && make operational-observability-check` | 固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險、Makefile 與 CI 入口 |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs && cd production-api-worker && make contract-gate-inventory-check` | 固定 32 個 root contract checker 全部被 GitHub Actions 呼叫，並同步 Makefile、README、API contract、章節與整合視覺課程入口 |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs && cd production-api-worker && make contract-gate-inventory-check` | 固定 33 個 root contract checker 全部被 GitHub Actions 呼叫，並同步 Makefile、README、API contract、章節與整合視覺課程入口 |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs && cd production-api-worker && make docs-publishing-check` | 固定 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈、Makefile 與 CI 入口 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs && cd production-api-worker && make production-workflow-check` | 固定 standalone production workflow 的 contract、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs && cd production-api-worker && make syntax-flow-svg-check` | 固定語法流程圖補充頁的 25 個 flow、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口 |

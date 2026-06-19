@@ -40,10 +40,10 @@ const required = {
     "OFFICIAL_HISTORY",
   ],
   "README.md": [
-    "教材版本：`v1.0.63`",
+    "教材版本：`v1.0.64`",
     "Go ReleaseNote contract gate",
     "node scripts/check-go-release-notes-contract.mjs",
-    "32 個 root contract checker",
+    "33 個 root contract checker",
   ],
   "production-api-worker/README.md": [
     "Go ReleaseNote Contract",
@@ -51,16 +51,16 @@ const required = {
     "node scripts/check-go-release-notes-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.63",
+    "版本：v1.0.64",
     "Go ReleaseNote contract gate",
     "node scripts/check-go-release-notes-contract.mjs",
-    "32 個 root contract checker",
+    "33 個 root contract checker",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.63",
+    "version: v1.0.64",
     "Go ReleaseNote contract gate",
     "check-go-release-notes-contract.mjs",
-    "all 32 root contract checker scripts",
+    "all 33 root contract checker scripts",
   ],
   "chapters/07-large-project-concurrent-crawler.md": [
     "Go ReleaseNote contract gate",
@@ -178,8 +178,8 @@ if (docsHtmlCount !== 27) missing.push(`expected 27 docs ReleaseNote HTML files,
 const contractScripts = readdirSync("scripts")
   .filter((file) => /^check-.*-contract\.mjs$/.test(file))
   .sort();
-if (contractScripts.length !== 32) {
-  missing.push(`expected 32 root contract checker scripts, found ${contractScripts.length}`);
+if (contractScripts.length !== 33) {
+  missing.push(`expected 33 root contract checker scripts, found ${contractScripts.length}`);
 }
 
 if (missing.length > 0) {

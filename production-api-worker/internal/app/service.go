@@ -15,6 +15,7 @@ type Tx interface {
 	InsertJob(ctx context.Context, job domain.Job) error
 	UpdateJobStatus(ctx context.Context, id string, status domain.JobStatus) error
 	GetJob(ctx context.Context, id string) (domain.Job, error)
+	GetJobByIdempotencyKey(ctx context.Context, key string) (domain.Job, error)
 }
 
 type Store interface {
@@ -54,19 +55,36 @@ func (s *Service) CreateJob(ctx context.Context, input domain.JobInput) (domain.
 	}
 
 	job := domain.Job{
-		ID:      s.newID(),
-		Name:    input.Name,
-		Payload: input.Payload,
-		Status:  domain.JobPending,
+		ID:             s.newID(),
+		Name:           input.Name,
+		Payload:        input.Payload,
+		IdempotencyKey: input.IdempotencyKey,
+		Status:         domain.JobPending,
 	}
+	created := false
 
 	err := s.withDeadlockRetry(ctx, func() error {
 		return s.store.WithTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted}, func(tx Tx) error {
+			if input.IdempotencyKey != "" {
+				existing, err := tx.GetJobByIdempotencyKey(ctx, input.IdempotencyKey)
+				if err == nil {
+					job = existing
+					created = false
+					return nil
+				}
+				if !errors.Is(err, domain.ErrNotFound) {
+					return err
+				}
+			}
+			created = true
 			return tx.InsertJob(ctx, job)
 		})
 	})
 	if err != nil {
 		return domain.Job{}, fmt.Errorf("insert job: %w", err)
+	}
+	if !created {
+		return job, nil
 	}
 
 	if err := s.queue.Enqueue(ctx, worker.Task{JobID: job.ID}); err != nil {

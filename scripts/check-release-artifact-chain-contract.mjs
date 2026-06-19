@@ -3,8 +3,8 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename } from "node:path";
 
 const version = readFileSync("VERSION", "utf8").trim();
-const expectedVersion = "v1.0.63";
-const artifactTimestamp = "2026-06-19-060324";
+const expectedVersion = "v1.0.64";
+const artifactTimestamp = "2026-06-20-060525";
 
 const files = [
   "README.md",
@@ -27,14 +27,14 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.63`",
+    "教材版本：`v1.0.64`",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "CHANGELOG.md": [
-    "## v1.0.63 - 2026-06-19",
-    "scripts/check-dependency-governance-contract.mjs",
-    "Dependency governance contract gate",
+    "## v1.0.64 - 2026-06-20",
+    "scripts/check-idempotency-key-contract.mjs",
+    "Idempotency key contract gate",
   ],
   "production-api-worker/README.md": [
     "Release Artifact Chain Contract",
@@ -42,12 +42,12 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.63",
+    "版本：v1.0.64",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.63",
+    "version: v1.0.64",
     "Release artifact chain contract gate",
     "check-release-artifact-chain-contract.mjs",
   ],
@@ -84,18 +84,18 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   [`審查報告/${artifactTimestamp}-資深工程師審查報告.md`]: [
-    "Dependency governance",
-    "v1.0.63",
-    "2026-06-19 06:03:24 CST +0800",
+    "Idempotency key",
+    "v1.0.64",
+    "2026-06-20 06:05:25 CST +0800",
   ],
   [`內容需要更新的部分/${artifactTimestamp}-內容需要更新的部分.md`]: [
-    "Dependency governance",
-    "scripts/check-dependency-governance-contract.mjs",
-    "v1.0.63",
+    "Idempotency key",
+    "scripts/check-idempotency-key-contract.mjs",
+    "v1.0.64",
   ],
   [`更新資料/${artifactTimestamp}-${expectedVersion}-更新紀錄.md`]: [
-    "Dependency governance contract gate",
-    "scripts/check-dependency-governance-contract.mjs",
+    "Idempotency key contract gate",
+    "scripts/check-idempotency-key-contract.mjs",
     "docs/index.html",
     "git push",
   ],

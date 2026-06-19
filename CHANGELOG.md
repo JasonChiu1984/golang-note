@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.64 - 2026-06-20
+
+- 新增 2026-06-20 06:05:25 CST +0800 資深工程師審查報告，確認 v1.0.63 已補齊 Dependency governance contract gate，但 `POST /jobs` 建立型 API 仍缺少 Idempotency key contract gate 來固定 retry-safe 行為。
+- 新增 `scripts/check-idempotency-key-contract.mjs`，固定 `Idempotency-Key` header、memory/Postgres repository lookup、`jobs.idempotency_key` unique index、migration、OpenAPI、Go contract tests、Makefile 與 GitHub Actions 入口。
+- `production-api-worker/Makefile` 新增 `idempotency-key-check`；`.github/workflows/ci.yml` 新增 `Check idempotency key contract`，並讓 `make ci-contract` / production contract job 涵蓋 `TestIdempotencyKeyContract` 與 `TestCreateJobIdempotencyKeyContract`。
+- Contract gate inventory 從 32 個 root contract checker 更新為 33 個，並納入 Idempotency key checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.64`。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.63 - 2026-06-19
 
 - 新增 2026-06-19 06:03:24 CST +0800 資深工程師審查報告，確認 v1.0.62 已補齊 Release artifact chain contract gate，但 Dependency governance contract gate 仍缺少獨立 static gate。

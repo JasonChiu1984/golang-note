@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.63
+  version: v1.0.64
   description: >
     Machine-readable contract for the Go teaching production API worker.
     This file mirrors docs/api-contract.md and the Go contract tests,
@@ -44,7 +44,7 @@ info:
     Startup configuration contract gate keeps PORT, QUEUE_SIZE, WORKERS,
     OTEL_EXPORTER_OTLP_ENDPOINT, config loader, Go tests, Makefile, and CI
     static gates aligned through check-startup-config-contract.mjs.
-    Contract gate inventory keeps all 32 root contract checker scripts,
+    Contract gate inventory keeps all 33 root contract checker scripts,
     check-contract-gate-inventory-contract.mjs, Makefile, README, API contract,
     chapters, visual course, and GitHub Actions aligned.
     Docs publishing contract gate keeps docs/index.html, GitHub Pages link fix,
@@ -68,6 +68,9 @@ info:
     go list -m -u all, govulncheck ./..., root and production module scan
     coverage, offline module proxy and vulnerability database notes, Makefile,
     and CI static gates aligned through check-dependency-governance-contract.mjs.
+    Idempotency key contract keeps POST /jobs retry-safe through the
+    Idempotency-Key header, memory/Postgres repository lookup, migration unique
+    index, Go contract tests, Makefile, and CI static gate.
     Panic recovery keeps handler panics behind a stable 500 internal_error JSON
     response while preserving X-Request-ID for incident review.
 servers:
@@ -94,6 +97,7 @@ paths:
         - {}
       parameters:
         - $ref: "#/components/parameters/RequestID"
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:
@@ -219,6 +223,16 @@ components:
         type: string
         minLength: 1
       description: Client-provided correlation id. Server echoes this value or creates req-*.
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+        pattern: "^\\S+$"
+      description: Optional idempotency key. Repeating POST /jobs with the same key returns the existing job and does not enqueue another worker task.
   headers:
     RequestID:
       description: Request correlation id echoed by the server.

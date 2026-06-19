@@ -120,3 +120,15 @@ func (tx *memoryTx) GetJob(ctx context.Context, id string) (domain.Job, error) {
 	}
 	return job, nil
 }
+
+func (tx *memoryTx) GetJobByIdempotencyKey(ctx context.Context, key string) (domain.Job, error) {
+	if err := ctx.Err(); err != nil {
+		return domain.Job{}, err
+	}
+	for _, job := range tx.jobs {
+		if job.IdempotencyKey == key {
+			return job, nil
+		}
+	}
+	return domain.Job{}, domain.ErrNotFound
+}

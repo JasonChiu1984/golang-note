@@ -38,6 +38,8 @@ type pprofConfig struct {
 
 var errPayloadTooLarge = errors.New("payload too large")
 
+const idempotencyKeyHeader = "Idempotency-Key"
+
 func WithReadiness(ready func() bool) Option {
 	return func(h *Handler) {
 		if ready != nil {
@@ -143,6 +145,7 @@ func (h *Handler) createJob(w http.ResponseWriter, r *http.Request) {
 		h.writeError(w, r, err)
 		return
 	}
+	input.IdempotencyKey = strings.TrimSpace(r.Header.Get(idempotencyKeyHeader))
 	job, err := h.service.CreateJob(ctx, input)
 	if err != nil {
 		h.writeError(w, r, err)

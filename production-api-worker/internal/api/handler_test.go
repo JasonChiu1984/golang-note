@@ -116,7 +116,7 @@ func TestReadinessContract(t *testing.T) {
 }
 
 func TestPanicRecoveryContract(t *testing.T) {
-	handler := newContractHandlerWithQueue(t, fakeQueue{panicValue: "queue panic"})
+	handler := newContractHandlerWithQueue(t, &fakeQueue{panicValue: "queue panic"})
 
 	req := httptest.NewRequest(http.MethodPost, "/jobs", strings.NewReader(`{"name":"resize","payload":"image"}`))
 	req.Header.Set(requestIDHeader, "panic-request")
@@ -213,6 +213,56 @@ func TestRequestBodyLimitContract(t *testing.T) {
 	}
 	if response.Error.Code != "payload_too_large" {
 		t.Fatalf("error code = %q, want payload_too_large", response.Error.Code)
+	}
+}
+
+func TestIdempotencyKeyContract(t *testing.T) {
+	obs := newTestObs(t)
+	store := repository.NewMemoryStore()
+	queue := &fakeQueue{}
+	ids := []string{"contract-job-1", "contract-job-2"}
+	service := app.NewService(store, queue, obs, func() string {
+		id := ids[0]
+		ids = ids[1:]
+		return id
+	})
+	handler := NewHandler(service, obs).Routes()
+
+	req := httptest.NewRequest(http.MethodPost, "/jobs", strings.NewReader(`{"name":"resize","payload":"image"}`))
+	req.Header.Set(idempotencyKeyHeader, "retry-key-1")
+	req.Header.Set(requestIDHeader, "idempotency-request")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("first status = %d, want %d: %s", rec.Code, http.StatusAccepted, rec.Body.String())
+	}
+
+	var first domain.Job
+	if err := json.NewDecoder(rec.Body).Decode(&first); err != nil {
+		t.Fatal(err)
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/jobs", strings.NewReader(`{"name":"resize","payload":"image"}`))
+	req.Header.Set(idempotencyKeyHeader, "retry-key-1")
+	req.Header.Set(requestIDHeader, "idempotency-request")
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("second status = %d, want %d: %s", rec.Code, http.StatusAccepted, rec.Body.String())
+	}
+
+	var second domain.Job
+	if err := json.NewDecoder(rec.Body).Decode(&second); err != nil {
+		t.Fatal(err)
+	}
+	if first.ID != second.ID {
+		t.Fatalf("duplicate idempotency key created different jobs: first=%s second=%s", first.ID, second.ID)
+	}
+	if len(queue.got) != 1 || queue.got[0].JobID != first.ID {
+		t.Fatalf("duplicate idempotency key should enqueue once, got %+v", queue.got)
+	}
+	if got := rec.Header().Get(requestIDHeader); got != "idempotency-request" {
+		t.Fatalf("request id header = %q, want idempotency-request", got)
 	}
 }
 
@@ -557,10 +607,10 @@ func newContractHandler(t *testing.T, enqueueErr error) http.Handler {
 
 func newContractHandlerWithOptions(t *testing.T, enqueueErr error, options ...Option) http.Handler {
 	t.Helper()
-	return newContractHandlerWithQueue(t, fakeQueue{err: enqueueErr}, options...)
+	return newContractHandlerWithQueue(t, &fakeQueue{err: enqueueErr}, options...)
 }
 
-func newContractHandlerWithQueue(t *testing.T, queue fakeQueue, options ...Option) http.Handler {
+func newContractHandlerWithQueue(t *testing.T, queue *fakeQueue, options ...Option) http.Handler {
 	t.Helper()
 	obs := newTestObs(t)
 	service := app.NewService(
@@ -589,11 +639,13 @@ func (discardWriter) Write(p []byte) (int, error) { return len(p), nil }
 type fakeQueue struct {
 	err        error
 	panicValue any
+	got        []worker.Task
 }
 
-func (q fakeQueue) Enqueue(ctx context.Context, task worker.Task) error {
+func (q *fakeQueue) Enqueue(ctx context.Context, task worker.Task) error {
 	if q.panicValue != nil {
 		panic(q.panicValue)
 	}
+	q.got = append(q.got, task)
 	return q.err
 }

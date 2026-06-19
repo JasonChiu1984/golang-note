@@ -24,18 +24,20 @@ var (
 )
 
 type JobInput struct {
-	Name    string `json:"name"`
-	Payload string `json:"payload"`
+	Name           string `json:"name"`
+	Payload        string `json:"payload"`
+	IdempotencyKey string `json:"-"`
 }
 
 type Job struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	Payload   string    `json:"payload"`
-	Status    JobStatus `json:"status"`
-	Attempts  int       `json:"attempts"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID             string    `json:"id"`
+	Name           string    `json:"name"`
+	Payload        string    `json:"payload"`
+	IdempotencyKey string    `json:"-"`
+	Status         JobStatus `json:"status"`
+	Attempts       int       `json:"attempts"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }
 
 func ValidateJobInput(input JobInput) error {
@@ -44,6 +46,25 @@ func ValidateJobInput(input JobInput) error {
 	}
 	if len(input.Payload) > 4096 {
 		return fmt.Errorf("payload too large: %w", ErrInvalidInput)
+	}
+	if err := ValidateIdempotencyKey(input.IdempotencyKey); err != nil {
+		return err
+	}
+	return nil
+}
+
+func ValidateIdempotencyKey(key string) error {
+	if key == "" {
+		return nil
+	}
+	if strings.TrimSpace(key) != key {
+		return fmt.Errorf("idempotency key must not have surrounding whitespace: %w", ErrInvalidInput)
+	}
+	if len(key) > 128 {
+		return fmt.Errorf("idempotency key is too long: %w", ErrInvalidInput)
+	}
+	if strings.ContainsAny(key, " \t\r\n") {
+		return fmt.Errorf("idempotency key must not contain whitespace: %w", ErrInvalidInput)
 	}
 	return nil
 }

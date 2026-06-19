@@ -71,7 +71,7 @@ func (s *PostgresStore) WithTx(ctx context.Context, opts *sql.TxOptions, fn func
 
 func (s *PostgresStore) GetJob(ctx context.Context, id string) (domain.Job, error) {
 	row := s.db.QueryRowContext(ctx, `
-SELECT id, name, payload, status, attempts, created_at, updated_at
+SELECT id, name, payload, idempotency_key, status, attempts, created_at, updated_at
 FROM jobs
 WHERE id = $1`, id)
 	return scanJob(row)
@@ -84,9 +84,9 @@ type postgresTx struct {
 func (tx *postgresTx) InsertJob(ctx context.Context, job domain.Job) error {
 	now := time.Now().UTC()
 	_, err := tx.tx.ExecContext(ctx, `
-INSERT INTO jobs (id, name, payload, status, attempts, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-		job.ID, job.Name, job.Payload, job.Status, job.Attempts, now, now)
+INSERT INTO jobs (id, name, payload, idempotency_key, status, attempts, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+		job.ID, job.Name, job.Payload, nullString(job.IdempotencyKey), job.Status, job.Attempts, now, now)
 	return classifyPostgresError(err)
 }
 
@@ -112,9 +112,17 @@ WHERE id = $1`, id, status, time.Now().UTC())
 
 func (tx *postgresTx) GetJob(ctx context.Context, id string) (domain.Job, error) {
 	row := tx.tx.QueryRowContext(ctx, `
-SELECT id, name, payload, status, attempts, created_at, updated_at
+SELECT id, name, payload, idempotency_key, status, attempts, created_at, updated_at
 FROM jobs
 WHERE id = $1`, id)
+	return scanJob(row)
+}
+
+func (tx *postgresTx) GetJobByIdempotencyKey(ctx context.Context, key string) (domain.Job, error) {
+	row := tx.tx.QueryRowContext(ctx, `
+SELECT id, name, payload, idempotency_key, status, attempts, created_at, updated_at
+FROM jobs
+WHERE idempotency_key = $1`, key)
 	return scanJob(row)
 }
 
@@ -124,13 +132,19 @@ type scanner interface {
 
 func scanJob(row scanner) (domain.Job, error) {
 	var job domain.Job
-	if err := row.Scan(&job.ID, &job.Name, &job.Payload, &job.Status, &job.Attempts, &job.CreatedAt, &job.UpdatedAt); err != nil {
+	var idempotencyKey sql.NullString
+	if err := row.Scan(&job.ID, &job.Name, &job.Payload, &idempotencyKey, &job.Status, &job.Attempts, &job.CreatedAt, &job.UpdatedAt); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return domain.Job{}, domain.ErrNotFound
 		}
 		return domain.Job{}, classifyPostgresError(err)
 	}
+	job.IdempotencyKey = idempotencyKey.String
 	return job, nil
+}
+
+func nullString(value string) sql.NullString {
+	return sql.NullString{String: value, Valid: value != ""}
 }
 
 func classifyPostgresError(err error) error {

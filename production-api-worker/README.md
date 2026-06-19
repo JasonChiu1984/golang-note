@@ -20,6 +20,7 @@
 - Trusted Proxy Client IP Contract：`TRUSTED_PROXY_CIDRS` 預設空值；只有信任代理來源才採用 `X-Forwarded-For` 第一個 IP，並由 `make trusted-proxy-check` 固定文件、runbook、測試、Makefile 與 CI 入口
 - Shutdown Signal Contract：`api-worker` 同時監聽 SIGINT / SIGTERM，收到訊號後才進入 draining、HTTP shutdown 與 queue drain
 - Request Decoding Contract：拒絕 malformed JSON、unknown field、trailing JSON value 與空白 name，並由 `make request-decoding-check` 固定文件、OpenAPI、測試與 CI 入口
+- Idempotency Key Contract：`POST /jobs` 支援 `Idempotency-Key` header；同一 key 的 client retry 回同一個 job 且不重複 enqueue，並由 `make idempotency-key-check` 固定 memory/Postgres、migration、OpenAPI、測試與 CI 入口
 - Service transaction boundary：`sql.TxOptions`、context-aware deadlock retry、queue enqueue
 - Startup configuration：集中驗證 `PORT`、`QUEUE_SIZE`、`WORKERS` 與 DB pool 設定，錯誤設定 fail fast
 - DB Pool Contract：`DATABASE_MAX_OPEN_CONNS`、`DATABASE_MAX_IDLE_CONNS`、`DATABASE_CONN_MAX_LIFETIME` 由 config 驅動並套用到 `sql.DB`，由 `make db-pool-check` 固定文件、repository wiring 與 CI 入口
@@ -35,7 +36,7 @@
 - Pipeline：migration CLI、Docker Compose、GitHub Actions workflow、Docker image build gate、Compose smoke gate
 - CI Quality Gate Contract：GitHub Actions 必須保留 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，並由 `make ci-quality-gate-check` 固定文件、Makefile 與 CI 入口
 - CI Contract Parity Gate：`make ci-contract` 與 GitHub Actions production contract job 必須使用相同 API test selector，包含 `TestCORSAllowedOriginsContract`，並由 `make ci-contract-parity-check` 固定
-- Contract Gate Inventory：32 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
+- Contract Gate Inventory：33 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
 - Docs Publishing Contract：`docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈必須由 `make docs-publishing-check` / `node scripts/check-docs-publishing-contract.mjs` 固定，避免 Pages 首頁與整合課程來源漂移
 - Production Workflow Contract：`production-api-worker/.github/workflows/production-api-worker.yml` 必須保留 `make ci-contract`、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup，並由 `make production-workflow-check` 固定
 - Syntax Flow SVG Contract：語法流程圖補充頁必須保留 25 個單語法 flow、標準流程圖符號、SVG metadata 與 blueprint renderer，並由 `make syntax-flow-svg-check` / `node scripts/check-syntax-flow-svg-contract.mjs` 固定
@@ -63,6 +64,7 @@ Then:
 curl -X POST http://localhost:8080/jobs \
   -H 'Content-Type: application/json' \
   -H 'X-Request-ID: demo-request-1' \
+  -H 'Idempotency-Key: demo-retry-key-1' \
   -H 'Authorization: Bearer dev-secret' \
   -d '{"name":"resize","payload":"image"}'
 
@@ -100,6 +102,7 @@ go test ./internal/migration -count=1
 make migration-check
 make readiness-check
 go test ./internal/api -run 'Test.*Contract|TestReadinessContract|TestPanicRecoveryContract|TestRequestDecodingContract|TestRequestBodyLimitContract' -count=1
+go test ./internal/api ./internal/app -run 'TestIdempotencyKeyContract|TestCreateJobIdempotencyKeyContract' -count=1
 go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1
 go test ./internal/api -run 'TestCORSAllowedOriginsContract' -count=1
 go test ./internal/api -run 'TestPprofDiagnosticsContract' -count=1
@@ -110,6 +113,7 @@ go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownD
 go test -race -cover ./...
 make openapi-check
 make request-decoding-check
+make idempotency-key-check
 make runbook-check
 make prometheus-check
 make pprof-check
@@ -152,6 +156,8 @@ make compose-smoke
 | `go test ./internal/api -run 'Test.*Contract' -count=1` | 固定 HTTP status、JSON shape、錯誤 code 與 response header |
 | `go test ./internal/api -run 'TestRequestDecodingContract' -count=1` | 固定 malformed JSON、unknown field、trailing JSON 與空白 name 的 `400 invalid_input` |
 | `make request-decoding-check` | 固定 Request Decoding Contract、Go tests、OpenAPI、README、章節、整合教程與 CI 入口 |
+| `go test ./internal/api ./internal/app -run 'TestIdempotencyKeyContract|TestCreateJobIdempotencyKeyContract' -count=1` | 固定 `Idempotency-Key` 重試回同一 job，且不重複 enqueue |
+| `make idempotency-key-check` | 固定 Idempotency Key Contract、memory/Postgres repository、migration unique index、OpenAPI、README、章節與 CI 入口 |
 | `go test ./internal/api -run 'TestRequestBodyLimitContract' -count=1` | 固定 oversized request body 的 `413 payload_too_large` JSON 與 request id 行為 |
 | `go test ./cmd/api-worker -run 'TestHTTPServerTimeoutContract' -count=1` | 固定 HTTP server read header、read、write、idle、shutdown 與 queue drain timeout 由 config 套用 |
 | `go test ./internal/api -run 'TestReadinessContract' -count=1` | 固定 ready / draining 狀態與 `/readyz` status code |
@@ -254,7 +260,7 @@ make contract-gate-inventory-check
 cd .. && node scripts/check-contract-gate-inventory-contract.mjs
 ```
 
-這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 32 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
+這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 33 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
 
 Production Workflow Contract 需包含：
 
@@ -320,6 +326,7 @@ Machine-readable contract 位於 `api/openapi.yaml`。它不是取代 Go contrac
 |---|---|
 | Success response | 保持 `id`、`name`、`payload`、`status` 欄位向後相容 |
 | Request decoding | 只接受單一 JSON object；unknown field、trailing JSON value 與空白 `name` 都回 `invalid_input`，並由 `make request-decoding-check` 固定 |
+| Idempotency key | `POST /jobs` 可帶 `Idempotency-Key`；同一 key 重試回同一 job，不重複寫入與 enqueue |
 | Request body limit | `POST /jobs` body 由 `REQUEST_BODY_LIMIT_BYTES` 限制；超限回 `413 payload_too_large` |
 | Queue backpressure | bounded queue 滿載時 service 回 `domain.ErrQueueFull`，HTTP API 對外回 `503 queue_full` |
 | Error response | 統一使用 `{"error":{"code":"...","message":"..."}}` |
@@ -331,6 +338,31 @@ Machine-readable contract 位於 `api/openapi.yaml`。它不是取代 Go contrac
 ```bash
 make openapi-check
 cd .. && node scripts/check-openapi-contract.mjs
+```
+
+## Idempotency Key Contract
+
+建立型 API 常被 client、gateway 或 queue retry 重送。`POST /jobs` 支援 `Idempotency-Key` header：第一次請求會建立 job 並 enqueue；同一 key 的後續重試回同一個 job，不再次 enqueue。空 header 保持原本每次建立新 job 的教學行為。
+
+| 項目 | 合約 |
+|---|---|
+| Header | `Idempotency-Key`，選填 |
+| Key validation | 不可含空白，長度不可超過 128 bytes |
+| Memory mode | `MemoryStore` 在 transaction snapshot 內查找既有 key |
+| Postgres mode | `jobs.idempotency_key` 搭配 `idx_jobs_idempotency_key` unique index |
+| Duplicate retry | 回既有 job，worker queue 不重複 enqueue |
+| Static gate | `make idempotency-key-check` 或 `node scripts/check-idempotency-key-contract.mjs` |
+
+```bash
+curl -X POST http://localhost:8080/jobs \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: retry-demo-1' \
+  -d '{"name":"resize","payload":"image"}'
+
+curl -X POST http://localhost:8080/jobs \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: retry-demo-1' \
+  -d '{"name":"resize","payload":"image"}'
 ```
 
 ## Startup Configuration Contract

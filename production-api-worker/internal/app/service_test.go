@@ -84,6 +84,45 @@ func TestCreateJobStopsDeadlockRetryWhenContextCanceled(t *testing.T) {
 	}
 }
 
+func TestCreateJobIdempotencyKeyContract(t *testing.T) {
+	obs := noopObs{}
+	store := newMemoryStore()
+	queue := &fakeQueue{}
+	ids := []string{"job-4", "job-5"}
+	service := NewService(store, queue, obs, func() string {
+		id := ids[0]
+		ids = ids[1:]
+		return id
+	})
+
+	first, err := service.CreateJob(context.Background(), domain.JobInput{
+		Name:           "resize",
+		Payload:        "image",
+		IdempotencyKey: "client-retry-1",
+	})
+	if err != nil {
+		t.Fatalf("first CreateJob returned error: %v", err)
+	}
+
+	second, err := service.CreateJob(context.Background(), domain.JobInput{
+		Name:           "resize",
+		Payload:        "image",
+		IdempotencyKey: "client-retry-1",
+	})
+	if err != nil {
+		t.Fatalf("second CreateJob returned error: %v", err)
+	}
+	if first.ID != second.ID {
+		t.Fatalf("duplicate idempotency key created different jobs: first=%s second=%s", first.ID, second.ID)
+	}
+	if len(queue.got) != 1 || queue.got[0].JobID != first.ID {
+		t.Fatalf("duplicate idempotency key should enqueue once, got %+v", queue.got)
+	}
+	if second.IdempotencyKey != "client-retry-1" {
+		t.Fatalf("idempotency key not preserved on stored job: %+v", second)
+	}
+}
+
 type cancelingDeadlockStore struct {
 	cancel context.CancelFunc
 	calls  int
@@ -196,4 +235,16 @@ func (tx *memoryTx) GetJob(ctx context.Context, id string) (domain.Job, error) {
 		return domain.Job{}, fmt.Errorf("job %s: %w", id, domain.ErrNotFound)
 	}
 	return job, nil
+}
+
+func (tx *memoryTx) GetJobByIdempotencyKey(ctx context.Context, key string) (domain.Job, error) {
+	if err := ctx.Err(); err != nil {
+		return domain.Job{}, err
+	}
+	for _, job := range tx.jobs {
+		if job.IdempotencyKey == key {
+			return job, nil
+		}
+	}
+	return domain.Job{}, domain.ErrNotFound
 }

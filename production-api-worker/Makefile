@@ -1,4 +1,4 @@
-.PHONY: test test-race ci ci-contract openapi-check readiness-check request-decoding-check panic-recovery-check request-correlation-check api-security-check worker-failure-check retry-cancellation-check request-timeout-check queue-backpressure-check db-pool-check migration-check runbook-check prometheus-check operational-observability-check pprof-check rate-limit-check trusted-proxy-check cors-check request-body-limit-check http-timeout-check startup-config-check shutdown-signal-check ci-quality-gate-check ci-contract-parity-check contract-gate-inventory-check docs-publishing-check production-workflow-check syntax-flow-svg-check go-release-notes-check release-artifact-chain-check dependency-governance-check compose-smoke-check otel-check docker-build compose-smoke run migrate docker-up docker-down
+.PHONY: test test-race ci ci-contract openapi-check readiness-check request-decoding-check idempotency-key-check panic-recovery-check request-correlation-check api-security-check worker-failure-check retry-cancellation-check request-timeout-check queue-backpressure-check db-pool-check migration-check runbook-check prometheus-check operational-observability-check pprof-check rate-limit-check trusted-proxy-check cors-check request-body-limit-check http-timeout-check startup-config-check shutdown-signal-check ci-quality-gate-check ci-contract-parity-check contract-gate-inventory-check docs-publishing-check production-workflow-check syntax-flow-svg-check go-release-notes-check release-artifact-chain-check dependency-governance-check compose-smoke-check otel-check docker-build compose-smoke run migrate docker-up docker-down
 
 test:
 	go test ./...
@@ -13,9 +13,9 @@ ci:
 
 ci-contract:
 	go test ./internal/config ./internal/migration -count=1
-	go test ./internal/api -run 'Test.*Contract|TestReadinessContract|TestPanicRecoveryContract|TestRequestDecodingContract|TestRequestBodyLimitContract|TestRequestTimeoutContract|TestRateLimitContract|TestCORSAllowedOriginsContract' -count=1
+	go test ./internal/api -run 'Test.*Contract|TestReadinessContract|TestPanicRecoveryContract|TestRequestDecodingContract|TestRequestBodyLimitContract|TestRequestTimeoutContract|TestRateLimitContract|TestCORSAllowedOriginsContract|TestIdempotencyKeyContract' -count=1
 	go test ./cmd/api-worker -run 'TestMonitoredSignalsContract|TestHTTPServerTimeoutContract' -count=1
-	go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled' -count=1
+	go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled|TestCreateJobIdempotencyKeyContract' -count=1
 	go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic|TestWorkerFailureResultContract|TestQueueBackpressureContract' -count=1
 
 openapi-check:
@@ -26,6 +26,9 @@ readiness-check:
 
 request-decoding-check:
 	cd .. && node scripts/check-request-decoding-contract.mjs
+
+idempotency-key-check:
+	cd .. && node scripts/check-idempotency-key-contract.mjs
 
 panic-recovery-check:
 	cd .. && node scripts/check-panic-recovery-contract.mjs
