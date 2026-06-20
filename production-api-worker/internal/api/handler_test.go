@@ -52,6 +52,9 @@ func TestCreateJobAndMetrics(t *testing.T) {
 	if !strings.Contains(metricsRec.Body.String(), "api_requests_total") {
 		t.Fatalf("metrics output missing api_requests_total: %s", metricsRec.Body.String())
 	}
+	if !strings.Contains(metricsRec.Body.String(), "api_request_duration_seconds") {
+		t.Fatalf("metrics output missing api_request_duration_seconds: %s", metricsRec.Body.String())
+	}
 }
 
 func TestCreateJobContract(t *testing.T) {
@@ -263,6 +266,36 @@ func TestIdempotencyKeyContract(t *testing.T) {
 	}
 	if got := rec.Header().Get(requestIDHeader); got != "idempotency-request" {
 		t.Fatalf("request id header = %q, want idempotency-request", got)
+	}
+}
+
+func TestAPILatencyMetricsContract(t *testing.T) {
+	handler := newContractHandler(t, nil)
+
+	req := httptest.NewRequest(http.MethodPost, "/jobs", strings.NewReader(`{"name":"resize","payload":"image"}`))
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("status = %d, want %d: %s", rec.Code, http.StatusAccepted, rec.Body.String())
+	}
+
+	metricsReq := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	metricsRec := httptest.NewRecorder()
+	handler.ServeHTTP(metricsRec, metricsReq)
+	if metricsRec.Code != http.StatusOK {
+		t.Fatalf("metrics status = %d, want %d", metricsRec.Code, http.StatusOK)
+	}
+	body := metricsRec.Body.String()
+	for _, want := range []string{
+		"api_requests_total",
+		"api_request_duration_seconds_bucket",
+		`route="/jobs"`,
+		`method="POST"`,
+		`status="Accepted"`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Fatalf("metrics output missing %q: %s", want, body)
+		}
 	}
 }
 

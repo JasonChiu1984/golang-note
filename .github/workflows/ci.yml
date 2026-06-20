@@ -66,6 +66,9 @@ jobs:
       - name: Check idempotency key contract
         run: node scripts/check-idempotency-key-contract.mjs
 
+      - name: Check API latency metrics contract
+        run: node scripts/check-api-latency-metrics-contract.mjs
+
       - name: Check panic recovery contract
         run: node scripts/check-panic-recovery-contract.mjs
 
@@ -175,7 +178,7 @@ jobs:
       - name: Run contract tests
         run: |
           go test ./internal/config ./internal/migration -count=1
-          go test ./internal/api -run 'Test.*Contract|TestReadinessContract|TestPanicRecoveryContract|TestRequestDecodingContract|TestRequestBodyLimitContract|TestRequestTimeoutContract|TestRateLimitContract|TestCORSAllowedOriginsContract|TestIdempotencyKeyContract' -count=1
+          go test ./internal/api -run 'Test.*Contract|TestReadinessContract|TestPanicRecoveryContract|TestRequestDecodingContract|TestRequestBodyLimitContract|TestRequestTimeoutContract|TestRateLimitContract|TestCORSAllowedOriginsContract|TestIdempotencyKeyContract|TestAPILatencyMetricsContract' -count=1
           go test ./cmd/api-worker -run 'TestMonitoredSignalsContract|TestHTTPServerTimeoutContract' -count=1
           go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled|TestCreateJobIdempotencyKeyContract' -count=1
           go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic|TestWorkerFailureResultContract|TestQueueBackpressureContract' -count=1

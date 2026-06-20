@@ -22,10 +22,10 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.64`",
+    "教材版本：`v1.0.65`",
     "Contract gate inventory",
     "node scripts/check-contract-gate-inventory-contract.mjs",
-    "33 個 root contract checker",
+    "34 個 root contract checker",
   ],
   "production-api-worker/README.md": [
     "Contract Gate Inventory",
@@ -33,13 +33,13 @@ const required = {
     "node scripts/check-contract-gate-inventory-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.64",
+    "版本：v1.0.65",
     "Contract gate inventory",
     "node scripts/check-contract-gate-inventory-contract.mjs",
-    "33 個 root contract checker",
+    "34 個 root contract checker",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.64",
+    "version: v1.0.65",
     "Contract gate inventory",
     "check-contract-gate-inventory-contract.mjs",
   ],
@@ -75,8 +75,8 @@ const required = {
 
 const missing = [];
 
-if (contractScripts.length !== 33) {
-  missing.push(`expected 33 root contract checker scripts, found ${contractScripts.length}`);
+if (contractScripts.length !== 34) {
+  missing.push(`expected 34 root contract checker scripts, found ${contractScripts.length}`);
 }
 
 for (const file of files) {

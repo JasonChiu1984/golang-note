@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.65 - 2026-06-21
+
+- 新增 2026-06-21 06:01:59 CST +0800 資深工程師審查報告，確認 v1.0.64 已補齊 Idempotency key contract gate，但 HTTP API latency metrics 仍缺少獨立 static gate。
+- 新增 `scripts/check-api-latency-metrics-contract.mjs`，固定 `api_request_duration_seconds` histogram、route / method / status labels、Go contract test、Makefile 與 GitHub Actions 入口。
+- `production-api-worker/Makefile` 新增 `api-latency-metrics-check`；`.github/workflows/ci.yml` 新增 `Check API latency metrics contract`，並讓 `make ci-contract` / production contract job 涵蓋 `TestAPILatencyMetricsContract`。
+- Contract gate inventory 從 33 個 root contract checker 更新為 34 個，並納入 API latency metrics checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.65`。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.64 - 2026-06-20
 
 - 新增 2026-06-20 06:05:25 CST +0800 資深工程師審查報告，確認 v1.0.63 已補齊 Dependency governance contract gate，但 `POST /jobs` 建立型 API 仍缺少 Idempotency key contract gate 來固定 retry-safe 行為。

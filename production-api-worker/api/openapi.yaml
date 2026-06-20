@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.64
+  version: v1.0.65
   description: >
     Machine-readable contract for the Go teaching production API worker.
     This file mirrors docs/api-contract.md and the Go contract tests,
@@ -44,7 +44,7 @@ info:
     Startup configuration contract gate keeps PORT, QUEUE_SIZE, WORKERS,
     OTEL_EXPORTER_OTLP_ENDPOINT, config loader, Go tests, Makefile, and CI
     static gates aligned through check-startup-config-contract.mjs.
-    Contract gate inventory keeps all 33 root contract checker scripts,
+    Contract gate inventory keeps all 34 root contract checker scripts,
     check-contract-gate-inventory-contract.mjs, Makefile, README, API contract,
     chapters, visual course, and GitHub Actions aligned.
     Docs publishing contract gate keeps docs/index.html, GitHub Pages link fix,
@@ -68,6 +68,8 @@ info:
     go list -m -u all, govulncheck ./..., root and production module scan
     coverage, offline module proxy and vulnerability database notes, Makefile,
     and CI static gates aligned through check-dependency-governance-contract.mjs.
+    API latency metrics contract keeps api_request_duration_seconds, route,
+    method, status labels, Go contract tests, Makefile, and CI static gate aligned.
     Idempotency key contract keeps POST /jobs retry-safe through the
     Idempotency-Key header, memory/Postgres repository lookup, migration unique
     index, Go contract tests, Makefile, and CI static gate.

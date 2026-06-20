@@ -335,9 +335,14 @@ func isPprofPath(path string) bool {
 
 func (h *Handler) metricsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
 		recorder := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
 		next.ServeHTTP(recorder, r)
-		h.obs.Metrics.RequestsTotal.WithLabelValues(routeLabel(r), r.Method, http.StatusText(recorder.status)).Inc()
+		route := routeLabel(r)
+		method := r.Method
+		status := http.StatusText(recorder.status)
+		h.obs.Metrics.RequestsTotal.WithLabelValues(route, method, status).Inc()
+		h.obs.ObserveHTTPRequestDuration(route, method, status, time.Since(start).Seconds())
 	})
 }
 

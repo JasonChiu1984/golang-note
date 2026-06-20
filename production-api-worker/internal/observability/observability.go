@@ -18,10 +18,11 @@ import (
 )
 
 type Metrics struct {
-	RequestsTotal *prometheus.CounterVec
-	JobsTotal     *prometheus.CounterVec
-	QueueDepth    prometheus.Gauge
-	JobDuration   prometheus.Histogram
+	RequestsTotal   *prometheus.CounterVec
+	RequestDuration *prometheus.HistogramVec
+	JobsTotal       *prometheus.CounterVec
+	QueueDepth      prometheus.Gauge
+	JobDuration     prometheus.Histogram
 }
 
 type Observability struct {
@@ -59,6 +60,11 @@ func NewWithConfig(ctx context.Context, config Config) (*Observability, error) {
 			Name: "api_requests_total",
 			Help: "HTTP requests by route, method and status.",
 		}, []string{"route", "method", "status"}),
+		RequestDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Name:    "api_request_duration_seconds",
+			Help:    "HTTP request latency by route, method and status.",
+			Buckets: prometheus.DefBuckets,
+		}, []string{"route", "method", "status"}),
 		JobsTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name: "worker_jobs_total",
 			Help: "Worker jobs by result.",
@@ -73,7 +79,7 @@ func NewWithConfig(ctx context.Context, config Config) (*Observability, error) {
 			Buckets: prometheus.DefBuckets,
 		}),
 	}
-	registry.MustRegister(metrics.RequestsTotal, metrics.JobsTotal, metrics.QueueDepth, metrics.JobDuration)
+	registry.MustRegister(metrics.RequestsTotal, metrics.RequestDuration, metrics.JobsTotal, metrics.QueueDepth, metrics.JobDuration)
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil)).With("service", config.ServiceName)
 	return &Observability{
@@ -113,6 +119,10 @@ func (o *Observability) InfoContext(ctx context.Context, msg string, args ...any
 
 func (o *Observability) WarnContext(ctx context.Context, msg string, args ...any) {
 	o.Logger.WarnContext(ctx, msg, args...)
+}
+
+func (o *Observability) ObserveHTTPRequestDuration(route, method, status string, seconds float64) {
+	o.Metrics.RequestDuration.WithLabelValues(route, method, status).Observe(seconds)
 }
 
 func (o *Observability) ObserveWorkerQueueDepth(depth int) {
