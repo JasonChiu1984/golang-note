@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.66 - 2026-06-22
+
+- 新增 2026-06-22 06:02:12 CST +0800 資深工程師審查報告，確認 v1.0.65 已補齊 API latency metrics contract gate，但 `CreateJob` 的 service transaction boundary 仍缺少獨立 static gate。
+- 新增 `scripts/check-service-transaction-boundary-contract.mjs`，固定 `sql.TxOptions{Isolation: sql.LevelReadCommitted}`、commit 後 enqueue、queue-full failed 狀態回寫、Go contract test、Makefile 與 GitHub Actions 入口。
+- `production-api-worker/internal/app/service_test.go` 新增 `TestServiceTransactionBoundaryContract`，驗證 job transaction isolation、enqueue 邊界與 queue 滿載後的 failed 狀態回寫。
+- `production-api-worker/Makefile` 新增 `service-transaction-boundary-check`；`.github/workflows/ci.yml` 新增 `Check service transaction boundary contract`，並讓 `make ci-contract` / production contract job 涵蓋 `TestServiceTransactionBoundaryContract`。
+- Contract gate inventory 從 34 個 root contract checker 更新為 35 個，並納入 Service transaction boundary checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.66`。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.65 - 2026-06-21
 
 - 新增 2026-06-21 06:01:59 CST +0800 資深工程師審查報告，確認 v1.0.64 已補齊 Idempotency key contract gate，但 HTTP API latency metrics 仍缺少獨立 static gate。

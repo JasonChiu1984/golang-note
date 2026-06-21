@@ -22,7 +22,7 @@
 - Request Decoding Contract：拒絕 malformed JSON、unknown field、trailing JSON value 與空白 name，並由 `make request-decoding-check` 固定文件、OpenAPI、測試與 CI 入口
 - Idempotency Key Contract：`POST /jobs` 支援 `Idempotency-Key` header；同一 key 的 client retry 回同一個 job 且不重複 enqueue，並由 `make idempotency-key-check` 固定 memory/Postgres、migration、OpenAPI、測試與 CI 入口
 - API Latency Metrics Contract：`api_request_duration_seconds` 必須用 `route`、`method`、`status` 標籤輸出 HTTP latency，並由 `make api-latency-metrics-check` 固定 runtime、測試、文件與 CI 入口
-- Service transaction boundary：`sql.TxOptions`、context-aware deadlock retry、queue enqueue
+- Service Transaction Boundary Contract：`sql.TxOptions{Isolation: sql.LevelReadCommitted}`、context-aware deadlock retry、commit 後 queue enqueue、queue-full failed 狀態回寫，並由 `make service-transaction-boundary-check` / `TestServiceTransactionBoundaryContract` 固定
 - Startup configuration：集中驗證 `PORT`、`QUEUE_SIZE`、`WORKERS` 與 DB pool 設定，錯誤設定 fail fast
 - DB Pool Contract：`DATABASE_MAX_OPEN_CONNS`、`DATABASE_MAX_IDLE_CONNS`、`DATABASE_CONN_MAX_LIFETIME` 由 config 驅動並套用到 `sql.DB`，由 `make db-pool-check` 固定文件、repository wiring 與 CI 入口
 - Migration Contract：集中驗證 migration env、timeout、SQL version，並用 `schema_migrations` 記錄已套用版本；`make migration-check` / `node scripts/check-migration-contract.mjs` 固定文件、測試與 CI 入口
@@ -37,7 +37,7 @@
 - Pipeline：migration CLI、Docker Compose、GitHub Actions workflow、Docker image build gate、Compose smoke gate
 - CI Quality Gate Contract：GitHub Actions 必須保留 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，並由 `make ci-quality-gate-check` 固定文件、Makefile 與 CI 入口
 - CI Contract Parity Gate：`make ci-contract` 與 GitHub Actions production contract job 必須使用相同 API test selector，包含 `TestCORSAllowedOriginsContract`，並由 `make ci-contract-parity-check` 固定
-- Contract Gate Inventory：34 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
+- Contract Gate Inventory：35 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
 - Docs Publishing Contract：`docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈必須由 `make docs-publishing-check` / `node scripts/check-docs-publishing-contract.mjs` 固定，避免 Pages 首頁與整合課程來源漂移
 - Production Workflow Contract：`production-api-worker/.github/workflows/production-api-worker.yml` 必須保留 `make ci-contract`、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup，並由 `make production-workflow-check` 固定
 - Syntax Flow SVG Contract：語法流程圖補充頁必須保留 25 個單語法 flow、標準流程圖符號、SVG metadata 與 blueprint renderer，並由 `make syntax-flow-svg-check` / `node scripts/check-syntax-flow-svg-contract.mjs` 固定
@@ -159,6 +159,8 @@ make compose-smoke
 | `make request-decoding-check` | 固定 Request Decoding Contract、Go tests、OpenAPI、README、章節、整合教程與 CI 入口 |
 | `go test ./internal/api ./internal/app -run 'TestIdempotencyKeyContract|TestCreateJobIdempotencyKeyContract' -count=1` | 固定 `Idempotency-Key` 重試回同一 job，且不重複 enqueue |
 | `make idempotency-key-check` | 固定 Idempotency Key Contract、memory/Postgres repository、migration unique index、OpenAPI、README、章節與 CI 入口 |
+| `go test ./internal/app -run 'TestServiceTransactionBoundaryContract' -count=1` | 固定 service transaction boundary、LevelReadCommitted、commit 後 enqueue 與 queue-full failed 回寫 |
+| `make service-transaction-boundary-check` | 固定 Service Transaction Boundary Contract、Go tests、README、API contract、章節、整合教程與 CI 入口 |
 | `go test ./internal/api -run 'TestRequestBodyLimitContract' -count=1` | 固定 oversized request body 的 `413 payload_too_large` JSON 與 request id 行為 |
 | `go test ./cmd/api-worker -run 'TestHTTPServerTimeoutContract' -count=1` | 固定 HTTP server read header、read、write、idle、shutdown 與 queue drain timeout 由 config 套用 |
 | `go test ./internal/api -run 'TestReadinessContract' -count=1` | 固定 ready / draining 狀態與 `/readyz` status code |
@@ -261,7 +263,7 @@ make contract-gate-inventory-check
 cd .. && node scripts/check-contract-gate-inventory-contract.mjs
 ```
 
-這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 34 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
+這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 35 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
 
 Production Workflow Contract 需包含：
 

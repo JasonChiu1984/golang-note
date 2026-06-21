@@ -3,8 +3,8 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename } from "node:path";
 
 const version = readFileSync("VERSION", "utf8").trim();
-const expectedVersion = "v1.0.65";
-const artifactTimestamp = "2026-06-21-060159";
+const expectedVersion = "v1.0.66";
+const artifactTimestamp = "2026-06-22-060212";
 
 const files = [
   "README.md",
@@ -27,14 +27,14 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.65`",
+    "教材版本：`v1.0.66`",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "CHANGELOG.md": [
-    "## v1.0.65 - 2026-06-21",
-    "scripts/check-api-latency-metrics-contract.mjs",
-    "API latency metrics contract",
+    "## v1.0.66 - 2026-06-22",
+    "scripts/check-service-transaction-boundary-contract.mjs",
+    "Service transaction boundary",
   ],
   "production-api-worker/README.md": [
     "Release Artifact Chain Contract",
@@ -42,12 +42,12 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.65",
+    "版本：v1.0.66",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.65",
+    "version: v1.0.66",
     "Release artifact chain contract gate",
     "check-release-artifact-chain-contract.mjs",
   ],
@@ -84,18 +84,18 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   [`審查報告/${artifactTimestamp}-資深工程師審查報告.md`]: [
-    "API latency metrics",
-    "v1.0.65",
-    "2026-06-21 06:01:59 CST +0800",
+    "Service transaction boundary",
+    "v1.0.66",
+    "2026-06-22 06:02:12 CST +0800",
   ],
   [`內容需要更新的部分/${artifactTimestamp}-內容需要更新的部分.md`]: [
-    "API latency metrics",
-    "scripts/check-api-latency-metrics-contract.mjs",
-    "v1.0.65",
+    "Service transaction boundary",
+    "scripts/check-service-transaction-boundary-contract.mjs",
+    "v1.0.66",
   ],
   [`更新資料/${artifactTimestamp}-${expectedVersion}-更新紀錄.md`]: [
-    "API latency metrics contract gate",
-    "scripts/check-api-latency-metrics-contract.mjs",
+    "Service transaction boundary contract gate",
+    "scripts/check-service-transaction-boundary-contract.mjs",
     "docs/index.html",
     "git push",
   ],

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.65
+  version: v1.0.66
   description: >
     Machine-readable contract for the Go teaching production API worker.
     This file mirrors docs/api-contract.md and the Go contract tests,
@@ -28,6 +28,9 @@ info:
     systems.
     Worker failure handling keeps failed jobs visible through worker_jobs_total.
     Retry cancellation keeps deadlock retry backoff bound to request or shutdown context.
+    Service transaction boundary contract keeps sql.TxOptions, commit-before-enqueue,
+    queue-full failed status updates, check-service-transaction-boundary-contract.mjs,
+    Makefile, and CI static gates aligned.
     Queue backpressure returns 503 queue_full while preserving dropped result labels,
     queue depth, and worker duration metrics. DB pool contract keeps DATABASE_MAX_OPEN_CONNS,
     DATABASE_MAX_IDLE_CONNS, DATABASE_CONN_MAX_LIFETIME, repository pool wiring,
@@ -44,7 +47,7 @@ info:
     Startup configuration contract gate keeps PORT, QUEUE_SIZE, WORKERS,
     OTEL_EXPORTER_OTLP_ENDPOINT, config loader, Go tests, Makefile, and CI
     static gates aligned through check-startup-config-contract.mjs.
-    Contract gate inventory keeps all 34 root contract checker scripts,
+    Contract gate inventory keeps all 35 root contract checker scripts,
     check-contract-gate-inventory-contract.mjs, Makefile, README, API contract,
     chapters, visual course, and GitHub Actions aligned.
     Docs publishing contract gate keeps docs/index.html, GitHub Pages link fix,

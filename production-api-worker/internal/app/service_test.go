@@ -123,6 +123,42 @@ func TestCreateJobIdempotencyKeyContract(t *testing.T) {
 	}
 }
 
+func TestServiceTransactionBoundaryContract(t *testing.T) {
+	obs := noopObs{}
+	store := newMemoryStore()
+	queue := &fakeQueue{}
+	service := NewService(store, queue, obs, func() string { return "job-transaction-boundary" })
+
+	job, err := service.CreateJob(context.Background(), domain.JobInput{Name: "resize", Payload: "image"})
+	if err != nil {
+		t.Fatalf("CreateJob returned error: %v", err)
+	}
+	if got := store.LastIsolationLevel(); got != sql.LevelReadCommitted {
+		t.Fatalf("transaction isolation = %v, want %v", got, sql.LevelReadCommitted)
+	}
+	if _, err := store.GetJob(context.Background(), job.ID); err != nil {
+		t.Fatalf("job must be committed before enqueue boundary is complete: %v", err)
+	}
+	if len(queue.got) != 1 || queue.got[0].JobID != job.ID {
+		t.Fatalf("job must enqueue exactly once after transaction commit: %+v", queue.got)
+	}
+
+	queue.err = domain.ErrQueueFull
+	service = NewService(store, queue, obs, func() string { return "job-queue-full-boundary" })
+
+	_, err = service.CreateJob(context.Background(), domain.JobInput{Name: "resize", Payload: "image"})
+	if !errors.Is(err, domain.ErrQueueFull) {
+		t.Fatalf("queue full error = %v, want %v", err, domain.ErrQueueFull)
+	}
+	failed, err := store.GetJob(context.Background(), "job-queue-full-boundary")
+	if err != nil {
+		t.Fatalf("queue-full job must remain queryable for incident/debug visibility: %v", err)
+	}
+	if failed.Status != domain.JobFailed {
+		t.Fatalf("queue-full job status = %s, want %s", failed.Status, domain.JobFailed)
+	}
+}
+
 type cancelingDeadlockStore struct {
 	cancel context.CancelFunc
 	calls  int
@@ -151,6 +187,7 @@ type memoryStore struct {
 	mu           sync.Mutex
 	jobs         map[string]domain.Job
 	nextDeadlock bool
+	lastOpts     sql.TxOptions
 }
 
 func newMemoryStore() *memoryStore {
@@ -167,6 +204,9 @@ func (s *memoryStore) WithTx(ctx context.Context, opts *sql.TxOptions, fn func(T
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if opts != nil {
+		s.lastOpts = *opts
+	}
 	if s.nextDeadlock {
 		s.nextDeadlock = false
 		return domain.ErrDeadlock
@@ -182,6 +222,12 @@ func (s *memoryStore) WithTx(ctx context.Context, opts *sql.TxOptions, fn func(T
 	}
 	s.jobs = snapshot
 	return nil
+}
+
+func (s *memoryStore) LastIsolationLevel() sql.IsolationLevel {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.lastOpts.Isolation
 }
 
 func (s *memoryStore) GetJob(ctx context.Context, id string) (domain.Job, error) {

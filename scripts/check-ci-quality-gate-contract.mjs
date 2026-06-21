@@ -17,7 +17,7 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.65`",
+    "教材版本：`v1.0.66`",
     "CI quality gate contract",
     "node scripts/check-ci-quality-gate-contract.mjs",
     "go mod verify",
@@ -31,14 +31,14 @@ const required = {
     "govulncheck ./...",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.65",
+    "版本：v1.0.66",
     "CI quality gate contract",
     "node scripts/check-ci-quality-gate-contract.mjs",
     "go mod verify",
     "govulncheck ./...",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.65",
+    "version: v1.0.66",
     "CI quality gate contract",
     "go mod verify",
     "go test -race -cover",
