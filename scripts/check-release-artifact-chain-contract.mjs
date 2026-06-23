@@ -3,8 +3,8 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename } from "node:path";
 
 const version = readFileSync("VERSION", "utf8").trim();
-const expectedVersion = "v1.0.66";
-const artifactTimestamp = "2026-06-22-060212";
+const expectedVersion = "v1.0.67";
+const artifactTimestamp = "2026-06-23-103243";
 
 const files = [
   "README.md",
@@ -27,14 +27,14 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.66`",
+    "教材版本：`v1.0.67`",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "CHANGELOG.md": [
-    "## v1.0.66 - 2026-06-22",
-    "scripts/check-service-transaction-boundary-contract.mjs",
-    "Service transaction boundary",
+    "## v1.0.67 - 2026-06-23",
+    "scripts/check-trace-shutdown-contract.mjs",
+    "Trace shutdown",
   ],
   "production-api-worker/README.md": [
     "Release Artifact Chain Contract",
@@ -42,12 +42,12 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.66",
+    "版本：v1.0.67",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.66",
+    "version: v1.0.67",
     "Release artifact chain contract gate",
     "check-release-artifact-chain-contract.mjs",
   ],
@@ -84,20 +84,20 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   [`審查報告/${artifactTimestamp}-資深工程師審查報告.md`]: [
-    "Service transaction boundary",
-    "v1.0.66",
-    "2026-06-22 06:02:12 CST +0800",
+    "Trace shutdown",
+    "v1.0.67",
+    "2026-06-23 10:32:43 CST +0800",
   ],
   [`內容需要更新的部分/${artifactTimestamp}-內容需要更新的部分.md`]: [
-    "Service transaction boundary",
-    "scripts/check-service-transaction-boundary-contract.mjs",
-    "v1.0.66",
+    "Trace shutdown",
+    "scripts/check-trace-shutdown-contract.mjs",
+    "v1.0.67",
   ],
   [`更新資料/${artifactTimestamp}-${expectedVersion}-更新紀錄.md`]: [
-    "Service transaction boundary contract gate",
-    "scripts/check-service-transaction-boundary-contract.mjs",
+    "Trace shutdown contract gate",
+    "scripts/check-trace-shutdown-contract.mjs",
     "docs/index.html",
-    "git push",
+    "GitHub push",
   ],
 };
 

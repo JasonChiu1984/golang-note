@@ -102,6 +102,9 @@ jobs:
       - name: Check pprof diagnostics contract
         run: node scripts/check-pprof-contract.mjs
 
+      - name: Check trace shutdown contract
+        run: node scripts/check-trace-shutdown-contract.mjs
+
       - name: Check rate limit contract
         run: node scripts/check-rate-limit-contract.mjs
 
@@ -183,6 +186,7 @@ jobs:
           go test ./internal/config ./internal/migration -count=1
           go test ./internal/api -run 'Test.*Contract|TestReadinessContract|TestPanicRecoveryContract|TestRequestDecodingContract|TestRequestBodyLimitContract|TestRequestTimeoutContract|TestRateLimitContract|TestCORSAllowedOriginsContract|TestIdempotencyKeyContract|TestAPILatencyMetricsContract' -count=1
           go test ./cmd/api-worker -run 'TestMonitoredSignalsContract|TestHTTPServerTimeoutContract' -count=1
+          go test ./internal/observability -run 'TestTraceShutdownContract' -count=1
           go test ./internal/app -run 'TestCreateJobStopsDeadlockRetryWhenContextCanceled|TestCreateJobIdempotencyKeyContract|TestServiceTransactionBoundaryContract' -count=1
           go test ./internal/worker -run 'Test.*Shutdown|TestConcurrentEnqueueAndShutdownDoesNotPanic|TestWorkerFailureResultContract|TestQueueBackpressureContract' -count=1
 

@@ -373,6 +373,7 @@ ENTRYPOINT ["/app"]
 | Idempotency key contract | 是否由 `node scripts/check-idempotency-key-contract.mjs` 固定 `Idempotency-Key`、重試回同一 job、不重複 enqueue、migration unique index 與 CI 入口 |
 | API latency metrics contract | 是否由 `node scripts/check-api-latency-metrics-contract.mjs` 固定 `api_request_duration_seconds`、route / method / status labels 與 CI 入口 |
 | Service transaction boundary contract | 是否由 `node scripts/check-service-transaction-boundary-contract.mjs` 固定 LevelReadCommitted transaction、commit 後 enqueue、queue-full failed 回寫與 `TestServiceTransactionBoundaryContract` |
+| Trace shutdown contract | 是否由 `node scripts/check-trace-shutdown-contract.mjs` 固定 `Observability.Shutdown` 的 3 秒 bounded context、api-worker exit hook 與 `TestTraceShutdownContract` |
 | CORS allowlist | `CORS_ALLOWED_ORIGINS` 是否只允許 exact origin，並固定 preflight `204` / blocked `403` |
 | Request body limit | `REQUEST_BODY_LIMIT_BYTES` 是否固定 oversized body 的 `413 payload_too_large` |
 | HTTP server timeout | `HTTP_READ_HEADER_TIMEOUT`、`HTTP_READ_TIMEOUT`、`HTTP_WRITE_TIMEOUT`、`HTTP_IDLE_TIMEOUT`、`HTTP_SHUTDOWN_TIMEOUT`、`QUEUE_DRAIN_TIMEOUT` 是否由 config 套用 |
@@ -415,7 +416,7 @@ node ../scripts/check-retry-cancellation-contract.mjs
 
 CI contract parity gate：在 repo root 執行 `node scripts/check-ci-contract-parity-contract.mjs`，固定 `make ci-contract` 與 GitHub Actions production contract job 都涵蓋 `TestCORSAllowedOriginsContract`。
 
-Contract gate inventory：在 repo root 執行 `node scripts/check-contract-gate-inventory-contract.mjs`，固定 35 個 root contract checker 全部被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate。
+Contract gate inventory：在 repo root 執行 `node scripts/check-contract-gate-inventory-contract.mjs`，固定 36 個 root contract checker 全部被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate。
 
 Docs publishing contract gate：在 repo root 執行 `node scripts/check-docs-publishing-contract.mjs`，固定 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈、Makefile 與 CI 入口。
 
@@ -434,6 +435,8 @@ Idempotency key contract：在 repo root 執行 `node scripts/check-idempotency-
 API latency metrics contract：在 repo root 執行 `node scripts/check-api-latency-metrics-contract.mjs`，固定 `api_request_duration_seconds` histogram、route / method / status labels、Go contract test、Makefile 與 CI 入口。
 
 Service transaction boundary contract：在 repo root 執行 `node scripts/check-service-transaction-boundary-contract.mjs`，固定 `CreateJob` 的 `sql.TxOptions{Isolation: sql.LevelReadCommitted}`、commit 後 enqueue、queue-full failed 狀態回寫、`TestServiceTransactionBoundaryContract`、Makefile 與 CI 入口。
+
+Trace shutdown contract：在 repo root 執行 `node scripts/check-trace-shutdown-contract.mjs`，固定 trace provider shutdown 的 3 秒 bounded context、`obs.Shutdown(context.Background())` exit hook、`TestTraceShutdownContract`、Makefile 與 CI 入口。
 
 Operational observability contract gate：在 repo root 執行 `node scripts/check-operational-observability-contract.mjs`，固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險、Makefile 與 CI 入口。
 
@@ -513,6 +516,7 @@ benchstat old.txt new.txt
 | `pprof` | CPU / memory / goroutine profiling |
 | `trace` | 排程、GC、系統呼叫時間線 |
 | `node scripts/check-otel-collector-contract.mjs` | 固定 OTLP collector receiver、debug exporter 與 Compose endpoint |
+| `node scripts/check-trace-shutdown-contract.mjs` | 固定 trace provider shutdown deadline、api-worker exit hook 與 `TestTraceShutdownContract` |
 | `-race` | 偵測 data race |
 | `goleak` | 偵測 goroutine leak |
 | `benchstat` | 比較 benchmark 結果 |
@@ -861,8 +865,9 @@ synctest.Test(t, func(t *testing.T) {
 | Idempotency key contract | `node scripts/check-idempotency-key-contract.mjs && cd production-api-worker && make idempotency-key-check` | 固定 `Idempotency-Key` 重試回同一 job、不重複 enqueue、Postgres unique index、OpenAPI、Makefile 與 CI 入口 |
 | API latency metrics contract | `node scripts/check-api-latency-metrics-contract.mjs && cd production-api-worker && make api-latency-metrics-check` | 固定 `api_request_duration_seconds`、route / method / status labels、Go contract test、Makefile 與 CI 入口 |
 | Service transaction boundary contract | `node scripts/check-service-transaction-boundary-contract.mjs && cd production-api-worker && make service-transaction-boundary-check` | 固定 LevelReadCommitted transaction、commit 後 enqueue、queue-full failed 回寫與 CI 入口 |
+| Trace shutdown contract | `node scripts/check-trace-shutdown-contract.mjs && cd production-api-worker && make trace-shutdown-check` | 固定 trace provider shutdown 3 秒 bounded context、api-worker exit hook 與 CI 入口 |
 | Operational observability contract gate | `node scripts/check-operational-observability-contract.mjs && cd production-api-worker && make operational-observability-check` | 固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險、Makefile 與 CI 入口 |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs && cd production-api-worker && make contract-gate-inventory-check` | 固定 35 個 root contract checker 全部被 GitHub Actions 呼叫，並同步 Makefile、README、API contract、章節與整合視覺課程入口 |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs && cd production-api-worker && make contract-gate-inventory-check` | 固定 36 個 root contract checker 全部被 GitHub Actions 呼叫，並同步 Makefile、README、API contract、章節與整合視覺課程入口 |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs && cd production-api-worker && make docs-publishing-check` | 固定 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈、Makefile 與 CI 入口 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs && cd production-api-worker && make production-workflow-check` | 固定 standalone production workflow 的 contract、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs && cd production-api-worker && make syntax-flow-svg-check` | 固定語法流程圖補充頁的 25 個 flow、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口 |

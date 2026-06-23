@@ -276,6 +276,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Error envelope | `error.code`、`error.message` | client 無法用穩定 code 做分支 |
 | Observability | route label、trace span name、metrics label、`X-Request-ID` | dashboard、alert 與 incident log 無法對照 |
 | OTLP collector contract | `production-api-worker/otel-collector.yaml`、OTLP gRPC `0.0.0.0:4317`、`debug exporter`、Compose endpoint | trace 程式碼存在，但 collector pipeline 或 Compose endpoint 漂移後無法收 span |
+| Trace shutdown contract | `node scripts/check-trace-shutdown-contract.mjs`、`TestTraceShutdownContract`、3 秒 bounded shutdown、api-worker exit hook | exporter flush 或 provider shutdown 在 process exit 時無 deadline，導致 graceful shutdown 無法預測 |
 | API security | `API_KEY`、Bearer token、公開 health endpoint、安全標頭 | 業務 endpoint 或 metrics 無條件公開，或 health check 被認證擋住 |
 | API security contract gate | `node scripts/check-api-security-contract.mjs`、`TestAPIKeyAuthContract`、`TestSecurityHeadersContract`、OpenAPI `bearerAuth`、CI 入口 | 文件寫了 API key，但測試、OpenAPI 或 workflow 漂移後無法阻擋 regression |
 | CORS allowlist contract | `CORS_ALLOWED_ORIGINS`、exact origin、preflight `204`、blocked origin `403` | 為了讓瀏覽器前端能呼叫 API 而誤開 `Access-Control-Allow-Origin: *` |
@@ -296,7 +297,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Queue shutdown | enqueue 與 close 的同步邊界 | shutdown 期間可能送入已關閉 channel，造成 panic |
 | Shutdown signal contract | `SIGINT`、`SIGTERM`、readiness draining、HTTP shutdown、queue drain | Docker / Kubernetes 發出 `SIGTERM` 時未進入 graceful shutdown |
 | CI quality gate static gate | `node scripts/check-ci-quality-gate-contract.mjs`、root course、production contracts、race/coverage、govulncheck、Docker build、Compose smoke | workflow 重整後漏掉 dependency verify、漏洞掃描、競態檢查或部署 smoke |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs`、35 個 root contract checker、GitHub Actions 呼叫清單 | 新增 checker 後沒有進入 CI、Makefile 或教材入口，導致 release gate 漂移 |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs`、36 個 root contract checker、GitHub Actions 呼叫清單 | 新增 checker 後沒有進入 CI、Makefile 或教材入口，導致 release gate 漂移 |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs`、`docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈 | 首頁同步後 Release Notes、補充教材入口或回主頁連結在 Pages 上漂移 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs`、standalone workflow、contract tests、race/coverage、govulncheck、Docker smoke | production worker 抽成獨立 repo 時 workflow 退化成只跑快速測試 |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs`、25 個 syntax flow、標準流程圖符號、SVG metadata、blueprint renderer | 視覺化語法教材退回不可維護圖檔、缺少 accessibility metadata 或 docs/來源漂移 |
@@ -336,6 +337,8 @@ Production service 的 observability 不是「有 metrics endpoint」就結束�
 
 OpenTelemetry 也需要 deployment contract。`production-api-worker/otel-collector.yaml` 固定 OTLP gRPC receiver `0.0.0.0:4317` 與本地 `debug exporter`，`docker-compose.yml` 則固定 `OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317`。這不是正式 APM 架構，而是教學用的最小 trace pipeline：先確定 API span 真的能送到 collector，再由正式環境把 exporter 換成 Tempo、Jaeger、OTLP backend 或雲端平台。
 
+Trace shutdown contract 由 `node scripts/check-trace-shutdown-contract.mjs` 固定：`Observability.Shutdown` 必須用 3 秒 bounded context 呼叫 trace provider shutdown，`api-worker` process exit 也必須保留 `obs.Shutdown(context.Background())` hook。這讓 exporter flush 不會在 rolling deploy、測試清理或本機 Ctrl+C 後無限等待。
+
 ```bash
 node scripts/check-otel-collector-contract.mjs
 cd production-api-worker && make otel-check
@@ -371,6 +374,7 @@ go test ./internal/api -run 'Test.*Contract' -count=1
 | Idempotency key contract | `Idempotency-Key` header、memory/Postgres lookup、migration unique index、`TestIdempotencyKeyContract` 與 `node scripts/check-idempotency-key-contract.mjs` 固定 retry-safe create |
 | API latency metrics contract | `api_request_duration_seconds` histogram、route / method / status labels、`TestAPILatencyMetricsContract` 與 `node scripts/check-api-latency-metrics-contract.mjs` 固定 API latency SLI |
 | Service transaction boundary contract | `sql.TxOptions{Isolation: sql.LevelReadCommitted}`、commit 後 enqueue、queue-full failed 回寫、`TestServiceTransactionBoundaryContract` 與 `node scripts/check-service-transaction-boundary-contract.mjs` 固定 service / queue 邊界 |
+| Trace shutdown contract | `Observability.Shutdown`、3 秒 bounded context、`TestTraceShutdownContract` 與 `node scripts/check-trace-shutdown-contract.mjs` 固定 trace provider shutdown |
 | 找不到資源 | `404 Not Found`、`error.code=not_found` |
 | Queue full | `503 Service Unavailable`、`error.code=queue_full` |
 | Request ID | client header 原樣回傳；未提供時產生 `req-*` |
@@ -456,7 +460,7 @@ Production API 的 timeout 不是未知錯誤。若 handler 建立的 request de
 | Production contracts | `make ci-contract` 對齊 config、migration、API、worker 與 lifecycle contract tests |
 | CI contract parity gate | `node scripts/check-ci-contract-parity-contract.mjs` 固定 `make ci-contract` 與 GitHub Actions production contract job 的 API test selector 一致，避免漏跑 `TestCORSAllowedOriginsContract` |
 | Operational observability contract gate | `node scripts/check-operational-observability-contract.mjs` 固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險與 CI 入口 |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` 固定 35 個 root contract checker 都被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` 固定 36 個 root contract checker 都被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs` 固定 `docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈，避免 Pages 首頁入口漂移 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs` 固定 `production-api-worker/.github/workflows/production-api-worker.yml` 的 contract、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs` 固定語法流程圖補充頁的 25 個 flow、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口 |

@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.67 - 2026-06-23
+
+- 新增 2026-06-23 10:32:43 CST +0800 資深工程師審查報告，確認 v1.0.66 已補齊 Service transaction boundary contract gate，但 trace provider shutdown 的 bounded timeout 與 api-worker exit hook 尚缺獨立 static gate。
+- 新增 `scripts/check-trace-shutdown-contract.mjs`，固定 `Observability.Shutdown` 的 3 秒 bounded context、`obs.Shutdown(context.Background())` exit hook、Go contract test、Makefile 與 GitHub Actions 入口。
+- `production-api-worker/internal/observability/observability_test.go` 新增 `TestTraceShutdownContract`，驗證 trace provider shutdown context 必須帶 deadline 且不超過 3 秒。
+- `production-api-worker/Makefile` 新增 `trace-shutdown-check`；`.github/workflows/ci.yml` 新增 `Check trace shutdown contract`，並讓 `make ci-contract` / production contract job 涵蓋 `TestTraceShutdownContract`。
+- Contract gate inventory 從 35 個 root contract checker 更新為 36 個，並納入 Trace shutdown checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.67`。
+- `docs/index.html` 已由整合課程重新同步並套用 GitHub Pages link fix。
+
 ## v1.0.66 - 2026-06-22
 
 - 新增 2026-06-22 06:02:12 CST +0800 資深工程師審查報告，確認 v1.0.65 已補齊 API latency metrics contract gate，但 `CreateJob` 的 service transaction boundary 仍缺少獨立 static gate。

@@ -2,9 +2,9 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
-> 教材版本：`v1.0.66`
+> 教材版本：`v1.0.67`
 > 教材基準：`Go 1.26.4`
-> 這次更新重點：正式發布 Service transaction boundary contract gate，固定 `sql.TxOptions`、commit 後 enqueue、queue-full failed 狀態回寫、Go contract test 與 CI static gate。
+> 這次更新重點：正式發布 Trace shutdown contract gate，固定 trace provider shutdown 的 3 秒 bounded context、api-worker exit hook、Go contract test 與 CI static gate。
 
 ## 版本策略
 
@@ -54,6 +54,7 @@
 | Migration contract gate | DB schema migration 需有 `DATABASE_URL`、`MIGRATIONS_DIR`、`MIGRATION_TIMEOUT` 設定驗證、`schema_migrations` 版本紀錄、transaction apply 與重複執行保護，並由 `node scripts/check-migration-contract.mjs` 固定 |
 | Pprof diagnostics contract | `ENABLE_PPROF=false` 為預設；啟用 `/debug/pprof/` 時必須設定 `PPROF_TOKEN` 或 `API_KEY`，並由 `node scripts/check-pprof-contract.mjs` 固定文件、測試與 CI 入口 |
 | OTLP collector contract | `production-api-worker/otel-collector.yaml` 需固定 OTLP gRPC receiver `0.0.0.0:4317`、`debug` exporter、Compose endpoint 與 `node scripts/check-otel-collector-contract.mjs` CI gate |
+| Trace shutdown contract | trace provider shutdown 必須使用 3 秒 bounded context，`api-worker` process exit 需呼叫 `obs.Shutdown(context.Background())`，並由 `TestTraceShutdownContract` 和 `node scripts/check-trace-shutdown-contract.mjs` 固定 |
 | Rate limit contract | `RATE_LIMIT_REQUESTS_PER_MINUTE=120` 為預設；`/jobs` 與 `/jobs/{id}` 依 client IP 限速，超限回 `429 rate_limited` 與 `Retry-After`，並由 `node scripts/check-rate-limit-contract.mjs` 固定文件、OpenAPI、測試與 CI 入口 |
 | Trusted proxy client IP contract gate | `TRUSTED_PROXY_CIDRS` 預設空值；只有 trusted proxy 來源可採用 `X-Forwarded-For` 第一個 IP，避免外部直連偽造 rate limit key，並由 `node scripts/check-trusted-proxy-contract.mjs` 固定文件、runbook、測試、Makefile 與 CI 入口 |
 | Shutdown signal contract | `api-worker` 必須同時監聽 SIGINT/SIGTERM；收到訊號後先讓 readiness 轉 draining，再停止 HTTP server 並 drain queue，並由 `node scripts/check-shutdown-signal-contract.mjs` 固定文件、測試與 CI 入口 |
@@ -63,7 +64,7 @@
 | CI release gate | `.github/workflows/ci.yml` 需固定 root module、production-api-worker contract、race/coverage、govulncheck 與 Docker build，避免教材只描述 CI 卻沒有真實 workflow |
 | CI quality gate contract | GitHub Actions 需同時保留 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，並由 `node scripts/check-ci-quality-gate-contract.mjs` 固定文件、Makefile 與 CI 入口 |
 | CI contract parity gate | `make ci-contract` 的 API contract test selector 必須與 `.github/workflows/ci.yml` production contract job 一致，包含 `TestCORSAllowedOriginsContract`，並由 `node scripts/check-ci-contract-parity-contract.mjs` 固定 |
-| Contract gate inventory | 35 個 root contract checker 必須全部被 `.github/workflows/ci.yml` 呼叫，並由 `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口 |
+| Contract gate inventory | 36 個 root contract checker 必須全部被 `.github/workflows/ci.yml` 呼叫，並由 `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口 |
 | Release artifact chain contract gate | `審查報告/`、`內容需要更新的部分/`、`更新資料/`、`VERSION`、`CHANGELOG.md` 與 `docs/index.html` 必須由 `node scripts/check-release-artifact-chain-contract.mjs` 固定，避免發版記錄漏件 |
 | Dependency governance contract gate | `go mod tidy`、`go mod verify`、`go list -m -u all`、`govulncheck ./...` 與 module proxy / vulnerability database 離線處理必須由 `node scripts/check-dependency-governance-contract.mjs` 固定 |
 | Docs publishing contract gate | `docs/index.html` 必須保留 `ReleaseNote/index.html`、補充教材入口與主頁教程回鏈，並由 `node scripts/check-docs-publishing-contract.mjs` 固定 `fix-docs-index-links.mjs --check` 與 `check-html-home-links.mjs` |
@@ -208,12 +209,13 @@ go test ./project-concurrent-crawler/...
 | Migration contract gate | `node scripts/check-migration-contract.mjs` | 確認 migration env、timeout、version table、transaction apply、Go tests、README 與 CI 入口一致 |
 | Pprof diagnostics gate | `node scripts/check-pprof-contract.mjs` | 確認 `ENABLE_PPROF`、`PPROF_TOKEN`、`/debug/pprof/`、Go tests、runbook、README 與 CI 入口一致 |
 | OTLP collector gate | `node scripts/check-otel-collector-contract.mjs` | 確認 `production-api-worker/otel-collector.yaml`、Compose OTLP endpoint、debug exporter、runbook、README 與 CI 入口一致 |
+| Trace shutdown gate | `node scripts/check-trace-shutdown-contract.mjs` | 確認 trace provider shutdown 以 3 秒 bounded context 執行、api-worker exit hook、Go test、README、API contract、Makefile 與 CI 入口一致 |
 | Rate limit contract gate | `node scripts/check-rate-limit-contract.mjs` | 確認 `RATE_LIMIT_REQUESTS_PER_MINUTE`、`TRUSTED_PROXY_CIDRS`、`429 rate_limited`、Go tests、OpenAPI、README 與 CI 入口一致 |
 | Trusted proxy client IP contract gate | `node scripts/check-trusted-proxy-contract.mjs` | 確認 `TRUSTED_PROXY_CIDRS`、`X-Forwarded-For`、untrusted `RemoteAddr` fallback、Go tests、runbook、Makefile 與 CI 入口一致 |
 | Shutdown signal contract gate | `node scripts/check-shutdown-signal-contract.mjs` | 確認 SIGINT/SIGTERM、`TestMonitoredSignalsContract`、README、API contract、章節與 CI 入口一致 |
 | CI quality gate contract | `node scripts/check-ci-quality-gate-contract.mjs` | 確認 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build、Compose smoke、Makefile 與 CI 入口一致 |
 | CI contract parity gate | `node scripts/check-ci-contract-parity-contract.mjs` | 確認 `make ci-contract` 與 GitHub Actions production contract job 的 API test selector 一致，且保留 `TestCORSAllowedOriginsContract` |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` | 確認 35 個 root contract checker 都被 GitHub Actions 呼叫，且 Makefile、README、API contract、章節與整合視覺課程入口一致 |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` | 確認 36 個 root contract checker 都被 GitHub Actions 呼叫，且 Makefile、README、API contract、章節與整合視覺課程入口一致 |
 | Release artifact chain contract gate | `node scripts/check-release-artifact-chain-contract.mjs` | 確認發版 artifact chain、版本標記、CHANGELOG、docs/index 與 CI 入口一致 |
 | Dependency governance contract gate | `node scripts/check-dependency-governance-contract.mjs` | 確認依賴完整性、可更新版本盤點、漏洞掃描、Makefile、CI 與離線限制說明一致 |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs` | 確認 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈、Makefile、CI 與教材入口一致 |
@@ -238,6 +240,7 @@ go test ./project-concurrent-crawler/...
 | Request decoding 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestDecodingContract' -count=1 && node scripts/check-request-decoding-contract.mjs` | 驗證 malformed JSON、unknown field、trailing JSON 與空白 name 都回 `400 invalid_input`，且文件 / OpenAPI / CI 入口一致 |
 | Idempotency key 合約 | `cd production-api-worker && go test ./internal/api ./internal/app -run 'TestIdempotencyKeyContract|TestCreateJobIdempotencyKeyContract' -count=1 && node scripts/check-idempotency-key-contract.mjs` | 驗證同一 `Idempotency-Key` 重試回同一 job，且 worker queue 只 enqueue 一次 |
 | Service transaction boundary 合約 | `cd production-api-worker && go test ./internal/app -run 'TestServiceTransactionBoundaryContract' -count=1 && node scripts/check-service-transaction-boundary-contract.mjs` | 驗證 CreateJob 使用 LevelReadCommitted transaction、commit 後 enqueue，且 queue-full 會回寫 failed 狀態 |
+| Trace shutdown 合約 | `cd production-api-worker && go test ./internal/observability -run 'TestTraceShutdownContract' -count=1 && node scripts/check-trace-shutdown-contract.mjs` | 驗證 trace provider shutdown 使用 3 秒 bounded context，且 api-worker process exit 保留 shutdown hook |
 | Request body limit 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestBodyLimitContract' -count=1` | 驗證 oversized `POST /jobs` request body 會回 `413 payload_too_large` |
 | HTTP server timeout 合約 | `cd production-api-worker && go test ./cmd/api-worker -run 'TestHTTPServerTimeoutContract' -count=1` | 驗證 server read header、read、write、idle、shutdown 與 queue drain timeout 由設定集中套用 |
 | Request ID 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestIDContract|TestCreateJobContract' -count=1` | 驗證 `X-Request-ID` 會回傳並進入 request context |
