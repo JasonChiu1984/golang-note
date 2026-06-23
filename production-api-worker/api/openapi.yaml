@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.67
+  version: v1.0.68
   description: >
     Machine-readable contract for the Go teaching production API worker.
     This file mirrors docs/api-contract.md and the Go contract tests,
@@ -27,6 +27,9 @@ info:
     metrics while liveness and readiness probes remain public for deployment
     systems.
     Worker failure handling keeps failed jobs visible through worker_jobs_total.
+    Worker shutdown contract keeps Queue.Enqueue and Queue.ShutdownContext aligned
+    around the same mutex-protected closed state, ErrClosed returns, shutdown
+    tests, check-worker-shutdown-contract.mjs, Makefile, docs, and CI static gates.
     Retry cancellation keeps deadlock retry backoff bound to request or shutdown context.
     Service transaction boundary contract keeps sql.TxOptions, commit-before-enqueue,
     queue-full failed status updates, check-service-transaction-boundary-contract.mjs,
@@ -51,7 +54,7 @@ info:
     context, keeps api-worker process exit hooked to obs.Shutdown, and keeps
     TestTraceShutdownContract, check-trace-shutdown-contract.mjs, Makefile,
     docs, and CI static gates aligned.
-    Contract gate inventory keeps all 36 root contract checker scripts,
+    Contract gate inventory keeps all 37 root contract checker scripts,
     check-contract-gate-inventory-contract.mjs, Makefile, README, API contract,
     chapters, visual course, and GitHub Actions aligned.
     Docs publishing contract gate keeps docs/index.html, GitHub Pages link fix,

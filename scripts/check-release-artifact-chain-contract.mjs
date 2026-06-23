@@ -3,8 +3,8 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename } from "node:path";
 
 const version = readFileSync("VERSION", "utf8").trim();
-const expectedVersion = "v1.0.67";
-const artifactTimestamp = "2026-06-23-103243";
+const expectedVersion = "v1.0.68";
+const artifactTimestamp = "2026-06-24-060230";
 
 const files = [
   "README.md",
@@ -27,14 +27,14 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.67`",
+    "教材版本：`v1.0.68`",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "CHANGELOG.md": [
-    "## v1.0.67 - 2026-06-23",
-    "scripts/check-trace-shutdown-contract.mjs",
-    "Trace shutdown",
+    "## v1.0.68 - 2026-06-24",
+    "scripts/check-worker-shutdown-contract.mjs",
+    "Worker shutdown",
   ],
   "production-api-worker/README.md": [
     "Release Artifact Chain Contract",
@@ -42,12 +42,12 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.67",
+    "版本：v1.0.68",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.67",
+    "version: v1.0.68",
     "Release artifact chain contract gate",
     "check-release-artifact-chain-contract.mjs",
   ],
@@ -84,18 +84,18 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   [`審查報告/${artifactTimestamp}-資深工程師審查報告.md`]: [
-    "Trace shutdown",
-    "v1.0.67",
-    "2026-06-23 10:32:43 CST +0800",
+    "Worker shutdown",
+    "v1.0.68",
+    "2026-06-24 06:02:30 CST +0800",
   ],
   [`內容需要更新的部分/${artifactTimestamp}-內容需要更新的部分.md`]: [
-    "Trace shutdown",
-    "scripts/check-trace-shutdown-contract.mjs",
-    "v1.0.67",
+    "Worker shutdown",
+    "scripts/check-worker-shutdown-contract.mjs",
+    "v1.0.68",
   ],
   [`更新資料/${artifactTimestamp}-${expectedVersion}-更新紀錄.md`]: [
-    "Trace shutdown contract gate",
-    "scripts/check-trace-shutdown-contract.mjs",
+    "Worker shutdown contract gate",
+    "scripts/check-worker-shutdown-contract.mjs",
     "docs/index.html",
     "GitHub push",
   ],

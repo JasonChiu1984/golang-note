@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.68 - 2026-06-24
+
+- 新增 2026-06-24 06:02:30 CST +0800 資深工程師審查報告，確認 v1.0.67 已補齊 Trace shutdown contract gate，但 worker shutdown safety 尚缺獨立 root static gate。
+- 新增 `scripts/check-worker-shutdown-contract.mjs`，固定 `Queue.Enqueue` 與 `Queue.ShutdownContext` 共用 mutex 保護 `closed` 狀態、channel send / close、`ErrClosed` 回傳、Go shutdown tests、Makefile 與 GitHub Actions 入口。
+- 將 Worker shutdown safety 從單純 Go test selector 升級為正式 Worker shutdown contract gate，並同步 README、production README、API contract、OpenAPI、第 7 / 9 / 11 章、進階 Cheat Sheet 與整合視覺課程。
+- Contract gate inventory 從 36 個 root contract checker 更新為 37 個，並納入 Worker shutdown checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.68`。
+
 ## v1.0.67 - 2026-06-23
 
 - 新增 2026-06-23 10:32:43 CST +0800 資深工程師審查報告，確認 v1.0.66 已補齊 Service transaction boundary contract gate，但 trace provider shutdown 的 bounded timeout 與 api-worker exit hook 尚缺獨立 static gate。
