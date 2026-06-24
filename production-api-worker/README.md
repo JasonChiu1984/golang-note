@@ -39,13 +39,14 @@
 - Pipeline：migration CLI、Docker Compose、GitHub Actions workflow、Docker image build gate、Compose smoke gate
 - CI Quality Gate Contract：GitHub Actions 必須保留 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，並由 `make ci-quality-gate-check` 固定文件、Makefile 與 CI 入口
 - CI Contract Parity Gate：`make ci-contract` 與 GitHub Actions production contract job 必須使用相同 API test selector，包含 `TestCORSAllowedOriginsContract`，並由 `make ci-contract-parity-check` 固定
-- Contract Gate Inventory：37 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
+- Contract Gate Inventory：38 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
 - Docs Publishing Contract：`docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈必須由 `make docs-publishing-check` / `node scripts/check-docs-publishing-contract.mjs` 固定，避免 Pages 首頁與整合課程來源漂移
 - Production Workflow Contract：`production-api-worker/.github/workflows/production-api-worker.yml` 必須保留 `make ci-contract`、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup，並由 `make production-workflow-check` 固定
 - Syntax Flow SVG Contract：語法流程圖補充頁必須保留 25 個單語法 flow、標準流程圖符號、SVG metadata 與 blueprint renderer，並由 `make syntax-flow-svg-check` / `node scripts/check-syntax-flow-svg-contract.mjs` 固定
 - Go ReleaseNote Contract：Go 1.1-1.26 專業報告、根目錄與 Pages 同步、官方來源、支援狀態與最新 patch 訊號必須由 `make go-release-notes-check` / `node scripts/check-go-release-notes-contract.mjs` 固定
 - Release Artifact Chain Contract：發版需保留同 timestamp 的審查報告、內容需要更新的部分、更新資料、版本標記與 docs/index 同步，並由 `make release-artifact-chain-check` / `node scripts/check-release-artifact-chain-contract.mjs` 固定
 - Dependency Governance Contract：root module 與 production module 都需保留 `go mod tidy`、`go mod verify`、`go list -m -u all`、`govulncheck ./...` 與離線限制說明，並由 `make dependency-governance-check` / `node scripts/check-dependency-governance-contract.mjs` 固定
+- Performance Benchmark Governance Contract：API / worker / queue hot path 修改需保留 benchmark A/B、`benchstat old.txt new.txt`、pprof 或 metrics 證據，並由 `make performance-benchmark-governance-check` / `node scripts/check-performance-benchmark-governance-contract.mjs` 固定
 - Compose Smoke Contract：`docker compose up -d --build` 後必須由 host-side `scripts/compose-smoke.sh` 驗證 `/livez`、`/readyz`、job create/read 與 `/metrics`，並由 `make compose-smoke-check` 固定文件、Makefile 與 CI 入口
 
 ## Local Memory Mode
@@ -209,6 +210,7 @@ make compose-smoke
 | `make go-release-notes-check` | 固定 Go ReleaseNote Contract、Go 1.1-1.26 報告、27 個 HTML、官方來源、最新 patch 訊號與 Pages 同步 |
 | `make release-artifact-chain-check` | 固定 Release Artifact Chain Contract、審查報告、內容需要更新的部分、更新資料、版本標記與 docs/index 同步 |
 | `make dependency-governance-check` | 固定 Dependency Governance Contract、module integrity、dependency update discovery、vulnerability scan、離線限制、Makefile 與 CI 入口 |
+| `make performance-benchmark-governance-check` | 固定 Performance Benchmark Governance Contract、benchmark A/B、benchstat、pprof、metrics、Makefile 與 CI 入口 |
 | `make compose-smoke-check` | 固定 Compose Smoke Contract、host-side smoke script、`/livez`、`/readyz`、job create/read、`/metrics`、失敗 logs、Makefile 與 CI 入口 |
 | `go test -run='^$' -bench=. -benchmem -count=10 ./...` | API / worker 效能改動需保留 benchmark 證據 |
 | `docker compose up --build` | 啟動 Postgres、migration、API、worker 與 metrics 整體鏈路 |
@@ -267,7 +269,7 @@ make contract-gate-inventory-check
 cd .. && node scripts/check-contract-gate-inventory-contract.mjs
 ```
 
-這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 37 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
+這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 38 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
 
 Production Workflow Contract 需包含：
 
@@ -322,6 +324,17 @@ cd .. && node scripts/check-dependency-governance-contract.mjs
 ```
 
 這個 gate 會固定 root module 與 `production-api-worker` 的依賴治理條款：新增或升級 module 前後需保留 `go mod tidy`、`go mod verify`、`go list -m -u all` 與 `govulncheck ./...`，且文件需明確標示 module proxy / vulnerability database 無法連線時要記錄為待補掃描，不可把離線限制誤標為安全通過。
+
+Performance Benchmark Governance Contract 需包含：
+
+```bash
+make performance-benchmark-governance-check
+cd .. && node scripts/check-performance-benchmark-governance-contract.mjs
+go test -run='^$' -bench=. -benchmem -count=10 ./... > bench.txt
+benchstat old.txt new.txt
+```
+
+這個 gate 會固定效能修改的 release 條款：API / worker / queue hot path 改動前後需保留 benchmark A/B、`benchstat old.txt new.txt`、pprof 或 metrics 證據與原始輸出路徑。若本機或 CI 環境無法穩定執行完整 benchmark，更新紀錄需把限制寫成待補驗證，而不是把功能測試通過誤當成效能回歸證據。
 
 ## API Contract
 

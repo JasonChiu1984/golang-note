@@ -1,4 +1,4 @@
-.PHONY: test test-race ci ci-contract openapi-check readiness-check request-decoding-check idempotency-key-check api-latency-metrics-check service-transaction-boundary-check panic-recovery-check request-correlation-check api-security-check worker-failure-check worker-shutdown-check retry-cancellation-check request-timeout-check queue-backpressure-check db-pool-check migration-check runbook-check prometheus-check operational-observability-check pprof-check trace-shutdown-check rate-limit-check trusted-proxy-check cors-check request-body-limit-check http-timeout-check startup-config-check shutdown-signal-check ci-quality-gate-check ci-contract-parity-check contract-gate-inventory-check docs-publishing-check production-workflow-check syntax-flow-svg-check go-release-notes-check release-artifact-chain-check dependency-governance-check compose-smoke-check otel-check docker-build compose-smoke run migrate docker-up docker-down
+.PHONY: test test-race ci ci-contract openapi-check readiness-check request-decoding-check idempotency-key-check api-latency-metrics-check service-transaction-boundary-check panic-recovery-check request-correlation-check api-security-check worker-failure-check worker-shutdown-check retry-cancellation-check request-timeout-check queue-backpressure-check db-pool-check migration-check runbook-check prometheus-check operational-observability-check pprof-check trace-shutdown-check rate-limit-check trusted-proxy-check cors-check request-body-limit-check http-timeout-check startup-config-check shutdown-signal-check ci-quality-gate-check ci-contract-parity-check contract-gate-inventory-check docs-publishing-check production-workflow-check syntax-flow-svg-check go-release-notes-check release-artifact-chain-check dependency-governance-check performance-benchmark-governance-check compose-smoke-check otel-check docker-build compose-smoke run migrate docker-up docker-down
 
 test:
 	go test ./...
@@ -131,6 +131,9 @@ release-artifact-chain-check:
 
 dependency-governance-check:
 	cd .. && node scripts/check-dependency-governance-contract.mjs
+
+performance-benchmark-governance-check:
+	cd .. && node scripts/check-performance-benchmark-governance-contract.mjs
 
 compose-smoke-check:
 	cd .. && node scripts/check-compose-smoke-contract.mjs

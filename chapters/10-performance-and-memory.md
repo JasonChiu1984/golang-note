@@ -170,6 +170,7 @@ flowchart TD
 | `node scripts/check-operational-runbook.mjs` | 確認 runbook、alert rules、README 與 CI 入口沒有被移除 |
 | `node scripts/check-prometheus-config.mjs` | 確認 Prometheus config、Compose monitoring profile、README、runbook 與 CI 入口一致 |
 | `node scripts/check-pprof-contract.mjs` | 確認 pprof diagnostics 預設關閉、啟用時要求 token，並同步 README、runbook、測試與 CI |
+| `node scripts/check-performance-benchmark-governance-contract.mjs` | Performance benchmark governance contract 固定 benchmark A/B、`benchstat old.txt new.txt`、pprof、metrics、Makefile 與 CI 入口 |
 
 | 告警 | 初判方向 |
 |---|---|
