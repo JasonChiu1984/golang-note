@@ -2,9 +2,9 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
-> 教材版本：`v1.0.69`
+> 教材版本：`v1.0.70`
 > 教材基準：`Go 1.26.4`
-> 這次更新重點：正式發布 Performance benchmark governance contract gate，固定效能修改前後的 benchmark A/B、benchstat、pprof、metrics 證據與 CI static gate。
+> 這次更新重點：正式發布 Release rollback drill contract gate，固定 rollback decision、previous image restore、migration rollback boundary、health verification、metrics verification 與 postmortem evidence。
 
 ## 版本策略
 
@@ -19,6 +19,7 @@
 | Dependency governance contract gate | root module 與 `production-api-worker` 的依賴完整性、可更新版本盤點、漏洞掃描與離線邊界需由 `node scripts/check-dependency-governance-contract.mjs` 固定 |
 | 效能診斷 | 效能修改前後需保留 benchmark / profile / metrics 證據，避免只靠直覺調整 |
 | Performance benchmark governance contract gate | API / worker / queue hot path 修改需保留 benchmark A/B、`benchstat old.txt new.txt`、pprof 或 metrics 證據，並由 `node scripts/check-performance-benchmark-governance-contract.mjs` 固定 |
+| Release rollback drill contract gate | release promotion 或 incident rollback 需保留 rollback decision、previous image restore、migration rollback boundary、health verification、metrics verification 與 postmortem evidence，並由 `node scripts/check-release-rollback-drill-contract.mjs` 固定 |
 | Release Note 效能矩陣 | 版本升級頁需列出官方效能數字、升級前後狀態、受影響場景與本地驗證指令 |
 | Release Note 官方覆蓋 | Go 1.1-1.26 報告需對照官方段落標題、Tools、Ports、minor changes 與 Patch Revisions，並同步 `ReleaseNote/` 與 `docs/ReleaseNote/` |
 | Release Note 支援狀態 | ReleaseNote 索引需依官方 Release Policy 標示目前支援版本、未支援版本與最新 patch，並用 SVG 圖表呈現 |
@@ -66,10 +67,11 @@
 | CI release gate | `.github/workflows/ci.yml` 需固定 root module、production-api-worker contract、race/coverage、govulncheck 與 Docker build，避免教材只描述 CI 卻沒有真實 workflow |
 | CI quality gate contract | GitHub Actions 需同時保留 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，並由 `node scripts/check-ci-quality-gate-contract.mjs` 固定文件、Makefile 與 CI 入口 |
 | CI contract parity gate | `make ci-contract` 的 API contract test selector 必須與 `.github/workflows/ci.yml` production contract job 一致，包含 `TestCORSAllowedOriginsContract`，並由 `node scripts/check-ci-contract-parity-contract.mjs` 固定 |
-| Contract gate inventory | 38 個 root contract checker 必須全部被 `.github/workflows/ci.yml` 呼叫，並由 `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口 |
+| Contract gate inventory | 39 個 root contract checker 必須全部被 `.github/workflows/ci.yml` 呼叫，並由 `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口 |
 | Release artifact chain contract gate | `審查報告/`、`內容需要更新的部分/`、`更新資料/`、`VERSION`、`CHANGELOG.md` 與 `docs/index.html` 必須由 `node scripts/check-release-artifact-chain-contract.mjs` 固定，避免發版記錄漏件 |
 | Dependency governance contract gate | `go mod tidy`、`go mod verify`、`go list -m -u all`、`govulncheck ./...` 與 module proxy / vulnerability database 離線處理必須由 `node scripts/check-dependency-governance-contract.mjs` 固定 |
 | Performance benchmark governance contract gate | 效能改動需明確保留 benchmark A/B、benchstat、pprof、metrics 與原始輸出路徑，並由 `node scripts/check-performance-benchmark-governance-contract.mjs` 固定 |
+| Release rollback drill contract gate | rollback decision、previous image restore、migration rollback boundary、health verification、metrics verification 與 postmortem evidence 必須由 `node scripts/check-release-rollback-drill-contract.mjs` 固定 |
 | Docs publishing contract gate | `docs/index.html` 必須保留 `ReleaseNote/index.html`、補充教材入口與主頁教程回鏈，並由 `node scripts/check-docs-publishing-contract.mjs` 固定 `fix-docs-index-links.mjs --check` 與 `check-html-home-links.mjs` |
 | Compose smoke contract gate | Docker Compose 不只要 build 成功，還要用主機端 smoke script 驗證 API ready、建立 job、讀回 job 與 metrics 暴露，並由 `node scripts/check-compose-smoke-contract.mjs` 固定文件、Makefile 與 CI 入口 |
 | API 合約 | 對外 HTTP endpoint 需有穩定 request/response/error schema，並用 contract test 阻擋破壞性變更 |
@@ -219,10 +221,11 @@ go test ./project-concurrent-crawler/...
 | Shutdown signal contract gate | `node scripts/check-shutdown-signal-contract.mjs` | 確認 SIGINT/SIGTERM、`TestMonitoredSignalsContract`、README、API contract、章節與 CI 入口一致 |
 | CI quality gate contract | `node scripts/check-ci-quality-gate-contract.mjs` | 確認 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build、Compose smoke、Makefile 與 CI 入口一致 |
 | CI contract parity gate | `node scripts/check-ci-contract-parity-contract.mjs` | 確認 `make ci-contract` 與 GitHub Actions production contract job 的 API test selector 一致，且保留 `TestCORSAllowedOriginsContract` |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` | 確認 38 個 root contract checker 都被 GitHub Actions 呼叫，且 Makefile、README、API contract、章節與整合視覺課程入口一致 |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` | 確認 39 個 root contract checker 都被 GitHub Actions 呼叫，且 Makefile、README、API contract、章節與整合視覺課程入口一致 |
 | Release artifact chain contract gate | `node scripts/check-release-artifact-chain-contract.mjs` | 確認發版 artifact chain、版本標記、CHANGELOG、docs/index 與 CI 入口一致 |
 | Dependency governance contract gate | `node scripts/check-dependency-governance-contract.mjs` | 確認依賴完整性、可更新版本盤點、漏洞掃描、Makefile、CI 與離線限制說明一致 |
 | Performance benchmark governance contract gate | `node scripts/check-performance-benchmark-governance-contract.mjs` | 確認 benchmark A/B、benchstat、pprof、metrics、Makefile、CI 與教材入口一致 |
+| Release rollback drill contract gate | `node scripts/check-release-rollback-drill-contract.mjs` | 確認 rollback decision、previous image restore、migration rollback boundary、health verification、metrics verification、postmortem evidence、Makefile 與 CI 入口一致 |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs` | 確認 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈、Makefile、CI 與教材入口一致 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs` | 確認 standalone production workflow 保留 contract、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs` | 確認語法流程圖補充頁保留 25 個 flow、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口 |

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.69
+  version: v1.0.70
   description: >
     Machine-readable contract for the Go teaching production API worker.
     This file mirrors docs/api-contract.md and the Go contract tests,
@@ -54,7 +54,7 @@ info:
     context, keeps api-worker process exit hooked to obs.Shutdown, and keeps
     TestTraceShutdownContract, check-trace-shutdown-contract.mjs, Makefile,
     docs, and CI static gates aligned.
-    Contract gate inventory keeps all 38 root contract checker scripts,
+    Contract gate inventory keeps all 39 root contract checker scripts,
     check-contract-gate-inventory-contract.mjs, Makefile, README, API contract,
     chapters, visual course, and GitHub Actions aligned.
     Docs publishing contract gate keeps docs/index.html, GitHub Pages link fix,
@@ -81,6 +81,10 @@ info:
     Performance benchmark governance contract keeps benchmark A/B,
     benchstat old.txt new.txt, pprof, metrics, raw output evidence, Makefile,
     and CI static gates aligned through check-performance-benchmark-governance-contract.mjs.
+    Release rollback drill contract keeps rollback decision, previous image restore,
+    migration rollback boundary, health verification, metrics verification,
+    postmortem evidence, Makefile, and CI static gates aligned through
+    check-release-rollback-drill-contract.mjs.
     API latency metrics contract keeps api_request_duration_seconds, route,
     method, status labels, Go contract tests, Makefile, and CI static gate aligned.
     Idempotency key contract keeps POST /jobs retry-safe through the

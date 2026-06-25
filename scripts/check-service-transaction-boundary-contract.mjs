@@ -19,7 +19,7 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.69`",
+    "教材版本：`v1.0.70`",
     "Service transaction boundary contract",
     "node scripts/check-service-transaction-boundary-contract.mjs",
     "TestServiceTransactionBoundaryContract",
@@ -41,12 +41,12 @@ const required = {
     "queue-full job status",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.69",
+    "版本：v1.0.70",
     "Service transaction boundary contract",
     "node scripts/check-service-transaction-boundary-contract.mjs",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.69",
+    "version: v1.0.70",
     "Service transaction boundary contract",
     "check-service-transaction-boundary-contract.mjs",
   ],

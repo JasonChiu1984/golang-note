@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.70 - 2026-06-26
+
+- 新增 2026-06-26 06:06:00 CST +0800 資深工程師審查報告，確認 v1.0.69 已補齊 Performance benchmark governance contract gate，但 release rollback drill 尚缺獨立 root static gate。
+- 新增 `scripts/check-release-rollback-drill-contract.mjs`，固定 rollback decision、previous image restore、migration rollback boundary、health verification、metrics verification、postmortem evidence、Makefile、GitHub Actions 與教材入口。
+- 將 Release rollback drill 從 runbook / 部署章 / 整合視覺課程的建議升級為正式 contract gate，並同步 README、production README、API contract、OpenAPI、第 9 / 11 章、進階 Cheat Sheet 與整合視覺課程。
+- Contract gate inventory 從 38 個 root contract checker 更新為 39 個，並納入 Release rollback drill checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.70`。
+
 ## v1.0.69 - 2026-06-25
 
 - 新增 2026-06-25 06:01:21 CST +0800 資深工程師審查報告，確認 v1.0.68 已補齊 Worker shutdown contract gate，但效能修改治理仍缺少獨立 root static gate。

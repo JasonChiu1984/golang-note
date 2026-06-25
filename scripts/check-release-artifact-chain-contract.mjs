@@ -3,8 +3,8 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename } from "node:path";
 
 const version = readFileSync("VERSION", "utf8").trim();
-const expectedVersion = "v1.0.69";
-const artifactTimestamp = "2026-06-25-060121";
+const expectedVersion = "v1.0.70";
+const artifactTimestamp = "2026-06-26-060600";
 
 const files = [
   "README.md",
@@ -27,14 +27,14 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.69`",
+    "教材版本：`v1.0.70`",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "CHANGELOG.md": [
-    "## v1.0.69 - 2026-06-25",
-    "scripts/check-performance-benchmark-governance-contract.mjs",
-    "Performance benchmark governance",
+    "## v1.0.70 - 2026-06-26",
+    "scripts/check-release-rollback-drill-contract.mjs",
+    "Release rollback drill",
   ],
   "production-api-worker/README.md": [
     "Release Artifact Chain Contract",
@@ -42,12 +42,12 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.69",
+    "版本：v1.0.70",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.69",
+    "version: v1.0.70",
     "Release artifact chain contract gate",
     "check-release-artifact-chain-contract.mjs",
   ],
@@ -84,18 +84,18 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   [`審查報告/${artifactTimestamp}-資深工程師審查報告.md`]: [
-    "Performance benchmark governance",
-    "v1.0.69",
-    "2026-06-25 06:01:21 CST +0800",
+    "Release rollback drill contract gate",
+    "v1.0.70",
+    "2026-06-26 06:06:00 CST +0800",
   ],
   [`內容需要更新的部分/${artifactTimestamp}-內容需要更新的部分.md`]: [
-    "Performance benchmark governance",
-    "scripts/check-performance-benchmark-governance-contract.mjs",
-    "v1.0.69",
+    "Release rollback drill contract gate",
+    "scripts/check-release-rollback-drill-contract.mjs",
+    "v1.0.70",
   ],
   [`更新資料/${artifactTimestamp}-${expectedVersion}-更新紀錄.md`]: [
-    "Performance benchmark governance contract gate",
-    "scripts/check-performance-benchmark-governance-contract.mjs",
+    "Release rollback drill contract gate",
+    "scripts/check-release-rollback-drill-contract.mjs",
     "docs/index.html",
     "GitHub push",
   ],
