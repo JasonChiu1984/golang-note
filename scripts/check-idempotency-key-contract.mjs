@@ -36,12 +36,12 @@ const required = {
     "Idempotency-Key",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.70",
+    "version: v1.0.71",
     "Idempotency-Key",
     "idempotency key",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.70",
+    "版本：v1.0.71",
     "Idempotency key contract",
     "node scripts/check-idempotency-key-contract.mjs",
   ],

@@ -39,12 +39,12 @@ const required = {
     'resultCount("success")',
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.70",
+    "版本：v1.0.71",
     "Worker failure contract",
     "TestWorkerFailureResultContract",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.70",
+    "version: v1.0.71",
     "Worker failure handling keeps failed jobs visible through worker_jobs_total",
   ],
   "chapters/07-large-project-concurrent-crawler.md": [

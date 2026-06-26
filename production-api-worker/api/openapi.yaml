@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.70
+  version: v1.0.71
   description: >
     Machine-readable contract for the Go teaching production API worker.
     This file mirrors docs/api-contract.md and the Go contract tests,
@@ -54,7 +54,7 @@ info:
     context, keeps api-worker process exit hooked to obs.Shutdown, and keeps
     TestTraceShutdownContract, check-trace-shutdown-contract.mjs, Makefile,
     docs, and CI static gates aligned.
-    Contract gate inventory keeps all 39 root contract checker scripts,
+    Contract gate inventory keeps all 40 root contract checker scripts,
     check-contract-gate-inventory-contract.mjs, Makefile, README, API contract,
     chapters, visual course, and GitHub Actions aligned.
     Docs publishing contract gate keeps docs/index.html, GitHub Pages link fix,
@@ -85,6 +85,11 @@ info:
     migration rollback boundary, health verification, metrics verification,
     postmortem evidence, Makefile, and CI static gates aligned through
     check-release-rollback-drill-contract.mjs.
+    Docker build contract keeps the Dockerfile multi-stage build, CGO_ENABLED=0,
+    api-worker and migrate binaries, distroless/static-debian12 runtime image,
+    docker build -t production-api-worker:ci ./production-api-worker,
+    docker build -t production-api-worker:standalone ., Makefile, and CI static
+    gates aligned through check-docker-build-contract.mjs.
     API latency metrics contract keeps api_request_duration_seconds, route,
     method, status labels, Go contract tests, Makefile, and CI static gate aligned.
     Idempotency key contract keeps POST /jobs retry-safe through the
