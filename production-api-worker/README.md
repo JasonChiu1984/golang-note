@@ -39,7 +39,7 @@
 - Pipeline：migration CLI、Docker Compose、GitHub Actions workflow、Docker image build gate、Compose smoke gate
 - CI Quality Gate Contract：GitHub Actions 必須保留 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，並由 `make ci-quality-gate-check` 固定文件、Makefile 與 CI 入口
 - CI Contract Parity Gate：`make ci-contract` 與 GitHub Actions production contract job 必須使用相同 API test selector，包含 `TestCORSAllowedOriginsContract`，並由 `make ci-contract-parity-check` 固定
-- Contract Gate Inventory：40 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
+- Contract Gate Inventory：41 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
 - Docs Publishing Contract：`docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈必須由 `make docs-publishing-check` / `node scripts/check-docs-publishing-contract.mjs` 固定，避免 Pages 首頁與整合課程來源漂移
 - Production Workflow Contract：`production-api-worker/.github/workflows/production-api-worker.yml` 必須保留 `make ci-contract`、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup，並由 `make production-workflow-check` 固定
 - Syntax Flow SVG Contract：語法流程圖補充頁必須保留 25 個單語法 flow、標準流程圖符號、SVG metadata 與 blueprint renderer，並由 `make syntax-flow-svg-check` / `node scripts/check-syntax-flow-svg-contract.mjs` 固定
@@ -49,6 +49,7 @@
 - Performance Benchmark Governance Contract：API / worker / queue hot path 修改需保留 benchmark A/B、`benchstat old.txt new.txt`、pprof 或 metrics 證據，並由 `make performance-benchmark-governance-check` / `node scripts/check-performance-benchmark-governance-contract.mjs` 固定
 - Release Rollback Drill Contract：release promotion 或 incident rollback 需保留 rollback decision、previous image restore、migration rollback boundary、health verification、metrics verification 與 postmortem evidence，並由 `make release-rollback-drill-check` / `node scripts/check-release-rollback-drill-contract.mjs` 固定
 - Docker Build Contract：Dockerfile 必須保留 multi-stage build、`CGO_ENABLED=0`、`api-worker` / `migrate` binaries、`distroless/static-debian12` runtime image、`docker build -t production-api-worker:ci ./production-api-worker` 與 `docker build -t production-api-worker:standalone .`，並由 `make docker-build-check` / `node scripts/check-docker-build-contract.mjs` 固定
+- Compose Runtime Env Contract：`docker-compose.yml` 必須保留 Postgres、migrate、api、OTEL collector、Prometheus `monitoring` profile、`DATABASE_URL`、`OTEL_EXPORTER_OTLP_ENDPOINT`、`API_KEY`、`REQUEST_BODY_LIMIT_BYTES`、`TRUSTED_PROXY_CIDRS`、`CORS_ALLOWED_ORIGINS` 與 service dependency，並由 `make compose-runtime-env-check` / `node scripts/check-compose-runtime-env-contract.mjs` 固定
 - Compose Smoke Contract：`docker compose up -d --build` 後必須由 host-side `scripts/compose-smoke.sh` 驗證 `/livez`、`/readyz`、job create/read 與 `/metrics`，並由 `make compose-smoke-check` 固定文件、Makefile 與 CI 入口
 
 ## Local Memory Mode
@@ -216,6 +217,7 @@ make compose-smoke
 | `make release-rollback-drill-check` | 固定 Release Rollback Drill Contract、rollback decision、previous image restore、migration rollback boundary、health verification、metrics verification、postmortem evidence 與 CI 入口 |
 | `make docker-build-check` | 固定 Docker Build Contract、Dockerfile、`CGO_ENABLED=0`、`api-worker` / `migrate` binaries、`distroless/static-debian12`、Makefile 與 CI build tags |
 | `make compose-smoke-check` | 固定 Compose Smoke Contract、host-side smoke script、`/livez`、`/readyz`、job create/read、`/metrics`、失敗 logs、Makefile 與 CI 入口 |
+| `make compose-runtime-env-check` | 固定 Compose Runtime Env Contract、`docker-compose.yml` runtime env、migration dependency、OTEL endpoint、API security env、request limit、trusted proxy、CORS 與 monitoring profile |
 | `go test -run='^$' -bench=. -benchmem -count=10 ./...` | API / worker 效能改動需保留 benchmark 證據 |
 | `docker compose up --build` | 啟動 Postgres、migration、API、worker 與 metrics 整體鏈路 |
 | `make compose-smoke` | 用主機端 curl 驗證 `/livez`、`/readyz`、job create/read 與 `/metrics` |
@@ -257,6 +259,15 @@ make compose-smoke-check
 cd .. && node scripts/check-compose-smoke-contract.mjs
 ```
 
+Compose runtime env static gate 需包含：
+
+```bash
+make compose-runtime-env-check
+cd .. && node scripts/check-compose-runtime-env-contract.mjs
+```
+
+這個 gate 固定 `docker-compose.yml` 的 Postgres、migration、API、OTEL collector 與 Prometheus monitoring profile，也固定 `DATABASE_URL`、`OTEL_EXPORTER_OTLP_ENDPOINT`、`API_KEY`、`REQUEST_BODY_LIMIT_BYTES`、`TRUSTED_PROXY_CIDRS`、`CORS_ALLOWED_ORIGINS` 等 runtime env，避免部署設定被 smoke test 間接覆蓋但沒有單獨的漂移檢查。
+
 CI contract parity gate 需包含：
 
 ```bash
@@ -273,7 +284,7 @@ make contract-gate-inventory-check
 cd .. && node scripts/check-contract-gate-inventory-contract.mjs
 ```
 
-這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 40 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
+這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 41 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
 
 Production Workflow Contract 需包含：
 
@@ -655,3 +666,5 @@ Readiness contract 是 deployment 的外部合約。`/livez` 表示 process 還�
 Release Rollback Drill Contract 會把 rollback decision、previous image restore、migration rollback boundary、health verification、metrics verification 與 postmortem evidence 寫成 release gate。Release rollback drill contract gate 演練時先記錄是否停止導流或回復 previous image，再確認 migration 是否可逆或需 forward fix，最後用 `/livez`、`/readyz`、`/metrics`、API smoke 與 incident notes 驗證修復結果。
 
 Docker Build Contract 會把 Dockerfile 的 multi-stage build、`CGO_ENABLED=0`、`api-worker` / `migrate` binaries、`distroless/static-debian12` runtime image、migration copy、`ENTRYPOINT ["/app/api-worker"]`、root CI 的 `docker build -t production-api-worker:ci ./production-api-worker` 與 standalone workflow 的 `docker build -t production-api-worker:standalone .` 寫成 release gate。Docker build contract 補上 Compose smoke 前的映像建置邊界，避免 Dockerfile 或 workflow tag 漂移時只靠端到端 smoke 才發現。
+
+Compose Runtime Env Contract 會把 `docker-compose.yml` 的 Postgres healthcheck、migrate `service_healthy` dependency、api `service_completed_successfully` / `service_started` dependency、OTEL collector endpoint、API security env、request limit、trusted proxy、CORS allowlist 與 Prometheus `monitoring` profile 寫成 release gate。Compose runtime env contract 補上 Docker build 與 Compose smoke 之間的部署設定面，避免 service dependency 或 env wiring 漂移。

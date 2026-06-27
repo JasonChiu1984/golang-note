@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.72 - 2026-06-28
+
+- 新增 2026-06-28 06:01:53 CST +0800 資深工程師審查報告，確認 v1.0.71 已補齊 Docker build contract gate，但 Compose runtime environment wiring 仍缺少獨立 root static gate。
+- 新增 `scripts/check-compose-runtime-env-contract.mjs`，固定 `production-api-worker/docker-compose.yml` 的 Postgres、migrate、api、OTEL collector、Prometheus monitoring profile、runtime env、service dependency、Makefile、GitHub Actions 與教材入口。
+- 將 Compose runtime env wiring 從既有 Docker Compose 設定升級為正式 Compose runtime env contract gate，並同步 README、production README、API contract、OpenAPI、第 7 / 9 / 11 章、進階 Cheat Sheet 與整合視覺課程。
+- Contract gate inventory 從 40 個 root contract checker 更新為 41 個，並納入 Compose runtime env checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.72`。
+
 ## v1.0.71 - 2026-06-27
 
 - 新增 2026-06-27 06:01:55 CST +0800 資深工程師審查報告，確認 v1.0.70 已補齊 Release rollback drill contract gate，但 Docker image build 邊界仍缺少獨立 root static gate。

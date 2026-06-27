@@ -168,6 +168,9 @@ jobs:
       - name: Check Compose smoke contract
         run: node scripts/check-compose-smoke-contract.mjs
 
+      - name: Check Compose runtime env contract
+        run: node scripts/check-compose-runtime-env-contract.mjs
+
       - name: Check OTLP collector contract
         run: node scripts/check-otel-collector-contract.mjs
 

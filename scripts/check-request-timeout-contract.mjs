@@ -19,7 +19,7 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.71`",
+    "教材版本：`v1.0.72`",
     "Request timeout contract gate",
     "node scripts/check-request-timeout-contract.mjs",
   ],
@@ -45,12 +45,12 @@ const required = {
     "request_timeout",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.71",
+    "version: v1.0.72",
     "RequestTimeout",
     "request_timeout",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.71",
+    "版本：v1.0.72",
     "Request timeout gate",
     "node scripts/check-request-timeout-contract.mjs",
   ],
