@@ -589,7 +589,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | CI quality gate static gate | `node scripts/check-ci-quality-gate-contract.mjs && cd production-api-worker && make ci-quality-gate-check` | 固定 root course、production contracts、race/coverage、govulncheck、Docker build 與 Compose smoke |
 | Operational observability contract gate | `node scripts/check-operational-observability-contract.mjs && cd production-api-worker && make operational-observability-check` | 固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險與 CI 入口 |
 | CI contract parity gate | `node scripts/check-ci-contract-parity-contract.mjs && cd production-api-worker && make ci-contract-parity-check` | 固定 `make ci-contract` 與 GitHub Actions production contract job 的 API test selector，保留 `TestCORSAllowedOriginsContract` |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs && cd production-api-worker && make contract-gate-inventory-check` | 固定 41 個 root contract checker 都被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs && cd production-api-worker && make contract-gate-inventory-check` | 固定 42 個 root contract checker 都被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs && cd production-api-worker && make docs-publishing-check` | 固定 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈、Makefile 與 CI 入口 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs && cd production-api-worker && make production-workflow-check` | 固定 standalone workflow 的 contract、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs && cd production-api-worker && make syntax-flow-svg-check` | 固定語法流程圖補充頁的 25 個 flow、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口 |
@@ -601,7 +601,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | Docker build contract | `node scripts/check-docker-build-contract.mjs && cd production-api-worker && make docker-build-check` | 固定 Dockerfile、CGO_ENABLED=0、api-worker / migrate binaries、distroless/static-debian12、Makefile 與 CI build tags |
 | Compose runtime env contract | `node scripts/check-compose-runtime-env-contract.mjs && cd production-api-worker && make compose-runtime-env-check` | 固定 Docker Compose runtime env、migration dependency、OTEL endpoint、API_KEY、REQUEST_BODY_LIMIT_BYTES、TRUSTED_PROXY_CIDRS、CORS_ALLOWED_ORIGINS 與 monitoring profile |
 | Operational runbook gate | `node scripts/check-operational-runbook.mjs` | 固定 runbook、Prometheus alert rules、README 與 CI 入口，避免 incident workflow 被文件更新移除 |
-| Prometheus config gate | `node scripts/check-prometheus-config.mjs` | 固定 Prometheus scrape job、rule_files、Compose monitoring profile 與 API key 風險說明 |
+| Prometheus config contract gate | `node scripts/check-prometheus-config-contract.mjs` | 固定 Prometheus scrape job、rule_files、Compose monitoring profile 與 API key scrape auth 風險說明 |
 | Operational observability contract gate | `node scripts/check-operational-observability-contract.mjs` | 確認 runbook、Prometheus scrape config、alert rules、Compose monitoring profile 與 API key scrape auth 風險一起進入 release gate |
 | OTLP collector gate | `node scripts/check-otel-collector-contract.mjs` | 固定 collector receiver、debug exporter、Compose endpoint、runbook、README 與 CI gate |
 | Trace shutdown contract | `node scripts/check-trace-shutdown-contract.mjs` | 確認 trace provider shutdown deadline、api-worker exit hook 與 `TestTraceShutdownContract` 一起進入 release gate |
@@ -609,7 +609,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | CI workflow syntax | `ruby -e 'require "yaml"; YAML.load_file(".github/workflows/ci.yml")'` | 固定 GitHub Actions workflow 至少可被 YAML parser 解析 |
 | CI production gate | `cd production-api-worker && make ci-contract && go test -race -cover ./... -count=1` | 本機重跑與 CI 對齊的核心合約、race 與 coverage gate |
 | CI contract parity gate | `node scripts/check-ci-contract-parity-contract.mjs` | 確認本機與 CI 的 API contract selector 一致，避免只在單一路徑跑到 CORS 合約 |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` | 確認 41 個 root contract checker 全部被 GitHub Actions 呼叫 |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` | 確認 42 個 root contract checker 全部被 GitHub Actions 呼叫 |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs` | 確認 `docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈沒有漂移 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs` | 確認 standalone production workflow 沒有漏掉 production release gate |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs` | 確認語法流程圖補充頁沒有漏掉 flow、標準符號、metadata、renderer 或 CI 入口 |
@@ -640,4 +640,4 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 2. 寫一個自訂的字串反轉函式，並用 `Fuzz` 測試看看傳入包含 Emoji 或罕見字元的隨機字串時是否會 panic。
 3. 將你的專案測試加上 `t.Cleanup` 取代原本的 `defer`。
 4. 把你的測試指令改寫成可在 `TMPDIR/GOCACHE/GOMODCACHE` 受限環境重現的版本。
-5. 把 `go mod verify`、`govulncheck ./...`、contract tests、OpenAPI contract gate、`go test -race -cover ./...`、Docker build、Compose smoke gate、operational runbook gate、Prometheus config gate 與 Operational observability contract gate 加進 CI，並定義哪些結果要阻擋合併。
+5. 把 `go mod verify`、`govulncheck ./...`、contract tests、OpenAPI contract gate、`go test -race -cover ./...`、Docker build、Compose smoke gate、operational runbook gate、Prometheus config contract gate 與 Operational observability contract gate 加進 CI，並定義哪些結果要阻擋合併。

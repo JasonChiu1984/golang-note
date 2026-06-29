@@ -73,6 +73,7 @@ runbook-check:
 
 prometheus-check:
 	cd .. && node scripts/check-prometheus-config.mjs
+	cd .. && node scripts/check-prometheus-config-contract.mjs
 
 operational-observability-check:
 	cd .. && node scripts/check-operational-observability-contract.mjs

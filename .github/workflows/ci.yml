@@ -51,6 +51,9 @@ jobs:
       - name: Check Prometheus config
         run: node scripts/check-prometheus-config.mjs
 
+      - name: Check Prometheus config contract
+        run: node scripts/check-prometheus-config-contract.mjs
+
       - name: Check operational observability contract
         run: node scripts/check-operational-observability-contract.mjs
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.73 - 2026-06-29
+
+- 新增 2026-06-29 09:04:04 CST +0800 資深工程師審查報告，確認 v1.0.72 已補齊 Compose runtime env contract gate，但 Prometheus scrape config 與 alert rule 尚未納入 root contract checker inventory。
+- 新增 `scripts/check-prometheus-config-contract.mjs`，固定 `configs/prometheus/prometheus.yml`、`configs/prometheus/production-api-worker-alerts.yml`、Compose `monitoring` profile、API key scrape auth 風險、Makefile、GitHub Actions 與教材入口。
+- 將 Prometheus config gate 升級為正式 Prometheus config contract gate，並同步 README、production README、API contract、OpenAPI、第 7 / 9 / 10 / 11 章、進階 Cheat Sheet 與整合視覺課程。
+- Contract gate inventory 從 41 個 root contract checker 更新為 42 個，並納入 Prometheus config contract checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.73`。
+
 ## v1.0.72 - 2026-06-28
 
 - 新增 2026-06-28 06:01:53 CST +0800 資深工程師審查報告，確認 v1.0.71 已補齊 Docker build contract gate，但 Compose runtime environment wiring 仍缺少獨立 root static gate。

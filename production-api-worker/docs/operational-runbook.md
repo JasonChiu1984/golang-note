@@ -175,7 +175,7 @@ curl -H 'Authorization: Bearer debug-token' 'http://localhost:8080/debug/pprof/h
 |---|---|---|
 | Runbook 文件完整性 | `node scripts/check-operational-runbook.mjs` | runbook、alert rules、README 與 CI 入口都存在 |
 | Prometheus rule 語法層級檢查 | `node scripts/check-operational-runbook.mjs` | rule group、alert、expr、for、severity、runbook_url 皆存在 |
-| Prometheus scrape config | `node scripts/check-prometheus-config.mjs` | scrape job、rule_files、Compose monitoring profile、README 與 CI 入口一致 |
+| Prometheus scrape config | `node scripts/check-prometheus-config-contract.mjs` | scrape job、rule_files、Compose monitoring profile、README 與 CI 入口一致 |
 | pprof diagnostics contract | `node scripts/check-pprof-contract.mjs` | `ENABLE_PPROF`、`PPROF_TOKEN`、Go tests、runbook、README 與 CI 入口一致 |
 | OTLP collector contract | `node scripts/check-otel-collector-contract.mjs` | OTLP receiver、debug exporter、Compose endpoint、runbook、README 與 CI 入口一致 |
 | pprof Go contract | `cd production-api-worker && go test ./internal/config ./internal/api -run 'Test.*Pprof|TestPprofDiagnosticsContract' -count=1` | pprof 預設關閉，啟用時要求 token，合法 token 才能讀 profile index |

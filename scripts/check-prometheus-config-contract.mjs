@@ -8,7 +8,15 @@ const files = {
   runbook: "production-api-worker/docs/operational-runbook.md",
   readme: "README.md",
   productionReadme: "production-api-worker/README.md",
+  apiContract: "production-api-worker/docs/api-contract.md",
+  chapter07: "chapters/07-large-project-concurrent-crawler.md",
+  chapter09: "chapters/09-build-and-deploy.md",
+  chapter10: "chapters/10-performance-and-memory.md",
+  chapter11: "chapters/11-advanced-testing.md",
+  cheatsheet: "Cheatsheet/cheatsheet-advanced.md",
+  visualCourse: "圖解筆記3-4整合/golang-complete-visual-course.html",
   workflow: ".github/workflows/ci.yml",
+  makefile: "production-api-worker/Makefile",
 };
 
 const missing = [];
@@ -42,6 +50,7 @@ requireTerms(files.alerts, [
   "ProductionAPIWorkerQueueDepthHigh",
   "ProductionAPIWorkerWorkerLatencyHigh",
   "ProductionAPIWorkerMetricsMissing",
+  "runbook_url:",
 ]);
 
 requireTerms(files.compose, [
@@ -56,36 +65,60 @@ requireTerms(files.compose, [
 requireTerms(files.runbook, [
   "Prometheus scrape config",
   "configs/prometheus/prometheus.yml",
-  "docker compose --profile monitoring up -d --build",
-  "http://localhost:9090",
   "API_KEY",
-]);
-
-requireTerms(files.readme, [
-  "Prometheus config contract gate",
-  "configs/prometheus/prometheus.yml",
+  "bearer token file",
+  "secret mount",
   "node scripts/check-prometheus-config-contract.mjs",
 ]);
 
-requireTerms(files.productionReadme, [
-  "Prometheus Local Monitoring",
-  "make prometheus-check",
-  "docker compose --profile monitoring up -d --build",
+requireTerms(files.readme, [
+  "教材版本：`v1.0.73`",
+  "Prometheus config contract gate",
+  "configs/prometheus/prometheus.yml",
+  "node scripts/check-prometheus-config-contract.mjs",
+  "42 個 root contract checker",
 ]);
 
+requireTerms(files.productionReadme, [
+  "Prometheus Config Contract",
+  "make prometheus-check",
+  "node scripts/check-prometheus-config-contract.mjs",
+  "bearer token file",
+]);
+
+requireTerms(files.apiContract, [
+  "版本：v1.0.73",
+  "Prometheus config contract gate",
+  "node scripts/check-prometheus-config-contract.mjs",
+  "42 個 root contract checker",
+]);
+
+for (const file of [files.chapter07, files.chapter09, files.chapter10, files.chapter11, files.cheatsheet, files.visualCourse]) {
+  requireTerms(file, [
+    "Prometheus config contract gate",
+    "node scripts/check-prometheus-config-contract.mjs",
+  ]);
+}
+
 requireTerms(files.workflow, [
-  "Check Prometheus config",
-  "node scripts/check-prometheus-config.mjs",
+  "Check Prometheus config contract",
+  "node scripts/check-prometheus-config-contract.mjs",
+]);
+
+requireTerms(files.makefile, [
+  "prometheus-check",
+  "node scripts/check-prometheus-config-contract.mjs",
 ]);
 
 if (missing.length > 0) {
-  console.error("prometheus config check failed:");
+  console.error("prometheus config contract check failed:");
   for (const item of missing) console.error(`- ${item}`);
   process.exit(1);
 }
 
 console.log(JSON.stringify({
   status: "ok",
+  contract: "prometheus config",
   checkedFiles: Object.keys(files).length,
   scrapeJob: "production-api-worker",
   monitoringProfile: true,

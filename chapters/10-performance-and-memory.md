@@ -168,7 +168,7 @@ flowchart TD
 | `configs/prometheus/production-api-worker-alerts.yml` | 固定 warning / critical alert rule 範例與 runbook link |
 | `configs/prometheus/prometheus.yml` | 固定本地 Prometheus scrape job、`/metrics` path 與 `rule_files` 載入 |
 | `node scripts/check-operational-runbook.mjs` | 確認 runbook、alert rules、README 與 CI 入口沒有被移除 |
-| `node scripts/check-prometheus-config.mjs` | 確認 Prometheus config、Compose monitoring profile、README、runbook 與 CI 入口一致 |
+| `node scripts/check-prometheus-config-contract.mjs` | Prometheus config contract gate：確認 Prometheus config、Compose monitoring profile、README、runbook、API key scrape auth 風險與 CI 入口一致 |
 | `node scripts/check-pprof-contract.mjs` | 確認 pprof diagnostics 預設關閉、啟用時要求 token，並同步 README、runbook、測試與 CI |
 | `node scripts/check-performance-benchmark-governance-contract.mjs` | Performance benchmark governance contract 固定 benchmark A/B、`benchstat old.txt new.txt`、pprof、metrics、Makefile 與 CI 入口 |
 

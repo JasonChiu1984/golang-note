@@ -3,8 +3,8 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename } from "node:path";
 
 const version = readFileSync("VERSION", "utf8").trim();
-const expectedVersion = "v1.0.72";
-const artifactTimestamp = "2026-06-28-060153";
+const expectedVersion = "v1.0.73";
+const artifactTimestamp = "2026-06-29-090404";
 
 const files = [
   "README.md",
@@ -27,14 +27,14 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.72`",
+    "教材版本：`v1.0.73`",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "CHANGELOG.md": [
-    "## v1.0.72 - 2026-06-28",
-    "scripts/check-compose-runtime-env-contract.mjs",
-    "Compose runtime env",
+    "## v1.0.73 - 2026-06-29",
+    "scripts/check-prometheus-config-contract.mjs",
+    "Prometheus config contract gate",
   ],
   "production-api-worker/README.md": [
     "Release Artifact Chain Contract",
@@ -42,12 +42,12 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.72",
+    "版本：v1.0.73",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.72",
+    "version: v1.0.73",
     "Release artifact chain contract gate",
     "check-release-artifact-chain-contract.mjs",
   ],
@@ -84,18 +84,18 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   [`審查報告/${artifactTimestamp}-資深工程師審查報告.md`]: [
-    "Compose runtime env contract gate",
-    "v1.0.72",
-    "2026-06-28 06:01:53 CST +0800",
+    "Prometheus config contract gate",
+    "v1.0.73",
+    "2026-06-29 09:04:04 CST +0800",
   ],
   [`內容需要更新的部分/${artifactTimestamp}-內容需要更新的部分.md`]: [
-    "Compose runtime env contract gate",
-    "scripts/check-compose-runtime-env-contract.mjs",
-    "v1.0.72",
+    "Prometheus config contract gate",
+    "scripts/check-prometheus-config-contract.mjs",
+    "v1.0.73",
   ],
   [`更新資料/${artifactTimestamp}-${expectedVersion}-更新紀錄.md`]: [
-    "Compose runtime env contract gate",
-    "scripts/check-compose-runtime-env-contract.mjs",
+    "Prometheus config contract gate",
+    "scripts/check-prometheus-config-contract.mjs",
     "docs/index.html",
     "GitHub push",
   ],

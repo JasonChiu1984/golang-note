@@ -34,12 +34,13 @@
 - Request timeout：handler deadline exceeded 時回穩定 `request_timeout` JSON
 - Observability：Prometheus client、OpenTelemetry OTLP/stdout exporter、slog、`X-Request-ID`
 - Operational runbook：SLI/SLO、Prometheus alert rules、scrape config、incident workflow、verification、troubleshooting
+- Prometheus Config Contract：scrape config、alert rule loading、Compose monitoring profile 與 API key scrape auth 風險需由 `make prometheus-check` 固定
 - Operational Observability Contract：runbook、Prometheus scrape config、alert rules、Compose monitoring profile 與 API key scrape auth risk 需由 `make operational-observability-check` 固定
 - Trace Shutdown Contract：trace provider shutdown 必須使用 3 秒 bounded context；`api-worker` process exit 需呼叫 `obs.Shutdown(context.Background())`，並由 `make trace-shutdown-check` / `TestTraceShutdownContract` 固定
 - Pipeline：migration CLI、Docker Compose、GitHub Actions workflow、Docker image build gate、Compose smoke gate
 - CI Quality Gate Contract：GitHub Actions 必須保留 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，並由 `make ci-quality-gate-check` 固定文件、Makefile 與 CI 入口
 - CI Contract Parity Gate：`make ci-contract` 與 GitHub Actions production contract job 必須使用相同 API test selector，包含 `TestCORSAllowedOriginsContract`，並由 `make ci-contract-parity-check` 固定
-- Contract Gate Inventory：41 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
+- Contract Gate Inventory：42 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
 - Docs Publishing Contract：`docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈必須由 `make docs-publishing-check` / `node scripts/check-docs-publishing-contract.mjs` 固定，避免 Pages 首頁與整合課程來源漂移
 - Production Workflow Contract：`production-api-worker/.github/workflows/production-api-worker.yml` 必須保留 `make ci-contract`、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup，並由 `make production-workflow-check` 固定
 - Syntax Flow SVG Contract：語法流程圖補充頁必須保留 25 個單語法 flow、標準流程圖符號、SVG metadata 與 blueprint renderer，並由 `make syntax-flow-svg-check` / `node scripts/check-syntax-flow-svg-contract.mjs` 固定
@@ -188,7 +189,7 @@ make compose-smoke
 | `make request-correlation-check` | 固定 Request correlation contract、`X-Request-ID`、request context、structured log、trace attribute、Go tests、OpenAPI 與 CI 入口 |
 | `make api-security-check` | 固定 API security contract、`API_KEY`、Bearer auth、公開 health endpoint、安全標頭、Go tests、OpenAPI 與 CI 入口 |
 | `make runbook-check` | 固定 SLI/SLO、Prometheus alert rules、incident workflow 與 runbook link 不被移除 |
-| `make prometheus-check` | 固定 Prometheus scrape config、rule_files、Compose monitoring profile 與 README/runbook 入口 |
+| `make prometheus-check` | 固定 Prometheus Config Contract、scrape config、rule_files、Compose monitoring profile、API key scrape auth 風險與 README/runbook 入口 |
 | `make operational-observability-check` | 固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險與 CI 入口 |
 | `make pprof-check` | 固定 pprof diagnostics contract、`ENABLE_PPROF`、`PPROF_TOKEN`、runbook、Go tests 與 CI 入口 |
 | `make trace-shutdown-check` | 固定 Trace Shutdown Contract、`TestTraceShutdownContract`、observability shutdown deadline、api-worker exit hook、文件與 CI 入口 |
@@ -235,7 +236,7 @@ make compose-smoke
 
 `production-api-worker/docs/api-contract.md` 是人讀的 API 合約；`production-api-worker/api/openapi.yaml` 是 machine-readable OpenAPI contract，供前端 mock、SDK 產生、契約測試與文件工具共用。兩者需和 Go contract tests 一起維護，並由 `node scripts/check-openapi-contract.mjs` 固定入口。
 
-`production-api-worker/docs/operational-runbook.md` 是值班與 incident review 的教學入口；`configs/prometheus/production-api-worker-alerts.yml` 是對應的 Prometheus alert rule 範例，`configs/prometheus/prometheus.yml` 則示範本地 scrape job 與 `rule_files` 載入。這些檔案分別由根目錄 `node scripts/check-operational-runbook.mjs`、`node scripts/check-prometheus-config.mjs` 與 `node scripts/check-pprof-contract.mjs` 固定，避免 observability 只剩 log / metrics 概念而沒有可操作告警、排障與受控 diagnostics 流程。
+`production-api-worker/docs/operational-runbook.md` 是值班與 incident review 的教學入口；`configs/prometheus/production-api-worker-alerts.yml` 是對應的 Prometheus alert rule 範例，`configs/prometheus/prometheus.yml` 則示範本地 scrape job 與 `rule_files` 載入。這些檔案分別由根目錄 `node scripts/check-operational-runbook.mjs`、`node scripts/check-prometheus-config-contract.mjs` 與 `node scripts/check-pprof-contract.mjs` 固定，避免 observability 只剩 log / metrics 概念而沒有可操作告警、排障與受控 diagnostics 流程。
 
 本機修改 production 行為前，至少先跑：
 
@@ -284,7 +285,7 @@ make contract-gate-inventory-check
 cd .. && node scripts/check-contract-gate-inventory-contract.mjs
 ```
 
-這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 41 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
+這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 42 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
 
 Production Workflow Contract 需包含：
 
@@ -562,7 +563,7 @@ Migration CLI 是 deployment pipeline 的一部分，不應只是逐檔執行 SQ
 |---|---|
 | `../configs/prometheus/prometheus.yml` | 固定 `production-api-worker` scrape job、`/metrics` path 與 alert rule 載入 |
 | `../configs/prometheus/production-api-worker-alerts.yml` | 固定 5xx、queue depth、worker latency 與 metrics missing 告警 |
-| `make prometheus-check` | 靜態檢查 Prometheus config、Compose profile、README、runbook 與 CI 入口 |
+| `make prometheus-check` | 靜態檢查 Prometheus Config Contract、Compose profile、README、runbook、API key scrape auth 風險與 CI 入口 |
 
 ```bash
 cd production-api-worker
@@ -571,7 +572,7 @@ open http://localhost:9090
 docker compose down -v
 ```
 
-若啟用 `API_KEY`，Prometheus scrape 必須同步設計 Bearer token 或 bearer token file。教學 profile 預設使用未設定 `API_KEY` 的 local mode，避免把密碼寫進 `prometheus.yml`。
+若啟用 `API_KEY`，Prometheus scrape 必須同步設計 Bearer token、bearer token file、secret mount 或平台原生 scrape auth。教學 profile 預設使用未設定 `API_KEY` 的 local mode，避免把密碼寫進 `prometheus.yml`。
 
 ## Panic Recovery Contract
 
@@ -656,7 +657,7 @@ Readiness contract 是 deployment 的外部合約。`/livez` 表示 process 還�
 | Prometheus alert rules | `../configs/prometheus/production-api-worker-alerts.yml` |
 | Prometheus scrape config | `../configs/prometheus/prometheus.yml` |
 | Runbook check | `make runbook-check` 或從 repo root 執行 `node scripts/check-operational-runbook.mjs` |
-| Prometheus config check | `make prometheus-check` 或從 repo root 執行 `node scripts/check-prometheus-config.mjs` |
+| Prometheus Config Contract | `make prometheus-check` 或從 repo root 執行 `node scripts/check-prometheus-config-contract.mjs` |
 | Operational observability contract | `make operational-observability-check` 或從 repo root 執行 `node scripts/check-operational-observability-contract.mjs` |
 | 主要 SLI | API 5xx rate、worker p95 latency、queue depth、readiness、metrics scrape |
 | Incident correlation | `X-Request-ID`、route label、structured log、OpenTelemetry span |
