@@ -36,11 +36,12 @@
 - Operational runbook：SLI/SLO、Prometheus alert rules、scrape config、incident workflow、verification、troubleshooting
 - Prometheus Config Contract：scrape config、alert rule loading、Compose monitoring profile 與 API key scrape auth 風險需由 `make prometheus-check` 固定
 - Operational Observability Contract：runbook、Prometheus scrape config、alert rules、Compose monitoring profile 與 API key scrape auth risk 需由 `make operational-observability-check` 固定
+- OTLP Export Governance Contract：local `debug exporter` 只供教學；正式 Tempo、Jaeger、OTLP backend 或雲端 APM 替換需保留 sampling rate、retention window、sensitive attribute redaction 與 trace data owner，並由 `make otel-export-governance-check` 固定
 - Trace Shutdown Contract：trace provider shutdown 必須使用 3 秒 bounded context；`api-worker` process exit 需呼叫 `obs.Shutdown(context.Background())`，並由 `make trace-shutdown-check` / `TestTraceShutdownContract` 固定
 - Pipeline：migration CLI、Docker Compose、GitHub Actions workflow、Docker image build gate、Compose smoke gate
 - CI Quality Gate Contract：GitHub Actions 必須保留 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，並由 `make ci-quality-gate-check` 固定文件、Makefile 與 CI 入口
 - CI Contract Parity Gate：`make ci-contract` 與 GitHub Actions production contract job 必須使用相同 API test selector，包含 `TestCORSAllowedOriginsContract`，並由 `make ci-contract-parity-check` 固定
-- Contract Gate Inventory：42 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
+- Contract Gate Inventory：43 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
 - Docs Publishing Contract：`docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈必須由 `make docs-publishing-check` / `node scripts/check-docs-publishing-contract.mjs` 固定，避免 Pages 首頁與整合課程來源漂移
 - Production Workflow Contract：`production-api-worker/.github/workflows/production-api-worker.yml` 必須保留 `make ci-contract`、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup，並由 `make production-workflow-check` 固定
 - Syntax Flow SVG Contract：語法流程圖補充頁必須保留 25 個單語法 flow、標準流程圖符號、SVG metadata 與 blueprint renderer，並由 `make syntax-flow-svg-check` / `node scripts/check-syntax-flow-svg-contract.mjs` 固定
@@ -285,7 +286,7 @@ make contract-gate-inventory-check
 cd .. && node scripts/check-contract-gate-inventory-contract.mjs
 ```
 
-這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 42 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
+這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 43 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
 
 Production Workflow Contract 需包含：
 
@@ -504,6 +505,14 @@ docker compose config
 ```
 
 正式環境通常會把 exporter 換成 OTLP backend、Tempo、Jaeger 或雲端 APM。替換時應保留 receiver、pipeline 與服務端 endpoint 的合約，並在 runbook 註明資料保留期限、取樣率與敏感欄位處理策略。
+
+## OTLP Export Governance Contract
+
+Local `debug exporter` 只用於教學與 smoke review，不是 production tracing backend。正式環境替換 Tempo、Jaeger、OTLP backend 或雲端 APM 時，必須在 runbook 保留 backend owner、sampling rate、retention window、sensitive attribute redaction 與 trace data owner，避免 trace pipeline 只驗證可連線卻沒有資料治理。
+
+```bash
+make otel-export-governance-check
+```
 
 ## API Security Contract
 

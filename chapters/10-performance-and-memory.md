@@ -190,9 +190,13 @@ docker compose down -v
 
 本地 trace pipeline 也要先通過 OTLP collector contract。`production-api-worker/otel-collector.yaml` 固定 OTLP gRPC receiver `0.0.0.0:4317`、`debug exporter` 與 traces pipeline；正式環境替換 exporter 前，至少要確認 receiver、endpoint 與 pipeline 名稱沒有漂移。
 
+OTLP export governance contract gate 補上 production tracing 的資料治理：正式 Tempo、Jaeger、OTLP backend 或雲端 APM 需指定 backend owner、sampling rate、retention window、sensitive attribute redaction 與 trace data owner；local `debug exporter` 只作為教學與 smoke review。
+
 ```bash
 node scripts/check-otel-collector-contract.mjs
+node scripts/check-otel-export-governance-contract.mjs
 cd production-api-worker && make otel-check
+cd production-api-worker && make otel-export-governance-check
 ```
 
 ## Benchmark A/B 與 `benchstat`

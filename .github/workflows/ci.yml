@@ -177,6 +177,9 @@ jobs:
       - name: Check OTLP collector contract
         run: node scripts/check-otel-collector-contract.mjs
 
+      - name: Check OTLP export governance contract
+        run: node scripts/check-otel-export-governance-contract.mjs
+
   production-contract:
     name: Production API worker contracts
     runs-on: ubuntu-latest

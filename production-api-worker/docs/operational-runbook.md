@@ -90,6 +90,13 @@ node scripts/check-otel-collector-contract.mjs
 cd production-api-worker && make otel-check
 ```
 
+OTLP export governance contract gate 固定 local `debug exporter` 只供教學；正式環境替換 Tempo、Jaeger、OTLP backend 或雲端 APM 時，必須記錄 backend owner、sampling rate、retention window、sensitive attribute redaction 與 trace data owner。
+
+```bash
+node scripts/check-otel-export-governance-contract.mjs
+cd production-api-worker && make otel-export-governance-check
+```
+
 pprof diagnostics 預設關閉。只有需要 CPU、heap、goroutine 或 trace 證據時才短期啟用：
 
 ```bash
@@ -178,6 +185,7 @@ curl -H 'Authorization: Bearer debug-token' 'http://localhost:8080/debug/pprof/h
 | Prometheus scrape config | `node scripts/check-prometheus-config-contract.mjs` | scrape job、rule_files、Compose monitoring profile、README 與 CI 入口一致 |
 | pprof diagnostics contract | `node scripts/check-pprof-contract.mjs` | `ENABLE_PPROF`、`PPROF_TOKEN`、Go tests、runbook、README 與 CI 入口一致 |
 | OTLP collector contract | `node scripts/check-otel-collector-contract.mjs` | OTLP receiver、debug exporter、Compose endpoint、runbook、README 與 CI 入口一致 |
+| OTLP export governance contract gate | `node scripts/check-otel-export-governance-contract.mjs` | local debug exporter、production backend owner、sampling rate、retention window、sensitive attribute redaction 與 trace data owner 一致 |
 | pprof Go contract | `cd production-api-worker && go test ./internal/config ./internal/api -run 'Test.*Pprof|TestPprofDiagnosticsContract' -count=1` | pprof 預設關閉，啟用時要求 token，合法 token 才能讀 profile index |
 | Production contract | `cd production-api-worker && make ci-contract` | API / config / migration / retry / worker 合約通過 |
 | Compose smoke | `cd production-api-worker && API_KEY=dev-secret docker compose up -d --build && API_KEY=dev-secret make compose-smoke` | ready、live、job create/read、metrics 通過 |
@@ -205,7 +213,7 @@ curl -H 'Authorization: Bearer debug-token' 'http://localhost:8080/debug/pprof/h
 | 不把 health endpoint 上鎖 | `/livez`、`/readyz` 保持公開供 LB / orchestrator 使用 |
 | 控制 label cardinality | route label 使用 `/jobs/{id}`，避免 job id 進入 metrics label |
 | 告警要能行動 | 每條 alert 必須有 summary、description、severity 與 runbook link |
-| trace pipeline 可替換 | 本地使用 debug exporter；正式環境替換 backend 時保留 OTLP receiver、endpoint 與取樣策略說明 |
+| trace pipeline 可替換 | 本地使用 debug exporter；正式環境替換 backend 時保留 OTLP receiver、endpoint、sampling rate、retention window、sensitive attribute redaction 與 trace data owner |
 | pprof 短期啟用 | profile 可能暴露 memory、cmdline、goroutine 與 route 資訊，診斷完成後必須關閉 |
 | 復盤要回到測試 | incident 後補 contract test、smoke gate 或 runbook 檢查，不只修文字 |
 
@@ -215,6 +223,6 @@ curl -H 'Authorization: Bearer debug-token' 'http://localhost:8080/debug/pprof/h
 |---|---|
 | 教學閾值不等於正式 SLA | 2%、5%、2s、50 queue depth 是教材 baseline；正式環境需依流量重算 |
 | Prometheus rule 未接真實 Alertmanager | 本 repo 提供 rule 與檢查腳本，不代表已部署告警平台 |
-| Trace backend 未固定 | 本地 collector 使用 `debug exporter`；正式環境需指定 Tempo、Jaeger、OTLP backend 或雲端 APM、取樣率與保存期限 |
+| Trace backend 未固定 | 本地 collector 使用 `debug exporter`；正式環境需指定 Tempo、Jaeger、OTLP backend 或雲端 APM、sampling rate、retention window、sensitive attribute redaction 與 trace data owner |
 | pprof profile 敏感 | heap、goroutine、cmdline、trace 可能含環境與請求資訊；只保存於受控 incident artifact |
 | Docker Compose 不是 Kubernetes | Compose smoke 可證明端到端最小流程，不取代 K8s readiness/liveness/rollout policy |

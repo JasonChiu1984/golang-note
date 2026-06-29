@@ -416,7 +416,7 @@ node ../scripts/check-retry-cancellation-contract.mjs
 
 CI contract parity gate：在 repo root 執行 `node scripts/check-ci-contract-parity-contract.mjs`，固定 `make ci-contract` 與 GitHub Actions production contract job 都涵蓋 `TestCORSAllowedOriginsContract`。
 
-Contract gate inventory：在 repo root 執行 `node scripts/check-contract-gate-inventory-contract.mjs`，固定 42 個 root contract checker 全部被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate。
+Contract gate inventory：在 repo root 執行 `node scripts/check-contract-gate-inventory-contract.mjs`，固定 43 個 root contract checker 全部被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate。
 
 Docs publishing contract gate：在 repo root 執行 `node scripts/check-docs-publishing-contract.mjs`，固定 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈、Makefile 與 CI 入口。
 
@@ -524,6 +524,7 @@ benchstat old.txt new.txt
 | `pprof` | CPU / memory / goroutine profiling |
 | `trace` | 排程、GC、系統呼叫時間線 |
 | `node scripts/check-otel-collector-contract.mjs` | 固定 OTLP collector receiver、debug exporter 與 Compose endpoint |
+| `node scripts/check-otel-export-governance-contract.mjs` | OTLP export governance contract gate：固定 Tempo、Jaeger、OTLP backend 或雲端 APM 替換時的 backend owner、sampling rate、retention window、sensitive attribute redaction 與 trace data owner |
 | `node scripts/check-trace-shutdown-contract.mjs` | 固定 trace provider shutdown deadline、api-worker exit hook 與 `TestTraceShutdownContract` |
 | `-race` | 偵測 data race |
 | `goleak` | 偵測 goroutine leak |
@@ -877,7 +878,7 @@ synctest.Test(t, func(t *testing.T) {
 | Worker shutdown contract | `node scripts/check-worker-shutdown-contract.mjs && cd production-api-worker && make worker-shutdown-check` | 固定 queue close/enqueue mutex、`ErrClosed`、shutdown tests、Makefile 與 CI 入口 |
 | Prometheus config contract gate | `node scripts/check-prometheus-config-contract.mjs && cd production-api-worker && make prometheus-check` | 固定 Prometheus scrape job、rule_files、alert rules、Compose monitoring profile、API key scrape auth 風險與 CI 入口 |
 | Operational observability contract gate | `node scripts/check-operational-observability-contract.mjs && cd production-api-worker && make operational-observability-check` | 固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險、Makefile 與 CI 入口 |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs && cd production-api-worker && make contract-gate-inventory-check` | 固定 42 個 root contract checker 全部被 GitHub Actions 呼叫，並同步 Makefile、README、API contract、章節與整合視覺課程入口 |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs && cd production-api-worker && make contract-gate-inventory-check` | 固定 43 個 root contract checker 全部被 GitHub Actions 呼叫，並同步 Makefile、README、API contract、章節與整合視覺課程入口 |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs && cd production-api-worker && make docs-publishing-check` | 固定 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈、Makefile 與 CI 入口 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs && cd production-api-worker && make production-workflow-check` | 固定 standalone production workflow 的 contract、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs && cd production-api-worker && make syntax-flow-svg-check` | 固定語法流程圖補充頁的 25 個 flow、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口 |

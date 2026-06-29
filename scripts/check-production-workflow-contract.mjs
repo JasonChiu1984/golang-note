@@ -18,7 +18,7 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.73`",
+    "教材版本：`v1.0.74`",
     "Production workflow contract gate",
     "node scripts/check-production-workflow-contract.mjs",
     "production-api-worker/.github/workflows/production-api-worker.yml",
@@ -29,13 +29,13 @@ const required = {
     "production-api-worker/.github/workflows/production-api-worker.yml",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.73",
+    "版本：v1.0.74",
     "Production workflow contract gate",
     "node scripts/check-production-workflow-contract.mjs",
     "production-api-worker/.github/workflows/production-api-worker.yml",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.73",
+    "version: v1.0.74",
     "Production workflow contract gate",
     "production-api-worker/.github/workflows/production-api-worker.yml",
   ],
