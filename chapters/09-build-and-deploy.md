@@ -360,6 +360,8 @@ Trace shutdown contract 由 `node scripts/check-trace-shutdown-contract.mjs` 固
 
 Prometheus config contract gate 由 `node scripts/check-prometheus-config-contract.mjs` 固定：`configs/prometheus/prometheus.yml`、alert rules、Compose monitoring profile、API key scrape auth 風險、Makefile 與 CI 入口必須一起存在，避免 monitoring profile 啟動後才發現 scrape job 或 rule_files 漂移。
 
+Secret handling governance contract gate 由 `node scripts/check-secret-handling-governance-contract.mjs` 與 `cd production-api-worker && make secret-handling-governance-check` 固定：`API_KEY`、`PPROF_TOKEN`、Prometheus bearer token file、secret mount、secret rotation owner、no hard-coded production credentials 與 incident artifact redaction 必須一起進入 release gate。
+
 Operational observability contract gate 由 `node scripts/check-operational-observability-contract.mjs` 固定：runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險、Makefile 與 CI 入口必須一起存在，避免觀測性只停在概念而沒有 incident-ready release gate。
 
 ```yaml

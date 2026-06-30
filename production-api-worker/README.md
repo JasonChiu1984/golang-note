@@ -37,11 +37,12 @@
 - Prometheus Config Contract：scrape config、alert rule loading、Compose monitoring profile 與 API key scrape auth 風險需由 `make prometheus-check` 固定
 - Operational Observability Contract：runbook、Prometheus scrape config、alert rules、Compose monitoring profile 與 API key scrape auth risk 需由 `make operational-observability-check` 固定
 - OTLP Export Governance Contract：local `debug exporter` 只供教學；正式 Tempo、Jaeger、OTLP backend 或雲端 APM 替換需保留 sampling rate、retention window、sensitive attribute redaction 與 trace data owner，並由 `make otel-export-governance-check` 固定
+- Secret Handling Governance Contract：`API_KEY`、`PPROF_TOKEN`、Prometheus bearer token file、secret mount、secret rotation owner、no hard-coded production credentials 與 incident artifact redaction 必須由 `make secret-handling-governance-check` / `node scripts/check-secret-handling-governance-contract.mjs` 固定
 - Trace Shutdown Contract：trace provider shutdown 必須使用 3 秒 bounded context；`api-worker` process exit 需呼叫 `obs.Shutdown(context.Background())`，並由 `make trace-shutdown-check` / `TestTraceShutdownContract` 固定
 - Pipeline：migration CLI、Docker Compose、GitHub Actions workflow、Docker image build gate、Compose smoke gate
 - CI Quality Gate Contract：GitHub Actions 必須保留 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，並由 `make ci-quality-gate-check` 固定文件、Makefile 與 CI 入口
 - CI Contract Parity Gate：`make ci-contract` 與 GitHub Actions production contract job 必須使用相同 API test selector，包含 `TestCORSAllowedOriginsContract`，並由 `make ci-contract-parity-check` 固定
-- Contract Gate Inventory：43 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
+- Contract Gate Inventory：44 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
 - Docs Publishing Contract：`docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈必須由 `make docs-publishing-check` / `node scripts/check-docs-publishing-contract.mjs` 固定，避免 Pages 首頁與整合課程來源漂移
 - Production Workflow Contract：`production-api-worker/.github/workflows/production-api-worker.yml` 必須保留 `make ci-contract`、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup，並由 `make production-workflow-check` 固定
 - Syntax Flow SVG Contract：語法流程圖補充頁必須保留 25 個單語法 flow、標準流程圖符號、SVG metadata 與 blueprint renderer，並由 `make syntax-flow-svg-check` / `node scripts/check-syntax-flow-svg-contract.mjs` 固定
@@ -189,6 +190,7 @@ make compose-smoke
 | `make readiness-check` | 固定 readiness / liveness route、draining status、contract tests、章節與 CI 靜態檢查入口 |
 | `make request-correlation-check` | 固定 Request correlation contract、`X-Request-ID`、request context、structured log、trace attribute、Go tests、OpenAPI 與 CI 入口 |
 | `make api-security-check` | 固定 API security contract、`API_KEY`、Bearer auth、公開 health endpoint、安全標頭、Go tests、OpenAPI 與 CI 入口 |
+| `make secret-handling-governance-check` | 固定 Secret Handling Governance Contract、`API_KEY`、`PPROF_TOKEN`、bearer token file、secret mount、secret rotation owner、no hard-coded production credentials 與 incident artifact redaction |
 | `make runbook-check` | 固定 SLI/SLO、Prometheus alert rules、incident workflow 與 runbook link 不被移除 |
 | `make prometheus-check` | 固定 Prometheus Config Contract、scrape config、rule_files、Compose monitoring profile、API key scrape auth 風險與 README/runbook 入口 |
 | `make operational-observability-check` | 固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險與 CI 入口 |
@@ -286,7 +288,7 @@ make contract-gate-inventory-check
 cd .. && node scripts/check-contract-gate-inventory-contract.mjs
 ```
 
-這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 43 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
+這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 44 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
 
 Production Workflow Contract 需包含：
 
@@ -582,6 +584,14 @@ docker compose down -v
 ```
 
 若啟用 `API_KEY`，Prometheus scrape 必須同步設計 Bearer token、bearer token file、secret mount 或平台原生 scrape auth。教學 profile 預設使用未設定 `API_KEY` 的 local mode，避免把密碼寫進 `prometheus.yml`。
+
+## Secret Handling Governance Contract
+
+Secret handling governance contract gate 把分散在 API security、pprof diagnostics、Prometheus scrape auth 與 OTLP redaction 的 secret 邊界收斂成 release gate。正式環境不可使用 hard-coded production credentials；`API_KEY`、`PPROF_TOKEN`、Prometheus bearer token file 與 secret mount 必須有 secret rotation owner，incident profile、log、trace 或 smoke artifact 需先做 incident artifact redaction 才能保存或分享。
+
+```bash
+make secret-handling-governance-check
+```
 
 ## Panic Recovery Contract
 

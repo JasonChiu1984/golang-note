@@ -180,6 +180,9 @@ jobs:
       - name: Check OTLP export governance contract
         run: node scripts/check-otel-export-governance-contract.mjs
 
+      - name: Check secret handling governance contract
+        run: node scripts/check-secret-handling-governance-contract.mjs
+
   production-contract:
     name: Production API worker contracts
     runs-on: ubuntu-latest

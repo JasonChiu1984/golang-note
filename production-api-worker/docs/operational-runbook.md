@@ -75,7 +75,7 @@ open http://localhost:9090
 docker compose down -v
 ```
 
-若設定 `API_KEY`，`/metrics` 會要求 `Authorization: Bearer <token>`。正式環境應改用 Prometheus bearer token file、secret mount 或平台原生 scrape auth，不要把 secret 寫入 repo 內的 `prometheus.yml`。
+若設定 `API_KEY`，`/metrics` 會要求 `Authorization: Bearer <token>`。正式環境應改用 Prometheus bearer token file、secret mount 或平台原生 scrape auth，不要把 secret 寫入 repo 內的 `prometheus.yml`。Secret handling governance contract gate 要求 secret manager 或平台 secret mount 保存正式 token，指定 secret rotation owner，禁止 no hard-coded production credentials，且 profile、log、trace、compose smoke output 等 incident artifact redaction 完成後才能附到事故紀錄。
 
 OpenTelemetry collector 設定檔位於：
 
@@ -186,6 +186,7 @@ curl -H 'Authorization: Bearer debug-token' 'http://localhost:8080/debug/pprof/h
 | pprof diagnostics contract | `node scripts/check-pprof-contract.mjs` | `ENABLE_PPROF`、`PPROF_TOKEN`、Go tests、runbook、README 與 CI 入口一致 |
 | OTLP collector contract | `node scripts/check-otel-collector-contract.mjs` | OTLP receiver、debug exporter、Compose endpoint、runbook、README 與 CI 入口一致 |
 | OTLP export governance contract gate | `node scripts/check-otel-export-governance-contract.mjs` | local debug exporter、production backend owner、sampling rate、retention window、sensitive attribute redaction 與 trace data owner 一致 |
+| Secret handling governance contract gate | `node scripts/check-secret-handling-governance-contract.mjs` | API_KEY、PPROF_TOKEN、bearer token file、secret mount、secret rotation owner、no hard-coded production credentials 與 incident artifact redaction 一致 |
 | pprof Go contract | `cd production-api-worker && go test ./internal/config ./internal/api -run 'Test.*Pprof|TestPprofDiagnosticsContract' -count=1` | pprof 預設關閉，啟用時要求 token，合法 token 才能讀 profile index |
 | Production contract | `cd production-api-worker && make ci-contract` | API / config / migration / retry / worker 合約通過 |
 | Compose smoke | `cd production-api-worker && API_KEY=dev-secret docker compose up -d --build && API_KEY=dev-secret make compose-smoke` | ready、live、job create/read、metrics 通過 |

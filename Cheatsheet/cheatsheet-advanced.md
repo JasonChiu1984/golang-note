@@ -239,6 +239,7 @@ func FetchUser(ctx context.Context, id int) (*User, error) {
 | Security headers | middleware 統一設定 `nosniff`、`DENY`、`no-referrer` |
 | Smoke test | `compose-smoke.sh` 要能帶 `API_KEY`，避免啟用認證後 smoke gate 失效 |
 | API security contract gate | `node scripts/check-api-security-contract.mjs` 固定 README、OpenAPI、Go tests、Makefile 與 CI |
+| Secret handling governance contract gate | `node scripts/check-secret-handling-governance-contract.mjs` 固定 `API_KEY`、`PPROF_TOKEN`、secret rotation owner、no hard-coded production credentials 與 incident artifact redaction |
 | Worker failure contract | `node scripts/check-worker-failure-contract.mjs` 固定 worker success/failed result metric、duration、Go test 與 CI |
 | 測試 | `go test ./internal/api -run 'TestAPIKeyAuthContract|TestSecurityHeadersContract' -count=1` |
 

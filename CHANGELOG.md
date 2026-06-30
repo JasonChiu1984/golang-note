@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.75 - 2026-07-01
+
+- 新增 2026-07-01 06:03:14 CST +0800 資深工程師審查報告，確認 v1.0.74 已補齊 OTLP export governance contract gate，但 Secret handling governance 尚未納入 root contract checker inventory。
+- 新增 `scripts/check-secret-handling-governance-contract.mjs`，固定 `API_KEY`、`PPROF_TOKEN`、Prometheus bearer token file、secret mount、secret rotation owner、no hard-coded production credentials 與 incident artifact redaction。
+- 將分散在 API security、pprof diagnostics、Prometheus scrape auth 與 OTLP redaction 的 secret 管理邊界升級為正式 Secret handling governance contract gate，並同步 README、production README、operational runbook、API contract、OpenAPI、第 7 / 9 / 10 / 11 章、進階 Cheat Sheet 與整合視覺課程。
+- Contract gate inventory 從 43 個 root contract checker 更新為 44 個，並納入 Secret handling governance contract checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.75`。
+
 ## v1.0.74 - 2026-06-30
 
 - 新增 2026-06-30 06:03:15 CST +0800 資深工程師審查報告，確認 v1.0.73 已補齊 Prometheus config contract gate，但 OTLP production exporter 替換治理尚未納入 root contract checker inventory。

@@ -232,6 +232,7 @@ func TestCreateJobContract(t *testing.T) {
 | Startup / DB pool config | 不合法 `PORT`、`QUEUE_SIZE`、`WORKERS`、DB pool size 或 DB pool duration 應 fail fast，不可 silent fallback |
 | Migration contract gate | migration env、timeout、SQL 檔排序、version 命名與 `node scripts/check-migration-contract.mjs` 應固定，避免 release pipeline 漂移 |
 | API security contract gate | `API_KEY` 啟用後 `/jobs`、`/metrics` 需 Bearer token；`/livez`、`/readyz` 不應被認證擋住，並由 `node scripts/check-api-security-contract.mjs` 固定文件、OpenAPI、測試與 CI |
+| Secret handling governance contract gate | `API_KEY`、`PPROF_TOKEN`、bearer token file、secret mount、secret rotation owner、no hard-coded production credentials 與 incident artifact redaction 需由 `node scripts/check-secret-handling-governance-contract.mjs` 固定 |
 | CORS allowlist | `CORS_ALLOWED_ORIGINS` 只接受 exact `http` / `https` origin；allowed preflight 回 `204`，blocked preflight 回 `403` |
 | Pprof diagnostics | `ENABLE_PPROF` 預設關閉；啟用 `/debug/pprof/` 時必須要求 Bearer token，避免 debug endpoint 公開 |
 | Trace shutdown contract | `Observability.Shutdown` 必須使用 3 秒 bounded context，並由 `TestTraceShutdownContract` 與 `node scripts/check-trace-shutdown-contract.mjs` 固定 |

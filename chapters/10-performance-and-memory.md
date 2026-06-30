@@ -192,6 +192,8 @@ docker compose down -v
 
 OTLP export governance contract gate 補上 production tracing 的資料治理：正式 Tempo、Jaeger、OTLP backend 或雲端 APM 需指定 backend owner、sampling rate、retention window、sensitive attribute redaction 與 trace data owner；local `debug exporter` 只作為教學與 smoke review。
 
+Secret handling governance contract gate 補上 profiling 與 incident artifact 的敏感資料治理：`node scripts/check-secret-handling-governance-contract.mjs` 固定 secret rotation owner、no hard-coded production credentials 與 incident artifact redaction，避免 profile、trace 或 log 證據把 token 帶進 repo。
+
 ```bash
 node scripts/check-otel-collector-contract.mjs
 node scripts/check-otel-export-governance-contract.mjs

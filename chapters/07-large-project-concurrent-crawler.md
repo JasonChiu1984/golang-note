@@ -279,6 +279,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Trace shutdown contract | `node scripts/check-trace-shutdown-contract.mjs`、`TestTraceShutdownContract`、3 秒 bounded shutdown、api-worker exit hook | exporter flush 或 provider shutdown 在 process exit 時無 deadline，導致 graceful shutdown 無法預測 |
 | API security | `API_KEY`、Bearer token、公開 health endpoint、安全標頭 | 業務 endpoint 或 metrics 無條件公開，或 health check 被認證擋住 |
 | API security contract gate | `node scripts/check-api-security-contract.mjs`、`TestAPIKeyAuthContract`、`TestSecurityHeadersContract`、OpenAPI `bearerAuth`、CI 入口 | 文件寫了 API key，但測試、OpenAPI 或 workflow 漂移後無法阻擋 regression |
+| Secret handling governance contract gate | `node scripts/check-secret-handling-governance-contract.mjs`、`make secret-handling-governance-check`、secret rotation owner、incident artifact redaction | 教學 token、pprof token、scrape auth 或 trace/log artifact 出現 hard-coded production credentials 或未遮蔽外流 |
 | CORS allowlist contract | `CORS_ALLOWED_ORIGINS`、exact origin、preflight `204`、blocked origin `403` | 為了讓瀏覽器前端能呼叫 API 而誤開 `Access-Control-Allow-Origin: *` |
 | Request body limit contract | `REQUEST_BODY_LIMIT_BYTES`、`http.MaxBytesReader`、`413 payload_too_large` | 大型 payload 或誤用 client 直接消耗 handler memory / decode 時間 |
 | HTTP server timeout contract | `HTTP_READ_HEADER_TIMEOUT`、`HTTP_READ_TIMEOUT`、`HTTP_WRITE_TIMEOUT`、`HTTP_IDLE_TIMEOUT`、`HTTP_SHUTDOWN_TIMEOUT`、`QUEUE_DRAIN_TIMEOUT` | slow client、卡住的 response 或過長 drain 讓部署與容量行為不可預測 |
