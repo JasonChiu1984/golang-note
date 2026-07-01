@@ -37,12 +37,12 @@ const required = {
     '"internal_error"',
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.75",
+    "version: v1.0.76",
     "panic recovery",
     "internal_error",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.75",
+    "版本：v1.0.76",
     "Panic recovery gate",
     "node scripts/check-panic-recovery-contract.mjs",
   ],

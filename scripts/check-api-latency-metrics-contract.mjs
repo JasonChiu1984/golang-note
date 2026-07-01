@@ -20,7 +20,7 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.75`",
+    "教材版本：`v1.0.76`",
     "API latency metrics contract",
     "node scripts/check-api-latency-metrics-contract.mjs",
     "api_request_duration_seconds",
@@ -46,12 +46,12 @@ const required = {
     "status=\"Accepted\"",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.75",
+    "版本：v1.0.76",
     "API latency metrics contract",
     "api_request_duration_seconds",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.75",
+    "version: v1.0.76",
     "API latency metrics contract",
     "api_request_duration_seconds",
   ],

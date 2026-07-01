@@ -38,11 +38,12 @@
 - Operational Observability Contract：runbook、Prometheus scrape config、alert rules、Compose monitoring profile 與 API key scrape auth risk 需由 `make operational-observability-check` 固定
 - OTLP Export Governance Contract：local `debug exporter` 只供教學；正式 Tempo、Jaeger、OTLP backend 或雲端 APM 替換需保留 sampling rate、retention window、sensitive attribute redaction 與 trace data owner，並由 `make otel-export-governance-check` 固定
 - Secret Handling Governance Contract：`API_KEY`、`PPROF_TOKEN`、Prometheus bearer token file、secret mount、secret rotation owner、no hard-coded production credentials 與 incident artifact redaction 必須由 `make secret-handling-governance-check` / `node scripts/check-secret-handling-governance-contract.mjs` 固定
+- Supply Chain Artifact Governance Contract：release promotion 需保留 SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner，並由 `make supply-chain-artifact-governance-check` / `node scripts/check-supply-chain-artifact-governance-contract.mjs` 固定
 - Trace Shutdown Contract：trace provider shutdown 必須使用 3 秒 bounded context；`api-worker` process exit 需呼叫 `obs.Shutdown(context.Background())`，並由 `make trace-shutdown-check` / `TestTraceShutdownContract` 固定
 - Pipeline：migration CLI、Docker Compose、GitHub Actions workflow、Docker image build gate、Compose smoke gate
 - CI Quality Gate Contract：GitHub Actions 必須保留 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，並由 `make ci-quality-gate-check` 固定文件、Makefile 與 CI 入口
 - CI Contract Parity Gate：`make ci-contract` 與 GitHub Actions production contract job 必須使用相同 API test selector，包含 `TestCORSAllowedOriginsContract`，並由 `make ci-contract-parity-check` 固定
-- Contract Gate Inventory：44 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
+- Contract Gate Inventory：45 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
 - Docs Publishing Contract：`docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈必須由 `make docs-publishing-check` / `node scripts/check-docs-publishing-contract.mjs` 固定，避免 Pages 首頁與整合課程來源漂移
 - Production Workflow Contract：`production-api-worker/.github/workflows/production-api-worker.yml` 必須保留 `make ci-contract`、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup，並由 `make production-workflow-check` 固定
 - Syntax Flow SVG Contract：語法流程圖補充頁必須保留 25 個單語法 flow、標準流程圖符號、SVG metadata 與 blueprint renderer，並由 `make syntax-flow-svg-check` / `node scripts/check-syntax-flow-svg-contract.mjs` 固定
@@ -191,6 +192,7 @@ make compose-smoke
 | `make request-correlation-check` | 固定 Request correlation contract、`X-Request-ID`、request context、structured log、trace attribute、Go tests、OpenAPI 與 CI 入口 |
 | `make api-security-check` | 固定 API security contract、`API_KEY`、Bearer auth、公開 health endpoint、安全標頭、Go tests、OpenAPI 與 CI 入口 |
 | `make secret-handling-governance-check` | 固定 Secret Handling Governance Contract、`API_KEY`、`PPROF_TOKEN`、bearer token file、secret mount、secret rotation owner、no hard-coded production credentials 與 incident artifact redaction |
+| `make supply-chain-artifact-governance-check` | 固定 Supply Chain Artifact Governance Contract、SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner |
 | `make runbook-check` | 固定 SLI/SLO、Prometheus alert rules、incident workflow 與 runbook link 不被移除 |
 | `make prometheus-check` | 固定 Prometheus Config Contract、scrape config、rule_files、Compose monitoring profile、API key scrape auth 風險與 README/runbook 入口 |
 | `make operational-observability-check` | 固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險與 CI 入口 |
@@ -217,6 +219,7 @@ make compose-smoke
 | `make go-release-notes-check` | 固定 Go ReleaseNote Contract、Go 1.1-1.26 報告、27 個 HTML、官方來源、最新 patch 訊號與 Pages 同步 |
 | `make release-artifact-chain-check` | 固定 Release Artifact Chain Contract、審查報告、內容需要更新的部分、更新資料、版本標記與 docs/index 同步 |
 | `make dependency-governance-check` | 固定 Dependency Governance Contract、module integrity、dependency update discovery、vulnerability scan、離線限制、Makefile 與 CI 入口 |
+| `make supply-chain-artifact-governance-check` | 固定 Supply Chain Artifact Governance Contract、SBOM、image signing、provenance / attestation、artifact retention、promotion approval、release evidence owner 與 CI 入口 |
 | `make performance-benchmark-governance-check` | 固定 Performance Benchmark Governance Contract、benchmark A/B、benchstat、pprof、metrics、Makefile 與 CI 入口 |
 | `make release-rollback-drill-check` | 固定 Release Rollback Drill Contract、rollback decision、previous image restore、migration rollback boundary、health verification、metrics verification、postmortem evidence 與 CI 入口 |
 | `make docker-build-check` | 固定 Docker Build Contract、Dockerfile、`CGO_ENABLED=0`、`api-worker` / `migrate` binaries、`distroless/static-debian12`、Makefile 與 CI build tags |
@@ -238,6 +241,8 @@ make compose-smoke
 | `docker-build` | `production-api-worker` Docker image build + Compose smoke | Dockerfile、migration binary、runtime image 或端到端啟動流程回歸 |
 
 `production-api-worker/docs/api-contract.md` 是人讀的 API 合約；`production-api-worker/api/openapi.yaml` 是 machine-readable OpenAPI contract，供前端 mock、SDK 產生、契約測試與文件工具共用。兩者需和 Go contract tests 一起維護，並由 `node scripts/check-openapi-contract.mjs` 固定入口。
+
+Supply chain artifact governance contract gate 固定 release promotion 不能只看測試通過或 Docker build 成功。正式發版需保留 SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner，並由 `make supply-chain-artifact-governance-check` / `node scripts/check-supply-chain-artifact-governance-contract.mjs` 固定文件、Makefile、CI、API contract、OpenAPI、章節與整合教程入口。
 
 `production-api-worker/docs/operational-runbook.md` 是值班與 incident review 的教學入口；`configs/prometheus/production-api-worker-alerts.yml` 是對應的 Prometheus alert rule 範例，`configs/prometheus/prometheus.yml` 則示範本地 scrape job 與 `rule_files` 載入。這些檔案分別由根目錄 `node scripts/check-operational-runbook.mjs`、`node scripts/check-prometheus-config-contract.mjs` 與 `node scripts/check-pprof-contract.mjs` 固定，避免 observability 只剩 log / metrics 概念而沒有可操作告警、排障與受控 diagnostics 流程。
 
@@ -288,7 +293,7 @@ make contract-gate-inventory-check
 cd .. && node scripts/check-contract-gate-inventory-contract.mjs
 ```
 
-這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 44 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
+這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 45 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
 
 Production Workflow Contract 需包含：
 
@@ -343,6 +348,15 @@ cd .. && node scripts/check-dependency-governance-contract.mjs
 ```
 
 這個 gate 會固定 root module 與 `production-api-worker` 的依賴治理條款：新增或升級 module 前後需保留 `go mod tidy`、`go mod verify`、`go list -m -u all` 與 `govulncheck ./...`，且文件需明確標示 module proxy / vulnerability database 無法連線時要記錄為待補掃描，不可把離線限制誤標為安全通過。
+
+Supply Chain Artifact Governance Contract 需包含：
+
+```bash
+make supply-chain-artifact-governance-check
+cd .. && node scripts/check-supply-chain-artifact-governance-contract.mjs
+```
+
+這個 gate 固定 SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner。它補在 dependency governance、Docker build、Compose smoke 與 rollback drill 之間，確保 release artifact 可追溯，而不只是原始碼測試通過。
 
 Performance Benchmark Governance Contract 需包含：
 

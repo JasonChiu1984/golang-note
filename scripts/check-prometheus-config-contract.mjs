@@ -72,11 +72,11 @@ requireTerms(files.runbook, [
 ]);
 
 requireTerms(files.readme, [
-  "教材版本：`v1.0.75`",
+  "教材版本：`v1.0.76`",
   "Prometheus config contract gate",
   "configs/prometheus/prometheus.yml",
   "node scripts/check-prometheus-config-contract.mjs",
-  "44 個 root contract checker",
+  "45 個 root contract checker",
 ]);
 
 requireTerms(files.productionReadme, [
@@ -87,10 +87,10 @@ requireTerms(files.productionReadme, [
 ]);
 
 requireTerms(files.apiContract, [
-  "版本：v1.0.75",
+  "版本：v1.0.76",
   "Prometheus config contract gate",
   "node scripts/check-prometheus-config-contract.mjs",
-  "44 個 root contract checker",
+  "45 個 root contract checker",
 ]);
 
 for (const file of [files.chapter07, files.chapter09, files.chapter10, files.chapter11, files.cheatsheet, files.visualCourse]) {

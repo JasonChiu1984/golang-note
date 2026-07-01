@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.76 - 2026-07-02
+
+- 新增 2026-07-02 06:02:06 CST +0800 資深工程師審查報告，確認 v1.0.75 已補齊 Secret handling governance contract gate，但 SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner 尚未納入 root contract checker inventory。
+- 新增 `scripts/check-supply-chain-artifact-governance-contract.mjs`，固定 Supply chain artifact governance contract gate，要求 README、production README、operational runbook、API contract、OpenAPI、章節、進階 Cheat Sheet、整合視覺課程、Makefile 與 GitHub Actions 都保留 supply chain artifact evidence 條款。
+- 將供應鏈 artifact governance 從第 9 章與整合視覺課程的企業級缺口提示升級為正式 release gate，補上 dependency governance、Docker build、Compose smoke 與 rollback drill 之間的 artifact evidence 邊界。
+- Contract gate inventory 從 44 個 root contract checker 更新為 45 個，並納入 Supply chain artifact governance contract checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.76`。
+
 ## v1.0.75 - 2026-07-01
 
 - 新增 2026-07-01 06:03:14 CST +0800 資深工程師審查報告，確認 v1.0.74 已補齊 OTLP export governance contract gate，但 Secret handling governance 尚未納入 root contract checker inventory。

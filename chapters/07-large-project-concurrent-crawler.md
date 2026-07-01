@@ -299,13 +299,14 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Worker shutdown contract | `node scripts/check-worker-shutdown-contract.mjs`、enqueue 與 close 的同步邊界、`ErrClosed`、shutdown tests | shutdown 期間可能送入已關閉 channel，造成 panic |
 | Shutdown signal contract | `SIGINT`、`SIGTERM`、readiness draining、HTTP shutdown、queue drain | Docker / Kubernetes 發出 `SIGTERM` 時未進入 graceful shutdown |
 | CI quality gate static gate | `node scripts/check-ci-quality-gate-contract.mjs`、root course、production contracts、race/coverage、govulncheck、Docker build、Compose smoke | workflow 重整後漏掉 dependency verify、漏洞掃描、競態檢查或部署 smoke |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs`、43 個 root contract checker、GitHub Actions 呼叫清單 | 新增 checker 後沒有進入 CI、Makefile 或教材入口，導致 release gate 漂移 |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs`、45 個 root contract checker、GitHub Actions 呼叫清單 | 新增 checker 後沒有進入 CI、Makefile 或教材入口，導致 release gate 漂移 |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs`、`docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈 | 首頁同步後 Release Notes、補充教材入口或回主頁連結在 Pages 上漂移 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs`、standalone workflow、contract tests、race/coverage、govulncheck、Docker smoke | production worker 抽成獨立 repo 時 workflow 退化成只跑快速測試 |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs`、25 個 syntax flow、標準流程圖符號、SVG metadata、blueprint renderer | 視覺化語法教材退回不可維護圖檔、缺少 accessibility metadata 或 docs/來源漂移 |
 | Go ReleaseNote contract gate | `node scripts/check-go-release-notes-contract.mjs`、Go 1.1-1.26 報告、根目錄與 Pages 同步、最新 patch 訊號 | ReleaseNote 產生器或 Pages 同步後遺失官方來源、支援狀態、必要報告區塊或 Go 1.26.4 / Go 1.25.11 patch revisions |
 | Release artifact chain contract gate | `node scripts/check-release-artifact-chain-contract.mjs`、審查報告、內容需要更新的部分、更新資料、VERSION、CHANGELOG、docs/index | 發版缺少可回查 artifact chain，導致審查結論、修正清單與推送紀錄無法對齊 |
 | Dependency governance static gate | `node scripts/check-dependency-governance-contract.mjs`、`go mod verify`、`go list -m -u all`、`govulncheck ./...`、離線限制說明 | 新增 module 或 workflow 重整後漏掉 dependency integrity、可更新版本盤點或漏洞掃描 |
+| Supply chain artifact governance contract gate | `node scripts/check-supply-chain-artifact-governance-contract.mjs`、SBOM、image signing、provenance / attestation、artifact retention、promotion approval、release evidence owner | release promotion 只保留 commit/tag，沒有可審核的 artifact evidence |
 | Performance benchmark governance contract | `node scripts/check-performance-benchmark-governance-contract.mjs`、benchmark A/B、`benchstat old.txt new.txt`、pprof、metrics | API / worker / queue hot path 改動只跑功能測試，未留下可比較的效能證據 |
 | Docker build contract | `node scripts/check-docker-build-contract.mjs`、Dockerfile、`CGO_ENABLED=0`、`api-worker` / `migrate` binaries、`distroless/static-debian12`、CI build tags | Dockerfile 或 workflow tag 漂移，導致 production image 與 release gate 不一致 |
 | Compose runtime env contract | `node scripts/check-compose-runtime-env-contract.mjs`、`make compose-runtime-env-check`、`docker-compose.yml`、runtime env、service dependency、monitoring profile | Compose deployment env 或 dependency 漂移，導致 smoke test 前的設定面不可追蹤 |
@@ -470,13 +471,14 @@ Production API 的 timeout 不是未知錯誤。若 handler 建立的 request de
 | CI contract parity gate | `node scripts/check-ci-contract-parity-contract.mjs` 固定 `make ci-contract` 與 GitHub Actions production contract job 的 API test selector 一致，避免漏跑 `TestCORSAllowedOriginsContract` |
 | Operational observability contract gate | `node scripts/check-operational-observability-contract.mjs` 固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險與 CI 入口 |
 | Worker shutdown contract | `node scripts/check-worker-shutdown-contract.mjs` 固定 queue close/enqueue mutex、`ErrClosed`、shutdown tests、Makefile 與 CI 入口 |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` 固定 43 個 root contract checker 都被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` 固定 45 個 root contract checker 都被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs` 固定 `docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈，避免 Pages 首頁入口漂移 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs` 固定 `production-api-worker/.github/workflows/production-api-worker.yml` 的 contract、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs` 固定語法流程圖補充頁的 25 個 flow、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口 |
 | Go ReleaseNote contract gate | `node scripts/check-go-release-notes-contract.mjs` 固定 Go 1.1-1.26 專業報告、27 個 ReleaseNote HTML、官方來源、Patch Revisions、支援狀態與 `docs/ReleaseNote/` Pages 同步 |
 | Release artifact chain contract gate | `node scripts/check-release-artifact-chain-contract.mjs` 固定審查報告、內容需要更新的部分、更新資料、版本標記、CHANGELOG 與 docs/index 發布同步 |
 | Dependency governance static gate | `node scripts/check-dependency-governance-contract.mjs` 固定 root / production module 的 `go mod tidy`、`go mod verify`、`go list -m -u all`、`govulncheck ./...` 與離線處理邊界 |
+| Supply chain artifact governance contract gate | `node scripts/check-supply-chain-artifact-governance-contract.mjs` 與 `make supply-chain-artifact-governance-check` 固定 SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner |
 | Performance benchmark governance contract | `node scripts/check-performance-benchmark-governance-contract.mjs` 固定 benchmark A/B、benchstat、pprof、metrics、Makefile 與 CI 入口 |
 | Docker build contract | `node scripts/check-docker-build-contract.mjs` 與 `make docker-build-check` 固定 Dockerfile、CGO_ENABLED=0、api-worker / migrate binaries、distroless/static-debian12、Makefile 與 CI build tags |
 | Compose runtime env contract | `node scripts/check-compose-runtime-env-contract.mjs` 與 `make compose-runtime-env-check` 固定 Docker Compose runtime env、migration dependency、OTEL endpoint、API_KEY、REQUEST_BODY_LIMIT_BYTES、TRUSTED_PROXY_CIDRS、CORS_ALLOWED_ORIGINS 與 monitoring profile |
