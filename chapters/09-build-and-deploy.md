@@ -330,6 +330,8 @@ Contract gate inventory 由 `node scripts/check-contract-gate-inventory-contract
 
 Docs publishing contract gate 由 `node scripts/check-docs-publishing-contract.mjs` 固定：`docs/index.html` 必須保留 GitHub Pages 可用路徑、Release Notes 與補充教材入口，且所有 HTML 教材頁都要保留可回到 `docs/index.html` 的「主頁教程」連結。
 
+API contract scope coverage 由 `node scripts/check-openapi-contract.mjs` 固定：`production-api-worker/docs/api-contract.md` 首段適用範圍必須列入 Docs publishing contract gate 與發布面 scope。這避免 contract 表格、OpenAPI description 與 CI checker 已更新，但 API contract header 仍停在舊範圍，讓 API gateway review 或 contract diff 誤判 release gate 覆蓋面。
+
 Production workflow contract gate 由 `node scripts/check-production-workflow-contract.mjs` 固定：`production-api-worker/.github/workflows/production-api-worker.yml` 是 tracked standalone workflow，需保留 `make ci-contract`、`go test -race -cover ./... -count=1`、`govulncheck ./...`、Docker build、Compose smoke、failure logs 與 cleanup，避免 production worker 抽成獨立 repo 時只剩快速測試。
 
 Syntax flow SVG contract gate 由 `node scripts/check-syntax-flow-svg-contract.mjs` 固定：`docs/golang-syntax-application-svg.html` 與整合來源都必須保留 25 個單語法流程、Start/End、Input/Output、Decision、Process 等標準流程圖符號、SVG metadata 與 blueprint renderer，避免視覺化語法教材在發布同步後只剩不可驗證的靜態內容。

@@ -2,9 +2,9 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
-> 教材版本：`v1.0.76`
+> 教材版本：`v1.0.77`
 > 教材基準：`Go 1.26.4`
-> 這次更新重點：正式發布 Supply chain artifact governance contract gate，固定 SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner。
+> 這次更新重點：強化 API contract scope coverage，固定 API contract header 必須同步 Docs publishing contract gate 與發布面 scope。
 
 ## 版本策略
 
@@ -41,7 +41,7 @@
 | Production workflow contract gate | `production-api-worker/.github/workflows/production-api-worker.yml` 需由 `node scripts/check-production-workflow-contract.mjs` 固定 `make ci-contract`、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | Syntax flow SVG contract gate | `docs/golang-syntax-application-svg.html` 與 `圖解筆記3-4整合/golang-syntax-application-svg.html` 需由 `node scripts/check-syntax-flow-svg-contract.mjs` 固定 25 個單語法流程、標準流程圖符號、SVG metadata、blueprint renderer 與 CI 入口 |
 | Go ReleaseNote contract gate | `ReleaseNote/`、`docs/ReleaseNote/` 與 `scripts/generate-go-release-notes.mjs` 需由 `node scripts/check-go-release-notes-contract.mjs` 固定根目錄/Pages 同步、官方來源、Go 1.26.4 / Go 1.25.11 patch revisions 與 CI 入口 |
-| OpenAPI contract | `production-api-worker/api/openapi.yaml` 需同步 `docs/api-contract.md` 與 Go contract tests，並由 `node scripts/check-openapi-contract.mjs` 固定 endpoint、schema、error code 與 auth 邊界 |
+| OpenAPI contract | `production-api-worker/api/openapi.yaml` 需同步 `docs/api-contract.md` 與 Go contract tests，並由 `node scripts/check-openapi-contract.mjs` 固定 endpoint、schema、error code、auth 邊界與 API contract scope coverage |
 | Readiness lifecycle contract | `/livez` 必須公開回 `200`；`/readyz` 在 ready 時回 `200`、draining 時回 `503`，並由 `TestReadinessContract` 和 `node scripts/check-readiness-contract.mjs` 固定 |
 | Request decoding contract | `POST /jobs` 只接受單一 JSON object；malformed JSON、unknown field、trailing JSON value 與空白 `name` 都必須回 `400 invalid_input`，並由 `TestRequestDecodingContract` 和 `node scripts/check-request-decoding-contract.mjs` 固定 |
 | Idempotency key contract | `POST /jobs` 可使用 `Idempotency-Key` header；同一 key 的 client retry 必須回同一個 job 且不重複 enqueue，並由 `TestIdempotencyKeyContract` 和 `node scripts/check-idempotency-key-contract.mjs` 固定 |

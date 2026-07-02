@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.0.77 - 2026-07-03
+
+- 新增 2026-07-03 06:03:26 CST +0800 資深工程師審查報告，確認 v1.0.76 已補齊 Supply chain artifact governance contract gate，但 API contract 首段適用範圍仍未明確固定 Docs publishing contract gate 與 API contract scope coverage。
+- 強化 `scripts/check-openapi-contract.mjs`，要求 `production-api-worker/docs/api-contract.md` 保留 API contract scope coverage、Docs publishing contract gate 與 checker 入口。
+- 同步 `README.md`、`production-api-worker/README.md`、`production-api-worker/api/openapi.yaml`、第 7 / 9 / 11 章、進階 Cheat Sheet 與整合視覺課程，將本輪發版重點標示為 API contract scope coverage。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.77`。
+
 ## v1.0.76 - 2026-07-02
 
 - 新增 2026-07-02 06:02:06 CST +0800 資深工程師審查報告，確認 v1.0.75 已補齊 Secret handling governance contract gate，但 SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner 尚未納入 root contract checker inventory。

@@ -370,7 +370,7 @@ ENTRYPOINT ["/app"]
 | Request schema | 必填欄位、型別、unknown field、trailing JSON 與大小限制是否改變 |
 | Response schema | status code、JSON 欄位、enum 是否仍可被舊 client decode |
 | Error envelope | 是否維持穩定 `error.code` 與 `error.message` |
-| OpenAPI contract | `api/openapi.yaml` 是否同步 endpoint、schema、error code、Bearer auth 與 `X-Request-ID` |
+| OpenAPI contract | `api/openapi.yaml` 是否同步 endpoint、schema、error code、Bearer auth、`X-Request-ID` 與 API contract scope coverage |
 | Idempotency key contract | 是否由 `node scripts/check-idempotency-key-contract.mjs` 固定 `Idempotency-Key`、重試回同一 job、不重複 enqueue、migration unique index 與 CI 入口 |
 | API latency metrics contract | 是否由 `node scripts/check-api-latency-metrics-contract.mjs` 固定 `api_request_duration_seconds`、route / method / status labels 與 CI 入口 |
 | Service transaction boundary contract | 是否由 `node scripts/check-service-transaction-boundary-contract.mjs` 固定 LevelReadCommitted transaction、commit 後 enqueue、queue-full failed 回寫與 `TestServiceTransactionBoundaryContract` |
@@ -420,6 +420,8 @@ CI contract parity gate：在 repo root 執行 `node scripts/check-ci-contract-p
 Contract gate inventory：在 repo root 執行 `node scripts/check-contract-gate-inventory-contract.mjs`，固定 45 個 root contract checker 全部被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate。
 
 Docs publishing contract gate：在 repo root 執行 `node scripts/check-docs-publishing-contract.mjs`，固定 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈、Makefile 與 CI 入口。
+
+API contract scope coverage：在 repo root 執行 `node scripts/check-openapi-contract.mjs`，固定 `production-api-worker/docs/api-contract.md` 首段適用範圍必須同步 Docs publishing contract gate 與發布面 scope。
 
 Production workflow contract gate：在 repo root 執行 `node scripts/check-production-workflow-contract.mjs`，固定 `production-api-worker/.github/workflows/production-api-worker.yml` 保留 `make ci-contract`、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup。
 

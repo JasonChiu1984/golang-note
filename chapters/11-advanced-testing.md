@@ -80,7 +80,7 @@ func FuzzParseInt(f *testing.F) {
 	f.Fuzz(func(t *testing.T, randomStr string) {
 		// 執行你的邏輯
 		_, err := ParseInt(randomStr)
-		
+
 		// Fuzzing 的重點不是判斷對錯，而是確保程式「不會 crash (panic)」
 		// err != nil 是正常的，但如果你的 parse 邏輯寫不好導致 panic，
 		// Fuzzing 引擎就會抓出來並將該筆資料存入 testdata。
@@ -119,7 +119,7 @@ func TestDatabaseIntegration(t *testing.T) {
 	// 取得連線字串並進行真實 DB 測試
 	dbURL, _ := postgresContainer.ConnectionString(ctx)
 	db, _ := sql.Open("postgres", dbURL)
-	
+
 	// ... 執行真實的 INSERT / SELECT 測試 ...
 }
 ```
@@ -585,7 +585,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | Startup config contract gate | `node scripts/check-startup-config-contract.mjs && cd production-api-worker && make startup-config-check` | 固定 `PORT`、`QUEUE_SIZE`、`WORKERS`、optional endpoint、config loader、Go tests、文件、Makefile 與 CI 入口 |
 | DB pool contract gate | `node scripts/check-db-pool-contract.mjs` | 固定 DB pool env、repository pool 套用、`api-worker` wiring、文件、Makefile 與 CI 入口 |
 | Migration contract gate | `cd production-api-worker && go test ./internal/config ./internal/migration -count=1 && node scripts/check-migration-contract.mjs` | 固定 migration env、timeout、SQL 檔排序、version 命名、靜態文件與 CI 入口 |
-| OpenAPI contract gate | `node scripts/check-openapi-contract.mjs` | 固定 OpenAPI spec、endpoint、schema、error code、Bearer auth 與文件入口 |
+| OpenAPI contract gate | `node scripts/check-openapi-contract.mjs` | 固定 OpenAPI spec、endpoint、schema、error code、Bearer auth、文件入口與 API contract scope coverage |
 | Trusted proxy client IP contract gate | `node scripts/check-trusted-proxy-contract.mjs` | 固定 `TRUSTED_PROXY_CIDRS`、`X-Forwarded-For`、untrusted `RemoteAddr` fallback、runbook、Makefile 與 CI 入口 |
 | CORS allowlist gate | `node scripts/check-cors-contract.mjs` | 固定 `CORS_ALLOWED_ORIGINS`、allowlist middleware、preflight 測試與 CI 入口 |
 | Compose smoke static gate | `node scripts/check-compose-smoke-contract.mjs && cd production-api-worker && docker compose up -d --build && make compose-smoke && docker compose down -v` | 固定 Docker Compose 啟動後 `/livez`、`/readyz`、job create/read、metrics、失敗 logs、Makefile 與 CI 入口 |
@@ -593,7 +593,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | Operational observability contract gate | `node scripts/check-operational-observability-contract.mjs && cd production-api-worker && make operational-observability-check` | 固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險與 CI 入口 |
 | CI contract parity gate | `node scripts/check-ci-contract-parity-contract.mjs && cd production-api-worker && make ci-contract-parity-check` | 固定 `make ci-contract` 與 GitHub Actions production contract job 的 API test selector，保留 `TestCORSAllowedOriginsContract` |
 | Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs && cd production-api-worker && make contract-gate-inventory-check` | 固定 45 個 root contract checker 都被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate |
-| Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs && cd production-api-worker && make docs-publishing-check` | 固定 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈、Makefile 與 CI 入口 |
+| Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs && cd production-api-worker && make docs-publishing-check` | 固定 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈、Makefile、CI 入口與 API contract scope header |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs && cd production-api-worker && make production-workflow-check` | 固定 standalone workflow 的 contract、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs && cd production-api-worker && make syntax-flow-svg-check` | 固定語法流程圖補充頁的 25 個 flow、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口 |
 | Go ReleaseNote contract gate | `node scripts/check-go-release-notes-contract.mjs && cd production-api-worker && make go-release-notes-check` | 固定 Go 1.1-1.26 ReleaseNote、27 個 HTML、官方來源、最新 patch 訊號與 Pages 同步 |
@@ -615,7 +615,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | CI production gate | `cd production-api-worker && make ci-contract && go test -race -cover ./... -count=1` | 本機重跑與 CI 對齊的核心合約、race 與 coverage gate |
 | CI contract parity gate | `node scripts/check-ci-contract-parity-contract.mjs` | 確認本機與 CI 的 API contract selector 一致，避免只在單一路徑跑到 CORS 合約 |
 | Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` | 確認 45 個 root contract checker 全部被 GitHub Actions 呼叫 |
-| Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs` | 確認 `docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈沒有漂移 |
+| Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs` | 確認 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈與 API contract scope header 沒有漂移 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs` | 確認 standalone production workflow 沒有漏掉 production release gate |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs` | 確認語法流程圖補充頁沒有漏掉 flow、標準符號、metadata、renderer 或 CI 入口 |
 | Go ReleaseNote contract gate | `node scripts/check-go-release-notes-contract.mjs` | 確認 ReleaseNote generated reports 與 Pages 版沒有漏掉官方來源、必要區塊或最新 patch 訊號 |

@@ -21,7 +21,7 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.76`",
+    "教材版本：`v1.0.77`",
     "Docs publishing contract gate",
     "node scripts/check-docs-publishing-contract.mjs",
     "node scripts/fix-docs-index-links.mjs --check",
@@ -33,14 +33,14 @@ const required = {
     "node scripts/check-docs-publishing-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.76",
+    "版本：v1.0.77",
     "Docs publishing contract gate",
     "node scripts/check-docs-publishing-contract.mjs",
     "fix-docs-index-links.mjs --check",
     "check-html-home-links.mjs",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.76",
+    "version: v1.0.77",
     "Docs publishing contract gate",
     "check-docs-publishing-contract.mjs",
     "all 45 root contract checker scripts",

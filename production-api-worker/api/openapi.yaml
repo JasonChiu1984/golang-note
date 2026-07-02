@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.76
+  version: v1.0.77
   description: >
     Machine-readable contract for the Go teaching production API worker.
     This file mirrors docs/api-contract.md and the Go contract tests,
@@ -70,6 +70,9 @@ info:
     Docs publishing contract gate keeps docs/index.html, GitHub Pages link fix,
     check-docs-publishing-contract.mjs, fix-docs-index-links.mjs --check,
     check-html-home-links.mjs, Makefile, and CI static gates aligned.
+    API contract scope coverage keeps docs/api-contract.md header scope aligned
+    with Docs publishing contract gate, release gates, OpenAPI description, and
+    check-openapi-contract.mjs.
     Production workflow contract gate keeps production-api-worker/.github/workflows/production-api-worker.yml,
     make ci-contract, race coverage, govulncheck, Docker build, Compose smoke,
     failure logs, cleanup, Makefile, and CI static gates aligned.

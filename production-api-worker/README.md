@@ -4,7 +4,7 @@
 
 - HTTP API：`POST /jobs`、`GET /jobs/{id}`、`GET /metrics`
 - API contract：穩定 request/response/error schema，文件在 `docs/api-contract.md`
-- OpenAPI contract：machine-readable schema 位於 `api/openapi.yaml`，用來對齊文件、測試、SDK 與前端 mock
+- OpenAPI contract：machine-readable schema 位於 `api/openapi.yaml`，用來對齊文件、測試、SDK、前端 mock 與 API contract scope coverage
 - Readiness Lifecycle Contract：`/livez` 永遠公開回 `200`；`/readyz` ready 時回 `200`、draining 時回 `503`，並由 `make readiness-check` 固定文件、OpenAPI、Go tests 與 CI 入口
 - Request correlation contract：`X-Request-ID` 需同時進入 response header、request context、structured log 與 trace attribute
 - API Security Contract：可用 `API_KEY` 啟用 Bearer token 保護 `/jobs` 與 `/metrics`，health endpoint 保持公開，並由靜態 gate 固定文件、OpenAPI、Go tests 與 CI 入口

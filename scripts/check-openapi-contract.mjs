@@ -18,8 +18,9 @@ const requiredFiles = [
 const specTerms = [
   "openapi: 3.1.0",
   "title: production-api-worker API",
-  "version: v1.0.76",
+  "version: v1.0.77",
   "API security uses optional API_KEY",
+  "API contract scope coverage keeps docs/api-contract.md header scope aligned",
   "Worker failure handling keeps failed jobs visible through worker_jobs_total",
   "Retry cancellation keeps deadlock retry backoff bound to request or shutdown context",
   "CORS allowlist",
@@ -79,7 +80,13 @@ function requireTerms(file, terms) {
 requireTerms(specPath, specTerms);
 requireTerms(readmePath, docTerms);
 requireTerms(productionReadmePath, docTerms);
-requireTerms(apiContractPath, ["OpenAPI", "production-api-worker/api/openapi.yaml"]);
+requireTerms(apiContractPath, [
+  "OpenAPI",
+  "production-api-worker/api/openapi.yaml",
+  "API contract scope coverage",
+  "Docs publishing contract gate",
+  "node scripts/check-openapi-contract.mjs",
+]);
 requireTerms(ciPath, ["Check OpenAPI contract", "node scripts/check-openapi-contract.mjs"]);
 
 const spec = read(specPath);

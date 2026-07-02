@@ -287,7 +287,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Queue backpressure contract | `TestQueueBackpressureContract`、`domain.ErrQueueFull`、`503 queue_full`、`worker_jobs_total{result="dropped"}`、`node scripts/check-queue-backpressure-contract.mjs` | queue 滿載行為分散在 handler / service / worker，重構後可能錯回 500 或漏記 dropped metric |
 | Rate limit contract | `RATE_LIMIT_REQUESTS_PER_MINUTE`、per-client IP、`429 rate_limited`、`Retry-After` | 單一 client 持續打爆 handler、queue 或 DB，或 health check 被錯誤限速 |
 | Trusted proxy client IP contract gate | `TRUSTED_PROXY_CIDRS`、`X-Forwarded-For`、untrusted `RemoteAddr` fallback、`node scripts/check-trusted-proxy-contract.mjs` | 服務在 reverse proxy 後方時誤信任外部直連偽造 header，導致 rate limit key 被繞過 |
-| OpenAPI contract | `api/openapi.yaml`、request/response schema、error code、auth scheme | Markdown 文件與前端 mock / SDK / API gateway review 漂移 |
+| OpenAPI contract | `api/openapi.yaml`、request/response schema、error code、auth scheme、API contract scope coverage | Markdown 文件、scope header、前端 mock / SDK / API gateway review 漂移 |
 | Readiness lifecycle contract | `/livez=200`、`/readyz=200/503`、`TestReadinessContract`、`node scripts/check-readiness-contract.mjs` | deployment health probe 漂移，rolling deploy 時導流系統無法正確停止新 request |
 | Panic recovery contract | `TestPanicRecoveryContract`、`500 internal_error` JSON、request id header、`node scripts/check-panic-recovery-contract.mjs` | panic 造成連線中斷、非 JSON 錯誤、洩漏內部細節，或文件 / CI 入口漂移 |
 | Request timeout | `504 request_timeout` JSON、request id header | handler deadline exceeded 被誤分類成 `500 internal_error`，client 無法區分 timeout 與 bug |
@@ -473,6 +473,7 @@ Production API 的 timeout 不是未知錯誤。若 handler 建立的 request de
 | Worker shutdown contract | `node scripts/check-worker-shutdown-contract.mjs` 固定 queue close/enqueue mutex、`ErrClosed`、shutdown tests、Makefile 與 CI 入口 |
 | Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` 固定 45 個 root contract checker 都被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs` 固定 `docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈，避免 Pages 首頁入口漂移 |
+| API contract scope coverage | `node scripts/check-openapi-contract.mjs` 固定 `docs/api-contract.md` 首段適用範圍必須列入 Docs publishing contract gate 與發布面 scope，避免表格更新但 header 漏列 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs` 固定 `production-api-worker/.github/workflows/production-api-worker.yml` 的 contract、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs` 固定語法流程圖補充頁的 25 個 flow、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口 |
 | Go ReleaseNote contract gate | `node scripts/check-go-release-notes-contract.mjs` 固定 Go 1.1-1.26 專業報告、27 個 ReleaseNote HTML、官方來源、Patch Revisions、支援狀態與 `docs/ReleaseNote/` Pages 同步 |

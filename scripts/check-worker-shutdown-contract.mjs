@@ -54,7 +54,7 @@ requireTerms(files.tests, [
 ]);
 
 requireTerms(files.readme, [
-  "教材版本：`v1.0.76`",
+  "教材版本：`v1.0.77`",
   "Worker shutdown contract",
   "TestConcurrentEnqueueAndShutdownDoesNotPanic",
   "node scripts/check-worker-shutdown-contract.mjs",
@@ -70,7 +70,7 @@ requireTerms(files.productionReadme, [
 ]);
 
 requireTerms(files.apiContract, [
-  "版本：v1.0.76",
+  "版本：v1.0.77",
   "Worker shutdown contract",
   "node scripts/check-worker-shutdown-contract.mjs",
   "TestConcurrentEnqueueAndShutdownDoesNotPanic",
@@ -78,7 +78,7 @@ requireTerms(files.apiContract, [
 ]);
 
 requireTerms(files.openapi, [
-  "version: v1.0.76",
+  "version: v1.0.77",
   "Worker shutdown contract",
   "check-worker-shutdown-contract.mjs",
 ]);

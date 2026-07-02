@@ -20,7 +20,7 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.76`",
+    "教材版本：`v1.0.77`",
     "Syntax flow SVG contract gate",
     "node scripts/check-syntax-flow-svg-contract.mjs",
     "node scripts/check-syntax-flow-svg.mjs",
@@ -31,12 +31,12 @@ const required = {
     "node scripts/check-syntax-flow-svg-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.76",
+    "版本：v1.0.77",
     "Syntax flow SVG contract gate",
     "node scripts/check-syntax-flow-svg-contract.mjs",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.76",
+    "version: v1.0.77",
     "Syntax flow SVG contract gate",
     "check-syntax-flow-svg-contract.mjs",
   ],
