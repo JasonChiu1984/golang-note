@@ -1,12 +1,15 @@
 # production-api-worker Operational Runbook
 
-> 文件日期：2026-05-17
-> 完整日期時間：2026-05-17 11:02:15 CST +0800
-> 適用範圍：`production-api-worker` API、worker queue、Postgres migration、Prometheus metrics、OpenTelemetry trace、pprof diagnostics、Docker Compose smoke gate。
+> 文件日期：2026-07-04
+> 完整日期時間：2026-07-04 06:03:01 CST +0800
+> 版本：v1.0.78
+> 適用範圍：`production-api-worker` API、worker queue、Postgres migration、Prometheus metrics、OpenTelemetry trace、pprof diagnostics、Docker Compose smoke gate、API contract scope coverage、Docs publishing contract gate、Release artifact chain contract gate、Dependency governance contract gate、Secret handling governance contract gate、Supply chain artifact governance contract gate。
 
 ## 1. Overview
 
 這份 runbook 把教材中的 observability、health check、API contract 與 deployment gate 轉成值班可操作流程。目標不是取代正式 SRE 平台，而是讓 Go production 教材具備最小可交付的事故處理骨架。
+
+Operational runbook scope freshness contract gate 固定本文件的日期、完整日期時間、版本與適用範圍。新增 release governance gate 時，runbook 不可只在內文零散補充，必須同步首段 scope、verification table、README、API contract、OpenAPI、Makefile、GitHub Actions 與整合視覺課程，避免值班入口落後於 release gate。
 
 | 目標 | 交付內容 |
 |---|---|
@@ -190,6 +193,7 @@ curl -H 'Authorization: Bearer debug-token' 'http://localhost:8080/debug/pprof/h
 | OTLP export governance contract gate | `node scripts/check-otel-export-governance-contract.mjs` | local debug exporter、production backend owner、sampling rate、retention window、sensitive attribute redaction 與 trace data owner 一致 |
 | Secret handling governance contract gate | `node scripts/check-secret-handling-governance-contract.mjs` | API_KEY、PPROF_TOKEN、bearer token file、secret mount、secret rotation owner、no hard-coded production credentials 與 incident artifact redaction 一致 |
 | Supply chain artifact governance contract gate | `node scripts/check-supply-chain-artifact-governance-contract.mjs` | SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner 一致 |
+| Operational runbook scope freshness contract gate | `node scripts/check-operational-runbook-scope-contract.mjs` | runbook metadata、API contract scope coverage、Docs publishing contract gate、Release artifact chain contract gate、Secret handling governance contract gate 與 Supply chain artifact governance contract gate 一致 |
 | pprof Go contract | `cd production-api-worker && go test ./internal/config ./internal/api -run 'Test.*Pprof|TestPprofDiagnosticsContract' -count=1` | pprof 預設關閉，啟用時要求 token，合法 token 才能讀 profile index |
 | Production contract | `cd production-api-worker && make ci-contract` | API / config / migration / retry / worker 合約通過 |
 | Compose smoke | `cd production-api-worker && API_KEY=dev-secret docker compose up -d --build && API_KEY=dev-secret make compose-smoke` | ready、live、job create/read、metrics 通過 |

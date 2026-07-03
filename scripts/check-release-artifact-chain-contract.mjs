@@ -3,8 +3,8 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename } from "node:path";
 
 const version = readFileSync("VERSION", "utf8").trim();
-const expectedVersion = "v1.0.77";
-const artifactTimestamp = "2026-07-03-060326";
+const expectedVersion = "v1.0.78";
+const artifactTimestamp = "2026-07-04-060301";
 
 const files = [
   "README.md",
@@ -27,14 +27,14 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.77`",
+    "教材版本：`v1.0.78`",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "CHANGELOG.md": [
-    "## v1.0.77 - 2026-07-03",
-    "API contract scope coverage",
-    "scripts/check-openapi-contract.mjs",
+    "## v1.0.78 - 2026-07-04",
+    "Operational runbook scope freshness",
+    "scripts/check-operational-runbook-scope-contract.mjs",
   ],
   "production-api-worker/README.md": [
     "Release Artifact Chain Contract",
@@ -42,12 +42,12 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.77",
+    "版本：v1.0.78",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.77",
+    "version: v1.0.78",
     "Release artifact chain contract gate",
     "check-release-artifact-chain-contract.mjs",
   ],
@@ -84,18 +84,18 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   [`審查報告/${artifactTimestamp}-資深工程師審查報告.md`]: [
-    "API contract scope coverage",
-    "v1.0.77",
-    "2026-07-03 06:03:26 CST +0800",
+    "Operational runbook scope freshness",
+    "v1.0.78",
+    "2026-07-04 06:03:01 CST +0800",
   ],
   [`內容需要更新的部分/${artifactTimestamp}-內容需要更新的部分.md`]: [
-    "API contract scope coverage",
-    "scripts/check-openapi-contract.mjs",
-    "v1.0.77",
+    "Operational runbook scope freshness",
+    "scripts/check-operational-runbook-scope-contract.mjs",
+    "v1.0.78",
   ],
   [`更新資料/${artifactTimestamp}-${expectedVersion}-更新紀錄.md`]: [
-    "API contract scope coverage",
-    "scripts/check-openapi-contract.mjs",
+    "Operational runbook scope freshness",
+    "scripts/check-operational-runbook-scope-contract.mjs",
     "docs/index.html",
     "GitHub push",
   ],

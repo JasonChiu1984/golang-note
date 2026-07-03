@@ -48,6 +48,9 @@ jobs:
       - name: Check operational runbook
         run: node scripts/check-operational-runbook.mjs
 
+      - name: Check operational runbook scope contract
+        run: node scripts/check-operational-runbook-scope-contract.mjs
+
       - name: Check Prometheus config
         run: node scripts/check-prometheus-config.mjs
 

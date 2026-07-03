@@ -29,81 +29,71 @@ function requireTerms(file, terms) {
   }
 }
 
-const governanceTerms = [
+const contractTerms = [
+  "Operational runbook scope freshness contract gate",
+  "node scripts/check-operational-runbook-scope-contract.mjs",
+  "API contract scope coverage",
+  "Docs publishing contract gate",
+  "Release artifact chain contract gate",
+  "Secret handling governance contract gate",
   "Supply chain artifact governance contract gate",
-  "node scripts/check-supply-chain-artifact-governance-contract.mjs",
-  "SBOM",
-  "image signing",
-  "provenance / attestation",
-  "artifact retention",
-  "promotion approval",
-  "release evidence owner",
 ];
 
 requireTerms(files.readme, [
   "教材版本：`v1.0.78`",
   "46 個 root contract checker",
-  ...governanceTerms,
+  ...contractTerms,
 ]);
 
 requireTerms(files.productionReadme, [
-  "Supply Chain Artifact Governance Contract",
-  "make supply-chain-artifact-governance-check",
-  ...governanceTerms,
+  "Operational Runbook Scope Freshness Contract",
+  "make operational-runbook-scope-check",
+  ...contractTerms,
 ]);
 
 requireTerms(files.runbook, [
-  "Supply chain artifact governance contract gate",
-  "SBOM",
-  "image signing",
-  "provenance / attestation",
-  "artifact retention",
-  "promotion approval",
-  "release evidence owner",
+  "文件日期：2026-07-04",
+  "完整日期時間：2026-07-04 06:03:01 CST +0800",
+  "版本：v1.0.78",
+  ...contractTerms,
 ]);
 
 requireTerms(files.apiContract, [
   "版本：v1.0.78",
-  ...governanceTerms,
+  ...contractTerms,
 ]);
 
 requireTerms(files.openapi, [
   "version: v1.0.78",
-  "Supply chain artifact governance contract gate",
-  "check-supply-chain-artifact-governance-contract.mjs",
-  "SBOM",
-  "image signing",
-  "provenance / attestation",
-  "artifact retention",
+  "Operational runbook scope freshness contract gate",
+  "check-operational-runbook-scope-contract.mjs",
 ]);
 
 for (const file of [files.chapter07, files.chapter09, files.chapter11, files.cheatsheet, files.visualCourse]) {
   requireTerms(file, [
-    "Supply chain artifact governance contract gate",
-    "node scripts/check-supply-chain-artifact-governance-contract.mjs",
-    "SBOM",
-    "image signing",
+    "Operational runbook scope freshness contract gate",
+    "node scripts/check-operational-runbook-scope-contract.mjs",
   ]);
 }
 
 requireTerms(files.workflow, [
-  "Check supply chain artifact governance contract",
-  "node scripts/check-supply-chain-artifact-governance-contract.mjs",
+  "Check operational runbook scope contract",
+  "node scripts/check-operational-runbook-scope-contract.mjs",
 ]);
 
 requireTerms(files.makefile, [
-  "supply-chain-artifact-governance-check",
-  "node scripts/check-supply-chain-artifact-governance-contract.mjs",
+  "operational-runbook-scope-check",
+  "node scripts/check-operational-runbook-scope-contract.mjs",
 ]);
 
 if (missing.length > 0) {
-  console.error("supply chain artifact governance contract check failed:");
+  console.error("operational runbook scope contract check failed:");
   for (const item of missing) console.error(`- ${item}`);
   process.exit(1);
 }
 
 console.log(JSON.stringify({
   status: "ok",
-  contract: "supply chain artifact governance",
+  contract: "operational runbook scope freshness",
   files: Object.keys(files).length,
 }, null, 2));

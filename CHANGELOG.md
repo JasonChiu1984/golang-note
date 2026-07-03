@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.78 - 2026-07-04
+
+- 新增 2026-07-04 06:03:01 CST +0800 資深工程師審查報告，確認 v1.0.77 已補齊 API contract scope coverage，但 operational runbook 首段日期、版本與適用範圍尚未被 root contract checker 固定。
+- 新增 `scripts/check-operational-runbook-scope-contract.mjs`，固定 Operational runbook scope freshness contract gate，要求 runbook metadata、API contract scope coverage、Docs publishing、Release artifact chain、Secret handling 與 Supply chain artifact governance 都保留在 runbook scope。
+- 同步 `README.md`、`production-api-worker/README.md`、`production-api-worker/docs/operational-runbook.md`、`production-api-worker/api/openapi.yaml`、第 7 / 9 / 11 章、進階 Cheat Sheet 與整合視覺課程，將本輪發版重點標示為 Operational runbook scope freshness。
+- Contract gate inventory 從 45 個 root contract checker 更新為 46 個，並納入 Operational runbook scope freshness contract checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.78`。
+
 ## v1.0.77 - 2026-07-03
 
 - 新增 2026-07-03 06:03:26 CST +0800 資深工程師審查報告，確認 v1.0.76 已補齊 Supply chain artifact governance contract gate，但 API contract 首段適用範圍仍未明確固定 Docs publishing contract gate 與 API contract scope coverage。

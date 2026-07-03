@@ -39,7 +39,7 @@ const required = {
     "WithTx calls",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.77",
+    "版本：v1.0.78",
     "Retry cancellation contract",
     "node scripts/check-retry-cancellation-contract.mjs",
   ],
