@@ -189,6 +189,9 @@ jobs:
       - name: Check supply chain artifact governance contract
         run: node scripts/check-supply-chain-artifact-governance-contract.mjs
 
+      - name: Check platform promotion policy contract
+        run: node scripts/check-platform-promotion-policy-contract.mjs
+
   production-contract:
     name: Production API worker contracts
     runs-on: ubuntu-latest

@@ -7,7 +7,6 @@ const files = {
   runbook: "production-api-worker/docs/operational-runbook.md",
   apiContract: "production-api-worker/docs/api-contract.md",
   openapi: "production-api-worker/api/openapi.yaml",
-  chapter07: "chapters/07-large-project-concurrent-crawler.md",
   chapter09: "chapters/09-build-and-deploy.md",
   chapter11: "chapters/11-advanced-testing.md",
   cheatsheet: "Cheatsheet/cheatsheet-advanced.md",
@@ -29,72 +28,80 @@ function requireTerms(file, terms) {
   }
 }
 
-const contractTerms = [
-  "Operational runbook scope freshness contract gate",
-  "node scripts/check-operational-runbook-scope-contract.mjs",
-  "API contract scope coverage",
-  "Docs publishing contract gate",
-  "Release artifact chain contract gate",
-  "Secret handling governance contract gate",
-  "Supply chain artifact governance contract gate",
+const policyTerms = [
   "Platform promotion policy contract gate",
+  "node scripts/check-platform-promotion-policy-contract.mjs",
+  "platform promotion policy",
+  "environment approval",
+  "progressive rollout",
+  "platform-native signing",
+  "artifact verification",
+  "rollback owner",
 ];
 
 requireTerms(files.readme, [
   "教材版本：`v1.0.79`",
   "47 個 root contract checker",
-  ...contractTerms,
+  ...policyTerms,
 ]);
 
 requireTerms(files.productionReadme, [
-  "Operational Runbook Scope Freshness Contract",
-  "make operational-runbook-scope-check",
-  ...contractTerms,
+  "Platform Promotion Policy Contract",
+  "make platform-promotion-policy-check",
+  ...policyTerms,
 ]);
 
 requireTerms(files.runbook, [
-  "文件日期：2026-07-05",
-  "完整日期時間：2026-07-05 06:03:40 CST +0800",
-  "版本：v1.0.79",
-  ...contractTerms,
+  "Platform promotion policy contract gate",
+  "environment approval",
+  "progressive rollout",
+  "platform-native signing",
+  "artifact verification",
+  "rollback owner",
 ]);
 
 requireTerms(files.apiContract, [
   "版本：v1.0.79",
-  ...contractTerms,
+  ...policyTerms,
 ]);
 
 requireTerms(files.openapi, [
   "version: v1.0.79",
-  "Operational runbook scope freshness contract gate",
-  "check-operational-runbook-scope-contract.mjs",
+  "Platform promotion policy contract gate",
+  "check-platform-promotion-policy-contract.mjs",
+  "environment approval",
+  "progressive rollout",
+  "platform-native signing",
+  "artifact verification",
 ]);
 
-for (const file of [files.chapter07, files.chapter09, files.chapter11, files.cheatsheet, files.visualCourse]) {
+for (const file of [files.chapter09, files.chapter11, files.cheatsheet, files.visualCourse]) {
   requireTerms(file, [
-    "Operational runbook scope freshness contract gate",
-    "node scripts/check-operational-runbook-scope-contract.mjs",
+    "Platform promotion policy contract gate",
+    "node scripts/check-platform-promotion-policy-contract.mjs",
+    "make platform-promotion-policy-check",
+    "platform-native signing",
   ]);
 }
 
 requireTerms(files.workflow, [
-  "Check operational runbook scope contract",
-  "node scripts/check-operational-runbook-scope-contract.mjs",
+  "Check platform promotion policy contract",
+  "node scripts/check-platform-promotion-policy-contract.mjs",
 ]);
 
 requireTerms(files.makefile, [
-  "operational-runbook-scope-check",
-  "node scripts/check-operational-runbook-scope-contract.mjs",
+  "platform-promotion-policy-check",
+  "node scripts/check-platform-promotion-policy-contract.mjs",
 ]);
 
 if (missing.length > 0) {
-  console.error("operational runbook scope contract check failed:");
+  console.error("platform promotion policy contract check failed:");
   for (const item of missing) console.error(`- ${item}`);
   process.exit(1);
 }
 
 console.log(JSON.stringify({
   status: "ok",
-  contract: "operational runbook scope freshness",
+  contract: "platform promotion policy",
   files: Object.keys(files).length,
 }, null, 2));

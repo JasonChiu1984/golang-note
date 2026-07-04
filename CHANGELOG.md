@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.79 - 2026-07-05
+
+- 新增 2026-07-05 06:03:40 CST +0800 資深工程師審查報告，確認 v1.0.78 已補齊 Operational runbook scope freshness，但整合視覺課程仍將實際部署平台 promotion policy 與平台原生簽章整合列為企業 runbook 待補事項。
+- 新增 `scripts/check-platform-promotion-policy-contract.mjs`，固定 Platform promotion policy contract gate，要求 platform promotion policy、environment approval、progressive rollout、platform-native signing、artifact verification 與 rollback owner 都保留在 README、production README、runbook、API contract、OpenAPI、章節、進階 Cheat Sheet、整合視覺課程、Makefile 與 GitHub Actions。
+- 同步 `README.md`、`production-api-worker/README.md`、`production-api-worker/docs/operational-runbook.md`、`production-api-worker/docs/api-contract.md`、`production-api-worker/api/openapi.yaml`、第 9 / 11 章、進階 Cheat Sheet 與整合視覺課程，將本輪發版重點標示為 Platform promotion policy。
+- Contract gate inventory 從 46 個 root contract checker 更新為 47 個，並納入 Platform promotion policy contract checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.79`。
+
 ## v1.0.78 - 2026-07-04
 
 - 新增 2026-07-04 06:03:01 CST +0800 資深工程師審查報告，確認 v1.0.77 已補齊 API contract scope coverage，但 operational runbook 首段日期、版本與適用範圍尚未被 root contract checker 固定。

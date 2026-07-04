@@ -38,13 +38,13 @@ const required = {
     "invalid_input",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.78",
+    "version: v1.0.79",
     "unknown field",
     "trailing JSON value",
     "invalid_input",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.78",
+    "版本：v1.0.79",
     "Request decoding gate",
     "node scripts/check-request-decoding-contract.mjs",
   ],

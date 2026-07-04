@@ -1,9 +1,9 @@
 # production-api-worker Operational Runbook
 
-> 文件日期：2026-07-04
-> 完整日期時間：2026-07-04 06:03:01 CST +0800
-> 版本：v1.0.78
-> 適用範圍：`production-api-worker` API、worker queue、Postgres migration、Prometheus metrics、OpenTelemetry trace、pprof diagnostics、Docker Compose smoke gate、API contract scope coverage、Docs publishing contract gate、Release artifact chain contract gate、Dependency governance contract gate、Secret handling governance contract gate、Supply chain artifact governance contract gate。
+> 文件日期：2026-07-05
+> 完整日期時間：2026-07-05 06:03:40 CST +0800
+> 版本：v1.0.79
+> 適用範圍：`production-api-worker` API、worker queue、Postgres migration、Prometheus metrics、OpenTelemetry trace、pprof diagnostics、Docker Compose smoke gate、API contract scope coverage、Docs publishing contract gate、Release artifact chain contract gate、Dependency governance contract gate、Secret handling governance contract gate、Supply chain artifact governance contract gate、Platform promotion policy contract gate。
 
 ## 1. Overview
 
@@ -114,6 +114,8 @@ go tool pprof profile.pb.gz
 
 Supply chain artifact governance contract gate 固定 release promotion 的供應鏈證據。正式發版需保留 SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner；這些證據應和 Docker build、Compose smoke、rollback drill 與更新紀錄一起保存，避免只知道 commit/tag 已建立卻無法追溯 image 與 artifact 是否可驗證。
 
+Platform promotion policy contract gate 固定實際部署平台的 promotion 證據。正式發版需保留 platform promotion policy、environment approval、progressive rollout、platform-native signing、artifact verification 與 rollback owner；這些證據應和 SBOM、image signing、provenance / attestation、rollback drill 與更新紀錄一起保存，避免只知道 artifact 已簽章卻無法追溯 production promotion 是否經過平台 approval 與可回復策略。
+
 ## 4. Configuration
 
 | 類型 | 建議值 | 說明 |
@@ -193,6 +195,7 @@ curl -H 'Authorization: Bearer debug-token' 'http://localhost:8080/debug/pprof/h
 | OTLP export governance contract gate | `node scripts/check-otel-export-governance-contract.mjs` | local debug exporter、production backend owner、sampling rate、retention window、sensitive attribute redaction 與 trace data owner 一致 |
 | Secret handling governance contract gate | `node scripts/check-secret-handling-governance-contract.mjs` | API_KEY、PPROF_TOKEN、bearer token file、secret mount、secret rotation owner、no hard-coded production credentials 與 incident artifact redaction 一致 |
 | Supply chain artifact governance contract gate | `node scripts/check-supply-chain-artifact-governance-contract.mjs` | SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner 一致 |
+| Platform promotion policy contract gate | `node scripts/check-platform-promotion-policy-contract.mjs` | platform promotion policy、environment approval、progressive rollout、platform-native signing、artifact verification 與 rollback owner 一致 |
 | Operational runbook scope freshness contract gate | `node scripts/check-operational-runbook-scope-contract.mjs` | runbook metadata、API contract scope coverage、Docs publishing contract gate、Release artifact chain contract gate、Secret handling governance contract gate 與 Supply chain artifact governance contract gate 一致 |
 | pprof Go contract | `cd production-api-worker && go test ./internal/config ./internal/api -run 'Test.*Pprof|TestPprofDiagnosticsContract' -count=1` | pprof 預設關閉，啟用時要求 token，合法 token 才能讀 profile index |
 | Production contract | `cd production-api-worker && make ci-contract` | API / config / migration / retry / worker 合約通過 |
