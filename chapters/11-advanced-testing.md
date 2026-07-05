@@ -460,6 +460,8 @@ Supply chain artifact governance contract gate 固定 release artifact 證據鏈
 
 Platform promotion policy contract gate 固定部署平台 promotion 證據鏈，不讓 platform promotion policy、environment approval、progressive rollout、platform-native signing、artifact verification 或 rollback owner 在 workflow / README / OpenAPI / runbook 重整時消失。它由 `node scripts/check-platform-promotion-policy-contract.mjs` 與 `cd production-api-worker && make platform-promotion-policy-check` 固定，測的是 release artifact 進入實際環境前後是否有可審核流程，不是取代 smoke test。
 
+Deployment controller config contract gate 固定實際部署控制器證據鏈，不讓 deployment controller、cloud environment template、environment manifest、progressive rollout controller、health gate、rollback trigger 或 promotion evidence 在 workflow / README / OpenAPI / runbook 重整時消失。它由 `node scripts/check-deployment-controller-config-contract.mjs` 與 `cd production-api-worker && make deployment-controller-config-check` 固定，測的是部署控制器設定是否可審核，不是取代 runtime smoke test。
+
 | 條款 | 固定內容 |
 |---|---|
 | Workflow artifact | `production-api-worker/.github/workflows/production-api-worker.yml` |
@@ -595,7 +597,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | Operational observability contract gate | `node scripts/check-operational-observability-contract.mjs && cd production-api-worker && make operational-observability-check` | 固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險與 CI 入口 |
 | Operational runbook scope freshness contract gate | `node scripts/check-operational-runbook-scope-contract.mjs && cd production-api-worker && make operational-runbook-scope-check` | 固定 runbook metadata、API contract scope coverage、Docs publishing contract gate、Release artifact chain contract gate 與供應鏈治理 scope |
 | CI contract parity gate | `node scripts/check-ci-contract-parity-contract.mjs && cd production-api-worker && make ci-contract-parity-check` | 固定 `make ci-contract` 與 GitHub Actions production contract job 的 API test selector，保留 `TestCORSAllowedOriginsContract` |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs && cd production-api-worker && make contract-gate-inventory-check` | 固定 47 個 root contract checker 都被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs && cd production-api-worker && make contract-gate-inventory-check` | 固定 48 個 root contract checker 都被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs && cd production-api-worker && make docs-publishing-check` | 固定 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈、Makefile、CI 入口與 API contract scope header |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs && cd production-api-worker && make production-workflow-check` | 固定 standalone workflow 的 contract、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs && cd production-api-worker && make syntax-flow-svg-check` | 固定語法流程圖補充頁的 25 個 flow、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口 |
@@ -604,6 +606,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | Dependency governance static gate | `node scripts/check-dependency-governance-contract.mjs && cd production-api-worker && make dependency-governance-check` | 固定 dependency integrity、update discovery、vulnerability scan、離線限制、Makefile 與 CI 入口 |
 | Supply chain artifact governance contract gate | `node scripts/check-supply-chain-artifact-governance-contract.mjs && cd production-api-worker && make supply-chain-artifact-governance-check` | 固定 SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner |
 | Platform promotion policy contract gate | `node scripts/check-platform-promotion-policy-contract.mjs && cd production-api-worker && make platform-promotion-policy-check` | 固定 platform promotion policy、environment approval、progressive rollout、platform-native signing、artifact verification 與 rollback owner |
+| Deployment controller config contract gate | `node scripts/check-deployment-controller-config-contract.mjs && cd production-api-worker && make deployment-controller-config-check` | 固定 deployment controller、cloud environment template、environment manifest、progressive rollout controller、health gate、rollback trigger 與 promotion evidence |
 | Performance benchmark governance contract | `node scripts/check-performance-benchmark-governance-contract.mjs && cd production-api-worker && make performance-benchmark-governance-check` | 固定 benchmark A/B、benchstat、pprof、metrics、Makefile 與 CI 入口 |
 | Release rollback drill contract | `node scripts/check-release-rollback-drill-contract.mjs && cd production-api-worker && make release-rollback-drill-check` | 固定 rollback decision、previous image restore、migration rollback boundary、health verification、metrics verification 與 postmortem evidence |
 | Docker build contract | `node scripts/check-docker-build-contract.mjs && cd production-api-worker && make docker-build-check` | 固定 Dockerfile、CGO_ENABLED=0、api-worker / migrate binaries、distroless/static-debian12、Makefile 與 CI build tags |
@@ -619,7 +622,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | CI workflow syntax | `ruby -e 'require "yaml"; YAML.load_file(".github/workflows/ci.yml")'` | 固定 GitHub Actions workflow 至少可被 YAML parser 解析 |
 | CI production gate | `cd production-api-worker && make ci-contract && go test -race -cover ./... -count=1` | 本機重跑與 CI 對齊的核心合約、race 與 coverage gate |
 | CI contract parity gate | `node scripts/check-ci-contract-parity-contract.mjs` | 確認本機與 CI 的 API contract selector 一致，避免只在單一路徑跑到 CORS 合約 |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` | 確認 47 個 root contract checker 全部被 GitHub Actions 呼叫 |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` | 確認 48 個 root contract checker 全部被 GitHub Actions 呼叫 |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs` | 確認 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈與 API contract scope header 沒有漂移 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs` | 確認 standalone production workflow 沒有漏掉 production release gate |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs` | 確認語法流程圖補充頁沒有漏掉 flow、標準符號、metadata、renderer 或 CI 入口 |
@@ -628,6 +631,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | Dependency governance static gate | `node scripts/check-dependency-governance-contract.mjs` | 確認 `go mod verify`、`go list -m -u all`、`govulncheck ./...` 與離線限制說明沒有漂移 |
 | Supply chain artifact governance contract gate | `node scripts/check-supply-chain-artifact-governance-contract.mjs` | 確認 SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner 沒有漂移 |
 | Platform promotion policy contract gate | `node scripts/check-platform-promotion-policy-contract.mjs` | 確認 platform promotion policy、environment approval、progressive rollout、platform-native signing、artifact verification 與 rollback owner 沒有漂移 |
+| Deployment controller config contract gate | `node scripts/check-deployment-controller-config-contract.mjs` | 確認 deployment controller、cloud environment template、environment manifest、progressive rollout controller、health gate、rollback trigger 與 promotion evidence 沒有漂移 |
 | Performance benchmark governance contract | `node scripts/check-performance-benchmark-governance-contract.mjs` | 確認 benchmark A/B、`benchstat old.txt new.txt`、pprof 與 metrics 證據要求沒有漂移 |
 | Release rollback drill contract | `node scripts/check-release-rollback-drill-contract.mjs` | 確認 rollback decision、previous image restore、migration rollback boundary、health verification、metrics verification 與 postmortem evidence 沒有漂移 |
 | Docker build contract | `node scripts/check-docker-build-contract.mjs` | 確認 Dockerfile、CGO_ENABLED=0、api-worker / migrate binaries、distroless/static-debian12 與 CI build tags 沒有漂移 |

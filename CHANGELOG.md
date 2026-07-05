@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.80 - 2026-07-06
+
+- 新增 2026-07-06 06:01:30 CST +0800 資深工程師審查報告，確認 v1.0.79 已補齊 Platform promotion policy，但整合視覺課程仍將實際雲平台環境範本與 deployment controller 設定列為企業 runbook 待補事項。
+- 新增 `scripts/check-deployment-controller-config-contract.mjs`，固定 Deployment controller config contract gate，要求 deployment controller、cloud environment template、environment manifest、progressive rollout controller、health gate、rollback trigger 與 promotion evidence 都保留在 README、production README、runbook、API contract、OpenAPI、章節、進階 Cheat Sheet、整合視覺課程、Makefile 與 GitHub Actions。
+- 同步 `README.md`、`production-api-worker/README.md`、`production-api-worker/docs/operational-runbook.md`、`production-api-worker/docs/api-contract.md`、`production-api-worker/api/openapi.yaml`、第 9 / 11 章、進階 Cheat Sheet 與整合視覺課程，將本輪發版重點標示為 Deployment controller config。
+- Contract gate inventory 從 47 個 root contract checker 更新為 48 個，並納入 Deployment controller config contract checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.80`。
+
 ## v1.0.79 - 2026-07-05
 
 - 新增 2026-07-05 06:03:40 CST +0800 資深工程師審查報告，確認 v1.0.78 已補齊 Operational runbook scope freshness，但整合視覺課程仍將實際部署平台 promotion policy 與平台原生簽章整合列為企業 runbook 待補事項。

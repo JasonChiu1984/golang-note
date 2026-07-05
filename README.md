@@ -2,9 +2,9 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
-> 教材版本：`v1.0.79`
+> 教材版本：`v1.0.80`
 > 教材基準：`Go 1.26.4`
-> 這次更新重點：強化 Platform promotion policy，固定部署平台 approval、progressive rollout、platform-native signing 與 rollback owner。
+> 這次更新重點：強化 Deployment controller config，固定 cloud environment template、deployment controller、health gate 與 rollback trigger。
 
 ## 版本策略
 
@@ -19,6 +19,7 @@
 | Dependency governance contract gate | root module 與 `production-api-worker` 的依賴完整性、可更新版本盤點、漏洞掃描與離線邊界需由 `node scripts/check-dependency-governance-contract.mjs` 固定 |
 | Supply chain artifact governance contract gate | release promotion 需保留 SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner，並由 `node scripts/check-supply-chain-artifact-governance-contract.mjs` 固定 |
 | Platform promotion policy contract gate | 實際部署平台需保留 platform promotion policy、environment approval、progressive rollout、platform-native signing、artifact verification 與 rollback owner，並由 `node scripts/check-platform-promotion-policy-contract.mjs` 固定 |
+| Deployment controller config contract gate | 實際部署需保留 deployment controller、cloud environment template、environment manifest、progressive rollout controller、health gate、rollback trigger 與 promotion evidence，並由 `node scripts/check-deployment-controller-config-contract.mjs` 固定 |
 | 效能診斷 | 效能修改前後需保留 benchmark / profile / metrics 證據，避免只靠直覺調整 |
 | Performance benchmark governance contract gate | API / worker / queue hot path 修改需保留 benchmark A/B、`benchstat old.txt new.txt`、pprof 或 metrics 證據，並由 `node scripts/check-performance-benchmark-governance-contract.mjs` 固定 |
 | Release rollback drill contract gate | release promotion 或 incident rollback 需保留 rollback decision、previous image restore、migration rollback boundary、health verification、metrics verification 與 postmortem evidence，並由 `node scripts/check-release-rollback-drill-contract.mjs` 固定 |
@@ -40,6 +41,7 @@
 | Secret handling governance contract gate | `API_KEY`、`PPROF_TOKEN`、Prometheus bearer token file、secret mount、secret rotation owner、no hard-coded production credentials 與 incident artifact redaction 必須由 `node scripts/check-secret-handling-governance-contract.mjs` 固定 |
 | Supply chain artifact governance contract gate | SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner 必須由 `node scripts/check-supply-chain-artifact-governance-contract.mjs` 固定 |
 | Platform promotion policy contract gate | platform promotion policy、environment approval、progressive rollout、platform-native signing、artifact verification 與 rollback owner 必須由 `node scripts/check-platform-promotion-policy-contract.mjs` 固定 |
+| Deployment controller config contract gate | deployment controller、cloud environment template、environment manifest、progressive rollout controller、health gate、rollback trigger 與 promotion evidence 必須由 `node scripts/check-deployment-controller-config-contract.mjs` 固定 |
 | Docs publishing contract gate | `docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈需由 `node scripts/check-docs-publishing-contract.mjs` 固定來源同步、Makefile、CI 與教材入口 |
 | Production workflow contract gate | `production-api-worker/.github/workflows/production-api-worker.yml` 需由 `node scripts/check-production-workflow-contract.mjs` 固定 `make ci-contract`、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | Syntax flow SVG contract gate | `docs/golang-syntax-application-svg.html` 與 `圖解筆記3-4整合/golang-syntax-application-svg.html` 需由 `node scripts/check-syntax-flow-svg-contract.mjs` 固定 25 個單語法流程、標準流程圖符號、SVG metadata、blueprint renderer 與 CI 入口 |
@@ -56,6 +58,7 @@
 | Secret handling governance contract gate | 正式 secret 不可硬編碼；`API_KEY`、`PPROF_TOKEN`、scrape auth 與 incident artifact 需有 secret rotation owner、secret mount / bearer token file 與 redaction 流程 |
 | Supply chain artifact governance contract gate | SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner 必須進入 release promotion 證據鏈 |
 | Platform promotion policy contract gate | platform promotion policy、environment approval、progressive rollout、platform-native signing、artifact verification 與 rollback owner 必須進入部署平台 promotion 證據鏈 |
+| Deployment controller config contract gate | deployment controller、cloud environment template、environment manifest、progressive rollout controller、health gate、rollback trigger 與 promotion evidence 必須進入實際部署控制器證據鏈 |
 | CORS allowlist contract | `CORS_ALLOWED_ORIGINS` 預設空值；只允許 exact `http` / `https` origin，preflight 與實際 request 由 `TestCORSAllowedOriginsContract` 和 `node scripts/check-cors-contract.mjs` 固定 |
 | Request body limit contract | `REQUEST_BODY_LIMIT_BYTES=1048576` 為預設；`POST /jobs` 超過上限回 `413 payload_too_large`，並由 `TestRequestBodyLimitContract` 和 `node scripts/check-request-body-limit-contract.mjs` 固定 |
 | HTTP server timeout contract | `HTTP_READ_HEADER_TIMEOUT=3s`、`HTTP_READ_TIMEOUT=5s`、`HTTP_WRITE_TIMEOUT=10s`、`HTTP_IDLE_TIMEOUT=60s`、`HTTP_SHUTDOWN_TIMEOUT=5s`、`QUEUE_DRAIN_TIMEOUT=10s` 為預設，並由 `TestHTTPServerTimeoutContract` 和 `node scripts/check-http-timeout-contract.mjs` 固定 |
@@ -79,7 +82,7 @@
 | CI release gate | `.github/workflows/ci.yml` 需固定 root module、production-api-worker contract、race/coverage、govulncheck 與 Docker build，避免教材只描述 CI 卻沒有真實 workflow |
 | CI quality gate contract | GitHub Actions 需同時保留 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，並由 `node scripts/check-ci-quality-gate-contract.mjs` 固定文件、Makefile 與 CI 入口 |
 | CI contract parity gate | `make ci-contract` 的 API contract test selector 必須與 `.github/workflows/ci.yml` production contract job 一致，包含 `TestCORSAllowedOriginsContract`，並由 `node scripts/check-ci-contract-parity-contract.mjs` 固定 |
-| Contract gate inventory | 47 個 root contract checker 必須全部被 `.github/workflows/ci.yml` 呼叫，並由 `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口 |
+| Contract gate inventory | 48 個 root contract checker 必須全部被 `.github/workflows/ci.yml` 呼叫，並由 `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口 |
 | Release artifact chain contract gate | `審查報告/`、`內容需要更新的部分/`、`更新資料/`、`VERSION`、`CHANGELOG.md` 與 `docs/index.html` 必須由 `node scripts/check-release-artifact-chain-contract.mjs` 固定，避免發版記錄漏件 |
 | Dependency governance contract gate | `go mod tidy`、`go mod verify`、`go list -m -u all`、`govulncheck ./...` 與 module proxy / vulnerability database 離線處理必須由 `node scripts/check-dependency-governance-contract.mjs` 固定 |
 | Supply chain artifact governance contract gate | SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner 必須由 `node scripts/check-supply-chain-artifact-governance-contract.mjs` 固定 |
@@ -222,6 +225,7 @@ go test ./project-concurrent-crawler/...
 | Secret handling governance contract gate | `node scripts/check-secret-handling-governance-contract.mjs` | 確認 `API_KEY`、`PPROF_TOKEN`、bearer token file、secret mount、secret rotation owner、no hard-coded production credentials 與 incident artifact redaction 一致 |
 | Supply chain artifact governance contract gate | `node scripts/check-supply-chain-artifact-governance-contract.mjs` | 確認 SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner 一致 |
 | Platform promotion policy contract gate | `node scripts/check-platform-promotion-policy-contract.mjs` | 確認 platform promotion policy、environment approval、progressive rollout、platform-native signing、artifact verification 與 rollback owner 一致 |
+| Deployment controller config contract gate | `node scripts/check-deployment-controller-config-contract.mjs` | 確認 deployment controller、cloud environment template、environment manifest、progressive rollout controller、health gate、rollback trigger 與 promotion evidence 一致 |
 | CORS allowlist gate | `node scripts/check-cors-contract.mjs` | 確認 `CORS_ALLOWED_ORIGINS`、allowlist middleware、preflight 測試、OpenAPI、README 與 CI 入口一致 |
 | Request body limit gate | `node scripts/check-request-body-limit-contract.mjs` | 確認 `REQUEST_BODY_LIMIT_BYTES`、`payload_too_large`、Go tests、OpenAPI、README 與 CI 入口一致 |
 | HTTP timeout gate | `node scripts/check-http-timeout-contract.mjs` | 確認 `HTTP_READ_HEADER_TIMEOUT`、`HTTP_READ_TIMEOUT`、`HTTP_WRITE_TIMEOUT`、`HTTP_IDLE_TIMEOUT`、`HTTP_SHUTDOWN_TIMEOUT`、`QUEUE_DRAIN_TIMEOUT`、Go tests、README、API contract 與 CI 入口一致 |
@@ -241,11 +245,12 @@ go test ./project-concurrent-crawler/...
 | Shutdown signal contract gate | `node scripts/check-shutdown-signal-contract.mjs` | 確認 SIGINT/SIGTERM、`TestMonitoredSignalsContract`、README、API contract、章節與 CI 入口一致 |
 | CI quality gate contract | `node scripts/check-ci-quality-gate-contract.mjs` | 確認 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build、Compose smoke、Makefile 與 CI 入口一致 |
 | CI contract parity gate | `node scripts/check-ci-contract-parity-contract.mjs` | 確認 `make ci-contract` 與 GitHub Actions production contract job 的 API test selector 一致，且保留 `TestCORSAllowedOriginsContract` |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` | 確認 47 個 root contract checker 都被 GitHub Actions 呼叫，且 Makefile、README、API contract、章節與整合視覺課程入口一致 |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` | 確認 48 個 root contract checker 都被 GitHub Actions 呼叫，且 Makefile、README、API contract、章節與整合視覺課程入口一致 |
 | Release artifact chain contract gate | `node scripts/check-release-artifact-chain-contract.mjs` | 確認發版 artifact chain、版本標記、CHANGELOG、docs/index 與 CI 入口一致 |
 | Dependency governance contract gate | `node scripts/check-dependency-governance-contract.mjs` | 確認依賴完整性、可更新版本盤點、漏洞掃描、Makefile、CI 與離線限制說明一致 |
 | Supply chain artifact governance contract gate | `node scripts/check-supply-chain-artifact-governance-contract.mjs` | 確認 SBOM、image signing、provenance / attestation、artifact retention、promotion approval、release evidence owner 與 CI 入口一致 |
 | Platform promotion policy contract gate | `node scripts/check-platform-promotion-policy-contract.mjs` | 確認 platform promotion policy、environment approval、progressive rollout、platform-native signing、artifact verification、rollback owner 與 CI 入口一致 |
+| Deployment controller config contract gate | `node scripts/check-deployment-controller-config-contract.mjs` | 確認 deployment controller、cloud environment template、environment manifest、progressive rollout controller、health gate、rollback trigger、promotion evidence 與 CI 入口一致 |
 | Performance benchmark governance contract gate | `node scripts/check-performance-benchmark-governance-contract.mjs` | 確認 benchmark A/B、benchstat、pprof、metrics、Makefile、CI 與教材入口一致 |
 | Release rollback drill contract gate | `node scripts/check-release-rollback-drill-contract.mjs` | 確認 rollback decision、previous image restore、migration rollback boundary、health verification、metrics verification、postmortem evidence、Makefile 與 CI 入口一致 |
 | Docker build contract gate | `node scripts/check-docker-build-contract.mjs` | 確認 Dockerfile、CGO_ENABLED=0、api-worker / migrate binaries、distroless/static-debian12、Makefile 與 CI build tags 一致 |
@@ -270,6 +275,7 @@ go test ./project-concurrent-crawler/...
 | Dependency governance contract gate | `node scripts/check-dependency-governance-contract.mjs && cd production-api-worker && make dependency-governance-check` | 固定 root / production module 的 dependency integrity、update discovery、vulnerability scan 與離線邊界 |
 | Supply chain artifact governance contract gate | `node scripts/check-supply-chain-artifact-governance-contract.mjs && cd production-api-worker && make supply-chain-artifact-governance-check` | 固定 SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner |
 | Platform promotion policy contract gate | `node scripts/check-platform-promotion-policy-contract.mjs && cd production-api-worker && make platform-promotion-policy-check` | 固定 platform promotion policy、environment approval、progressive rollout、platform-native signing、artifact verification 與 rollback owner |
+| Deployment controller config contract gate | `node scripts/check-deployment-controller-config-contract.mjs && cd production-api-worker && make deployment-controller-config-check` | 固定 deployment controller、cloud environment template、environment manifest、progressive rollout controller、health gate、rollback trigger 與 promotion evidence |
 | Performance benchmark governance contract gate | `node scripts/check-performance-benchmark-governance-contract.mjs && cd production-api-worker && make performance-benchmark-governance-check` | 固定效能修改需保留 benchmark A/B、`benchstat old.txt new.txt`、pprof、metrics 與原始輸出 |
 | API 合約回歸 | `cd production-api-worker && go test ./internal/api -run 'Test.*Contract' -count=1` | 驗證 HTTP status、JSON schema 與錯誤 code 沒有意外改變 |
 | Request decoding 合約 | `cd production-api-worker && go test ./internal/api -run 'TestRequestDecodingContract' -count=1 && node scripts/check-request-decoding-contract.mjs` | 驗證 malformed JSON、unknown field、trailing JSON 與空白 name 都回 `400 invalid_input`，且文件 / OpenAPI / CI 入口一致 |

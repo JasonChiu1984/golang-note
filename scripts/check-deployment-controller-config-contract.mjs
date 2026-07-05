@@ -7,7 +7,6 @@ const files = {
   runbook: "production-api-worker/docs/operational-runbook.md",
   apiContract: "production-api-worker/docs/api-contract.md",
   openapi: "production-api-worker/api/openapi.yaml",
-  chapter07: "chapters/07-large-project-concurrent-crawler.md",
   chapter09: "chapters/09-build-and-deploy.md",
   chapter11: "chapters/11-advanced-testing.md",
   cheatsheet: "Cheatsheet/cheatsheet-advanced.md",
@@ -29,81 +28,81 @@ function requireTerms(file, terms) {
   }
 }
 
-const governanceTerms = [
-  "Supply chain artifact governance contract gate",
-  "node scripts/check-supply-chain-artifact-governance-contract.mjs",
-  "SBOM",
-  "image signing",
-  "provenance / attestation",
-  "artifact retention",
-  "promotion approval",
-  "release evidence owner",
+const controllerTerms = [
+  "Deployment controller config contract gate",
+  "node scripts/check-deployment-controller-config-contract.mjs",
+  "deployment controller",
+  "cloud environment template",
+  "environment manifest",
+  "progressive rollout controller",
+  "health gate",
+  "rollback trigger",
+  "promotion evidence",
 ];
 
 requireTerms(files.readme, [
   "教材版本：`v1.0.80`",
   "48 個 root contract checker",
-  ...governanceTerms,
+  ...controllerTerms,
 ]);
 
 requireTerms(files.productionReadme, [
-  "Supply Chain Artifact Governance Contract",
-  "make supply-chain-artifact-governance-check",
-  ...governanceTerms,
+  "Deployment Controller Config Contract",
+  "make deployment-controller-config-check",
+  ...controllerTerms,
 ]);
 
 requireTerms(files.runbook, [
-  "Supply chain artifact governance contract gate",
-  "SBOM",
-  "image signing",
-  "provenance / attestation",
-  "artifact retention",
-  "promotion approval",
-  "release evidence owner",
+  "Deployment controller config contract gate",
+  "deployment controller",
+  "cloud environment template",
+  "environment manifest",
+  "health gate",
+  "rollback trigger",
 ]);
 
 requireTerms(files.apiContract, [
   "版本：v1.0.80",
-  ...governanceTerms,
+  ...controllerTerms,
 ]);
 
 requireTerms(files.openapi, [
   "version: v1.0.80",
-  "Supply chain artifact governance contract gate",
-  "check-supply-chain-artifact-governance-contract.mjs",
-  "SBOM",
-  "image signing",
-  "provenance / attestation",
-  "artifact retention",
+  "Deployment controller config contract gate",
+  "check-deployment-controller-config-contract.mjs",
+  "deployment controller",
+  "cloud environment template",
+  "environment manifest",
+  "progressive rollout controller",
 ]);
 
-for (const file of [files.chapter07, files.chapter09, files.chapter11, files.cheatsheet, files.visualCourse]) {
+for (const file of [files.chapter09, files.chapter11, files.cheatsheet, files.visualCourse]) {
   requireTerms(file, [
-    "Supply chain artifact governance contract gate",
-    "node scripts/check-supply-chain-artifact-governance-contract.mjs",
-    "SBOM",
-    "image signing",
+    "Deployment controller config contract gate",
+    "node scripts/check-deployment-controller-config-contract.mjs",
+    "make deployment-controller-config-check",
+    "rollback trigger",
   ]);
 }
 
 requireTerms(files.workflow, [
-  "Check supply chain artifact governance contract",
-  "node scripts/check-supply-chain-artifact-governance-contract.mjs",
+  "Check deployment controller config contract",
+  "node scripts/check-deployment-controller-config-contract.mjs",
 ]);
 
 requireTerms(files.makefile, [
-  "supply-chain-artifact-governance-check",
-  "node scripts/check-supply-chain-artifact-governance-contract.mjs",
+  "deployment-controller-config-check",
+  "node scripts/check-deployment-controller-config-contract.mjs",
 ]);
 
 if (missing.length > 0) {
-  console.error("supply chain artifact governance contract check failed:");
+  console.error("deployment controller config contract check failed:");
   for (const item of missing) console.error(`- ${item}`);
   process.exit(1);
 }
 
 console.log(JSON.stringify({
   status: "ok",
-  contract: "supply chain artifact governance",
+  contract: "deployment controller config",
   files: Object.keys(files).length,
 }, null, 2));

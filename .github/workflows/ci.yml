@@ -192,6 +192,9 @@ jobs:
       - name: Check platform promotion policy contract
         run: node scripts/check-platform-promotion-policy-contract.mjs
 
+      - name: Check deployment controller config contract
+        run: node scripts/check-deployment-controller-config-contract.mjs
+
   production-contract:
     name: Production API worker contracts
     runs-on: ubuntu-latest

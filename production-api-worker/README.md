@@ -41,11 +41,12 @@
 - Secret Handling Governance Contract：`API_KEY`、`PPROF_TOKEN`、Prometheus bearer token file、secret mount、secret rotation owner、no hard-coded production credentials 與 incident artifact redaction 必須由 `make secret-handling-governance-check` / `node scripts/check-secret-handling-governance-contract.mjs` 固定
 - Supply Chain Artifact Governance Contract：release promotion 需保留 SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner，並由 `make supply-chain-artifact-governance-check` / `node scripts/check-supply-chain-artifact-governance-contract.mjs` 固定
 - Platform Promotion Policy Contract：實際部署平台需保留 platform promotion policy、environment approval、progressive rollout、platform-native signing、artifact verification 與 rollback owner，並由 `make platform-promotion-policy-check` / `node scripts/check-platform-promotion-policy-contract.mjs` 固定
+- Deployment Controller Config Contract：實際部署需保留 deployment controller、cloud environment template、environment manifest、progressive rollout controller、health gate、rollback trigger 與 promotion evidence，並由 `make deployment-controller-config-check` / `node scripts/check-deployment-controller-config-contract.mjs` 固定
 - Trace Shutdown Contract：trace provider shutdown 必須使用 3 秒 bounded context；`api-worker` process exit 需呼叫 `obs.Shutdown(context.Background())`，並由 `make trace-shutdown-check` / `TestTraceShutdownContract` 固定
 - Pipeline：migration CLI、Docker Compose、GitHub Actions workflow、Docker image build gate、Compose smoke gate
 - CI Quality Gate Contract：GitHub Actions 必須保留 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，並由 `make ci-quality-gate-check` 固定文件、Makefile 與 CI 入口
 - CI Contract Parity Gate：`make ci-contract` 與 GitHub Actions production contract job 必須使用相同 API test selector，包含 `TestCORSAllowedOriginsContract`，並由 `make ci-contract-parity-check` 固定
-- Contract Gate Inventory：47 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
+- Contract Gate Inventory：48 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
 - Docs Publishing Contract：`docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈必須由 `make docs-publishing-check` / `node scripts/check-docs-publishing-contract.mjs` 固定，避免 Pages 首頁與整合課程來源漂移
 - Production Workflow Contract：`production-api-worker/.github/workflows/production-api-worker.yml` 必須保留 `make ci-contract`、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup，並由 `make production-workflow-check` 固定
 - Syntax Flow SVG Contract：語法流程圖補充頁必須保留 25 個單語法 flow、標準流程圖符號、SVG metadata 與 blueprint renderer，並由 `make syntax-flow-svg-check` / `node scripts/check-syntax-flow-svg-contract.mjs` 固定
@@ -196,6 +197,7 @@ make compose-smoke
 | `make secret-handling-governance-check` | 固定 Secret Handling Governance Contract、`API_KEY`、`PPROF_TOKEN`、bearer token file、secret mount、secret rotation owner、no hard-coded production credentials 與 incident artifact redaction |
 | `make supply-chain-artifact-governance-check` | 固定 Supply Chain Artifact Governance Contract、SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner |
 | `make platform-promotion-policy-check` | 固定 Platform Promotion Policy Contract、platform promotion policy、environment approval、progressive rollout、platform-native signing、artifact verification 與 rollback owner |
+| `make deployment-controller-config-check` | 固定 Deployment Controller Config Contract、deployment controller、cloud environment template、environment manifest、progressive rollout controller、health gate、rollback trigger 與 promotion evidence |
 | `make runbook-check` | 固定 SLI/SLO、Prometheus alert rules、incident workflow 與 runbook link 不被移除 |
 | `make prometheus-check` | 固定 Prometheus Config Contract、scrape config、rule_files、Compose monitoring profile、API key scrape auth 風險與 README/runbook 入口 |
 | `make operational-observability-check` | 固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險與 CI 入口 |
@@ -224,6 +226,7 @@ make compose-smoke
 | `make dependency-governance-check` | 固定 Dependency Governance Contract、module integrity、dependency update discovery、vulnerability scan、離線限制、Makefile 與 CI 入口 |
 | `make supply-chain-artifact-governance-check` | 固定 Supply Chain Artifact Governance Contract、SBOM、image signing、provenance / attestation、artifact retention、promotion approval、release evidence owner 與 CI 入口 |
 | `make platform-promotion-policy-check` | 固定 Platform Promotion Policy Contract、platform promotion policy、environment approval、progressive rollout、platform-native signing、artifact verification、rollback owner 與 CI 入口 |
+| `make deployment-controller-config-check` | 固定 Deployment Controller Config Contract、deployment controller、cloud environment template、environment manifest、progressive rollout controller、health gate、rollback trigger、promotion evidence 與 CI 入口 |
 | `make performance-benchmark-governance-check` | 固定 Performance Benchmark Governance Contract、benchmark A/B、benchstat、pprof、metrics、Makefile 與 CI 入口 |
 | `make release-rollback-drill-check` | 固定 Release Rollback Drill Contract、rollback decision、previous image restore、migration rollback boundary、health verification、metrics verification、postmortem evidence 與 CI 入口 |
 | `make docker-build-check` | 固定 Docker Build Contract、Dockerfile、`CGO_ENABLED=0`、`api-worker` / `migrate` binaries、`distroless/static-debian12`、Makefile 與 CI build tags |
@@ -299,7 +302,7 @@ make contract-gate-inventory-check
 cd .. && node scripts/check-contract-gate-inventory-contract.mjs
 ```
 
-這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 47 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
+這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 48 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
 
 Production Workflow Contract 需包含：
 
@@ -372,6 +375,15 @@ cd .. && node scripts/check-platform-promotion-policy-contract.mjs
 ```
 
 這個 gate 固定 platform promotion policy、environment approval、progressive rollout、platform-native signing、artifact verification 與 rollback owner。它把 supply chain artifact evidence 推進到實際部署平台，避免 artifact 已簽章但 production promotion、canary rollout、environment approval 或 rollback owner 沒有可審核紀錄。
+
+Deployment Controller Config Contract 需包含：
+
+```bash
+make deployment-controller-config-check
+cd .. && node scripts/check-deployment-controller-config-contract.mjs
+```
+
+Deployment controller config contract gate 固定 deployment controller、cloud environment template、environment manifest、progressive rollout controller、health gate、rollback trigger 與 promotion evidence。它把 platform promotion policy 落到實際控制器設定，避免 release policy 寫得完整，但 Kubernetes / cloud deploy controller、rollout health gate 或 rollback trigger 沒有可審核設定。
 
 Operational Runbook Scope Freshness Contract 需包含：
 

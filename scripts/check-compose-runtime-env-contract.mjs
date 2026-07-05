@@ -43,10 +43,10 @@ const composeRuntimeTerms = [
 ];
 
 requireTerms(files.readme, [
-  "教材版本：`v1.0.79`",
+  "教材版本：`v1.0.80`",
   "Compose runtime env contract gate",
   "node scripts/check-compose-runtime-env-contract.mjs",
-  "47 個 root contract checker",
+  "48 個 root contract checker",
   ...composeRuntimeTerms,
 ]);
 
@@ -58,15 +58,15 @@ requireTerms(files.productionReadme, [
 ]);
 
 requireTerms(files.apiContract, [
-  "版本：v1.0.79",
+  "版本：v1.0.80",
   "Compose runtime env contract",
   "node scripts/check-compose-runtime-env-contract.mjs",
-  "47 個 root contract checker",
+  "48 個 root contract checker",
   ...composeRuntimeTerms,
 ]);
 
 requireTerms(files.openapi, [
-  "version: v1.0.79",
+  "version: v1.0.80",
   "Compose runtime env contract",
   "check-compose-runtime-env-contract.mjs",
   "DATABASE_URL",
