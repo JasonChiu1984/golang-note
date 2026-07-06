@@ -38,11 +38,12 @@ const contractTerms = [
   "Secret handling governance contract gate",
   "Supply chain artifact governance contract gate",
   "Platform promotion policy contract gate",
+  "Alertmanager routing governance contract gate",
 ];
 
 requireTerms(files.readme, [
-  "教材版本：`v1.0.80`",
-  "48 個 root contract checker",
+  "教材版本：`v1.0.81`",
+  "49 個 root contract checker",
   ...contractTerms,
 ]);
 
@@ -53,19 +54,19 @@ requireTerms(files.productionReadme, [
 ]);
 
 requireTerms(files.runbook, [
-  "文件日期：2026-07-06",
-  "完整日期時間：2026-07-06 06:01:30 CST +0800",
-  "版本：v1.0.80",
+  "文件日期：2026-07-07",
+  "完整日期時間：2026-07-07 06:02:31 CST +0800",
+  "版本：v1.0.81",
   ...contractTerms,
 ]);
 
 requireTerms(files.apiContract, [
-  "版本：v1.0.80",
+  "版本：v1.0.81",
   ...contractTerms,
 ]);
 
 requireTerms(files.openapi, [
-  "version: v1.0.80",
+  "version: v1.0.81",
   "Operational runbook scope freshness contract gate",
   "check-operational-runbook-scope-contract.mjs",
 ]);

@@ -60,6 +60,9 @@ jobs:
       - name: Check operational observability contract
         run: node scripts/check-operational-observability-contract.mjs
 
+      - name: Check Alertmanager routing governance contract
+        run: node scripts/check-alertmanager-routing-contract.mjs
+
       - name: Check OpenAPI contract
         run: node scripts/check-openapi-contract.mjs
 

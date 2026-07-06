@@ -67,3 +67,15 @@ services:
     depends_on:
       api:
         condition: service_started
+      alertmanager:
+        condition: service_started
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    command: ["--config.file=/etc/alertmanager/alertmanager.yml"]
+    volumes:
+      - ../configs/prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    ports:
+      - "9093:9093"
+    profiles:
+      - monitoring

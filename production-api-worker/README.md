@@ -37,6 +37,7 @@
 - Operational Runbook Scope Freshness Contract：Operational runbook scope freshness contract gate 固定 runbook metadata、API contract scope coverage、Docs publishing contract gate、Release artifact chain contract gate、Secret handling governance contract gate 與 Supply chain artifact governance contract gate，並由 `make operational-runbook-scope-check` / `node scripts/check-operational-runbook-scope-contract.mjs` 固定
 - Prometheus Config Contract：scrape config、alert rule loading、Compose monitoring profile 與 API key scrape auth 風險需由 `make prometheus-check` 固定
 - Operational Observability Contract：runbook、Prometheus scrape config、alert rules、Compose monitoring profile 與 API key scrape auth risk 需由 `make operational-observability-check` 固定
+- Alertmanager Routing Governance Contract：正式告警需保留 Alertmanager route、receiver owner、escalation owner、silence policy 與 notification evidence，並由 `make alertmanager-routing-check` / `node scripts/check-alertmanager-routing-contract.mjs` 固定
 - OTLP Export Governance Contract：local `debug exporter` 只供教學；正式 Tempo、Jaeger、OTLP backend 或雲端 APM 替換需保留 sampling rate、retention window、sensitive attribute redaction 與 trace data owner，並由 `make otel-export-governance-check` 固定
 - Secret Handling Governance Contract：`API_KEY`、`PPROF_TOKEN`、Prometheus bearer token file、secret mount、secret rotation owner、no hard-coded production credentials 與 incident artifact redaction 必須由 `make secret-handling-governance-check` / `node scripts/check-secret-handling-governance-contract.mjs` 固定
 - Supply Chain Artifact Governance Contract：release promotion 需保留 SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner，並由 `make supply-chain-artifact-governance-check` / `node scripts/check-supply-chain-artifact-governance-contract.mjs` 固定
@@ -46,7 +47,7 @@
 - Pipeline：migration CLI、Docker Compose、GitHub Actions workflow、Docker image build gate、Compose smoke gate
 - CI Quality Gate Contract：GitHub Actions 必須保留 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，並由 `make ci-quality-gate-check` 固定文件、Makefile 與 CI 入口
 - CI Contract Parity Gate：`make ci-contract` 與 GitHub Actions production contract job 必須使用相同 API test selector，包含 `TestCORSAllowedOriginsContract`，並由 `make ci-contract-parity-check` 固定
-- Contract Gate Inventory：48 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
+- Contract Gate Inventory：49 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
 - Docs Publishing Contract：`docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈必須由 `make docs-publishing-check` / `node scripts/check-docs-publishing-contract.mjs` 固定，避免 Pages 首頁與整合課程來源漂移
 - Production Workflow Contract：`production-api-worker/.github/workflows/production-api-worker.yml` 必須保留 `make ci-contract`、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup，並由 `make production-workflow-check` 固定
 - Syntax Flow SVG Contract：語法流程圖補充頁必須保留 25 個單語法 flow、標準流程圖符號、SVG metadata 與 blueprint renderer，並由 `make syntax-flow-svg-check` / `node scripts/check-syntax-flow-svg-contract.mjs` 固定
@@ -302,7 +303,7 @@ make contract-gate-inventory-check
 cd .. && node scripts/check-contract-gate-inventory-contract.mjs
 ```
 
-這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 48 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
+這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 49 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
 
 Production Workflow Contract 需包含：
 
@@ -564,6 +565,15 @@ Local `debug exporter` 只用於教學與 smoke review，不是 production traci
 
 ```bash
 make otel-export-governance-check
+```
+
+## Alertmanager Routing Governance Contract
+
+Alertmanager routing governance contract gate 讓 Prometheus rule 不只證明 alert expression 可被載入，也固定告警送達值班流程。正式環境需保留 Alertmanager route、receiver owner、escalation owner、silence policy 與 notification evidence；local teaching profile 使用 `configs/prometheus/alertmanager.yml` 的 `teaching-webhook` receiver 固定 routing shape。
+
+```bash
+make alertmanager-routing-check
+docker compose --profile monitoring config
 ```
 
 ## API Security Contract

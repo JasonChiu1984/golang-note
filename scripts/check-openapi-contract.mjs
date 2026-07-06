@@ -18,7 +18,7 @@ const requiredFiles = [
 const specTerms = [
   "openapi: 3.1.0",
   "title: production-api-worker API",
-  "version: v1.0.80",
+  "version: v1.0.81",
   "API security uses optional API_KEY",
   "API contract scope coverage keeps docs/api-contract.md header scope aligned",
   "Worker failure handling keeps failed jobs visible through worker_jobs_total",

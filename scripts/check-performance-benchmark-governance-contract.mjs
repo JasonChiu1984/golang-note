@@ -31,14 +31,14 @@ function requireTerms(file, terms) {
 }
 
 requireTerms(files.readme, [
-  "教材版本：`v1.0.80`",
+  "教材版本：`v1.0.81`",
   "Performance benchmark governance contract gate",
   "node scripts/check-performance-benchmark-governance-contract.mjs",
   "go test -run='^$' -bench=. -benchmem -count=10 ./...",
   "benchstat old.txt new.txt",
   "pprof",
   "metrics",
-  "48 個 root contract checker",
+  "49 個 root contract checker",
 ]);
 
 requireTerms(files.productionReadme, [
@@ -51,16 +51,16 @@ requireTerms(files.productionReadme, [
 ]);
 
 requireTerms(files.apiContract, [
-  "版本：v1.0.80",
+  "版本：v1.0.81",
   "Performance benchmark governance contract",
   "node scripts/check-performance-benchmark-governance-contract.mjs",
   "benchmark A/B",
   "benchstat old.txt new.txt",
-  "48 個 root contract checker",
+  "49 個 root contract checker",
 ]);
 
 requireTerms(files.openapi, [
-  "version: v1.0.80",
+  "version: v1.0.81",
   "Performance benchmark governance contract",
   "check-performance-benchmark-governance-contract.mjs",
   "benchmark A/B",

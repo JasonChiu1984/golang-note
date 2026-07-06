@@ -1,9 +1,9 @@
 # production-api-worker Operational Runbook
 
-> 文件日期：2026-07-06
-> 完整日期時間：2026-07-06 06:01:30 CST +0800
-> 版本：v1.0.80
-> 適用範圍：`production-api-worker` API、worker queue、Postgres migration、Prometheus metrics、OpenTelemetry trace、pprof diagnostics、Docker Compose smoke gate、API contract scope coverage、Docs publishing contract gate、Release artifact chain contract gate、Dependency governance contract gate、Secret handling governance contract gate、Supply chain artifact governance contract gate、Platform promotion policy contract gate、Deployment controller config contract gate。
+> 文件日期：2026-07-07
+> 完整日期時間：2026-07-07 06:02:31 CST +0800
+> 版本：v1.0.81
+> 適用範圍：`production-api-worker` API、worker queue、Postgres migration、Prometheus metrics、OpenTelemetry trace、pprof diagnostics、Docker Compose smoke gate、API contract scope coverage、Docs publishing contract gate、Release artifact chain contract gate、Dependency governance contract gate、Secret handling governance contract gate、Supply chain artifact governance contract gate、Platform promotion policy contract gate、Deployment controller config contract gate、Alertmanager routing governance contract gate。
 
 ## 1. Overview
 
@@ -16,6 +16,7 @@ Operational runbook scope freshness contract gate 固定本文件的日期、完
 | SLI / SLO | 定義 API availability、request error rate、worker latency、queue depth 與 readiness 狀態 |
 | Alert rule | 提供 Prometheus rule 檔，可由 CI 與人工審查檢查 |
 | Prometheus scrape config | 提供本地 scrape job 與 rule_files 載入範本 |
+| Alertmanager routing | 提供本地 Alertmanager route / receiver 範本，並固定正式 receiver owner、escalation owner、silence policy 與 notification evidence |
 | pprof diagnostics | 預設關閉 `/debug/pprof/`；事故期間短期啟用時強制 Bearer token |
 | OTLP collector contract | 固定 `production-api-worker/otel-collector.yaml` 的 OTLP gRPC receiver、debug exporter 與 Compose endpoint |
 | Incident workflow | 從告警、分級、初判、緩解、驗證到復盤 |
@@ -33,7 +34,8 @@ flowchart LR
   A --> T["OpenTelemetry trace exporter"]
   A --> L["structured slog JSON"]
   M --> R["configs/prometheus/production-api-worker-alerts.yml"]
-  R --> O["on-call triage"]
+  R --> AM["Alertmanager route / receiver"]
+  AM --> O["on-call triage"]
 ```
 
 | Signal | Source | 主要用途 |
@@ -67,6 +69,12 @@ Prometheus scrape config 位於：
 
 ```text
 configs/prometheus/prometheus.yml
+```
+
+Alertmanager routing config 位於：
+
+```text
+configs/prometheus/alertmanager.yml
 ```
 
 本地教學 profile：
@@ -117,6 +125,8 @@ Supply chain artifact governance contract gate 固定 release promotion 的供�
 Platform promotion policy contract gate 固定實際部署平台的 promotion 證據。正式發版需保留 platform promotion policy、environment approval、progressive rollout、platform-native signing、artifact verification 與 rollback owner；這些證據應和 SBOM、image signing、provenance / attestation、rollback drill 與更新紀錄一起保存，避免只知道 artifact 已簽章卻無法追溯 production promotion 是否經過平台 approval 與可回復策略。
 
 Deployment controller config contract gate 固定實際部署控制器設定。正式發版需保留 deployment controller、cloud environment template、environment manifest、progressive rollout controller、health gate、rollback trigger 與 promotion evidence；這些證據應和 platform promotion policy、artifact verification、rollback drill 與更新紀錄一起保存，避免 release policy 已核准但部署控制器沒有可審核的環境 manifest、health gate 或 rollback trigger。
+
+Alertmanager routing governance contract gate 固定正式告警送達流程。正式環境需保留 Alertmanager route、receiver owner、escalation owner、silence policy 與 notification evidence；local teaching profile 使用 `configs/prometheus/alertmanager.yml` 固定 route shape，避免 Prometheus rules 已載入但告警沒有 receiver、升級責任或送達證據。
 
 ## 4. Configuration
 
@@ -192,6 +202,7 @@ curl -H 'Authorization: Bearer debug-token' 'http://localhost:8080/debug/pprof/h
 | Runbook 文件完整性 | `node scripts/check-operational-runbook.mjs` | runbook、alert rules、README 與 CI 入口都存在 |
 | Prometheus rule 語法層級檢查 | `node scripts/check-operational-runbook.mjs` | rule group、alert、expr、for、severity、runbook_url 皆存在 |
 | Prometheus scrape config | `node scripts/check-prometheus-config-contract.mjs` | scrape job、rule_files、Compose monitoring profile、README 與 CI 入口一致 |
+| Alertmanager routing governance contract gate | `node scripts/check-alertmanager-routing-contract.mjs` | Alertmanager route、receiver owner、escalation owner、silence policy、notification evidence、Prometheus alerting target 與 Compose service 一致 |
 | pprof diagnostics contract | `node scripts/check-pprof-contract.mjs` | `ENABLE_PPROF`、`PPROF_TOKEN`、Go tests、runbook、README 與 CI 入口一致 |
 | OTLP collector contract | `node scripts/check-otel-collector-contract.mjs` | OTLP receiver、debug exporter、Compose endpoint、runbook、README 與 CI 入口一致 |
 | OTLP export governance contract gate | `node scripts/check-otel-export-governance-contract.mjs` | local debug exporter、production backend owner、sampling rate、retention window、sensitive attribute redaction 與 trace data owner 一致 |
@@ -203,7 +214,7 @@ curl -H 'Authorization: Bearer debug-token' 'http://localhost:8080/debug/pprof/h
 | pprof Go contract | `cd production-api-worker && go test ./internal/config ./internal/api -run 'Test.*Pprof|TestPprofDiagnosticsContract' -count=1` | pprof 預設關閉，啟用時要求 token，合法 token 才能讀 profile index |
 | Production contract | `cd production-api-worker && make ci-contract` | API / config / migration / retry / worker 合約通過 |
 | Compose smoke | `cd production-api-worker && API_KEY=dev-secret docker compose up -d --build && API_KEY=dev-secret make compose-smoke` | ready、live、job create/read、metrics 通過 |
-| Compose monitoring profile | `cd production-api-worker && docker compose --profile monitoring up -d --build` | Prometheus 於 `http://localhost:9090` 載入 scrape config 與 alert rules |
+| Compose monitoring profile | `cd production-api-worker && docker compose --profile monitoring up -d --build` | Prometheus 於 `http://localhost:9090` 載入 scrape config 與 alert rules，Alertmanager 於 `http://localhost:9093` 載入 routing config |
 
 ## 7. Troubleshooting
 
@@ -236,7 +247,7 @@ curl -H 'Authorization: Bearer debug-token' 'http://localhost:8080/debug/pprof/h
 | 風險 | 說明 |
 |---|---|
 | 教學閾值不等於正式 SLA | 2%、5%、2s、50 queue depth 是教材 baseline；正式環境需依流量重算 |
-| Prometheus rule 未接真實 Alertmanager | 本 repo 提供 rule 與檢查腳本，不代表已部署告警平台 |
+| Alertmanager receiver 仍是教學範本 | 本 repo 提供 local `teaching-webhook` routing shape；正式環境需替換 receiver 並保留 receiver owner、escalation owner、silence policy 與 notification evidence |
 | Trace backend 未固定 | 本地 collector 使用 `debug exporter`；正式環境需指定 Tempo、Jaeger、OTLP backend 或雲端 APM、sampling rate、retention window、sensitive attribute redaction 與 trace data owner |
 | pprof profile 敏感 | heap、goroutine、cmdline、trace 可能含環境與請求資訊；只保存於受控 incident artifact |
 | Docker Compose 不是 Kubernetes | Compose smoke 可證明端到端最小流程，不取代 K8s readiness/liveness/rollout policy |

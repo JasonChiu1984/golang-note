@@ -3,8 +3,8 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename } from "node:path";
 
 const version = readFileSync("VERSION", "utf8").trim();
-const expectedVersion = "v1.0.80";
-const artifactTimestamp = "2026-07-06-060130";
+const expectedVersion = "v1.0.81";
+const artifactTimestamp = "2026-07-07-060231";
 
 const files = [
   "README.md",
@@ -27,14 +27,14 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.80`",
+    "教材版本：`v1.0.81`",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "CHANGELOG.md": [
-    "## v1.0.80 - 2026-07-06",
-    "Deployment controller config",
-    "scripts/check-deployment-controller-config-contract.mjs",
+    "## v1.0.81 - 2026-07-07",
+    "Alertmanager routing governance",
+    "scripts/check-alertmanager-routing-contract.mjs",
   ],
   "production-api-worker/README.md": [
     "Release Artifact Chain Contract",
@@ -42,12 +42,12 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.80",
+    "版本：v1.0.81",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.80",
+    "version: v1.0.81",
     "Release artifact chain contract gate",
     "check-release-artifact-chain-contract.mjs",
   ],
@@ -84,18 +84,18 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   [`審查報告/${artifactTimestamp}-資深工程師審查報告.md`]: [
-    "Deployment controller config",
-    "v1.0.80",
-    "2026-07-06 06:01:30 CST +0800",
+    "Alertmanager routing governance",
+    "v1.0.81",
+    "2026-07-07 06:02:31 CST +0800",
   ],
   [`內容需要更新的部分/${artifactTimestamp}-內容需要更新的部分.md`]: [
-    "Deployment controller config",
-    "scripts/check-deployment-controller-config-contract.mjs",
-    "v1.0.80",
+    "Alertmanager routing governance",
+    "scripts/check-alertmanager-routing-contract.mjs",
+    "v1.0.81",
   ],
   [`更新資料/${artifactTimestamp}-${expectedVersion}-更新紀錄.md`]: [
-    "Deployment controller config",
-    "scripts/check-deployment-controller-config-contract.mjs",
+    "Alertmanager routing governance",
+    "scripts/check-alertmanager-routing-contract.mjs",
     "docs/index.html",
     "GitHub push",
   ],

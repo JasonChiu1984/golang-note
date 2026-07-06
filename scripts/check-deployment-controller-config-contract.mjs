@@ -41,8 +41,8 @@ const controllerTerms = [
 ];
 
 requireTerms(files.readme, [
-  "教材版本：`v1.0.80`",
-  "48 個 root contract checker",
+  "教材版本：`v1.0.81`",
+  "49 個 root contract checker",
   ...controllerTerms,
 ]);
 
@@ -62,12 +62,12 @@ requireTerms(files.runbook, [
 ]);
 
 requireTerms(files.apiContract, [
-  "版本：v1.0.80",
+  "版本：v1.0.81",
   ...controllerTerms,
 ]);
 
 requireTerms(files.openapi, [
-  "version: v1.0.80",
+  "version: v1.0.81",
   "Deployment controller config contract gate",
   "check-deployment-controller-config-contract.mjs",
   "deployment controller",

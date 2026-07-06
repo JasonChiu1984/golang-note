@@ -43,10 +43,10 @@ const dockerBuildTerms = [
 ];
 
 requireTerms(files.readme, [
-  "教材版本：`v1.0.80`",
+  "教材版本：`v1.0.81`",
   "Docker build contract gate",
   "node scripts/check-docker-build-contract.mjs",
-  "48 個 root contract checker",
+  "49 個 root contract checker",
   ...dockerBuildTerms,
 ]);
 
@@ -58,14 +58,14 @@ requireTerms(files.productionReadme, [
 ]);
 
 requireTerms(files.apiContract, [
-  "版本：v1.0.80",
+  "版本：v1.0.81",
   "Docker build contract",
   "node scripts/check-docker-build-contract.mjs",
   ...dockerBuildTerms,
 ]);
 
 requireTerms(files.openapi, [
-  "version: v1.0.80",
+  "version: v1.0.81",
   "Docker build contract",
   "check-docker-build-contract.mjs",
   "distroless/static-debian12",

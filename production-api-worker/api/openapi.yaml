@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.80
+  version: v1.0.81
   description: >
     Machine-readable contract for the Go teaching production API worker.
     This file mirrors docs/api-contract.md and the Go contract tests,
@@ -18,6 +18,10 @@ info:
     and CI entrypoints aligned. Operational observability contract gate keeps
     runbook, Prometheus scrape config, alert rules, Compose monitoring profile,
     and API key scrape auth risk aligned with CI and Makefile entrypoints.
+    Alertmanager routing governance contract gate keeps configs/prometheus/alertmanager.yml,
+    Prometheus alerting.alertmanagers, Compose Alertmanager service, receiver owner,
+    escalation owner, silence policy, notification evidence, and
+    check-alertmanager-routing-contract.mjs aligned.
     OTLP export governance contract gate keeps local debug exporter teaching mode,
     production Tempo, Jaeger, OTLP backend, or cloud APM ownership, sampling rate,
     retention window, sensitive attribute redaction, trace data owner, and
@@ -76,7 +80,7 @@ info:
     context, keeps api-worker process exit hooked to obs.Shutdown, and keeps
     TestTraceShutdownContract, check-trace-shutdown-contract.mjs, Makefile,
     docs, and CI static gates aligned.
-    Contract gate inventory keeps all 48 root contract checker scripts,
+    Contract gate inventory keeps all 49 root contract checker scripts,
     check-contract-gate-inventory-contract.mjs, Makefile, README, API contract,
     chapters, visual course, and GitHub Actions aligned.
     Docs publishing contract gate keeps docs/index.html, GitHub Pages link fix,

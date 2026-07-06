@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.81 - 2026-07-07
+
+- 新增 2026-07-07 06:02:31 CST +0800 資深工程師審查報告，確認 v1.0.80 已補齊 Deployment controller config，但 runbook 與整合視覺課程仍將正式 Alertmanager routing / receiver / escalation governance 列為 production runbook 缺口。
+- 新增 `configs/prometheus/alertmanager.yml` 與 `scripts/check-alertmanager-routing-contract.mjs`，固定 Alertmanager routing governance contract gate，要求 Alertmanager route、receiver owner、escalation owner、silence policy、notification evidence、Prometheus alerting target、Compose service、README、production README、runbook、API contract、OpenAPI、章節、進階 Cheat Sheet、整合視覺課程、Makefile 與 GitHub Actions 都保持一致。
+- 更新 `configs/prometheus/prometheus.yml`，加入 `alerting.alertmanagers` target `alertmanager:9093`；更新 `production-api-worker/docker-compose.yml`，在 `monitoring` profile 加入 Alertmanager service 與 `9093:9093`。
+- 同步 `README.md`、`production-api-worker/README.md`、`production-api-worker/docs/operational-runbook.md`、`production-api-worker/docs/api-contract.md`、`production-api-worker/api/openapi.yaml`、第 9 / 11 章、進階 Cheat Sheet 與整合視覺課程，將本輪發版重點標示為 Alertmanager routing governance。
+- Contract gate inventory 從 48 個 root contract checker 更新為 49 個，並納入 Alertmanager routing governance contract checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.81`。
+
 ## v1.0.80 - 2026-07-06
 
 - 新增 2026-07-06 06:01:30 CST +0800 資深工程師審查報告，確認 v1.0.79 已補齊 Platform promotion policy，但整合視覺課程仍將實際雲平台環境範本與 deployment controller 設定列為企業 runbook 待補事項。
