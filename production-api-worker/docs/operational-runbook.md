@@ -1,8 +1,8 @@
 # production-api-worker Operational Runbook
 
-> 文件日期：2026-07-07
-> 完整日期時間：2026-07-07 06:02:31 CST +0800
-> 版本：v1.0.81
+> 文件日期：2026-07-08
+> 完整日期時間：2026-07-08 06:02:28 CST +0800
+> 版本：v1.0.82
 > 適用範圍：`production-api-worker` API、worker queue、Postgres migration、Prometheus metrics、OpenTelemetry trace、pprof diagnostics、Docker Compose smoke gate、API contract scope coverage、Docs publishing contract gate、Release artifact chain contract gate、Dependency governance contract gate、Secret handling governance contract gate、Supply chain artifact governance contract gate、Platform promotion policy contract gate、Deployment controller config contract gate、Alertmanager routing governance contract gate。
 
 ## 1. Overview

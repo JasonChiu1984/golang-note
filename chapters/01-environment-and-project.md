@@ -1,6 +1,6 @@
 # 01. 環境與專案結構
 
-> **本教材撰寫基準版本：Go 1.26.4**
+> **本教材撰寫基準版本：Go 1.26.5**
 > 內容涵蓋 Go 1.18（generics）、Go 1.21（`min`/`max`/`clear`）、Go 1.22（range-over-int、loop variable fix）、Go 1.25（container-aware `GOMAXPROCS`、`testing/synctest`）與 Go 1.26（`new(expression)`、Green Tea GC、`T.ArtifactDir`）等重要特性。如使用較舊版本，部分語法可能不支援。
 
 Go 專案的第一個重點不是語法，而是「程式如何被組織、編譯、測試」。Go 的工具鏈很完整，學會 `go` 指令等於學會一半日常工作流。
@@ -46,12 +46,12 @@ Go 的平台支援不是永久不變。升級 toolchain 時，應把語法/API �
 | **Linux** | 官方 tarball | `sudo tar -C /usr/local -xzf go*.tar.gz` |
 | **Windows** | 官方安裝包 | [golang.org/dl](https://golang.org/dl/) 下載 `.msi` |
 | **Windows** | Scoop | `scoop install go` |
-| **任何平台** | 版本管理工具 | `go install golang.org/dl/go1.26.4@latest` |
+| **任何平台** | 版本管理工具 | `go install golang.org/dl/go1.26.5@latest` |
 
 ```bash
 # 確認安裝成功
 go version
-# go version go1.26.4 darwin/arm64
+# go version go1.26.5 darwin/arm64
 
 # 查看環境設定
 go env GOROOT GOPATH GOOS GOARCH
@@ -108,7 +108,7 @@ module example.com/hello-go
 go 1.26
 ```
 
-> **版本策略**：教材文字以 Go 1.26.4 為基準；本 repo 內部分可執行範例仍可能保留 `go 1.22`，用來維持舊 toolchain 的學習相容性。新專案建議使用當前支援中的最新 Go patch release。
+> **版本策略**：教材文字以 Go 1.26.5 為基準；本 repo 內部分可執行範例仍可能保留 `go 1.22`，用來維持舊 toolchain 的學習相容性。新專案建議使用當前支援中的最新 Go patch release。
 
 ## 最小程式
 

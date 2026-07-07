@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.82 - 2026-07-08
+
+- 新增 2026-07-08 06:02:28 CST +0800 資深工程師審查報告，確認 v1.0.81 已補齊 Alertmanager routing governance，但 Go ReleaseNote patch baseline 已落後官方 2026-07-07 的 go1.26.5 / go1.25.12。
+- 更新 `scripts/generate-go-release-notes.mjs` 與 `scripts/check-go-release-notes-contract.mjs`，將最新 patch 訊號改為 `go1.26.5` / `go1.25.12`，並保留 Go ReleaseNote contract gate 的 49 個 root contract checker inventory。
+- 同步 `ReleaseNote/` 與 `docs/ReleaseNote/` 的 Go 1.25 / Go 1.26 patch revisions，加入 go1.25.12 與 go1.26.5 的官方摘要。
+- 同步 `README.md`、`chapters/01-environment-and-project.md`、`production-api-worker/docs/api-contract.md`、`production-api-worker/api/openapi.yaml`、整合視覺課程與 docs 首頁，將本輪發版重點標示為 Go ReleaseNote patch baseline refresh。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.82`。
+
 ## v1.0.81 - 2026-07-07
 
 - 新增 2026-07-07 06:02:31 CST +0800 資深工程師審查報告，確認 v1.0.80 已補齊 Deployment controller config，但 runbook 與整合視覺課程仍將正式 Alertmanager routing / receiver / escalation governance 列為 production runbook 缺口。

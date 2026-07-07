@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.81
+  version: v1.0.82
   description: >
     Machine-readable contract for the Go teaching production API worker.
     This file mirrors docs/api-contract.md and the Go contract tests,
@@ -98,7 +98,7 @@ info:
     renderer, Makefile, and CI static gates aligned.
     Go ReleaseNote contract gate keeps scripts/generate-go-release-notes.mjs,
     ReleaseNote/, docs/ReleaseNote/, Go 1.1-1.26 report sections,
-    Go 1.26.4 and Go 1.25.11 patch signals, official source links,
+    Go 1.26.5 and Go 1.25.12 patch signals, official source links,
     Makefile, and CI static gates aligned through check-go-release-notes-contract.mjs.
     Release artifact chain contract gate keeps review reports, update-needed
     notes, update records, VERSION, CHANGELOG.md, docs/index.html, Makefile,

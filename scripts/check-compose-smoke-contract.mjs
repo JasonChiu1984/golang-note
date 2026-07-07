@@ -20,7 +20,7 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.81`",
+    "教材版本：`v1.0.82`",
     "Compose smoke contract gate",
     "node scripts/check-compose-smoke-contract.mjs",
   ],
@@ -44,7 +44,7 @@ const required = {
     "OTEL_EXPORTER_OTLP_ENDPOINT",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.81",
+    "版本：v1.0.82",
     "Compose smoke contract",
     "node scripts/check-compose-smoke-contract.mjs",
   ],
@@ -54,7 +54,7 @@ const required = {
     "docker compose logs --no-color",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.81",
+    "version: v1.0.82",
     "Compose smoke contract",
     "POST /jobs",
     "GET /jobs/{id}",
