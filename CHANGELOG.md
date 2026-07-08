@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.83 - 2026-07-09
+
+- 新增 2026-07-09 06:03:02 CST +0800 資深工程師審查報告，確認 v1.0.82 已完成 Go ReleaseNote patch baseline refresh，且官方 Go Release History 仍維持 go1.26.5 / go1.25.12。
+- 強化 `scripts/check-otel-collector-contract.mjs`，將 `production-api-worker/docs/api-contract.md`、`production-api-worker/api/openapi.yaml` 與整合視覺課程納入 OTLP collector scope coverage。
+- 同步 `README.md`、`production-api-worker/docs/api-contract.md`、`production-api-worker/api/openapi.yaml`、`production-api-worker/docs/operational-runbook.md`、第 7 / 10 章與整合視覺課程，明確固定 `production-api-worker/otel-collector.yaml`、OTLP gRPC `0.0.0.0:4317`、`debug exporter`、Compose endpoint 與正式 backend 替換邊界。
+- Contract gate inventory 維持 49 個 root contract checker；本輪不新增 runtime feature，只補強既有 OTLP collector contract 的 API contract / OpenAPI / visual course 追溯面。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.83`。
+
 ## v1.0.82 - 2026-07-08
 
 - 新增 2026-07-08 06:02:28 CST +0800 資深工程師審查報告，確認 v1.0.81 已補齊 Alertmanager routing governance，但 Go ReleaseNote patch baseline 已落後官方 2026-07-07 的 go1.26.5 / go1.25.12。

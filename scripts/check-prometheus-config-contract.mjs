@@ -72,7 +72,7 @@ requireTerms(files.runbook, [
 ]);
 
 requireTerms(files.readme, [
-  "教材版本：`v1.0.82`",
+  "教材版本：`v1.0.83`",
   "Prometheus config contract gate",
   "configs/prometheus/prometheus.yml",
   "node scripts/check-prometheus-config-contract.mjs",
@@ -87,7 +87,7 @@ requireTerms(files.productionReadme, [
 ]);
 
 requireTerms(files.apiContract, [
-  "版本：v1.0.82",
+  "版本：v1.0.83",
   "Prometheus config contract gate",
   "node scripts/check-prometheus-config-contract.mjs",
   "49 個 root contract checker",
