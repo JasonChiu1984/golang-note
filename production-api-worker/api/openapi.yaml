@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.82
+  version: v1.0.83
   description: >
     Machine-readable contract for the Go teaching production API worker.
     This file mirrors docs/api-contract.md and the Go contract tests,
@@ -22,6 +22,11 @@ info:
     Prometheus alerting.alertmanagers, Compose Alertmanager service, receiver owner,
     escalation owner, silence policy, notification evidence, and
     check-alertmanager-routing-contract.mjs aligned.
+    OTLP collector contract keeps production-api-worker/otel-collector.yaml,
+    OTLP gRPC receiver 0.0.0.0:4317, debug exporter, Compose endpoint
+    OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317, API contract scope,
+    OpenAPI description, visual course, Makefile, and CI aligned through
+    check-otel-collector-contract.mjs.
     OTLP export governance contract gate keeps local debug exporter teaching mode,
     production Tempo, Jaeger, OTLP backend, or cloud APM ownership, sampling rate,
     retention window, sensitive attribute redaction, trace data owner, and

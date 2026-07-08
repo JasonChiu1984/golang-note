@@ -5,10 +5,13 @@ const files = {
   collector: "production-api-worker/otel-collector.yaml",
   compose: "production-api-worker/docker-compose.yml",
   runbook: "production-api-worker/docs/operational-runbook.md",
+  apiContract: "production-api-worker/docs/api-contract.md",
+  openapi: "production-api-worker/api/openapi.yaml",
   readme: "README.md",
   productionReadme: "production-api-worker/README.md",
   chapter07: "chapters/07-large-project-concurrent-crawler.md",
   chapter10: "chapters/10-performance-and-memory.md",
+  visualCourse: "圖解筆記3-4整合/golang-complete-visual-course.html",
   workflow: ".github/workflows/ci.yml",
 };
 
@@ -56,6 +59,23 @@ requireTerms(files.runbook, [
   "node scripts/check-otel-collector-contract.mjs",
 ]);
 
+requireTerms(files.apiContract, [
+  "OTLP collector contract",
+  "production-api-worker/otel-collector.yaml",
+  "0.0.0.0:4317",
+  "debug exporter",
+  "node scripts/check-otel-collector-contract.mjs",
+]);
+
+requireTerms(files.openapi, [
+  "OTLP collector contract",
+  "production-api-worker/otel-collector.yaml",
+  "OTLP gRPC receiver",
+  "debug exporter",
+  "OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317",
+  "check-otel-collector-contract.mjs",
+]);
+
 requireTerms(files.readme, [
   "OTLP collector contract",
   "production-api-worker/otel-collector.yaml",
@@ -78,6 +98,14 @@ requireTerms(files.chapter07, [
 requireTerms(files.chapter10, [
   "OTLP collector contract",
   "node scripts/check-otel-collector-contract.mjs",
+]);
+
+requireTerms(files.visualCourse, [
+  "OTLP collector contract",
+  "production-api-worker/otel-collector.yaml",
+  "debug exporter",
+  "API contract",
+  "OpenAPI",
 ]);
 
 requireTerms(files.workflow, [

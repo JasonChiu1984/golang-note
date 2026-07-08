@@ -41,7 +41,7 @@ const governanceTerms = [
 ];
 
 requireTerms(files.readme, [
-  "教材版本：`v1.0.82`",
+  "教材版本：`v1.0.83`",
   "49 個 root contract checker",
   ...governanceTerms,
 ]);
@@ -63,12 +63,12 @@ requireTerms(files.runbook, [
 ]);
 
 requireTerms(files.apiContract, [
-  "版本：v1.0.82",
+  "版本：v1.0.83",
   ...governanceTerms,
 ]);
 
 requireTerms(files.openapi, [
-  "version: v1.0.82",
+  "version: v1.0.83",
   "Supply chain artifact governance contract gate",
   "check-supply-chain-artifact-governance-contract.mjs",
   "SBOM",

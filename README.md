@@ -2,9 +2,9 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
-> 教材版本：`v1.0.82`
+> 教材版本：`v1.0.83`
 > 教材基準：`Go 1.26.5`
-> 這次更新重點：刷新 Go ReleaseNote patch baseline，將官方 2026-07-07 的 go1.26.5 / go1.25.12 納入教材與 contract gate。
+> 這次更新重點：補強 OTLP collector scope coverage，將 collector config、API contract、OpenAPI、整合視覺課程與 docs publishing 發版鏈一起固定。
 
 ## 版本策略
 
