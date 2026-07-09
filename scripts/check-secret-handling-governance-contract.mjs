@@ -42,8 +42,8 @@ const governanceTerms = [
 ];
 
 requireTerms(files.readme, [
-  "教材版本：`v1.0.83`",
-  "49 個 root contract checker",
+  "教材版本：`v1.0.84`",
+  "50 個 root contract checker",
   ...governanceTerms,
 ]);
 
@@ -66,14 +66,14 @@ requireTerms(files.runbook, [
 ]);
 
 requireTerms(files.apiContract, [
-  "版本：v1.0.83",
+  "版本：v1.0.84",
   "Secret handling governance contract gate",
   "node scripts/check-secret-handling-governance-contract.mjs",
   "no hard-coded production credentials",
 ]);
 
 requireTerms(files.openapi, [
-  "version: v1.0.83",
+  "version: v1.0.84",
   "Secret handling governance contract gate",
   "check-secret-handling-governance-contract.mjs",
   "secret rotation owner",

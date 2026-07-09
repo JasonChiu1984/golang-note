@@ -3,8 +3,8 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename } from "node:path";
 
 const version = readFileSync("VERSION", "utf8").trim();
-const expectedVersion = "v1.0.83";
-const artifactTimestamp = "2026-07-09-060302";
+const expectedVersion = "v1.0.84";
+const artifactTimestamp = "2026-07-10-060242";
 
 const files = [
   "README.md",
@@ -27,15 +27,15 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.83`",
+    "教材版本：`v1.0.84`",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "CHANGELOG.md": [
-    "## v1.0.83 - 2026-07-09",
-    "OTLP collector scope coverage",
-    "check-otel-collector-contract.mjs",
-    "production-api-worker/otel-collector.yaml",
+    "## v1.0.84 - 2026-07-10",
+    "Release publish reconciliation evidence",
+    "check-release-publish-reconciliation-contract.mjs",
+    "force-with-lease",
   ],
   "production-api-worker/README.md": [
     "Release Artifact Chain Contract",
@@ -43,12 +43,12 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.83",
+    "版本：v1.0.84",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.83",
+    "version: v1.0.84",
     "Release artifact chain contract gate",
     "check-release-artifact-chain-contract.mjs",
   ],
@@ -85,18 +85,18 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   [`審查報告/${artifactTimestamp}-資深工程師審查報告.md`]: [
-    "OTLP collector scope coverage",
-    "v1.0.83",
-    "2026-07-09 06:03:02 CST +0800",
+    "Release publish reconciliation evidence",
+    "v1.0.84",
+    "2026-07-10 06:02:42 CST +0800",
   ],
   [`內容需要更新的部分/${artifactTimestamp}-內容需要更新的部分.md`]: [
-    "OTLP collector scope coverage",
-    "scripts/check-otel-collector-contract.mjs",
-    "v1.0.83",
+    "Release publish reconciliation evidence",
+    "scripts/check-release-publish-reconciliation-contract.mjs",
+    "v1.0.84",
   ],
   [`更新資料/${artifactTimestamp}-${expectedVersion}-更新紀錄.md`]: [
-    "OTLP collector scope coverage",
-    "scripts/check-otel-collector-contract.mjs",
+    "Release publish reconciliation evidence",
+    "scripts/check-release-publish-reconciliation-contract.mjs",
     "docs/index.html",
     "GitHub push",
   ],

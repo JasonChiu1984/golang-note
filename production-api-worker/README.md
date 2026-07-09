@@ -47,7 +47,7 @@
 - Pipeline：migration CLI、Docker Compose、GitHub Actions workflow、Docker image build gate、Compose smoke gate
 - CI Quality Gate Contract：GitHub Actions 必須保留 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，並由 `make ci-quality-gate-check` 固定文件、Makefile 與 CI 入口
 - CI Contract Parity Gate：`make ci-contract` 與 GitHub Actions production contract job 必須使用相同 API test selector，包含 `TestCORSAllowedOriginsContract`，並由 `make ci-contract-parity-check` 固定
-- Contract Gate Inventory：49 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
+- Contract Gate Inventory：50 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
 - Docs Publishing Contract：`docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈必須由 `make docs-publishing-check` / `node scripts/check-docs-publishing-contract.mjs` 固定，避免 Pages 首頁與整合課程來源漂移
 - Production Workflow Contract：`production-api-worker/.github/workflows/production-api-worker.yml` 必須保留 `make ci-contract`、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup，並由 `make production-workflow-check` 固定
 - Syntax Flow SVG Contract：語法流程圖補充頁必須保留 25 個單語法 flow、標準流程圖符號、SVG metadata 與 blueprint renderer，並由 `make syntax-flow-svg-check` / `node scripts/check-syntax-flow-svg-contract.mjs` 固定
@@ -303,7 +303,7 @@ make contract-gate-inventory-check
 cd .. && node scripts/check-contract-gate-inventory-contract.mjs
 ```
 
-這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 49 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
+這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 50 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
 
 Production Workflow Contract 需包含：
 
@@ -349,6 +349,15 @@ cd .. && node scripts/check-release-artifact-chain-contract.mjs
 ```
 
 這個 gate 會固定每次 release 的三段式 artifact chain：`審查報告/`、`內容需要更新的部分/`、`更新資料/` 必須使用同一 timestamp，並同步 `VERSION`、`CHANGELOG.md`、`docs/index.html`、Makefile 與 GitHub Actions，避免 release 只留下 commit/tag 卻缺少可回查的審查與更新紀錄。
+
+Release Publish Reconciliation Contract 需包含：
+
+```bash
+make release-publish-reconciliation-check
+cd .. && node scripts/check-release-publish-reconciliation-contract.mjs
+```
+
+Release publish reconciliation contract gate 固定 remote release 已建立但 final release-record amend / tag 更新仍 local-only 時的證據格式。更新紀錄需明確保留 `HEAD`、`origin/main`、`tag^{}`、`force-with-lease` 與 recovery command，避免下一輪發版誤判為已完全發布或覆蓋遠端 release commit。
 
 Dependency Governance Contract 需包含：
 

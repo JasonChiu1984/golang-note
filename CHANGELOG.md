@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.84 - 2026-07-10
+
+- 新增 2026-07-10 06:02:42 CST +0800 資深工程師審查報告，確認教程深度廣度已足夠，本輪缺口集中在 v1.0.83 remote release 已建立但 final release-record amend / tag 更新仍 local-only 的發布收斂證據。
+- 新增 `scripts/check-release-publish-reconciliation-contract.mjs` 與 `make release-publish-reconciliation-check`，固定 `HEAD`、`origin/main`、`v1.0.83^{}`、`force-with-lease` 與 recovery command 需留在更新紀錄與教材治理面。
+- 同步 `README.md`、`production-api-worker/README.md`、`production-api-worker/docs/api-contract.md`、`production-api-worker/api/openapi.yaml`、第 7 / 9 / 11 章、進階 Cheat Sheet 與整合視覺課程，將本輪發版重點標示為 Release publish reconciliation evidence。
+- Contract gate inventory 從 49 個 root contract checker 更新為 50 個，並納入 release publish reconciliation contract checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.84`。
+
 ## v1.0.83 - 2026-07-09
 
 - 新增 2026-07-09 06:03:02 CST +0800 資深工程師審查報告，確認 v1.0.82 已完成 Go ReleaseNote patch baseline refresh，且官方 Go Release History 仍維持 go1.26.5 / go1.25.12。

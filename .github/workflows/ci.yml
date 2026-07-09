@@ -162,6 +162,9 @@ jobs:
       - name: Check release artifact chain contract
         run: node scripts/check-release-artifact-chain-contract.mjs
 
+      - name: Check release publish reconciliation contract
+        run: node scripts/check-release-publish-reconciliation-contract.mjs
+
       - name: Check dependency governance contract
         run: node scripts/check-dependency-governance-contract.mjs
 
