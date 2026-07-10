@@ -3,8 +3,8 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename } from "node:path";
 
 const version = readFileSync("VERSION", "utf8").trim();
-const expectedVersion = "v1.0.84";
-const artifactTimestamp = "2026-07-10-060242";
+const expectedVersion = "v1.0.85";
+const artifactTimestamp = "2026-07-11-060331";
 
 const files = [
   "README.md",
@@ -27,13 +27,13 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.84`",
+    "教材版本：`v1.0.85`",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "CHANGELOG.md": [
-    "## v1.0.84 - 2026-07-10",
-    "Release publish reconciliation evidence",
+    "## v1.0.85 - 2026-07-11",
+    "Release publish recovery finalization",
     "check-release-publish-reconciliation-contract.mjs",
     "force-with-lease",
   ],
@@ -43,12 +43,12 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.84",
+    "版本：v1.0.85",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.84",
+    "version: v1.0.85",
     "Release artifact chain contract gate",
     "check-release-artifact-chain-contract.mjs",
   ],
@@ -85,17 +85,17 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   [`審查報告/${artifactTimestamp}-資深工程師審查報告.md`]: [
-    "Release publish reconciliation evidence",
-    "v1.0.84",
-    "2026-07-10 06:02:42 CST +0800",
+    "Release publish recovery finalization",
+    "v1.0.85",
+    "2026-07-11 06:03:31 CST +0800",
   ],
   [`內容需要更新的部分/${artifactTimestamp}-內容需要更新的部分.md`]: [
-    "Release publish reconciliation evidence",
+    "Release publish recovery finalization",
     "scripts/check-release-publish-reconciliation-contract.mjs",
-    "v1.0.84",
+    "v1.0.85",
   ],
   [`更新資料/${artifactTimestamp}-${expectedVersion}-更新紀錄.md`]: [
-    "Release publish reconciliation evidence",
+    "Release publish recovery finalization",
     "scripts/check-release-publish-reconciliation-contract.mjs",
     "docs/index.html",
     "GitHub push",

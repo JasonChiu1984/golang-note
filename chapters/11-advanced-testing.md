@@ -454,7 +454,7 @@ Go ReleaseNote contract gate 固定 generated report chain，不讓 `scripts/gen
 
 Release artifact chain contract gate 固定發版審查鏈，不讓 `審查報告/`、`內容需要更新的部分/`、`更新資料/`、`VERSION`、`CHANGELOG.md` 或 `docs/index.html` 在 automation release 中漏件或不同步。
 
-Release publish reconciliation contract gate 固定發布收斂證據：remote release 已建立但 final release-record amend / tag 更新仍 local-only 時，更新紀錄必須保留 `HEAD`、`origin/main`、`tag^{}`、`force-with-lease` 與 recovery command。它由 `node scripts/check-release-publish-reconciliation-contract.mjs` 檢查，避免下一輪 release 把 local-only final amend 誤判成已完整發布。
+Release publish reconciliation contract gate 固定發布收斂證據：remote release 已建立但 final release-record amend / tag 更新仍 local-only 時，更新紀錄必須保留 `HEAD`、`origin/main`、`tag^{}`、`force-with-lease` 與 recovery command；blocked-push recovery 完成後，也要保留成功推送輸出與 finalization artifact。它由 `node scripts/check-release-publish-reconciliation-contract.mjs` 檢查，避免下一輪 release 把 local-only final amend 誤判成已完整發布，或把已補推的 release 誤判成仍 blocked。
 
 Dependency governance static gate 固定依賴供應鏈鏈條，不讓 `go mod verify`、`go list -m -u all`、`govulncheck ./...` 或離線限制說明在 workflow / README / chapter 重整時消失。若環境出現 `lookup proxy.golang.org: no such host` 或 `govulncheck` 無法取得漏洞資料庫，結果要記錄為待補掃描，不可誤標為已通過。
 
@@ -605,7 +605,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs && cd production-api-worker && make syntax-flow-svg-check` | 固定語法流程圖補充頁的 25 個 flow、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口 |
 | Go ReleaseNote contract gate | `node scripts/check-go-release-notes-contract.mjs && cd production-api-worker && make go-release-notes-check` | 固定 Go 1.1-1.26 ReleaseNote、27 個 HTML、官方來源、最新 patch 訊號與 Pages 同步 |
 | Release artifact chain contract gate | `node scripts/check-release-artifact-chain-contract.mjs && cd production-api-worker && make release-artifact-chain-check` | 固定審查報告、內容需要更新的部分、更新資料、版本標記、CHANGELOG 與 docs/index 同步 |
-| Release publish reconciliation contract gate | `node scripts/check-release-publish-reconciliation-contract.mjs && cd production-api-worker && make release-publish-reconciliation-check` | 固定 remote-created / local-final-amended release 的 `HEAD`、`origin/main`、`tag^{}`、`force-with-lease` 與 recovery command |
+| Release publish reconciliation contract gate | `node scripts/check-release-publish-reconciliation-contract.mjs && cd production-api-worker && make release-publish-reconciliation-check` | 固定 remote-created / local-final-amended release 與 blocked-push recovery finalization 的 `HEAD`、`origin/main`、`tag^{}`、`force-with-lease`、recovery command 與成功推送輸出 |
 | Dependency governance static gate | `node scripts/check-dependency-governance-contract.mjs && cd production-api-worker && make dependency-governance-check` | 固定 dependency integrity、update discovery、vulnerability scan、離線限制、Makefile 與 CI 入口 |
 | Supply chain artifact governance contract gate | `node scripts/check-supply-chain-artifact-governance-contract.mjs && cd production-api-worker && make supply-chain-artifact-governance-check` | 固定 SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner |
 | Platform promotion policy contract gate | `node scripts/check-platform-promotion-policy-contract.mjs && cd production-api-worker && make platform-promotion-policy-check` | 固定 platform promotion policy、environment approval、progressive rollout、platform-native signing、artifact verification 與 rollback owner |

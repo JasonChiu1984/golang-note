@@ -14,6 +14,8 @@ const files = {
   makefile: "production-api-worker/Makefile",
   workflow: ".github/workflows/ci.yml",
   previousUpdateRecord: "更新資料/2026-07-09-060302-v1.0.83-更新紀錄.md",
+  blockedUpdateRecord: "更新資料/2026-07-10-060242-v1.0.84-更新紀錄.md",
+  currentUpdateRecord: "更新資料/2026-07-11-060331-v1.0.85-更新紀錄.md",
 };
 
 const missing = [];
@@ -35,7 +37,7 @@ const gateTerms = [
 ];
 
 requireTerms(files.readme, [
-  "教材版本：`v1.0.84`",
+  "教材版本：`v1.0.85`",
   ...gateTerms,
   "force-with-lease",
 ]);
@@ -47,7 +49,7 @@ requireTerms(files.productionReadme, [
 ]);
 
 requireTerms(files.apiContract, [
-  "版本：v1.0.84",
+  "版本：v1.0.85",
   ...gateTerms,
   "HEAD",
   "origin/main",
@@ -55,7 +57,7 @@ requireTerms(files.apiContract, [
 ]);
 
 requireTerms(files.openapi, [
-  "version: v1.0.84",
+  "version: v1.0.85",
   "Release publish reconciliation contract gate",
   "check-release-publish-reconciliation-contract.mjs",
   "force-with-lease",
@@ -91,6 +93,25 @@ requireTerms(files.previousUpdateRecord, [
   "git push --force origin refs/tags/v1.0.83",
 ]);
 
+requireTerms(files.blockedUpdateRecord, [
+  "local release complete / remote push blocked",
+  "git push origin main refs/tags/v1.0.84",
+  "Could not resolve host: github.com",
+  "main...origin/main",
+]);
+
+requireTerms(files.currentUpdateRecord, [
+  "Release publish recovery finalization",
+  "git push origin main refs/tags/v1.0.84",
+  "main -> main",
+  "[new tag]         v1.0.84 -> v1.0.84",
+  "HEAD",
+  "origin/main",
+  "v1.0.84^{}",
+  "v1.0.85^{}",
+  "force-with-lease",
+]);
+
 if (missing.length > 0) {
   console.error("release publish reconciliation contract check failed:");
   for (const item of missing) console.error(`- ${item}`);
@@ -100,7 +121,7 @@ if (missing.length > 0) {
 console.log(JSON.stringify({
   status: "ok",
   contract: "release publish reconciliation",
-  version: "v1.0.84",
-  previousRelease: "v1.0.83",
-  evidence: "remote created, final release-record amend local-only",
+  version: "v1.0.85",
+  previousRelease: "v1.0.84",
+  evidence: "blocked release recovered, finalization recorded",
 }, null, 2));

@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.85 - 2026-07-11
+
+- 新增 2026-07-11 06:03:31 CST +0800 資深工程師審查報告，確認教程深度廣度已足夠，本輪缺口集中在 v1.0.84 blocked-push recovery 已成功但尚未形成新的 finalization artifact。
+- 更新 `scripts/check-release-publish-reconciliation-contract.mjs`，在既有 remote-created / local-final-amended release 證據之外，加入 v1.0.84 blocked-push recovery 成功推送輸出與 v1.0.85 更新紀錄檢查。
+- 更新 `scripts/check-release-artifact-chain-contract.mjs`，將 artifact chain 推進到 2026-07-11 06:03:31 CST +0800 的審查報告、內容需要更新的部分與更新資料。
+- 同步 `README.md`、`production-api-worker/README.md`、`production-api-worker/docs/api-contract.md`、`production-api-worker/api/openapi.yaml`、第 9 / 11 章與整合視覺課程，將本輪發版重點標示為 Release publish recovery finalization。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.85`。
+
 ## v1.0.84 - 2026-07-10
 
 - 新增 2026-07-10 06:02:42 CST +0800 資深工程師審查報告，確認教程深度廣度已足夠，本輪缺口集中在 v1.0.83 remote release 已建立但 final release-record amend / tag 更新仍 local-only 的發布收斂證據。

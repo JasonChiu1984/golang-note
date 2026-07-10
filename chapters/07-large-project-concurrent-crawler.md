@@ -481,7 +481,7 @@ Production API 的 timeout 不是未知錯誤。若 handler 建立的 request de
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs` 固定語法流程圖補充頁的 25 個 flow、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口 |
 | Go ReleaseNote contract gate | `node scripts/check-go-release-notes-contract.mjs` 固定 Go 1.1-1.26 專業報告、27 個 ReleaseNote HTML、官方來源、Patch Revisions、支援狀態與 `docs/ReleaseNote/` Pages 同步 |
 | Release artifact chain contract gate | `node scripts/check-release-artifact-chain-contract.mjs` 固定審查報告、內容需要更新的部分、更新資料、版本標記、CHANGELOG 與 docs/index 發布同步 |
-| Release publish reconciliation contract gate | `node scripts/check-release-publish-reconciliation-contract.mjs` 固定 remote-created / local-final-amended release 的 `HEAD`、`origin/main`、`tag^{}`、`force-with-lease` 與 recovery command |
+| Release publish reconciliation contract gate | `node scripts/check-release-publish-reconciliation-contract.mjs` 固定 remote-created / local-final-amended release 與 blocked-push recovery finalization 的 `HEAD`、`origin/main`、`tag^{}`、`force-with-lease`、recovery command 與成功推送輸出 |
 | Dependency governance static gate | `node scripts/check-dependency-governance-contract.mjs` 固定 root / production module 的 `go mod tidy`、`go mod verify`、`go list -m -u all`、`govulncheck ./...` 與離線處理邊界 |
 | Supply chain artifact governance contract gate | `node scripts/check-supply-chain-artifact-governance-contract.mjs` 與 `make supply-chain-artifact-governance-check` 固定 SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner |
 | Performance benchmark governance contract | `node scripts/check-performance-benchmark-governance-contract.mjs` 固定 benchmark A/B、benchstat、pprof、metrics、Makefile 與 CI 入口 |

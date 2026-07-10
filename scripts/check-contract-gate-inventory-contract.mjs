@@ -22,7 +22,7 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.84`",
+    "教材版本：`v1.0.85`",
     "Contract gate inventory",
     "node scripts/check-contract-gate-inventory-contract.mjs",
     "50 個 root contract checker",
@@ -33,13 +33,13 @@ const required = {
     "node scripts/check-contract-gate-inventory-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.84",
+    "版本：v1.0.85",
     "Contract gate inventory",
     "node scripts/check-contract-gate-inventory-contract.mjs",
     "50 個 root contract checker",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.84",
+    "version: v1.0.85",
     "Contract gate inventory",
     "check-contract-gate-inventory-contract.mjs",
   ],

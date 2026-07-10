@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.84
+  version: v1.0.85
   description: >
     Machine-readable contract for the Go teaching production API worker.
     This file mirrors docs/api-contract.md and the Go contract tests,
@@ -110,8 +110,9 @@ info:
     and CI static gates aligned through check-release-artifact-chain-contract.mjs.
     Release publish reconciliation contract gate keeps remote-created but
     final-amended release states explicit through HEAD, origin/main, tag^{},
-    force-with-lease, recovery commands, Makefile, and CI static gates aligned
-    through check-release-publish-reconciliation-contract.mjs.
+    force-with-lease, recovery commands, blocked-push recovery finalization,
+    successful push output, Makefile, and CI static gates aligned through
+    check-release-publish-reconciliation-contract.mjs.
     Dependency governance contract gate keeps go mod tidy, go mod verify,
     go list -m -u all, govulncheck ./..., root and production module scan
     coverage, offline module proxy and vulnerability database notes, Makefile,

@@ -50,12 +50,12 @@ const required = {
     "http.StatusServiceUnavailable",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.84",
+    "version: v1.0.85",
     "Readiness lifecycle keeps /livez public",
     "Service is draining and should stop receiving new traffic",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.84",
+    "版本：v1.0.85",
     "Readiness lifecycle gate",
     "node scripts/check-readiness-contract.mjs",
   ],

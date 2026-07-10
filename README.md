@@ -2,9 +2,9 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
-> 教材版本：`v1.0.84`
+> 教材版本：`v1.0.85`
 > 教材基準：`Go 1.26.5`
-> 這次更新重點：新增 Release publish reconciliation contract gate，固定 remote release 已建立但 final release-record amend / tag 更新仍 local-only 時的 HEAD、origin/main、tag 與 force-with-lease 復原證據。
+> 這次更新重點：補齊 Release publish recovery finalization，記錄 v1.0.84 blocked-push recovery 已成功推送，並讓 release publish reconciliation gate 固定 recovery evidence。
 
 ## 版本策略
 
@@ -31,7 +31,7 @@
 | Release Note 支援狀態 | ReleaseNote 索引需依官方 Release Policy 標示目前支援版本、未支援版本與最新 patch，並用 SVG 圖表呈現 |
 | Go ReleaseNote contract gate | `ReleaseNote/` 與 `docs/ReleaseNote/` 需由 `node scripts/check-go-release-notes-contract.mjs` 固定 27 個 HTML、Go 1.1-1.26 必要報告區塊、官方來源、支援狀態與最新 patch 訊號 |
 | Release artifact chain contract gate | 每次發版需保留同 timestamp 的 `審查報告/`、`內容需要更新的部分/`、`更新資料/`，並由 `node scripts/check-release-artifact-chain-contract.mjs` 固定 VERSION、CHANGELOG、docs/index 與 CI 入口 |
-| Release publish reconciliation contract gate | remote release 已建立但 final release-record amend / tag 更新仍 local-only 時，必須保留 `HEAD`、`origin/main`、`tag^{}`、`force-with-lease` 與恢復命令，並由 `node scripts/check-release-publish-reconciliation-contract.mjs` 固定 |
+| Release publish reconciliation contract gate | remote release 已建立但 final release-record amend / tag 更新仍 local-only 時，必須保留 `HEAD`、`origin/main`、`tag^{}`、`force-with-lease` 與恢復命令；blocked-push recovery 完成後，必須保留成功推送輸出與 finalization artifact，並由 `node scripts/check-release-publish-reconciliation-contract.mjs` 固定 |
 | 補充教材頁 | 重大補充 HTML 需放入 `docs/`，包含語法應用圖解、第三方模組選型、C/Python/Go 效能比較、Assembly 與微服務 |
 | 語法 SVG 流程圖 | 單語法補充頁需以 Start/End、Input/Output、Decision、Process 等標準流程圖符號呈現，並保留 `<title>` / `<desc>` / `aria-labelledby` 可存取性 metadata |
 | Syntax flow SVG contract gate | `docs/golang-syntax-application-svg.html` 與整合來源需由 `node scripts/check-syntax-flow-svg-contract.mjs` 固定 25 個單語法流程、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口 |
