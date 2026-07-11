@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.86 - 2026-07-12
+
+- 新增 2026-07-12 06:03:15 CST +0800 資深工程師審查報告，確認教程深度廣度已足夠，本輪缺口集中在 Go ReleaseNote patch baseline 已更新但 freshness evidence 尚未形成獨立 gate。
+- 新增 `scripts/check-go-release-notes-freshness-contract.mjs` 與 `make go-release-notes-freshness-check`，固定 official Go Release History verified 時間、Go 1.26.5 / Go 1.25.12 baseline、ReleaseNote index 來源證據、Makefile 與 CI 入口。
+- 更新 `scripts/generate-go-release-notes.mjs`、`ReleaseNote/index.html` 與 `docs/ReleaseNote/index.html`，將支援狀態查核日期推進到 2026-07-12，並明確記錄本輪官方來源核對時間。
+- 同步 `README.md`、`production-api-worker/README.md`、`production-api-worker/docs/api-contract.md`、`production-api-worker/api/openapi.yaml`、第 9 / 11 章、進階 Cheat Sheet 與整合視覺課程，將本輪發版重點標示為 Go ReleaseNote freshness evidence。
+- Contract gate inventory 從 50 個 root contract checker 更新為 51 個 root contract checker，並納入 Go ReleaseNote freshness evidence checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.86`。
+
 ## v1.0.85 - 2026-07-11
 
 - 新增 2026-07-11 06:03:31 CST +0800 資深工程師審查報告，確認教程深度廣度已足夠，本輪缺口集中在 v1.0.84 blocked-push recovery 已成功但尚未形成新的 finalization artifact。

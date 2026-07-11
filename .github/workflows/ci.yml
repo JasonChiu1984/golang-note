@@ -159,6 +159,9 @@ jobs:
       - name: Check Go release notes contract
         run: node scripts/check-go-release-notes-contract.mjs
 
+      - name: Check Go release notes freshness evidence contract
+        run: node scripts/check-go-release-notes-freshness-contract.mjs
+
       - name: Check release artifact chain contract
         run: node scripts/check-release-artifact-chain-contract.mjs
 

@@ -60,8 +60,8 @@ requireTerms(files.compose, [
 ]);
 
 requireTerms(files.readme, [
-  "教材版本：`v1.0.85`",
-  "50 個 root contract checker",
+  "教材版本：`v1.0.86`",
+  "51 個 root contract checker",
   "Alertmanager routing governance contract gate",
   "node scripts/check-alertmanager-routing-contract.mjs",
   "receiver owner",
@@ -80,7 +80,7 @@ requireTerms(files.productionReadme, [
 ]);
 
 requireTerms(files.runbook, [
-  "版本：v1.0.85",
+  "版本：v1.0.86",
   "Alertmanager routing governance contract gate",
   "configs/prometheus/alertmanager.yml",
   "receiver owner",
@@ -90,13 +90,13 @@ requireTerms(files.runbook, [
 ]);
 
 requireTerms(files.apiContract, [
-  "版本：v1.0.85",
+  "版本：v1.0.86",
   "Alertmanager routing governance contract gate",
   "node scripts/check-alertmanager-routing-contract.mjs",
 ]);
 
 requireTerms(files.openapi, [
-  "version: v1.0.85",
+  "version: v1.0.86",
   "Alertmanager routing governance contract gate",
   "check-alertmanager-routing-contract.mjs",
 ]);
@@ -122,8 +122,8 @@ const contractScripts = readdirSync("scripts")
   .filter((name) => /^check-.*-contract\.mjs$/.test(name))
   .sort();
 
-if (contractScripts.length !== 50) {
-  missing.push(`expected 50 root contract checker scripts, found ${contractScripts.length}`);
+if (contractScripts.length !== 51) {
+  missing.push(`expected 51 root contract checker scripts, found ${contractScripts.length}`);
 }
 
 if (missing.length > 0) {

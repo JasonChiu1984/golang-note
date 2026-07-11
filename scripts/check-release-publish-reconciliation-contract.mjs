@@ -37,7 +37,7 @@ const gateTerms = [
 ];
 
 requireTerms(files.readme, [
-  "教材版本：`v1.0.85`",
+  "教材版本：`v1.0.86`",
   ...gateTerms,
   "force-with-lease",
 ]);
@@ -49,7 +49,7 @@ requireTerms(files.productionReadme, [
 ]);
 
 requireTerms(files.apiContract, [
-  "版本：v1.0.85",
+  "版本：v1.0.86",
   ...gateTerms,
   "HEAD",
   "origin/main",
@@ -57,7 +57,7 @@ requireTerms(files.apiContract, [
 ]);
 
 requireTerms(files.openapi, [
-  "version: v1.0.85",
+  "version: v1.0.86",
   "Release publish reconciliation contract gate",
   "check-release-publish-reconciliation-contract.mjs",
   "force-with-lease",

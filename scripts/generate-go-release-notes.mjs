@@ -50,9 +50,11 @@ const roadmapStages = [
 ];
 
 const supportStatus = {
-  asOf: "2026-07-08",
+  asOf: "2026-07-12",
+  verifiedAt: "2026-07-12 06:03:15 CST +0800",
   latestPatch: "Go 1.26.5",
   latestPatchTokens: ["go1.26.5", "go1.25.12"],
+  sourceEvidence: "official Go Release History verified; Go ReleaseNote freshness evidence keeps the Go 1.26.5 / Go 1.25.12 baseline current without inventing a new patch release.",
   supported: [25, 26],
   unsupportedRange: [1, 24],
   rule: "官方 Release Policy：每個 major release 支援到已有兩個更新 major release 為止。",
@@ -1224,7 +1226,7 @@ function supportStatusHtml() {
 
   return `<section id="support-status">
       <h2>目前支援版本 SVG 圖表</h2>
-      <p class="section-note">依官方 Go Release Policy 與 Release History 判定；狀態日期：${supportStatus.asOf}，最新 patch：${supportStatus.latestPatch}。</p>
+      <p class="section-note">依官方 Go Release Policy 與 Release History 判定；狀態日期：${supportStatus.asOf}，完整查核時間：${supportStatus.verifiedAt}，最新 patch：${supportStatus.latestPatch}。Go ReleaseNote freshness evidence：${supportStatus.sourceEvidence}</p>
       <div class="support-svg-wrap">
         <svg id="support-status-chart" class="support-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 380" role="img" aria-labelledby="support-chart-title support-chart-desc">
           <title id="support-chart-title">Go 1.1 到 Go 1.26 支援狀態圖表</title>
@@ -1266,7 +1268,7 @@ function supportStatusHtml() {
           </g>
         </svg>
       </div>
-      <div class="support-source">官方來源：<a href="${OFFICIAL_HISTORY}">Go Release History / Release Policy</a>。</div>
+      <div class="support-source">官方來源：<a href="${OFFICIAL_HISTORY}">Go Release History / Release Policy</a>。official Go Release History verified：${supportStatus.verifiedAt}；latest patch tokens：${supportStatus.latestPatchTokens.join(" / ")}。</div>
     </section>`;
 }
 
@@ -1326,8 +1328,8 @@ function indexHtml(releases) {
 <body>
   <header>
     <h1>Go 1.1-1.26 Release Note 專業整理報告索引</h1>
-    <p class="lead">依官方 Go Release History 與各版本 Release Notes 建立 26 份 major-version 獨立專業整理報告。最新 major 版本為 Go 1.26，最新 patch 狀態記錄至 Go 1.26.5（2026-07-07）。</p>
-    <div class="meta-row"><span class="meta">範圍：Go 1.1 - Go 1.26</span><span class="meta">報告數：26</span><span class="meta">生成時間：${GENERATED_AT}</span><span class="meta">來源：go.dev 官方文件</span></div>
+    <p class="lead">依官方 Go Release History 與各版本 Release Notes 建立 26 份 major-version 獨立專業整理報告。最新 major 版本為 Go 1.26，最新 patch 狀態記錄至 Go 1.26.5（2026-07-07）；Go ReleaseNote freshness evidence 已於 ${supportStatus.verifiedAt} 重新核對官方來源，確認 baseline 維持 ${supportStatus.latestPatchTokens.join(" / ")}。</p>
+    <div class="meta-row"><span class="meta">範圍：Go 1.1 - Go 1.26</span><span class="meta">報告數：26</span><span class="meta">生成時間：${GENERATED_AT}</span><span class="meta">來源：go.dev 官方文件</span><span class="meta">official Go Release History verified：${supportStatus.verifiedAt}</span></div>
   </header>
   <main>
     <nav class="nav" aria-label="Release roadmap and versions">${nav}</nav>

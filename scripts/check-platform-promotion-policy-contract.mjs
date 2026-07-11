@@ -40,8 +40,8 @@ const policyTerms = [
 ];
 
 requireTerms(files.readme, [
-  "教材版本：`v1.0.85`",
-  "50 個 root contract checker",
+  "教材版本：`v1.0.86`",
+  "51 個 root contract checker",
   ...policyTerms,
 ]);
 
@@ -61,12 +61,12 @@ requireTerms(files.runbook, [
 ]);
 
 requireTerms(files.apiContract, [
-  "版本：v1.0.85",
+  "版本：v1.0.86",
   ...policyTerms,
 ]);
 
 requireTerms(files.openapi, [
-  "version: v1.0.85",
+  "version: v1.0.86",
   "Platform promotion policy contract gate",
   "check-platform-promotion-policy-contract.mjs",
   "environment approval",
