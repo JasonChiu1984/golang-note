@@ -3,8 +3,8 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename } from "node:path";
 
 const version = readFileSync("VERSION", "utf8").trim();
-const expectedVersion = "v1.0.86";
-const artifactTimestamp = "2026-07-12-060315";
+const expectedVersion = "v1.0.87";
+const artifactTimestamp = "2026-07-13-061816";
 
 const files = [
   "README.md",
@@ -27,15 +27,15 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.86`",
+    "教材版本：`v1.0.87`",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "CHANGELOG.md": [
-    "## v1.0.86 - 2026-07-12",
-    "Go ReleaseNote freshness evidence",
-    "check-go-release-notes-freshness-contract.mjs",
-    "51 個 root contract checker",
+    "## v1.0.87 - 2026-07-13",
+    "Release version consistency contract gate",
+    "check-release-version-consistency-contract.mjs",
+    "52 個 root contract checker",
   ],
   "production-api-worker/README.md": [
     "Release Artifact Chain Contract",
@@ -43,12 +43,12 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.86",
+    "版本：v1.0.87",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.86",
+    "version: v1.0.87",
     "Release artifact chain contract gate",
     "check-release-artifact-chain-contract.mjs",
   ],
@@ -85,18 +85,18 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   [`審查報告/${artifactTimestamp}-資深工程師審查報告.md`]: [
-    "Go ReleaseNote freshness evidence",
-    "v1.0.86",
-    "2026-07-12 06:03:15 CST +0800",
+    "Release version consistency contract gate",
+    "v1.0.87",
+    "2026-07-13 06:18:16 CST +0800",
   ],
   [`內容需要更新的部分/${artifactTimestamp}-內容需要更新的部分.md`]: [
-    "Go ReleaseNote freshness evidence",
-    "scripts/check-go-release-notes-freshness-contract.mjs",
-    "v1.0.86",
+    "Release version consistency contract gate",
+    "scripts/check-release-version-consistency-contract.mjs",
+    "v1.0.87",
   ],
   [`更新資料/${artifactTimestamp}-${expectedVersion}-更新紀錄.md`]: [
-    "Go ReleaseNote freshness evidence",
-    "scripts/check-go-release-notes-freshness-contract.mjs",
+    "Release version consistency contract gate",
+    "scripts/check-release-version-consistency-contract.mjs",
     "docs/index.html",
     "GitHub push",
   ],

@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.87 - 2026-07-13
+
+- 新增 2026-07-13 06:18:16 CST +0800 資深工程師審查報告，確認教程深度廣度已足夠，本輪缺口集中在目前 release 版本號尚未由獨立 gate 固定。
+- 新增 `scripts/check-release-version-consistency-contract.mjs` 與 `make release-version-consistency-check`，固定 `VERSION`、`CHANGELOG.md`、README、production README、API contract、OpenAPI、章節、Cheatsheet、整合視覺課程、`docs/index.html`、Makefile 與 GitHub Actions 的目前版本一致性。
+- 同步 `README.md`、`production-api-worker/README.md`、`production-api-worker/docs/api-contract.md`、`production-api-worker/api/openapi.yaml`、第 7 / 9 / 11 章、進階 Cheat Sheet 與整合視覺課程，將本輪發版重點標示為 Release version consistency contract gate。
+- Contract gate inventory 從 51 個 root contract checker 更新為 52 個 root contract checker，並納入 release version consistency checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.87`。
+
 ## v1.0.86 - 2026-07-12
 
 - 新增 2026-07-12 06:03:15 CST +0800 資深工程師審查報告，確認教程深度廣度已足夠，本輪缺口集中在 Go ReleaseNote patch baseline 已更新但 freshness evidence 尚未形成獨立 gate。

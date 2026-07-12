@@ -2,9 +2,9 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
-> 教材版本：`v1.0.86`
+> 教材版本：`v1.0.87`
 > 教材基準：`Go 1.26.5`
-> 這次更新重點：補齊 Go ReleaseNote freshness evidence，確認 2026-07-12 已重新核對官方 Go Release History，且 Go 1.26.5 / Go 1.25.12 patch baseline 維持有效。
+> 這次更新重點：補齊 Release version consistency contract gate，固定 `VERSION`、`CHANGELOG.md`、README、API contract、OpenAPI、章節、整合視覺課程、`docs/index.html`、Makefile 與 GitHub Actions 的同版一致性。
 
 ## 版本策略
 
@@ -31,6 +31,7 @@
 | Release Note 支援狀態 | ReleaseNote 索引需依官方 Release Policy 標示目前支援版本、未支援版本與最新 patch，並用 SVG 圖表呈現 |
 | Go ReleaseNote contract gate | `ReleaseNote/` 與 `docs/ReleaseNote/` 需由 `node scripts/check-go-release-notes-contract.mjs` 固定 27 個 HTML、Go 1.1-1.26 必要報告區塊、官方來源、支援狀態與最新 patch 訊號 |
 | Go ReleaseNote freshness evidence | `node scripts/check-go-release-notes-freshness-contract.mjs` 需固定 official Go Release History verified 時間、Go 1.26.5 / Go 1.25.12 baseline 與 ReleaseNote index 來源證據 |
+| Release version consistency contract gate | `VERSION`、`CHANGELOG.md`、README、API contract、OpenAPI、章節、整合視覺課程、`docs/index.html`、Makefile 與 GitHub Actions 必須同步目前版本，並由 `node scripts/check-release-version-consistency-contract.mjs` 固定 |
 | Release artifact chain contract gate | 每次發版需保留同 timestamp 的 `審查報告/`、`內容需要更新的部分/`、`更新資料/`，並由 `node scripts/check-release-artifact-chain-contract.mjs` 固定 VERSION、CHANGELOG、docs/index 與 CI 入口 |
 | Release publish reconciliation contract gate | remote release 已建立但 final release-record amend / tag 更新仍 local-only 時，必須保留 `HEAD`、`origin/main`、`tag^{}`、`force-with-lease` 與恢復命令；blocked-push recovery 完成後，必須保留成功推送輸出與 finalization artifact，並由 `node scripts/check-release-publish-reconciliation-contract.mjs` 固定 |
 | 補充教材頁 | 重大補充 HTML 需放入 `docs/`，包含語法應用圖解、第三方模組選型、C/Python/Go 效能比較、Assembly 與微服務 |
@@ -87,7 +88,7 @@
 | CI release gate | `.github/workflows/ci.yml` 需固定 root module、production-api-worker contract、race/coverage、govulncheck 與 Docker build，避免教材只描述 CI 卻沒有真實 workflow |
 | CI quality gate contract | GitHub Actions 需同時保留 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，並由 `node scripts/check-ci-quality-gate-contract.mjs` 固定文件、Makefile 與 CI 入口 |
 | CI contract parity gate | `make ci-contract` 的 API contract test selector 必須與 `.github/workflows/ci.yml` production contract job 一致，包含 `TestCORSAllowedOriginsContract`，並由 `node scripts/check-ci-contract-parity-contract.mjs` 固定 |
-| Contract gate inventory | 51 個 root contract checker 必須全部被 `.github/workflows/ci.yml` 呼叫，並由 `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口 |
+| Contract gate inventory | 52 個 root contract checker 必須全部被 `.github/workflows/ci.yml` 呼叫，並由 `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口 |
 | Release artifact chain contract gate | `審查報告/`、`內容需要更新的部分/`、`更新資料/`、`VERSION`、`CHANGELOG.md` 與 `docs/index.html` 必須由 `node scripts/check-release-artifact-chain-contract.mjs` 固定，避免發版記錄漏件 |
 | Dependency governance contract gate | `go mod tidy`、`go mod verify`、`go list -m -u all`、`govulncheck ./...` 與 module proxy / vulnerability database 離線處理必須由 `node scripts/check-dependency-governance-contract.mjs` 固定 |
 | Supply chain artifact governance contract gate | SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner 必須由 `node scripts/check-supply-chain-artifact-governance-contract.mjs` 固定 |
@@ -211,6 +212,7 @@ go test ./project-concurrent-crawler/...
 | Go 1.20 效能矩陣 | `rg -n "效能比較|crypto/rsa encryption|runtime/metrics histogram" ReleaseNote/go1.20-release-note.html docs/ReleaseNote/go1.20-release-note.html` | 確認 Release Note 同步記錄官方效能數字與 benchmark / metrics 驗證建議 |
 | Release Note 官方段落覆蓋 | `rg -n "Go 1.1-1.26|support-status-chart|Go 1.25、Go 1.26|go1.1-release-note" ReleaseNote docs/ReleaseNote` | 確認根目錄與 Pages 版都保留 Go 1.1、Roadmap、支援狀態圖與最新 patch 訊號 |
 | Go ReleaseNote contract gate | `node scripts/check-go-release-notes-contract.mjs` | 確認 Go 1.1-1.26 報告、27 個 HTML、官方來源、Go 1.26.5 / Go 1.25.12 patch 訊號與 Pages 同步沒有漂移 |
+| Release version consistency contract gate | `node scripts/check-release-version-consistency-contract.mjs` | 確認目前版本在 VERSION、CHANGELOG、README、API contract、OpenAPI、章節、整合視覺課程、docs/index、Makefile 與 CI 中一致 |
 | Release artifact chain contract gate | `node scripts/check-release-artifact-chain-contract.mjs` | 確認同 timestamp 的審查報告、內容更新清單、更新資料、版本標記與 docs/index 同步沒有漏件 |
 | 補充教材頁 | `test -f docs/golang-syntax-application-svg.html && test -f docs/golang-third-party-modules.html && test -f docs/c-python-go-performance-supplement.html && test -f docs/golang-assembly-tutorial.html && test -f docs/golang-microservice-tutorial.html` | 確認補充 HTML 交付頁存在 |
 | 語法 SVG 流程圖品質門檻 | `node scripts/check-syntax-flow-svg.mjs` | 確認 `docs/` 與整合來源都保留 25 個單語法流程圖、標準流程圖符號、SVG metadata 與 blueprint renderer |
@@ -250,7 +252,7 @@ go test ./project-concurrent-crawler/...
 | Shutdown signal contract gate | `node scripts/check-shutdown-signal-contract.mjs` | 確認 SIGINT/SIGTERM、`TestMonitoredSignalsContract`、README、API contract、章節與 CI 入口一致 |
 | CI quality gate contract | `node scripts/check-ci-quality-gate-contract.mjs` | 確認 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build、Compose smoke、Makefile 與 CI 入口一致 |
 | CI contract parity gate | `node scripts/check-ci-contract-parity-contract.mjs` | 確認 `make ci-contract` 與 GitHub Actions production contract job 的 API test selector 一致，且保留 `TestCORSAllowedOriginsContract` |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` | 確認 51 個 root contract checker 都被 GitHub Actions 呼叫，且 Makefile、README、API contract、章節與整合視覺課程入口一致 |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` | 確認 52 個 root contract checker 都被 GitHub Actions 呼叫，且 Makefile、README、API contract、章節與整合視覺課程入口一致 |
 | Release artifact chain contract gate | `node scripts/check-release-artifact-chain-contract.mjs` | 確認發版 artifact chain、版本標記、CHANGELOG、docs/index 與 CI 入口一致 |
 | Dependency governance contract gate | `node scripts/check-dependency-governance-contract.mjs` | 確認依賴完整性、可更新版本盤點、漏洞掃描、Makefile、CI 與離線限制說明一致 |
 | Supply chain artifact governance contract gate | `node scripts/check-supply-chain-artifact-governance-contract.mjs` | 確認 SBOM、image signing、provenance / attestation、artifact retention、promotion approval、release evidence owner 與 CI 入口一致 |
@@ -264,6 +266,7 @@ go test ./project-concurrent-crawler/...
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs` | 確認 standalone production workflow 保留 contract、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs` | 確認語法流程圖補充頁保留 25 個 flow、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口 |
 | Go ReleaseNote contract gate | `node scripts/check-go-release-notes-contract.mjs` | 確認 `ReleaseNote/` 與 `docs/ReleaseNote/` 逐檔一致，且每個版本頁保留必要報告區塊與官方來源 |
+| Release version consistency contract gate | `node scripts/check-release-version-consistency-contract.mjs` | 確認目前 release 版本、52 個 root checker inventory、發版 artifact chain 與 CI 入口一致 |
 | Docs index 連結自動修正 | `node scripts/fix-docs-index-links.mjs --sync-source && node scripts/fix-docs-index-links.mjs --check` | 每次重產 `docs/index.html` 後，自動改成 GitHub Pages `docs/` root 可用路徑，避免 `/docs`、`/ReleaseNote` 404 |
 | HTML 回主頁教程檢查 | `node scripts/check-html-home-links.mjs` | 確認 `docs/`、`ReleaseNote/` 與圖解 HTML 頁面都有可解析到 `docs/index.html` 的「主頁教程」入口 |
 | 跨語言效能範例 | `cd examples/performance-comparison && clang -O2 c/bench.c -o /tmp/bench-c && /tmp/bench-c && go test -bench=. -benchmem -count=1 ./go && python3 python/bench.py` | 確認 C/Python/Go 範例可重跑，並保留正式報告所需原始輸出 |

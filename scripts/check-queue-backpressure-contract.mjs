@@ -45,13 +45,13 @@ const required = {
     "queue_full",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.86",
+    "版本：v1.0.87",
     "Queue backpressure contract",
     "queue_full",
     "node scripts/check-queue-backpressure-contract.mjs",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.86",
+    "version: v1.0.87",
     "Queue backpressure returns 503 queue_full",
     "QueueFull",
   ],
