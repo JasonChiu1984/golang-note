@@ -3,8 +3,8 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename } from "node:path";
 
 const version = readFileSync("VERSION", "utf8").trim();
-const expectedVersion = "v1.0.87";
-const artifactTimestamp = "2026-07-13-061816";
+const expectedVersion = "v1.0.88";
+const artifactTimestamp = "2026-07-14-060143";
 
 const files = [
   "README.md",
@@ -27,15 +27,15 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.87`",
+    "教材版本：`v1.0.88`",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "CHANGELOG.md": [
-    "## v1.0.87 - 2026-07-13",
-    "Release version consistency contract gate",
-    "check-release-version-consistency-contract.mjs",
-    "52 個 root contract checker",
+    "## v1.0.88 - 2026-07-14",
+    "Release artifact metadata consistency contract gate",
+    "check-release-artifact-metadata-contract.mjs",
+    "53 個 root contract checker",
   ],
   "production-api-worker/README.md": [
     "Release Artifact Chain Contract",
@@ -43,12 +43,12 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.87",
+    "版本：v1.0.88",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.87",
+    "version: v1.0.88",
     "Release artifact chain contract gate",
     "check-release-artifact-chain-contract.mjs",
   ],
@@ -85,18 +85,18 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   [`審查報告/${artifactTimestamp}-資深工程師審查報告.md`]: [
-    "Release version consistency contract gate",
-    "v1.0.87",
-    "2026-07-13 06:18:16 CST +0800",
+    "Release artifact metadata consistency contract gate",
+    "v1.0.88",
+    "2026-07-14 06:01:43 CST +0800",
   ],
   [`內容需要更新的部分/${artifactTimestamp}-內容需要更新的部分.md`]: [
-    "Release version consistency contract gate",
-    "scripts/check-release-version-consistency-contract.mjs",
-    "v1.0.87",
+    "Release artifact metadata consistency contract gate",
+    "scripts/check-release-artifact-metadata-contract.mjs",
+    "v1.0.88",
   ],
   [`更新資料/${artifactTimestamp}-${expectedVersion}-更新紀錄.md`]: [
-    "Release version consistency contract gate",
-    "scripts/check-release-version-consistency-contract.mjs",
+    "Release artifact metadata consistency contract gate",
+    "scripts/check-release-artifact-metadata-contract.mjs",
     "docs/index.html",
     "GitHub push",
   ],

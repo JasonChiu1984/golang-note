@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 
-const expectedVersion = "v1.0.87";
-const expectedCheckerCount = 52;
+const expectedVersion = "v1.0.88";
+const expectedCheckerCount = 53;
 const freshnessDate = "2026-07-12";
 const freshnessTimestamp = "2026-07-12 06:03:15 CST +0800";
 const latestPatch = "Go 1.26.5";
@@ -70,7 +70,7 @@ const required = {
     `version: ${expectedVersion}`,
     "Go ReleaseNote freshness evidence",
     "check-go-release-notes-freshness-contract.mjs",
-    "all 52 root contract checker scripts",
+    "all 53 root contract checker scripts",
   ],
   "chapters/09-build-and-deploy.md": [
     "Go ReleaseNote freshness evidence",

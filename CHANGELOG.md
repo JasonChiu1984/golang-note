@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.88 - 2026-07-14
+
+- 新增 2026-07-14 06:01:43 CST +0800 資深工程師審查報告，確認教程深度廣度已足夠，本輪缺口集中在 release artifact 三件套的 metadata 與交叉引用尚未有獨立 gate 固定。
+- 新增 `scripts/check-release-artifact-metadata-contract.mjs` 與 `make release-artifact-metadata-check`，固定同 timestamp 的 `審查報告/`、`內容需要更新的部分/`、`更新資料/` 在版本、完整日期時間、本輪主題、來源引用與 artifact reference 上一致。
+- 同步 `README.md`、`production-api-worker/README.md`、`production-api-worker/docs/api-contract.md`、`production-api-worker/api/openapi.yaml`、第 7 / 9 / 11 章、進階 Cheat Sheet 與整合視覺課程，將本輪發版重點標示為 Release artifact metadata consistency contract gate。
+- Contract gate inventory 從 52 個 root contract checker 更新為 53 個 root contract checker，並納入 release artifact metadata checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.88`。
+
 ## v1.0.87 - 2026-07-13
 
 - 新增 2026-07-13 06:18:16 CST +0800 資深工程師審查報告，確認教程深度廣度已足夠，本輪缺口集中在目前 release 版本號尚未由獨立 gate 固定。

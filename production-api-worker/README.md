@@ -47,7 +47,7 @@
 - Pipeline：migration CLI、Docker Compose、GitHub Actions workflow、Docker image build gate、Compose smoke gate
 - CI Quality Gate Contract：GitHub Actions 必須保留 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，並由 `make ci-quality-gate-check` 固定文件、Makefile 與 CI 入口
 - CI Contract Parity Gate：`make ci-contract` 與 GitHub Actions production contract job 必須使用相同 API test selector，包含 `TestCORSAllowedOriginsContract`，並由 `make ci-contract-parity-check` 固定
-- Contract Gate Inventory：52 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
+- Contract Gate Inventory：53 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
 - Docs Publishing Contract：`docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈必須由 `make docs-publishing-check` / `node scripts/check-docs-publishing-contract.mjs` 固定，避免 Pages 首頁與整合課程來源漂移
 - Production Workflow Contract：`production-api-worker/.github/workflows/production-api-worker.yml` 必須保留 `make ci-contract`、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup，並由 `make production-workflow-check` 固定
 - Syntax Flow SVG Contract：語法流程圖補充頁必須保留 25 個單語法 flow、標準流程圖符號、SVG metadata 與 blueprint renderer，並由 `make syntax-flow-svg-check` / `node scripts/check-syntax-flow-svg-contract.mjs` 固定
@@ -55,6 +55,7 @@
 - Go ReleaseNote Freshness Evidence Contract：Go ReleaseNote freshness evidence、official Go Release History verified 時間、Go 1.26.5 / Go 1.25.12 baseline 與 ReleaseNote index 來源證據必須由 `make go-release-notes-freshness-check` / `node scripts/check-go-release-notes-freshness-contract.mjs` 固定
 - Release Version Consistency Contract：`VERSION`、`CHANGELOG.md`、README、API contract、OpenAPI、章節、整合視覺課程、`docs/index.html`、Makefile 與 GitHub Actions 必須同步目前版本，並由 `make release-version-consistency-check` / `node scripts/check-release-version-consistency-contract.mjs` 固定
 - Release Artifact Chain Contract：發版需保留同 timestamp 的審查報告、內容需要更新的部分、更新資料、版本標記與 docs/index 同步，並由 `make release-artifact-chain-check` / `node scripts/check-release-artifact-chain-contract.mjs` 固定
+- Release Artifact Metadata Consistency Contract：同 timestamp 的審查報告、內容需要更新的部分與更新資料需保留一致的版本、完整日期時間、本輪主題與交叉引用，並由 `make release-artifact-metadata-check` / `node scripts/check-release-artifact-metadata-contract.mjs` 固定
 - Dependency Governance Contract：root module 與 production module 都需保留 `go mod tidy`、`go mod verify`、`go list -m -u all`、`govulncheck ./...` 與離線限制說明，並由 `make dependency-governance-check` / `node scripts/check-dependency-governance-contract.mjs` 固定
 - Performance Benchmark Governance Contract：API / worker / queue hot path 修改需保留 benchmark A/B、`benchstat old.txt new.txt`、pprof 或 metrics 證據，並由 `make performance-benchmark-governance-check` / `node scripts/check-performance-benchmark-governance-contract.mjs` 固定
 - Release Rollback Drill Contract：release promotion 或 incident rollback 需保留 rollback decision、previous image restore、migration rollback boundary、health verification、metrics verification 與 postmortem evidence，並由 `make release-rollback-drill-check` / `node scripts/check-release-rollback-drill-contract.mjs` 固定
@@ -227,6 +228,7 @@ make compose-smoke
 | `make go-release-notes-check` | 固定 Go ReleaseNote Contract、Go 1.1-1.26 報告、27 個 HTML、官方來源、最新 patch 訊號與 Pages 同步 |
 | `make go-release-notes-freshness-check` | 固定 Go ReleaseNote Freshness Evidence Contract、official Go Release History verified 時間、Go 1.26.5 / Go 1.25.12 baseline 與 ReleaseNote index 來源證據 |
 | `make release-artifact-chain-check` | 固定 Release Artifact Chain Contract、審查報告、內容需要更新的部分、更新資料、版本標記與 docs/index 同步 |
+| `make release-artifact-metadata-check` | 固定 Release Artifact Metadata Consistency Contract、三份 dated artifacts 的版本、日期、主題與交叉引用 |
 | `make dependency-governance-check` | 固定 Dependency Governance Contract、module integrity、dependency update discovery、vulnerability scan、離線限制、Makefile 與 CI 入口 |
 | `make supply-chain-artifact-governance-check` | 固定 Supply Chain Artifact Governance Contract、SBOM、image signing、provenance / attestation、artifact retention、promotion approval、release evidence owner 與 CI 入口 |
 | `make platform-promotion-policy-check` | 固定 Platform Promotion Policy Contract、platform promotion policy、environment approval、progressive rollout、platform-native signing、artifact verification、rollback owner 與 CI 入口 |
@@ -306,7 +308,7 @@ make contract-gate-inventory-check
 cd .. && node scripts/check-contract-gate-inventory-contract.mjs
 ```
 
-這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 52 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
+這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 53 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
 
 Production Workflow Contract 需包含：
 
@@ -359,6 +361,15 @@ Release Artifact Chain Contract 需包含：
 make release-artifact-chain-check
 cd .. && node scripts/check-release-artifact-chain-contract.mjs
 ```
+
+Release Artifact Metadata Consistency Contract 需包含：
+
+```bash
+make release-artifact-metadata-check
+cd .. && node scripts/check-release-artifact-metadata-contract.mjs
+```
+
+這個 gate 會檢查同 timestamp 的審查報告、內容需要更新的部分與更新資料，確認版本、完整日期時間、本輪主題、來源引用與 artifact reference 一致，避免發版紀錄檔存在但內容無法互相追溯。
 
 這個 gate 會固定每次 release 的三段式 artifact chain：`審查報告/`、`內容需要更新的部分/`、`更新資料/` 必須使用同一 timestamp，並同步 `VERSION`、`CHANGELOG.md`、`docs/index.html`、Makefile 與 GitHub Actions，避免 release 只留下 commit/tag 卻缺少可回查的審查與更新紀錄。
 

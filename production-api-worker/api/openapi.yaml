@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.87
+  version: v1.0.88
   description: >
     Machine-readable contract for the Go teaching production API worker.
     This file mirrors docs/api-contract.md and the Go contract tests,
@@ -85,7 +85,7 @@ info:
     context, keeps api-worker process exit hooked to obs.Shutdown, and keeps
     TestTraceShutdownContract, check-trace-shutdown-contract.mjs, Makefile,
     docs, and CI static gates aligned.
-    Contract gate inventory keeps all 52 root contract checker scripts,
+    Contract gate inventory keeps all 53 root contract checker scripts,
     check-contract-gate-inventory-contract.mjs, Makefile, README, API contract,
     chapters, visual course, and GitHub Actions aligned.
     Docs publishing contract gate keeps docs/index.html, GitHub Pages link fix,
@@ -116,6 +116,10 @@ info:
     Release artifact chain contract gate keeps review reports, update-needed
     notes, update records, VERSION, CHANGELOG.md, docs/index.html, Makefile,
     and CI static gates aligned through check-release-artifact-chain-contract.mjs.
+    Release artifact metadata consistency contract gate keeps same-timestamp
+    review reports, update-needed notes, and update records aligned on version,
+    full datetime, release topic, source references, artifact references,
+    Makefile, and CI static gates through check-release-artifact-metadata-contract.mjs.
     Release publish reconciliation contract gate keeps remote-created but
     final-amended release states explicit through HEAD, origin/main, tag^{},
     force-with-lease, recovery commands, blocked-push recovery finalization,

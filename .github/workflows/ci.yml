@@ -168,6 +168,9 @@ jobs:
       - name: Check release artifact chain contract
         run: node scripts/check-release-artifact-chain-contract.mjs
 
+      - name: Check release artifact metadata consistency contract
+        run: node scripts/check-release-artifact-metadata-contract.mjs
+
       - name: Check release publish reconciliation contract
         run: node scripts/check-release-publish-reconciliation-contract.mjs
 

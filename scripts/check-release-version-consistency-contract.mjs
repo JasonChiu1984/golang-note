@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 
-const expectedVersion = "v1.0.87";
-const releaseDate = "2026-07-13";
-const artifactTimestamp = "2026-07-13-061816";
-const expectedCheckerCount = 52;
+const expectedVersion = "v1.0.88";
+const releaseDate = "2026-07-14";
+const artifactTimestamp = "2026-07-14-060143";
+const expectedCheckerCount = 53;
 
 const version = readFileSync("VERSION", "utf8").trim();
 const contractScripts = readdirSync("scripts")
@@ -35,14 +35,14 @@ const required = {
   "VERSION": [expectedVersion],
   "CHANGELOG.md": [
     `## ${expectedVersion} - ${releaseDate}`,
-    "Release version consistency contract gate",
-    "check-release-version-consistency-contract.mjs",
+    "Release artifact metadata consistency contract gate",
+    "check-release-artifact-metadata-contract.mjs",
     `${expectedCheckerCount} 個 root contract checker`,
   ],
   "README.md": [
     `教材版本：\`${expectedVersion}\``,
-    "Release version consistency contract gate",
-    "node scripts/check-release-version-consistency-contract.mjs",
+    "Release artifact metadata consistency contract gate",
+    "node scripts/check-release-artifact-metadata-contract.mjs",
     `${expectedCheckerCount} 個 root contract checker`,
   ],
   "production-api-worker/README.md": [
@@ -52,8 +52,8 @@ const required = {
   ],
   "production-api-worker/docs/api-contract.md": [
     `版本：${expectedVersion}`,
-    "Release version consistency contract gate",
-    "node scripts/check-release-version-consistency-contract.mjs",
+    "Release artifact metadata consistency contract gate",
+    "node scripts/check-release-artifact-metadata-contract.mjs",
     `${expectedCheckerCount} 個 root contract checker`,
   ],
   "production-api-worker/api/openapi.yaml": [
@@ -63,24 +63,24 @@ const required = {
     `all ${expectedCheckerCount} root contract checker scripts`,
   ],
   "chapters/07-large-project-concurrent-crawler.md": [
-    "Release version consistency contract gate",
-    "node scripts/check-release-version-consistency-contract.mjs",
+    "Release artifact metadata consistency contract gate",
+    "node scripts/check-release-artifact-metadata-contract.mjs",
   ],
   "chapters/09-build-and-deploy.md": [
-    "Release version consistency contract gate",
-    "node scripts/check-release-version-consistency-contract.mjs",
+    "Release artifact metadata consistency contract gate",
+    "node scripts/check-release-artifact-metadata-contract.mjs",
   ],
   "chapters/11-advanced-testing.md": [
-    "Release version consistency contract gate",
-    "node scripts/check-release-version-consistency-contract.mjs",
+    "Release artifact metadata consistency contract gate",
+    "node scripts/check-release-artifact-metadata-contract.mjs",
   ],
   "Cheatsheet/cheatsheet-advanced.md": [
-    "Release version consistency contract gate",
-    "node scripts/check-release-version-consistency-contract.mjs",
+    "Release artifact metadata consistency contract gate",
+    "node scripts/check-release-artifact-metadata-contract.mjs",
   ],
   "圖解筆記3-4整合/golang-complete-visual-course.html": [
-    "Release version consistency contract gate",
-    "node scripts/check-release-version-consistency-contract.mjs",
+    "Release artifact metadata consistency contract gate",
+    "node scripts/check-release-artifact-metadata-contract.mjs",
   ],
   "docs/index.html": [
     "Release version consistency contract gate",
@@ -95,18 +95,18 @@ const required = {
     "node scripts/check-release-version-consistency-contract.mjs",
   ],
   [`審查報告/${artifactTimestamp}-資深工程師審查報告.md`]: [
-    "Release version consistency contract gate",
+    "Release artifact metadata consistency contract gate",
     expectedVersion,
-    "2026-07-13 06:18:16 CST +0800",
+    "2026-07-14 06:01:43 CST +0800",
   ],
   [`內容需要更新的部分/${artifactTimestamp}-內容需要更新的部分.md`]: [
-    "Release version consistency contract gate",
-    "scripts/check-release-version-consistency-contract.mjs",
+    "Release artifact metadata consistency contract gate",
+    "scripts/check-release-artifact-metadata-contract.mjs",
     expectedVersion,
   ],
   [`更新資料/${artifactTimestamp}-${expectedVersion}-更新紀錄.md`]: [
-    "Release version consistency contract gate",
-    "scripts/check-release-version-consistency-contract.mjs",
+    "Release artifact metadata consistency contract gate",
+    "scripts/check-release-artifact-metadata-contract.mjs",
     "docs/index.html",
   ],
 };

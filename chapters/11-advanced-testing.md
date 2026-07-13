@@ -456,6 +456,8 @@ Release version consistency contract gate 固定目前版本同步，不讓 `VER
 
 Release artifact chain contract gate 固定發版審查鏈，不讓 `審查報告/`、`內容需要更新的部分/`、`更新資料/`、`VERSION`、`CHANGELOG.md` 或 `docs/index.html` 在 automation release 中漏件或不同步。
 
+Release artifact metadata consistency contract gate 固定同 timestamp 的三份 release artifacts，不讓審查報告、內容需要更新的部分或更新資料在版本、完整日期時間、本輪主題、來源引用與 artifact reference 上漂移。它由 `node scripts/check-release-artifact-metadata-contract.mjs` 與 `cd production-api-worker && make release-artifact-metadata-check` 固定。
+
 Release publish reconciliation contract gate 固定發布收斂證據：remote release 已建立但 final release-record amend / tag 更新仍 local-only 時，更新紀錄必須保留 `HEAD`、`origin/main`、`tag^{}`、`force-with-lease` 與 recovery command；blocked-push recovery 完成後，也要保留成功推送輸出與 finalization artifact。它由 `node scripts/check-release-publish-reconciliation-contract.mjs` 檢查，避免下一輪 release 把 local-only final amend 誤判成已完整發布，或把已補推的 release 誤判成仍 blocked。
 
 Dependency governance static gate 固定依賴供應鏈鏈條，不讓 `go mod verify`、`go list -m -u all`、`govulncheck ./...` 或離線限制說明在 workflow / README / chapter 重整時消失。若環境出現 `lookup proxy.golang.org: no such host` 或 `govulncheck` 無法取得漏洞資料庫，結果要記錄為待補掃描，不可誤標為已通過。
@@ -601,7 +603,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | Operational observability contract gate | `node scripts/check-operational-observability-contract.mjs && cd production-api-worker && make operational-observability-check` | 固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險與 CI 入口 |
 | Operational runbook scope freshness contract gate | `node scripts/check-operational-runbook-scope-contract.mjs && cd production-api-worker && make operational-runbook-scope-check` | 固定 runbook metadata、API contract scope coverage、Docs publishing contract gate、Release artifact chain contract gate 與供應鏈治理 scope |
 | CI contract parity gate | `node scripts/check-ci-contract-parity-contract.mjs && cd production-api-worker && make ci-contract-parity-check` | 固定 `make ci-contract` 與 GitHub Actions production contract job 的 API test selector，保留 `TestCORSAllowedOriginsContract` |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs && cd production-api-worker && make contract-gate-inventory-check` | 固定 52 個 root contract checker 都被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs && cd production-api-worker && make contract-gate-inventory-check` | 固定 53 個 root contract checker 都被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs && cd production-api-worker && make docs-publishing-check` | 固定 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈、Makefile、CI 入口與 API contract scope header |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs && cd production-api-worker && make production-workflow-check` | 固定 standalone workflow 的 contract、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs && cd production-api-worker && make syntax-flow-svg-check` | 固定語法流程圖補充頁的 25 個 flow、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口 |
@@ -609,6 +611,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | Go ReleaseNote freshness evidence | `node scripts/check-go-release-notes-freshness-contract.mjs && cd production-api-worker && make go-release-notes-freshness-check` | 固定 official Go Release History verified 時間、Go 1.26.5 / Go 1.25.12 baseline 與 ReleaseNote index 來源證據 |
 | Release version consistency contract gate | `node scripts/check-release-version-consistency-contract.mjs && cd production-api-worker && make release-version-consistency-check` | 固定 VERSION、CHANGELOG、README、API contract、OpenAPI、章節、整合視覺課程、docs/index、Makefile 與 CI 目前版本一致 |
 | Release artifact chain contract gate | `node scripts/check-release-artifact-chain-contract.mjs && cd production-api-worker && make release-artifact-chain-check` | 固定審查報告、內容需要更新的部分、更新資料、版本標記、CHANGELOG 與 docs/index 同步 |
+| Release artifact metadata consistency contract gate | `node scripts/check-release-artifact-metadata-contract.mjs && cd production-api-worker && make release-artifact-metadata-check` | 固定三份 release artifacts 的 timestamp、版本、完整日期時間、本輪主題與交叉引用 |
 | Release publish reconciliation contract gate | `node scripts/check-release-publish-reconciliation-contract.mjs && cd production-api-worker && make release-publish-reconciliation-check` | 固定 remote-created / local-final-amended release 與 blocked-push recovery finalization 的 `HEAD`、`origin/main`、`tag^{}`、`force-with-lease`、recovery command 與成功推送輸出 |
 | Dependency governance static gate | `node scripts/check-dependency-governance-contract.mjs && cd production-api-worker && make dependency-governance-check` | 固定 dependency integrity、update discovery、vulnerability scan、離線限制、Makefile 與 CI 入口 |
 | Supply chain artifact governance contract gate | `node scripts/check-supply-chain-artifact-governance-contract.mjs && cd production-api-worker && make supply-chain-artifact-governance-check` | 固定 SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner |
@@ -630,7 +633,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | CI workflow syntax | `ruby -e 'require "yaml"; YAML.load_file(".github/workflows/ci.yml")'` | 固定 GitHub Actions workflow 至少可被 YAML parser 解析 |
 | CI production gate | `cd production-api-worker && make ci-contract && go test -race -cover ./... -count=1` | 本機重跑與 CI 對齊的核心合約、race 與 coverage gate |
 | CI contract parity gate | `node scripts/check-ci-contract-parity-contract.mjs` | 確認本機與 CI 的 API contract selector 一致，避免只在單一路徑跑到 CORS 合約 |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` | 確認 52 個 root contract checker 全部被 GitHub Actions 呼叫 |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` | 確認 53 個 root contract checker 全部被 GitHub Actions 呼叫 |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs` | 確認 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈與 API contract scope header 沒有漂移 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs` | 確認 standalone production workflow 沒有漏掉 production release gate |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs` | 確認語法流程圖補充頁沒有漏掉 flow、標準符號、metadata、renderer 或 CI 入口 |
@@ -638,6 +641,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | Go ReleaseNote freshness evidence | `node scripts/check-go-release-notes-freshness-contract.mjs` | 確認官方查核時間、ReleaseNote index 來源證據與最新 patch baseline 沒有漂移 |
 | Release version consistency contract gate | `node scripts/check-release-version-consistency-contract.mjs` | 確認 release 版本在核心文件、OpenAPI、章節、整合視覺課程與 CI 中一致 |
 | Release artifact chain contract gate | `node scripts/check-release-artifact-chain-contract.mjs` | 確認發版 artifact chain、版本、CHANGELOG 與 docs/index 沒有漏件 |
+| Release artifact metadata consistency contract gate | `node scripts/check-release-artifact-metadata-contract.mjs` | 確認 release artifacts 的 metadata 與交叉引用一致 |
 | Release publish reconciliation contract gate | `node scripts/check-release-publish-reconciliation-contract.mjs` | 確認 remote/local publish divergence、force-with-lease 與 recovery command 沒有漏件 |
 | Dependency governance static gate | `node scripts/check-dependency-governance-contract.mjs` | 確認 `go mod verify`、`go list -m -u all`、`govulncheck ./...` 與離線限制說明沒有漂移 |
 | Supply chain artifact governance contract gate | `node scripts/check-supply-chain-artifact-governance-contract.mjs` | 確認 SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner 沒有漂移 |
