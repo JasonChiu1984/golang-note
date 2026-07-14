@@ -40,7 +40,7 @@ const required = {
     "OFFICIAL_HISTORY",
   ],
   "README.md": [
-    "教材版本：`v1.0.88`",
+    "教材版本：`v1.0.89`",
     "Go ReleaseNote contract gate",
     "node scripts/check-go-release-notes-contract.mjs",
     "53 個 root contract checker",
@@ -51,13 +51,13 @@ const required = {
     "node scripts/check-go-release-notes-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.88",
+    "版本：v1.0.89",
     "Go ReleaseNote contract gate",
     "node scripts/check-go-release-notes-contract.mjs",
     "53 個 root contract checker",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.88",
+    "version: v1.0.89",
     "Go ReleaseNote contract gate",
     "check-go-release-notes-contract.mjs",
     "all 53 root contract checker scripts",

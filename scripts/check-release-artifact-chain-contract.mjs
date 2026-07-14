@@ -3,8 +3,8 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename } from "node:path";
 
 const version = readFileSync("VERSION", "utf8").trim();
-const expectedVersion = "v1.0.88";
-const artifactTimestamp = "2026-07-14-060143";
+const expectedVersion = "v1.0.89";
+const artifactTimestamp = "2026-07-15-060246";
 
 const files = [
   "README.md",
@@ -27,14 +27,14 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.88`",
+    "教材版本：`v1.0.89`",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "CHANGELOG.md": [
-    "## v1.0.88 - 2026-07-14",
-    "Release artifact metadata consistency contract gate",
-    "check-release-artifact-metadata-contract.mjs",
+    "## v1.0.89 - 2026-07-15",
+    "Release publish recovery continuation",
+    "check-release-publish-reconciliation-contract.mjs",
     "53 個 root contract checker",
   ],
   "production-api-worker/README.md": [
@@ -43,12 +43,12 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.88",
+    "版本：v1.0.89",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.88",
+    "version: v1.0.89",
     "Release artifact chain contract gate",
     "check-release-artifact-chain-contract.mjs",
   ],
@@ -85,18 +85,18 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   [`審查報告/${artifactTimestamp}-資深工程師審查報告.md`]: [
-    "Release artifact metadata consistency contract gate",
-    "v1.0.88",
-    "2026-07-14 06:01:43 CST +0800",
+    "Release publish recovery continuation",
+    "v1.0.89",
+    "2026-07-15 06:02:46 CST +0800",
   ],
   [`內容需要更新的部分/${artifactTimestamp}-內容需要更新的部分.md`]: [
-    "Release artifact metadata consistency contract gate",
-    "scripts/check-release-artifact-metadata-contract.mjs",
-    "v1.0.88",
+    "Release publish recovery continuation",
+    "scripts/check-release-publish-reconciliation-contract.mjs",
+    "v1.0.89",
   ],
   [`更新資料/${artifactTimestamp}-${expectedVersion}-更新紀錄.md`]: [
-    "Release artifact metadata consistency contract gate",
-    "scripts/check-release-artifact-metadata-contract.mjs",
+    "Release publish recovery continuation",
+    "scripts/check-release-publish-reconciliation-contract.mjs",
     "docs/index.html",
     "GitHub push",
   ],

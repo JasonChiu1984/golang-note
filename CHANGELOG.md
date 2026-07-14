@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.89 - 2026-07-15
+
+- 新增 2026-07-15 06:02:46 CST +0800 資深工程師審查報告，確認教程深度廣度已足夠，本輪缺口集中在 v1.0.88 final release-record amend recovery 已完成但尚未納入最新 release evidence。
+- 先執行 `git push --force-with-lease=main:43d607a3f5bdef4076709f079e41aca0c78f07cc origin main refs/tags/v1.0.88 --force`，成功將遠端 `main` 從 `43d607a` force-update 到 `45a26b6`，並 force-update `v1.0.88` tag。
+- 更新 `scripts/check-release-publish-reconciliation-contract.mjs`，將 current evidence 推進到 `v1.0.89`，固定 `v1.0.88` recovery continuation、成功推送輸出、本輪 artifact 與 release record。
+- 同步 `README.md`、`production-api-worker/README.md`、`production-api-worker/docs/api-contract.md`、`production-api-worker/api/openapi.yaml`、第 7 / 9 / 11 章、進階 Cheat Sheet 與整合視覺課程，將本輪發版重點標示為 Release publish recovery continuation。
+- Contract gate inventory 維持 53 個 root contract checker；本輪更新既有 release publish reconciliation checker，不新增 root checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.89`。
+
 ## v1.0.88 - 2026-07-14
 
 - 新增 2026-07-14 06:01:43 CST +0800 資深工程師審查報告，確認教程深度廣度已足夠，本輪缺口集中在 release artifact 三件套的 metadata 與交叉引用尚未有獨立 gate 固定。

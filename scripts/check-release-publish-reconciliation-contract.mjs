@@ -15,7 +15,8 @@ const files = {
   workflow: ".github/workflows/ci.yml",
   previousUpdateRecord: "更新資料/2026-07-09-060302-v1.0.83-更新紀錄.md",
   blockedUpdateRecord: "更新資料/2026-07-10-060242-v1.0.84-更新紀錄.md",
-  currentUpdateRecord: "更新資料/2026-07-11-060331-v1.0.85-更新紀錄.md",
+  v1088UpdateRecord: "更新資料/2026-07-14-060143-v1.0.88-更新紀錄.md",
+  currentUpdateRecord: "更新資料/2026-07-15-060246-v1.0.89-更新紀錄.md",
 };
 
 const missing = [];
@@ -37,7 +38,7 @@ const gateTerms = [
 ];
 
 requireTerms(files.readme, [
-  "教材版本：`v1.0.88`",
+  "教材版本：`v1.0.89`",
   ...gateTerms,
   "force-with-lease",
 ]);
@@ -49,7 +50,7 @@ requireTerms(files.productionReadme, [
 ]);
 
 requireTerms(files.apiContract, [
-  "版本：v1.0.88",
+  "版本：v1.0.89",
   ...gateTerms,
   "HEAD",
   "origin/main",
@@ -57,7 +58,7 @@ requireTerms(files.apiContract, [
 ]);
 
 requireTerms(files.openapi, [
-  "version: v1.0.88",
+  "version: v1.0.89",
   "Release publish reconciliation contract gate",
   "check-release-publish-reconciliation-contract.mjs",
   "force-with-lease",
@@ -101,15 +102,23 @@ requireTerms(files.blockedUpdateRecord, [
 ]);
 
 requireTerms(files.currentUpdateRecord, [
-  "Release publish recovery finalization",
-  "git push origin main refs/tags/v1.0.84",
-  "main -> main",
-  "[new tag]         v1.0.84 -> v1.0.84",
-  "HEAD",
-  "origin/main",
-  "v1.0.84^{}",
-  "v1.0.85^{}",
+  "Release publish recovery continuation",
+  "2026-07-15 06:02:46 CST +0800",
+  "2026-07-15-060246-v1.0.89-更新紀錄.md",
+  "v1.0.88 final release-record amend recovery",
+  "git push --force-with-lease=main:43d607a3f5bdef4076709f079e41aca0c78f07cc origin main refs/tags/v1.0.88 --force",
+  "43d607a...45a26b6 main -> main (forced update)",
+  "0090050...5b0d3c0 v1.0.88 -> v1.0.88 (forced update)",
+  "45a26b6cdceb3e7561190cd5d08d3c93fb87c1b0",
+  "v1.0.88^{}",
   "force-with-lease",
+]);
+
+requireTerms(files.v1088UpdateRecord, [
+  "remote initial publish succeeded / final release-record amend push blocked",
+  "git push origin main --force-with-lease",
+  "git push origin refs/tags/v1.0.88 --force",
+  "main...origin/main [ahead 1, behind 1]",
 ]);
 
 if (missing.length > 0) {
@@ -121,7 +130,7 @@ if (missing.length > 0) {
 console.log(JSON.stringify({
   status: "ok",
   contract: "release publish reconciliation",
-  version: "v1.0.85",
-  previousRelease: "v1.0.84",
-  evidence: "blocked release recovered, finalization recorded",
+  version: "v1.0.89",
+  previousRelease: "v1.0.88",
+  evidence: "final release-record amend recovered, continuation recorded",
 }, null, 2));

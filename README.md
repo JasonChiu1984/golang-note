@@ -2,9 +2,9 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
-> 教材版本：`v1.0.88`
+> 教材版本：`v1.0.89`
 > 教材基準：`Go 1.26.5`
-> 這次更新重點：補齊 Release artifact metadata consistency contract gate，固定同 timestamp 的審查報告、內容需要更新的部分、更新資料在版本、日期、主題與交叉引用上的一致性。
+> 這次更新重點：補齊 Release publish recovery continuation，固定 v1.0.88 final amend recovery 證據，並將本輪 v1.0.89 發版建立在已收斂的遠端基線上。
 
 ## 版本策略
 
@@ -34,7 +34,7 @@
 | Release version consistency contract gate | `VERSION`、`CHANGELOG.md`、README、API contract、OpenAPI、章節、整合視覺課程、`docs/index.html`、Makefile 與 GitHub Actions 必須同步目前版本，並由 `node scripts/check-release-version-consistency-contract.mjs` 固定 |
 | Release artifact chain contract gate | 每次發版需保留同 timestamp 的 `審查報告/`、`內容需要更新的部分/`、`更新資料/`，並由 `node scripts/check-release-artifact-chain-contract.mjs` 固定 VERSION、CHANGELOG、docs/index 與 CI 入口 |
 | Release artifact metadata consistency contract gate | 同 timestamp 的審查報告、內容需要更新的部分與更新資料必須保留相同版本、完整日期時間、本輪主題與交叉引用，並由 `node scripts/check-release-artifact-metadata-contract.mjs` 固定 |
-| Release publish reconciliation contract gate | remote release 已建立但 final release-record amend / tag 更新仍 local-only 時，必須保留 `HEAD`、`origin/main`、`tag^{}`、`force-with-lease` 與恢復命令；blocked-push recovery 完成後，必須保留成功推送輸出與 finalization artifact，並由 `node scripts/check-release-publish-reconciliation-contract.mjs` 固定 |
+| Release publish reconciliation contract gate | remote release 已建立但 final release-record amend / tag 更新仍 local-only 時，必須保留 `HEAD`、`origin/main`、`tag^{}`、`force-with-lease` 與恢復命令；blocked-push recovery 完成後與 Release publish recovery continuation，必須保留成功推送輸出與 Release publish recovery continuation 與 finalization artifact，並由 `node scripts/check-release-publish-reconciliation-contract.mjs` 固定 |
 | 補充教材頁 | 重大補充 HTML 需放入 `docs/`，包含語法應用圖解、第三方模組選型、C/Python/Go 效能比較、Assembly 與微服務 |
 | 語法 SVG 流程圖 | 單語法補充頁需以 Start/End、Input/Output、Decision、Process 等標準流程圖符號呈現，並保留 `<title>` / `<desc>` / `aria-labelledby` 可存取性 metadata |
 | Syntax flow SVG contract gate | `docs/golang-syntax-application-svg.html` 與整合來源需由 `node scripts/check-syntax-flow-svg-contract.mjs` 固定 25 個單語法流程、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口 |

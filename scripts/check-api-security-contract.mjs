@@ -30,13 +30,13 @@ const required = {
     "TestSecurityHeadersContract",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.88",
+    "version: v1.0.89",
     "API security uses optional API_KEY",
     "bearerAuth:",
     "Required only when API_KEY is configured",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.88",
+    "版本：v1.0.89",
     "API security gate",
     "node scripts/check-api-security-contract.mjs",
     "TestAPIKeyAuthContract",

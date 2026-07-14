@@ -31,7 +31,7 @@ function requireTerms(file, terms) {
 }
 
 requireTerms(files.readme, [
-  "教材版本：`v1.0.88`",
+  "教材版本：`v1.0.89`",
   "Performance benchmark governance contract gate",
   "node scripts/check-performance-benchmark-governance-contract.mjs",
   "go test -run='^$' -bench=. -benchmem -count=10 ./...",
@@ -51,7 +51,7 @@ requireTerms(files.productionReadme, [
 ]);
 
 requireTerms(files.apiContract, [
-  "版本：v1.0.88",
+  "版本：v1.0.89",
   "Performance benchmark governance contract",
   "node scripts/check-performance-benchmark-governance-contract.mjs",
   "benchmark A/B",
@@ -60,7 +60,7 @@ requireTerms(files.apiContract, [
 ]);
 
 requireTerms(files.openapi, [
-  "version: v1.0.88",
+  "version: v1.0.89",
   "Performance benchmark governance contract",
   "check-performance-benchmark-governance-contract.mjs",
   "benchmark A/B",

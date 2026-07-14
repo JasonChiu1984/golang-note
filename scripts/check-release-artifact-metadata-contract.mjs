@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 import { existsSync, readFileSync } from "node:fs";
 
-const expectedVersion = "v1.0.88";
-const releaseDate = "2026-07-14";
-const fullDateTime = "2026-07-14 06:01:43 CST +0800";
-const artifactTimestamp = "2026-07-14-060143";
-const releaseTopic = "Release artifact metadata consistency contract gate";
+const expectedVersion = "v1.0.89";
+const releaseDate = "2026-07-15";
+const fullDateTime = "2026-07-15 06:02:46 CST +0800";
+const artifactTimestamp = "2026-07-15-060246";
+const releaseTopic = "Release publish recovery continuation";
 
 const artifacts = {
   review: `審查報告/${artifactTimestamp}-資深工程師審查報告.md`,
@@ -17,13 +17,13 @@ const required = {
   [artifacts.review]: [
     `審查日期：${releaseDate}`,
     `完整日期時間：${fullDateTime}`,
-    "審查版本基準：v1.0.87",
+    "審查版本基準：v1.0.88",
     "官方 Go Release History 查核",
     "go1.26.5",
     "go1.25.12",
     expectedVersion,
     releaseTopic,
-    "scripts/check-release-artifact-metadata-contract.mjs",
+    "scripts/check-release-publish-reconciliation-contract.mjs",
     "53 個 root contract checker",
   ],
   [artifacts.needed]: [
@@ -32,8 +32,8 @@ const required = {
     `依據審查報告：\`${artifacts.review}\``,
     `目標版本：${expectedVersion}`,
     `本輪主題：${releaseTopic}`,
-    "scripts/check-release-artifact-metadata-contract.mjs",
-    "release-artifact-metadata-check",
+    "scripts/check-release-publish-reconciliation-contract.mjs",
+    "release-publish-reconciliation-check",
     "53 個 root contract checker",
   ],
   [artifacts.record]: [
@@ -44,8 +44,8 @@ const required = {
     `${artifactTimestamp}-資深工程師審查報告.md`,
     `${artifactTimestamp}-內容需要更新的部分.md`,
     `${artifactTimestamp}-${expectedVersion}-更新紀錄.md`,
-    "scripts/check-release-artifact-metadata-contract.mjs",
-    "release-artifact-metadata-check",
+    "scripts/check-release-publish-reconciliation-contract.mjs",
+    "release-publish-reconciliation-check",
     "53 個 root contract checker",
   ],
 };
@@ -160,4 +160,3 @@ console.log(JSON.stringify({
   artifacts: Object.keys(artifacts).length,
   surfaceFiles: surfaceFiles.length,
 }, null, 2));
-

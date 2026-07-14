@@ -60,7 +60,7 @@ requireTerms(files.compose, [
 ]);
 
 requireTerms(files.readme, [
-  "教材版本：`v1.0.88`",
+  "教材版本：`v1.0.89`",
   "53 個 root contract checker",
   "Alertmanager routing governance contract gate",
   "node scripts/check-alertmanager-routing-contract.mjs",
@@ -80,7 +80,7 @@ requireTerms(files.productionReadme, [
 ]);
 
 requireTerms(files.runbook, [
-  "版本：v1.0.88",
+  "版本：v1.0.89",
   "Alertmanager routing governance contract gate",
   "configs/prometheus/alertmanager.yml",
   "receiver owner",
@@ -90,13 +90,13 @@ requireTerms(files.runbook, [
 ]);
 
 requireTerms(files.apiContract, [
-  "版本：v1.0.88",
+  "版本：v1.0.89",
   "Alertmanager routing governance contract gate",
   "node scripts/check-alertmanager-routing-contract.mjs",
 ]);
 
 requireTerms(files.openapi, [
-  "version: v1.0.88",
+  "version: v1.0.89",
   "Alertmanager routing governance contract gate",
   "check-alertmanager-routing-contract.mjs",
 ]);

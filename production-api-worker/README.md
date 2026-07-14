@@ -380,7 +380,7 @@ make release-publish-reconciliation-check
 cd .. && node scripts/check-release-publish-reconciliation-contract.mjs
 ```
 
-Release publish reconciliation contract gate 固定 remote release 已建立但 final release-record amend / tag 更新仍 local-only 時的證據格式，也固定 blocked-push recovery 完成後的 finalization 紀錄。更新紀錄需明確保留 `HEAD`、`origin/main`、`tag^{}`、`force-with-lease`、recovery command 與成功推送輸出，避免下一輪發版誤判為仍 blocked 或覆蓋遠端 release commit。
+Release publish reconciliation contract gate 固定 remote release 已建立但 final release-record amend / tag 更新仍 local-only 時的證據格式，也固定 blocked-push recovery 完成後與 Release publish recovery continuation的 finalization 紀錄。更新紀錄需明確保留 `HEAD`、`origin/main`、`tag^{}`、`force-with-lease`、recovery command 與成功推送輸出與 Release publish recovery continuation，避免下一輪發版誤判為仍 blocked 或覆蓋遠端 release commit。
 
 Dependency Governance Contract 需包含：
 

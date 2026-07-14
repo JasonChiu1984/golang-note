@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 
-const expectedVersion = "v1.0.88";
-const releaseDate = "2026-07-14";
-const artifactTimestamp = "2026-07-14-060143";
+const expectedVersion = "v1.0.89";
+const releaseDate = "2026-07-15";
+const artifactTimestamp = "2026-07-15-060246";
 const expectedCheckerCount = 53;
 
 const version = readFileSync("VERSION", "utf8").trim();
@@ -35,8 +35,8 @@ const required = {
   "VERSION": [expectedVersion],
   "CHANGELOG.md": [
     `## ${expectedVersion} - ${releaseDate}`,
-    "Release artifact metadata consistency contract gate",
-    "check-release-artifact-metadata-contract.mjs",
+    "Release publish recovery continuation",
+    "check-release-publish-reconciliation-contract.mjs",
     `${expectedCheckerCount} 個 root contract checker`,
   ],
   "README.md": [
@@ -95,18 +95,18 @@ const required = {
     "node scripts/check-release-version-consistency-contract.mjs",
   ],
   [`審查報告/${artifactTimestamp}-資深工程師審查報告.md`]: [
-    "Release artifact metadata consistency contract gate",
+    "Release publish recovery continuation",
     expectedVersion,
-    "2026-07-14 06:01:43 CST +0800",
+    "2026-07-15 06:02:46 CST +0800",
   ],
   [`內容需要更新的部分/${artifactTimestamp}-內容需要更新的部分.md`]: [
-    "Release artifact metadata consistency contract gate",
-    "scripts/check-release-artifact-metadata-contract.mjs",
+    "Release publish recovery continuation",
+    "scripts/check-release-publish-reconciliation-contract.mjs",
     expectedVersion,
   ],
   [`更新資料/${artifactTimestamp}-${expectedVersion}-更新紀錄.md`]: [
-    "Release artifact metadata consistency contract gate",
-    "scripts/check-release-artifact-metadata-contract.mjs",
+    "Release publish recovery continuation",
+    "scripts/check-release-publish-reconciliation-contract.mjs",
     "docs/index.html",
   ],
 };

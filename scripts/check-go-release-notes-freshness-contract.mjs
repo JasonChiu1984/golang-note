@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 
-const expectedVersion = "v1.0.88";
+const expectedVersion = "v1.0.89";
 const expectedCheckerCount = 53;
 const freshnessDate = "2026-07-12";
 const freshnessTimestamp = "2026-07-12 06:03:15 CST +0800";
