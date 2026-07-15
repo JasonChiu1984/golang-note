@@ -18,7 +18,7 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.89`",
+    "教材版本：`v1.0.90`",
     "Dependency governance contract gate",
     "node scripts/check-dependency-governance-contract.mjs",
     "go mod tidy",
@@ -35,7 +35,7 @@ const required = {
     "govulncheck ./...",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.89",
+    "版本：v1.0.90",
     "Dependency governance contract gate",
     "node scripts/check-dependency-governance-contract.mjs",
     "go mod verify",
@@ -43,7 +43,7 @@ const required = {
     "govulncheck ./...",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.89",
+    "version: v1.0.90",
     "Dependency governance contract gate",
     "go mod verify",
     "go list -m -u all",

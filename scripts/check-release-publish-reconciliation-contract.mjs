@@ -38,7 +38,7 @@ const gateTerms = [
 ];
 
 requireTerms(files.readme, [
-  "教材版本：`v1.0.89`",
+  "教材版本：`v1.0.90`",
   ...gateTerms,
   "force-with-lease",
 ]);
@@ -50,7 +50,7 @@ requireTerms(files.productionReadme, [
 ]);
 
 requireTerms(files.apiContract, [
-  "版本：v1.0.89",
+  "版本：v1.0.90",
   ...gateTerms,
   "HEAD",
   "origin/main",
@@ -58,7 +58,7 @@ requireTerms(files.apiContract, [
 ]);
 
 requireTerms(files.openapi, [
-  "version: v1.0.89",
+  "version: v1.0.90",
   "Release publish reconciliation contract gate",
   "check-release-publish-reconciliation-contract.mjs",
   "force-with-lease",
@@ -130,7 +130,7 @@ if (missing.length > 0) {
 console.log(JSON.stringify({
   status: "ok",
   contract: "release publish reconciliation",
-  version: "v1.0.89",
+  version: "v1.0.90",
   previousRelease: "v1.0.88",
   evidence: "final release-record amend recovered, continuation recorded",
 }, null, 2));

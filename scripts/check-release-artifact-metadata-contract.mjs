@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 import { existsSync, readFileSync } from "node:fs";
 
-const expectedVersion = "v1.0.89";
-const releaseDate = "2026-07-15";
-const fullDateTime = "2026-07-15 06:02:46 CST +0800";
-const artifactTimestamp = "2026-07-15-060246";
-const releaseTopic = "Release publish recovery continuation";
+const expectedVersion = "v1.0.90";
+const releaseDate = "2026-07-16";
+const fullDateTime = "2026-07-16 06:02:04 CST +0800";
+const artifactTimestamp = "2026-07-16-060204";
+const releaseTopic = "Release artifact continuity index contract gate";
 
 const artifacts = {
   review: `審查報告/${artifactTimestamp}-資深工程師審查報告.md`,
@@ -17,14 +17,14 @@ const required = {
   [artifacts.review]: [
     `審查日期：${releaseDate}`,
     `完整日期時間：${fullDateTime}`,
-    "審查版本基準：v1.0.88",
+    "審查版本基準：v1.0.89",
     "官方 Go Release History 查核",
     "go1.26.5",
     "go1.25.12",
     expectedVersion,
     releaseTopic,
-    "scripts/check-release-publish-reconciliation-contract.mjs",
-    "53 個 root contract checker",
+    "scripts/check-release-artifact-continuity-contract.mjs",
+    "54 個 root contract checker",
   ],
   [artifacts.needed]: [
     `產生日期：${releaseDate}`,
@@ -32,9 +32,9 @@ const required = {
     `依據審查報告：\`${artifacts.review}\``,
     `目標版本：${expectedVersion}`,
     `本輪主題：${releaseTopic}`,
-    "scripts/check-release-publish-reconciliation-contract.mjs",
-    "release-publish-reconciliation-check",
-    "53 個 root contract checker",
+    "scripts/check-release-artifact-continuity-contract.mjs",
+    "release-artifact-continuity-check",
+    "54 個 root contract checker",
   ],
   [artifacts.record]: [
     `更新日期：${releaseDate}`,
@@ -44,9 +44,9 @@ const required = {
     `${artifactTimestamp}-資深工程師審查報告.md`,
     `${artifactTimestamp}-內容需要更新的部分.md`,
     `${artifactTimestamp}-${expectedVersion}-更新紀錄.md`,
-    "scripts/check-release-publish-reconciliation-contract.mjs",
-    "release-publish-reconciliation-check",
-    "53 個 root contract checker",
+    "scripts/check-release-artifact-continuity-contract.mjs",
+    "release-artifact-continuity-check",
+    "54 個 root contract checker",
   ],
 };
 
@@ -68,53 +68,53 @@ const surfaceFiles = [
 const surfaceRequired = {
   "README.md": [
     releaseTopic,
-    "node scripts/check-release-artifact-metadata-contract.mjs",
-    "53 個 root contract checker",
+    "node scripts/check-release-artifact-continuity-contract.mjs",
+    "54 個 root contract checker",
   ],
   "production-api-worker/README.md": [
     "Release Artifact Metadata Consistency Contract",
-    "make release-artifact-metadata-check",
-    "node scripts/check-release-artifact-metadata-contract.mjs",
+    "make release-artifact-continuity-check",
+    "node scripts/check-release-artifact-continuity-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
     releaseTopic,
-    "node scripts/check-release-artifact-metadata-contract.mjs",
+    "node scripts/check-release-artifact-continuity-contract.mjs",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "Release artifact metadata consistency contract gate",
+    "Release artifact continuity index contract gate",
     "check-release-artifact-metadata-contract.mjs",
   ],
   "chapters/07-large-project-concurrent-crawler.md": [
     releaseTopic,
-    "node scripts/check-release-artifact-metadata-contract.mjs",
+    "node scripts/check-release-artifact-continuity-contract.mjs",
   ],
   "chapters/09-build-and-deploy.md": [
     releaseTopic,
-    "node scripts/check-release-artifact-metadata-contract.mjs",
+    "node scripts/check-release-artifact-continuity-contract.mjs",
   ],
   "chapters/11-advanced-testing.md": [
     releaseTopic,
-    "node scripts/check-release-artifact-metadata-contract.mjs",
+    "node scripts/check-release-artifact-continuity-contract.mjs",
   ],
   "Cheatsheet/cheatsheet-advanced.md": [
     releaseTopic,
-    "node scripts/check-release-artifact-metadata-contract.mjs",
+    "node scripts/check-release-artifact-continuity-contract.mjs",
   ],
   "圖解筆記3-4整合/golang-complete-visual-course.html": [
     releaseTopic,
-    "node scripts/check-release-artifact-metadata-contract.mjs",
+    "node scripts/check-release-artifact-continuity-contract.mjs",
   ],
   "docs/index.html": [
-    "Release artifact metadata consistency contract gate",
+    "Release artifact continuity index contract gate",
     "check-release-artifact-metadata-contract.mjs",
   ],
   "production-api-worker/Makefile": [
     "release-artifact-metadata-check",
-    "node scripts/check-release-artifact-metadata-contract.mjs",
+    "node scripts/check-release-artifact-continuity-contract.mjs",
   ],
   ".github/workflows/ci.yml": [
-    "Check release artifact metadata consistency contract",
-    "node scripts/check-release-artifact-metadata-contract.mjs",
+    "Check release artifact continuity index contract",
+    "node scripts/check-release-artifact-continuity-contract.mjs",
   ],
 };
 
