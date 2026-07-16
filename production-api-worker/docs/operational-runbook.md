@@ -1,9 +1,11 @@
 # production-api-worker Operational Runbook
 
-> 文件日期：2026-07-16
-> 完整日期時間：2026-07-16 06:02:46 CST +0800
-> 版本：v1.0.90
-> 適用範圍：`production-api-worker` API、worker queue、Postgres migration、Prometheus metrics、OpenTelemetry trace、OTLP collector contract、pprof diagnostics、Docker Compose smoke gate、API contract scope coverage、Docs publishing contract gate、Release artifact chain contract gate、Go ReleaseNote freshness evidence、Release version consistency contract gate、Dependency governance contract gate、Secret handling governance contract gate、Supply chain artifact governance contract gate、Platform promotion policy contract gate、Deployment controller config contract gate、Alertmanager routing governance contract gate。
+> 文件日期：2026-07-17
+> 完整日期時間：2026-07-17 06:02:46 CST +0800
+> 版本：v1.0.91
+> 適用範圍：`production-api-worker` API、worker queue、Postgres migration、Prometheus metrics、OpenTelemetry trace、OTLP collector contract、pprof diagnostics、Docker Compose smoke gate、API contract scope coverage、Docs publishing contract gate、Release artifact chain contract gate、Go ReleaseNote freshness evidence、Release version consistency contract gate、Dependency governance contract gate、Dependency audit evidence freshness contract gate、Secret handling governance contract gate、Supply chain artifact governance contract gate、Platform promotion policy contract gate、Deployment controller config contract gate、Alertmanager routing governance contract gate。
+
+Dependency audit evidence freshness contract gate 要求 release evidence retention 保留 root module 與 production module 的 `go mod verify`、`go list -m -u all`、`govulncheck ./...` 結果；若 module proxy / vulnerability database 無法連線，runbook 與更新紀錄只能標示待補掃描，不可宣稱漏洞掃描通過。
 
 ## 1. Overview
 

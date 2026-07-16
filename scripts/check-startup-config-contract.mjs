@@ -18,7 +18,7 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.90`",
+    "教材版本：`v1.0.91`",
     "Startup config contract gate",
     "node scripts/check-startup-config-contract.mjs",
     "PORT",
@@ -33,12 +33,12 @@ const required = {
     "WORKERS",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.90",
+    "版本：v1.0.91",
     "Startup configuration contract gate",
     "node scripts/check-startup-config-contract.mjs",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.90",
+    "version: v1.0.91",
     "Startup configuration contract gate",
     "check-startup-config-contract.mjs",
   ],

@@ -3,8 +3,8 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename } from "node:path";
 
 const version = readFileSync("VERSION", "utf8").trim();
-const expectedVersion = "v1.0.90";
-const artifactTimestamp = "2026-07-16-060204";
+const expectedVersion = "v1.0.91";
+const artifactTimestamp = "2026-07-17-060237";
 
 const files = [
   "README.md",
@@ -27,15 +27,15 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.90`",
+    "教材版本：`v1.0.91`",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "CHANGELOG.md": [
-    "## v1.0.90 - 2026-07-16",
-    "Release artifact continuity index contract gate",
+    "## v1.0.91 - 2026-07-17",
+    "Dependency audit evidence freshness contract gate",
     "check-release-publish-reconciliation-contract.mjs",
-    "54 個 root contract checker",
+    "55 個 root contract checker",
   ],
   "production-api-worker/README.md": [
     "Release Artifact Chain Contract",
@@ -43,12 +43,12 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.90",
+    "版本：v1.0.91",
     "Release artifact chain contract gate",
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.90",
+    "version: v1.0.91",
     "Release artifact chain contract gate",
     "check-release-artifact-chain-contract.mjs",
   ],
@@ -85,18 +85,18 @@ const required = {
     "node scripts/check-release-artifact-chain-contract.mjs",
   ],
   [`審查報告/${artifactTimestamp}-資深工程師審查報告.md`]: [
-    "Release artifact continuity index contract gate",
-    "v1.0.90",
-    "2026-07-16 06:02:04 CST +0800",
+    "Dependency audit evidence freshness contract gate",
+    "v1.0.91",
+    "2026-07-17 06:02:37 CST +0800",
   ],
   [`內容需要更新的部分/${artifactTimestamp}-內容需要更新的部分.md`]: [
-    "Release artifact continuity index contract gate",
-    "scripts/check-release-artifact-continuity-contract.mjs",
-    "v1.0.90",
+    "Dependency audit evidence freshness contract gate",
+    "scripts/check-dependency-audit-evidence-contract.mjs",
+    "v1.0.91",
   ],
   [`更新資料/${artifactTimestamp}-${expectedVersion}-更新紀錄.md`]: [
-    "Release artifact continuity index contract gate",
-    "scripts/check-release-artifact-continuity-contract.mjs",
+    "Dependency audit evidence freshness contract gate",
+    "scripts/check-dependency-audit-evidence-contract.mjs",
     "docs/index.html",
     "GitHub push",
   ],

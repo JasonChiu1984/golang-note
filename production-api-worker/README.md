@@ -47,7 +47,7 @@
 - Pipeline：migration CLI、Docker Compose、GitHub Actions workflow、Docker image build gate、Compose smoke gate
 - CI Quality Gate Contract：GitHub Actions 必須保留 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，並由 `make ci-quality-gate-check` 固定文件、Makefile 與 CI 入口
 - CI Contract Parity Gate：`make ci-contract` 與 GitHub Actions production contract job 必須使用相同 API test selector，包含 `TestCORSAllowedOriginsContract`，並由 `make ci-contract-parity-check` 固定
-- Contract Gate Inventory：54 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
+- Contract Gate Inventory：55 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
 - Docs Publishing Contract：`docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈必須由 `make docs-publishing-check` / `node scripts/check-docs-publishing-contract.mjs` 固定，避免 Pages 首頁與整合課程來源漂移
 - Production Workflow Contract：`production-api-worker/.github/workflows/production-api-worker.yml` 必須保留 `make ci-contract`、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup，並由 `make production-workflow-check` 固定
 - Syntax Flow SVG Contract：語法流程圖補充頁必須保留 25 個單語法 flow、標準流程圖符號、SVG metadata 與 blueprint renderer，並由 `make syntax-flow-svg-check` / `node scripts/check-syntax-flow-svg-contract.mjs` 固定
@@ -58,6 +58,7 @@
 - Release Artifact Metadata Consistency Contract：同 timestamp 的審查報告、內容需要更新的部分與更新資料需保留一致的版本、完整日期時間、本輪主題與交叉引用，並由 `make release-artifact-metadata-check` / `node scripts/check-release-artifact-metadata-contract.mjs` 固定
 - Release Artifact Continuity Index Contract：近期 release artifacts 需保留版本 sequence、timestamp 配對、三件套對應與 update record 自我引用，並由 `make release-artifact-continuity-check` / `node scripts/check-release-artifact-continuity-contract.mjs` 固定
 - Dependency Governance Contract：root module 與 production module 都需保留 `go mod tidy`、`go mod verify`、`go list -m -u all`、`govulncheck ./...` 與離線限制說明，並由 `make dependency-governance-check` / `node scripts/check-dependency-governance-contract.mjs` 固定
+- Dependency Audit Evidence Freshness Contract：每次 release 需保留 root module 與 production module 的 dependency audit evidence；`go list -m -u all` / `govulncheck ./...` 因 module proxy / vulnerability database 離線時只能記錄為待補掃描，不可當作通過，並由 `make dependency-audit-evidence-check` / `node scripts/check-dependency-audit-evidence-contract.mjs` 固定 release evidence retention
 - Performance Benchmark Governance Contract：API / worker / queue hot path 修改需保留 benchmark A/B、`benchstat old.txt new.txt`、pprof 或 metrics 證據，並由 `make performance-benchmark-governance-check` / `node scripts/check-performance-benchmark-governance-contract.mjs` 固定
 - Release Rollback Drill Contract：release promotion 或 incident rollback 需保留 rollback decision、previous image restore、migration rollback boundary、health verification、metrics verification 與 postmortem evidence，並由 `make release-rollback-drill-check` / `node scripts/check-release-rollback-drill-contract.mjs` 固定
 - Docker Build Contract：Dockerfile 必須保留 multi-stage build、`CGO_ENABLED=0`、`api-worker` / `migrate` binaries、`distroless/static-debian12` runtime image、`docker build -t production-api-worker:ci ./production-api-worker` 與 `docker build -t production-api-worker:standalone .`，並由 `make docker-build-check` / `node scripts/check-docker-build-contract.mjs` 固定
@@ -232,6 +233,7 @@ make compose-smoke
 | `make release-artifact-metadata-check` | 固定 Release Artifact Metadata Consistency Contract、三份 dated artifacts 的版本、日期、主題與交叉引用 |
 | `make release-artifact-continuity-check` | 固定 Release Artifact Continuity Index Contract、近期 release artifacts 的版本連續、timestamp 配對與 update record 自我引用 |
 | `make dependency-governance-check` | 固定 Dependency Governance Contract、module integrity、dependency update discovery、vulnerability scan、離線限制、Makefile 與 CI 入口 |
+| `make dependency-audit-evidence-check` | 固定 Dependency Audit Evidence Freshness Contract、release evidence retention、root / production module audit coverage 與離線待補掃描語意 |
 | `make supply-chain-artifact-governance-check` | 固定 Supply Chain Artifact Governance Contract、SBOM、image signing、provenance / attestation、artifact retention、promotion approval、release evidence owner 與 CI 入口 |
 | `make platform-promotion-policy-check` | 固定 Platform Promotion Policy Contract、platform promotion policy、environment approval、progressive rollout、platform-native signing、artifact verification、rollback owner 與 CI 入口 |
 | `make deployment-controller-config-check` | 固定 Deployment Controller Config Contract、deployment controller、cloud environment template、environment manifest、progressive rollout controller、health gate、rollback trigger、promotion evidence 與 CI 入口 |
@@ -310,7 +312,7 @@ make contract-gate-inventory-check
 cd .. && node scripts/check-contract-gate-inventory-contract.mjs
 ```
 
-這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 54 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
+這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 55 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
 
 Production Workflow Contract 需包含：
 
@@ -401,6 +403,8 @@ cd .. && node scripts/check-dependency-governance-contract.mjs
 ```
 
 這個 gate 會固定 root module 與 `production-api-worker` 的依賴治理條款：新增或升級 module 前後需保留 `go mod tidy`、`go mod verify`、`go list -m -u all` 與 `govulncheck ./...`，且文件需明確標示 module proxy / vulnerability database 無法連線時要記錄為待補掃描，不可把離線限制誤標為安全通過。
+
+Dependency Audit Evidence Freshness Contract 會把上述條款推進到 release evidence retention：每次 release 都要能追溯 root module 與 production module 的 `go mod verify`、`go list -m -u all`、`govulncheck ./...` 狀態；若 module proxy / vulnerability database 無法連線，更新紀錄需明確標示待補掃描與原因，不可把 DNS 或離線限制寫成已通過。
 
 Supply Chain Artifact Governance Contract 需包含：
 

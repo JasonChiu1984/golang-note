@@ -180,6 +180,9 @@ jobs:
       - name: Check dependency governance contract
         run: node scripts/check-dependency-governance-contract.mjs
 
+      - name: Check dependency audit evidence freshness contract
+        run: node scripts/check-dependency-audit-evidence-contract.mjs
+
       - name: Check performance benchmark governance contract
         run: node scripts/check-performance-benchmark-governance-contract.mjs
 
