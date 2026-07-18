@@ -8,6 +8,7 @@
 - Readiness Lifecycle Contract：`/livez` 永遠公開回 `200`；`/readyz` ready 時回 `200`、draining 時回 `503`，並由 `make readiness-check` 固定文件、OpenAPI、Go tests 與 CI 入口
 - Request correlation contract：`X-Request-ID` 需同時進入 response header、request context、structured log 與 trace attribute
 - API Security Contract：可用 `API_KEY` 啟用 Bearer token 保護 `/jobs` 與 `/metrics`，health endpoint 保持公開，並由靜態 gate 固定文件、OpenAPI、Go tests 與 CI 入口
+- API Edge Security Policy Governance Contract：production edge 需保留 gateway owner、API Gateway / WAF policy、OAuth2 / OIDC issuer、mTLS boundary、TLS termination owner、trusted header forwarding、identity propagation 與 evidence retention，並由 `make api-edge-security-policy-check` / `node scripts/check-api-edge-security-policy-contract.mjs` 固定
 - CORS Allowlist Contract：`CORS_ALLOWED_ORIGINS` 預設空值；只有明確列入的 exact origin 才回 CORS header
 - Request Body Limit Contract：`REQUEST_BODY_LIMIT_BYTES` 預設 1048576；`POST /jobs` 超限回 `413 payload_too_large`
 - HTTP Server Timeout Contract：`HTTP_READ_HEADER_TIMEOUT`、`HTTP_READ_TIMEOUT`、`HTTP_WRITE_TIMEOUT`、`HTTP_IDLE_TIMEOUT`、`HTTP_SHUTDOWN_TIMEOUT`、`QUEUE_DRAIN_TIMEOUT` 集中設定並 fail fast
@@ -47,7 +48,7 @@
 - Pipeline：migration CLI、Docker Compose、GitHub Actions workflow、Docker image build gate、Compose smoke gate
 - CI Quality Gate Contract：GitHub Actions 必須保留 root course、production contracts、`go mod verify`、`go test -race -cover`、`govulncheck ./...`、Docker build 與 Compose smoke，並由 `make ci-quality-gate-check` 固定文件、Makefile 與 CI 入口
 - CI Contract Parity Gate：`make ci-contract` 與 GitHub Actions production contract job 必須使用相同 API test selector，包含 `TestCORSAllowedOriginsContract`，並由 `make ci-contract-parity-check` 固定
-- Contract Gate Inventory：55 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
+- Contract Gate Inventory：56 個 root contract checker 必須全部被 GitHub Actions 呼叫，並由 `make contract-gate-inventory-check` / `node scripts/check-contract-gate-inventory-contract.mjs` 固定 Makefile、README、API contract、章節與整合視覺課程入口
 - Docs Publishing Contract：`docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈必須由 `make docs-publishing-check` / `node scripts/check-docs-publishing-contract.mjs` 固定，避免 Pages 首頁與整合課程來源漂移
 - Production Workflow Contract：`production-api-worker/.github/workflows/production-api-worker.yml` 必須保留 `make ci-contract`、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup，並由 `make production-workflow-check` 固定
 - Syntax Flow SVG Contract：語法流程圖補充頁必須保留 25 個單語法 flow、標準流程圖符號、SVG metadata 與 blueprint renderer，並由 `make syntax-flow-svg-check` / `node scripts/check-syntax-flow-svg-contract.mjs` 固定
@@ -200,6 +201,7 @@ make compose-smoke
 | `make readiness-check` | 固定 readiness / liveness route、draining status、contract tests、章節與 CI 靜態檢查入口 |
 | `make request-correlation-check` | 固定 Request correlation contract、`X-Request-ID`、request context、structured log、trace attribute、Go tests、OpenAPI 與 CI 入口 |
 | `make api-security-check` | 固定 API security contract、`API_KEY`、Bearer auth、公開 health endpoint、安全標頭、Go tests、OpenAPI 與 CI 入口 |
+| `make api-edge-security-policy-check` | 固定 API Edge Security Policy Governance Contract、gateway owner、API Gateway / WAF policy、OAuth2 / OIDC issuer、mTLS boundary、TLS termination owner、trusted header forwarding、identity propagation 與 evidence retention |
 | `make secret-handling-governance-check` | 固定 Secret Handling Governance Contract、`API_KEY`、`PPROF_TOKEN`、bearer token file、secret mount、secret rotation owner、no hard-coded production credentials 與 incident artifact redaction |
 | `make supply-chain-artifact-governance-check` | 固定 Supply Chain Artifact Governance Contract、SBOM、image signing、provenance / attestation、artifact retention、promotion approval 與 release evidence owner |
 | `make platform-promotion-policy-check` | 固定 Platform Promotion Policy Contract、platform promotion policy、environment approval、progressive rollout、platform-native signing、artifact verification 與 rollback owner |
@@ -312,7 +314,7 @@ make contract-gate-inventory-check
 cd .. && node scripts/check-contract-gate-inventory-contract.mjs
 ```
 
-這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 55 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
+這個 gate 會盤點 root `scripts/check-*-contract.mjs`，確認 56 個 root contract checker 全部被 `.github/workflows/ci.yml` 呼叫，避免新增 checker 後只留在 repo、沒有進入 release gate。
 
 Production Workflow Contract 需包含：
 

@@ -31,7 +31,7 @@ const required = {
     "node scripts/check-migration-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.91",
+    "版本：v1.0.92",
     "Migration Operation Contract",
     "node scripts/check-migration-contract.mjs",
   ],

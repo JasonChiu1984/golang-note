@@ -2,7 +2,7 @@
 
 > 文件日期：2026-07-17
 > 完整日期時間：2026-07-17 06:02:46 CST +0800
-> 版本：v1.0.91
+> 版本：v1.0.92
 > 適用範圍：`production-api-worker` API、worker queue、Postgres migration、Prometheus metrics、OpenTelemetry trace、OTLP collector contract、pprof diagnostics、Docker Compose smoke gate、API contract scope coverage、Docs publishing contract gate、Release artifact chain contract gate、Go ReleaseNote freshness evidence、Release version consistency contract gate、Dependency governance contract gate、Dependency audit evidence freshness contract gate、Secret handling governance contract gate、Supply chain artifact governance contract gate、Platform promotion policy contract gate、Deployment controller config contract gate、Alertmanager routing governance contract gate。
 
 Dependency audit evidence freshness contract gate 要求 release evidence retention 保留 root module 與 production module 的 `go mod verify`、`go list -m -u all`、`govulncheck ./...` 結果；若 module proxy / vulnerability database 無法連線，runbook 與更新紀錄只能標示待補掃描，不可宣稱漏洞掃描通過。
@@ -253,3 +253,7 @@ curl -H 'Authorization: Bearer debug-token' 'http://localhost:8080/debug/pprof/h
 | Trace backend 未固定 | 本地 collector 使用 `debug exporter`；正式環境需指定 Tempo、Jaeger、OTLP backend 或雲端 APM、sampling rate、retention window、sensitive attribute redaction 與 trace data owner |
 | pprof profile 敏感 | heap、goroutine、cmdline、trace 可能含環境與請求資訊；只保存於受控 incident artifact |
 | Docker Compose 不是 Kubernetes | Compose smoke 可證明端到端最小流程，不取代 K8s readiness/liveness/rollout policy |
+
+## API Edge Security Policy Governance
+
+API edge security policy governance contract gate 要求 production edge 保留 API Gateway / WAF policy、OAuth2 / OIDC issuer、mTLS boundary、TLS termination owner、trusted header forwarding、identity propagation、gateway owner 與 evidence retention。Release 前需重跑 `node scripts/check-api-edge-security-policy-contract.mjs` 與 `make api-edge-security-policy-check`，並把 gateway policy drift review 放入 release evidence retention。

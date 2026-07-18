@@ -417,7 +417,7 @@ node ../scripts/check-retry-cancellation-contract.mjs
 
 CI contract parity gate：在 repo root 執行 `node scripts/check-ci-contract-parity-contract.mjs`，固定 `make ci-contract` 與 GitHub Actions production contract job 都涵蓋 `TestCORSAllowedOriginsContract`。
 
-Contract gate inventory：在 repo root 執行 `node scripts/check-contract-gate-inventory-contract.mjs`，固定 55 個 root contract checker 全部被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate。
+Contract gate inventory：在 repo root 執行 `node scripts/check-contract-gate-inventory-contract.mjs`，固定 56 個 root contract checker 全部被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate。
 
 Docs publishing contract gate：在 repo root 執行 `node scripts/check-docs-publishing-contract.mjs`，固定 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈、Makefile 與 CI 入口。
 
@@ -900,7 +900,7 @@ synctest.Test(t, func(t *testing.T) {
 | Prometheus config contract gate | `node scripts/check-prometheus-config-contract.mjs && cd production-api-worker && make prometheus-check` | 固定 Prometheus scrape job、rule_files、alert rules、Compose monitoring profile、API key scrape auth 風險與 CI 入口 |
 | Operational observability contract gate | `node scripts/check-operational-observability-contract.mjs && cd production-api-worker && make operational-observability-check` | 固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險、Makefile 與 CI 入口 |
 | Operational runbook scope freshness contract gate | `node scripts/check-operational-runbook-scope-contract.mjs && cd production-api-worker && make operational-runbook-scope-check` | 固定 runbook metadata、API contract scope coverage、Docs publishing contract gate、Release artifact chain contract gate 與供應鏈治理 scope |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs && cd production-api-worker && make contract-gate-inventory-check` | 固定 55 個 root contract checker 全部被 GitHub Actions 呼叫，並同步 Makefile、README、API contract、章節與整合視覺課程入口 |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs && cd production-api-worker && make contract-gate-inventory-check` | 固定 56 個 root contract checker 全部被 GitHub Actions 呼叫，並同步 Makefile、README、API contract、章節與整合視覺課程入口 |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs && cd production-api-worker && make docs-publishing-check` | 固定 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈、Makefile 與 CI 入口 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs && cd production-api-worker && make production-workflow-check` | 固定 standalone production workflow 的 contract、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs && cd production-api-worker && make syntax-flow-svg-check` | 固定語法流程圖補充頁的 25 個 flow、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口 |
@@ -925,3 +925,7 @@ synctest.Test(t, func(t *testing.T) {
 | CPU 熱點 | `go tool pprof http://localhost:6060/debug/pprof/profile?seconds=30` | 本機教學用；適合 CPU-bound，不適合直接判斷 I/O wait |
 | Runtime metrics | `/gc/*`、`/sched/*`、RSS、scrape payload | 升級 Go runtime / GC 前後要用同一組 dashboard threshold |
 | 工業通訊效能 | polling interval、timeout、retry、設備回應時間、queue backlog | PLC / DDC / SCADA 場景常被 I/O wait 主導，不能只看語言層 CPU |
+
+### API edge security policy governance contract gate
+
+Production API 不應只依賴 service 內的 demo `API_KEY`。`node scripts/check-api-edge-security-policy-contract.mjs` 與 `make api-edge-security-policy-check` 固定 gateway owner、API Gateway / WAF policy、OAuth2 / OIDC issuer、mTLS boundary、TLS termination owner、trusted header forwarding、identity propagation 與 evidence retention，避免 edge security policy 只存在於口頭 runbook。

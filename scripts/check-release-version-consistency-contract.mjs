@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 
-const expectedVersion = "v1.0.91";
-const releaseDate = "2026-07-17";
-const artifactTimestamp = "2026-07-17-060237";
-const expectedCheckerCount = 55;
+const expectedVersion = "v1.0.92";
+const releaseDate = "2026-07-19";
+const artifactTimestamp = "2026-07-19-060230";
+const expectedCheckerCount = 56;
 
 const version = readFileSync("VERSION", "utf8").trim();
 const contractScripts = readdirSync("scripts")
@@ -35,14 +35,14 @@ const required = {
   "VERSION": [expectedVersion],
   "CHANGELOG.md": [
     `## ${expectedVersion} - ${releaseDate}`,
-    "Dependency audit evidence freshness contract gate",
+    "API edge security policy governance contract gate",
     "check-release-publish-reconciliation-contract.mjs",
     `${expectedCheckerCount} 個 root contract checker`,
   ],
   "README.md": [
     `教材版本：\`${expectedVersion}\``,
-    "Dependency audit evidence freshness contract gate",
-    "node scripts/check-dependency-audit-evidence-contract.mjs",
+    "API edge security policy governance contract gate",
+    "node scripts/check-api-edge-security-policy-contract.mjs",
     `${expectedCheckerCount} 個 root contract checker`,
   ],
   "production-api-worker/README.md": [
@@ -52,8 +52,8 @@ const required = {
   ],
   "production-api-worker/docs/api-contract.md": [
     `版本：${expectedVersion}`,
-    "Dependency audit evidence freshness contract gate",
-    "node scripts/check-dependency-audit-evidence-contract.mjs",
+    "API edge security policy governance contract gate",
+    "node scripts/check-api-edge-security-policy-contract.mjs",
     `${expectedCheckerCount} 個 root contract checker`,
   ],
   "production-api-worker/api/openapi.yaml": [
@@ -63,24 +63,24 @@ const required = {
     `all ${expectedCheckerCount} root contract checker scripts`,
   ],
   "chapters/07-large-project-concurrent-crawler.md": [
-    "Dependency audit evidence freshness contract gate",
-    "node scripts/check-dependency-audit-evidence-contract.mjs",
+    "API edge security policy governance contract gate",
+    "node scripts/check-api-edge-security-policy-contract.mjs",
   ],
   "chapters/09-build-and-deploy.md": [
-    "Dependency audit evidence freshness contract gate",
-    "node scripts/check-dependency-audit-evidence-contract.mjs",
+    "API edge security policy governance contract gate",
+    "node scripts/check-api-edge-security-policy-contract.mjs",
   ],
   "chapters/11-advanced-testing.md": [
-    "Dependency audit evidence freshness contract gate",
-    "node scripts/check-dependency-audit-evidence-contract.mjs",
+    "API edge security policy governance contract gate",
+    "node scripts/check-api-edge-security-policy-contract.mjs",
   ],
   "Cheatsheet/cheatsheet-advanced.md": [
-    "Dependency audit evidence freshness contract gate",
-    "node scripts/check-dependency-audit-evidence-contract.mjs",
+    "API edge security policy governance contract gate",
+    "node scripts/check-api-edge-security-policy-contract.mjs",
   ],
   "圖解筆記3-4整合/golang-complete-visual-course.html": [
-    "Dependency audit evidence freshness contract gate",
-    "node scripts/check-dependency-audit-evidence-contract.mjs",
+    "API edge security policy governance contract gate",
+    "node scripts/check-api-edge-security-policy-contract.mjs",
   ],
   "docs/index.html": [
     "Release version consistency contract gate",
@@ -95,18 +95,18 @@ const required = {
     "node scripts/check-release-version-consistency-contract.mjs",
   ],
   [`審查報告/${artifactTimestamp}-資深工程師審查報告.md`]: [
-    "Dependency audit evidence freshness contract gate",
+    "API edge security policy governance contract gate",
     expectedVersion,
-    "2026-07-17 06:02:37 CST +0800",
+    "2026-07-19 06:02:30 CST +0800",
   ],
   [`內容需要更新的部分/${artifactTimestamp}-內容需要更新的部分.md`]: [
-    "Dependency audit evidence freshness contract gate",
-    "scripts/check-dependency-audit-evidence-contract.mjs",
+    "API edge security policy governance contract gate",
+    "scripts/check-api-edge-security-policy-contract.mjs",
     expectedVersion,
   ],
   [`更新資料/${artifactTimestamp}-${expectedVersion}-更新紀錄.md`]: [
-    "Dependency audit evidence freshness contract gate",
-    "scripts/check-dependency-audit-evidence-contract.mjs",
+    "API edge security policy governance contract gate",
+    "scripts/check-api-edge-security-policy-contract.mjs",
     "docs/index.html",
   ],
 };

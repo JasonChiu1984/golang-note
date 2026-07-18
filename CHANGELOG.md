@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.92 - 2026-07-19
+
+- 新增 2026-07-19 06:02:30 CST +0800 資深工程師審查報告，確認教程深度廣度已足夠，本輪缺口集中在 API edge security policy 尚未被獨立 gate 固定。
+- 新增 `scripts/check-api-edge-security-policy-contract.mjs` 與 `make api-edge-security-policy-check`，固定 API Gateway / WAF policy、OAuth2 / OIDC issuer、mTLS boundary、TLS termination owner、trusted header forwarding、identity propagation 與 release evidence retention。
+- 同步 `README.md`、`production-api-worker/README.md`、`production-api-worker/docs/api-contract.md`、`production-api-worker/api/openapi.yaml`、operational runbook、第 7 / 9 / 11 章、進階 Cheat Sheet 與整合視覺課程，將本輪發版重點標示為 API edge security policy governance contract gate。
+- Contract gate inventory 從 55 個 root contract checker 更新為 56 個 root contract checker，並納入 API edge security policy governance checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.92`。
+
 ## v1.0.91 - 2026-07-17
 
 - 新增 2026-07-17 06:02:37 CST +0800 資深工程師審查報告，確認教程深度廣度已足夠，本輪缺口集中在 dependency governance 尚未獨立固定每次 release 的 dependency audit evidence freshness。

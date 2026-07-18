@@ -183,6 +183,9 @@ jobs:
       - name: Check dependency audit evidence freshness contract
         run: node scripts/check-dependency-audit-evidence-contract.mjs
 
+      - name: Check API edge security policy governance contract
+        run: node scripts/check-api-edge-security-policy-contract.mjs
+
       - name: Check performance benchmark governance contract
         run: node scripts/check-performance-benchmark-governance-contract.mjs
 

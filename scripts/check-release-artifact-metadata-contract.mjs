@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 import { existsSync, readFileSync } from "node:fs";
 
-const expectedVersion = "v1.0.91";
-const releaseDate = "2026-07-17";
-const fullDateTime = "2026-07-17 06:02:37 CST +0800";
-const artifactTimestamp = "2026-07-17-060237";
-const releaseTopic = "Dependency audit evidence freshness contract gate";
+const expectedVersion = "v1.0.92";
+const releaseDate = "2026-07-19";
+const fullDateTime = "2026-07-19 06:02:30 CST +0800";
+const artifactTimestamp = "2026-07-19-060230";
+const releaseTopic = "API edge security policy governance contract gate";
 
 const artifacts = {
   review: `審查報告/${artifactTimestamp}-資深工程師審查報告.md`,
@@ -17,14 +17,14 @@ const required = {
   [artifacts.review]: [
     `審查日期：${releaseDate}`,
     `完整日期時間：${fullDateTime}`,
-    "審查版本基準：v1.0.90",
+    "審查版本基準：v1.0.91",
     "官方 Go Release History 查核",
     "go1.26.5",
     "go1.25.12",
     expectedVersion,
     releaseTopic,
-    "scripts/check-dependency-audit-evidence-contract.mjs",
-    "55 個 root contract checker",
+    "scripts/check-api-edge-security-policy-contract.mjs",
+    "56 個 root contract checker",
   ],
   [artifacts.needed]: [
     `產生日期：${releaseDate}`,
@@ -32,9 +32,9 @@ const required = {
     `依據審查報告：\`${artifacts.review}\``,
     `目標版本：${expectedVersion}`,
     `本輪主題：${releaseTopic}`,
-    "scripts/check-dependency-audit-evidence-contract.mjs",
-    "dependency-audit-evidence-check",
-    "55 個 root contract checker",
+    "scripts/check-api-edge-security-policy-contract.mjs",
+    "api-edge-security-policy-check",
+    "56 個 root contract checker",
   ],
   [artifacts.record]: [
     `更新日期：${releaseDate}`,
@@ -44,9 +44,9 @@ const required = {
     `${artifactTimestamp}-資深工程師審查報告.md`,
     `${artifactTimestamp}-內容需要更新的部分.md`,
     `${artifactTimestamp}-${expectedVersion}-更新紀錄.md`,
-    "scripts/check-dependency-audit-evidence-contract.mjs",
-    "dependency-audit-evidence-check",
-    "55 個 root contract checker",
+    "scripts/check-api-edge-security-policy-contract.mjs",
+    "api-edge-security-policy-check",
+    "56 個 root contract checker",
   ],
 };
 
@@ -68,53 +68,53 @@ const surfaceFiles = [
 const surfaceRequired = {
   "README.md": [
     releaseTopic,
-    "node scripts/check-dependency-audit-evidence-contract.mjs",
-    "55 個 root contract checker",
+    "node scripts/check-api-edge-security-policy-contract.mjs",
+    "56 個 root contract checker",
   ],
   "production-api-worker/README.md": [
     "Release Artifact Metadata Consistency Contract",
-    "make dependency-audit-evidence-check",
-    "node scripts/check-dependency-audit-evidence-contract.mjs",
+    "make api-edge-security-policy-check",
+    "node scripts/check-api-edge-security-policy-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
     releaseTopic,
-    "node scripts/check-dependency-audit-evidence-contract.mjs",
+    "node scripts/check-api-edge-security-policy-contract.mjs",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "Dependency audit evidence freshness contract gate",
+    "API edge security policy governance contract gate",
     "check-release-artifact-metadata-contract.mjs",
   ],
   "chapters/07-large-project-concurrent-crawler.md": [
     releaseTopic,
-    "node scripts/check-dependency-audit-evidence-contract.mjs",
+    "node scripts/check-api-edge-security-policy-contract.mjs",
   ],
   "chapters/09-build-and-deploy.md": [
     releaseTopic,
-    "node scripts/check-dependency-audit-evidence-contract.mjs",
+    "node scripts/check-api-edge-security-policy-contract.mjs",
   ],
   "chapters/11-advanced-testing.md": [
     releaseTopic,
-    "node scripts/check-dependency-audit-evidence-contract.mjs",
+    "node scripts/check-api-edge-security-policy-contract.mjs",
   ],
   "Cheatsheet/cheatsheet-advanced.md": [
     releaseTopic,
-    "node scripts/check-dependency-audit-evidence-contract.mjs",
+    "node scripts/check-api-edge-security-policy-contract.mjs",
   ],
   "圖解筆記3-4整合/golang-complete-visual-course.html": [
     releaseTopic,
-    "node scripts/check-dependency-audit-evidence-contract.mjs",
+    "node scripts/check-api-edge-security-policy-contract.mjs",
   ],
   "docs/index.html": [
-    "Dependency audit evidence freshness contract gate",
+    "API edge security policy governance contract gate",
     "check-release-artifact-metadata-contract.mjs",
   ],
   "production-api-worker/Makefile": [
     "release-artifact-metadata-check",
-    "node scripts/check-dependency-audit-evidence-contract.mjs",
+    "node scripts/check-api-edge-security-policy-contract.mjs",
   ],
   ".github/workflows/ci.yml": [
     "Check release artifact continuity index contract",
-    "node scripts/check-dependency-audit-evidence-contract.mjs",
+    "node scripts/check-api-edge-security-policy-contract.mjs",
   ],
 };
 
