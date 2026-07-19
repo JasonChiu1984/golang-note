@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: production-api-worker API
-  version: v1.0.92
+  version: v1.0.93
   description: >
     Machine-readable contract for the Go teaching production API worker.
     This file mirrors docs/api-contract.md and the Go contract tests,
@@ -60,6 +60,10 @@ info:
     API Gateway / WAF policy, OAuth2 / OIDC issuer, mTLS boundary, TLS termination owner,
     trusted header forwarding, identity propagation, evidence retention, and
     check-api-edge-security-policy-contract.mjs aligned.
+    SLO incident response governance contract gate keeps availability SLO,
+    error budget policy, incident commander, escalation policy, mitigation decision,
+    customer impact note, postmortem action owner, and
+    check-slo-incident-response-governance-contract.mjs aligned.
     Worker failure handling keeps failed jobs visible through worker_jobs_total.
     Worker shutdown contract keeps Queue.Enqueue and Queue.ShutdownContext aligned
     around the same mutex-protected closed state, ErrClosed returns, shutdown
@@ -88,7 +92,7 @@ info:
     context, keeps api-worker process exit hooked to obs.Shutdown, and keeps
     TestTraceShutdownContract, check-trace-shutdown-contract.mjs, Makefile,
     docs, and CI static gates aligned.
-    Contract gate inventory keeps all 56 root contract checker scripts,
+    Contract gate inventory keeps all 57 root contract checker scripts,
     check-contract-gate-inventory-contract.mjs, Makefile, README, API contract,
     chapters, visual course, and GitHub Actions aligned.
     Docs publishing contract gate keeps docs/index.html, GitHub Pages link fix,

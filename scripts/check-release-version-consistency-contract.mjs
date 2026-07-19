@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 
-const expectedVersion = "v1.0.92";
-const releaseDate = "2026-07-19";
-const artifactTimestamp = "2026-07-19-060230";
-const expectedCheckerCount = 56;
+const expectedVersion = "v1.0.93";
+const releaseDate = "2026-07-20";
+const artifactTimestamp = "2026-07-20-060855";
+const expectedCheckerCount = 57;
 
 const version = readFileSync("VERSION", "utf8").trim();
 const contractScripts = readdirSync("scripts")
@@ -35,14 +35,14 @@ const required = {
   "VERSION": [expectedVersion],
   "CHANGELOG.md": [
     `## ${expectedVersion} - ${releaseDate}`,
-    "API edge security policy governance contract gate",
-    "check-release-publish-reconciliation-contract.mjs",
+    "SLO incident response governance contract gate",
+    "check-slo-incident-response-governance-contract.mjs",
     `${expectedCheckerCount} 個 root contract checker`,
   ],
   "README.md": [
     `教材版本：\`${expectedVersion}\``,
-    "API edge security policy governance contract gate",
-    "node scripts/check-api-edge-security-policy-contract.mjs",
+    "SLO incident response governance contract gate",
+    "node scripts/check-slo-incident-response-governance-contract.mjs",
     `${expectedCheckerCount} 個 root contract checker`,
   ],
   "production-api-worker/README.md": [
@@ -52,8 +52,8 @@ const required = {
   ],
   "production-api-worker/docs/api-contract.md": [
     `版本：${expectedVersion}`,
-    "API edge security policy governance contract gate",
-    "node scripts/check-api-edge-security-policy-contract.mjs",
+    "SLO incident response governance contract gate",
+    "node scripts/check-slo-incident-response-governance-contract.mjs",
     `${expectedCheckerCount} 個 root contract checker`,
   ],
   "production-api-worker/api/openapi.yaml": [
@@ -63,24 +63,24 @@ const required = {
     `all ${expectedCheckerCount} root contract checker scripts`,
   ],
   "chapters/07-large-project-concurrent-crawler.md": [
-    "API edge security policy governance contract gate",
-    "node scripts/check-api-edge-security-policy-contract.mjs",
+    "SLO incident response governance contract gate",
+    "node scripts/check-slo-incident-response-governance-contract.mjs",
   ],
   "chapters/09-build-and-deploy.md": [
-    "API edge security policy governance contract gate",
-    "node scripts/check-api-edge-security-policy-contract.mjs",
+    "SLO incident response governance contract gate",
+    "node scripts/check-slo-incident-response-governance-contract.mjs",
   ],
   "chapters/11-advanced-testing.md": [
-    "API edge security policy governance contract gate",
-    "node scripts/check-api-edge-security-policy-contract.mjs",
+    "SLO incident response governance contract gate",
+    "node scripts/check-slo-incident-response-governance-contract.mjs",
   ],
   "Cheatsheet/cheatsheet-advanced.md": [
-    "API edge security policy governance contract gate",
-    "node scripts/check-api-edge-security-policy-contract.mjs",
+    "SLO incident response governance contract gate",
+    "node scripts/check-slo-incident-response-governance-contract.mjs",
   ],
   "圖解筆記3-4整合/golang-complete-visual-course.html": [
-    "API edge security policy governance contract gate",
-    "node scripts/check-api-edge-security-policy-contract.mjs",
+    "SLO incident response governance contract gate",
+    "node scripts/check-slo-incident-response-governance-contract.mjs",
   ],
   "docs/index.html": [
     "Release version consistency contract gate",
@@ -95,18 +95,18 @@ const required = {
     "node scripts/check-release-version-consistency-contract.mjs",
   ],
   [`審查報告/${artifactTimestamp}-資深工程師審查報告.md`]: [
-    "API edge security policy governance contract gate",
+    "SLO incident response governance contract gate",
     expectedVersion,
-    "2026-07-19 06:02:30 CST +0800",
+    "2026-07-20 06:08:55 CST +0800",
   ],
   [`內容需要更新的部分/${artifactTimestamp}-內容需要更新的部分.md`]: [
-    "API edge security policy governance contract gate",
-    "scripts/check-api-edge-security-policy-contract.mjs",
+    "SLO incident response governance contract gate",
+    "scripts/check-slo-incident-response-governance-contract.mjs",
     expectedVersion,
   ],
   [`更新資料/${artifactTimestamp}-${expectedVersion}-更新紀錄.md`]: [
-    "API edge security policy governance contract gate",
-    "scripts/check-api-edge-security-policy-contract.mjs",
+    "SLO incident response governance contract gate",
+    "scripts/check-slo-incident-response-governance-contract.mjs",
     "docs/index.html",
   ],
 };

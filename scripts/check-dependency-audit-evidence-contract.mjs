@@ -18,7 +18,7 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.92`",
+    "教材版本：`v1.0.93`",
     "Dependency audit evidence freshness contract gate",
     "node scripts/check-dependency-audit-evidence-contract.mjs",
     "release evidence retention",
@@ -31,13 +31,13 @@ const required = {
     "release evidence retention",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.92",
+    "版本：v1.0.93",
     "Dependency audit evidence freshness contract gate",
     "node scripts/check-dependency-audit-evidence-contract.mjs",
     "module proxy / vulnerability database",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.92",
+    "version: v1.0.93",
     "Dependency audit evidence freshness contract gate",
     "check-dependency-audit-evidence-contract.mjs",
     "release evidence retention",

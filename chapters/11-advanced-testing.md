@@ -94,6 +94,8 @@ func FuzzParseInt(f *testing.F) {
 
 單元測試用 Mock，但我們終究需要真實測試資料庫的 SQL 是否正確。
 
+Production 測試也要覆蓋事故治理文件面。SLO incident response governance contract gate 由 `node scripts/check-slo-incident-response-governance-contract.mjs` 固定 availability SLO、error budget policy、incident commander、escalation policy、mitigation decision、customer impact note 與 postmortem action owner；這類 checker 不測 runtime branch，而是防止 runbook、API contract、CI 與教程入口漏掉 postmortem action owner 或 escalation policy。
+
 ### 使用 Testcontainers
 
 [Testcontainers-go](https://golang.testcontainers.org/) 可以讓你在 Go 測試碼裡面用 Docker 啟動一個臨時的 PostgreSQL / Redis，測試完自動刪除。
@@ -605,7 +607,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | Operational observability contract gate | `node scripts/check-operational-observability-contract.mjs && cd production-api-worker && make operational-observability-check` | 固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險與 CI 入口 |
 | Operational runbook scope freshness contract gate | `node scripts/check-operational-runbook-scope-contract.mjs && cd production-api-worker && make operational-runbook-scope-check` | 固定 runbook metadata、API contract scope coverage、Docs publishing contract gate、Release artifact chain contract gate 與供應鏈治理 scope |
 | CI contract parity gate | `node scripts/check-ci-contract-parity-contract.mjs && cd production-api-worker && make ci-contract-parity-check` | 固定 `make ci-contract` 與 GitHub Actions production contract job 的 API test selector，保留 `TestCORSAllowedOriginsContract` |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs && cd production-api-worker && make contract-gate-inventory-check` | 固定 56 個 root contract checker 都被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs && cd production-api-worker && make contract-gate-inventory-check` | 固定 57 個 root contract checker 都被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs && cd production-api-worker && make docs-publishing-check` | 固定 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈、Makefile、CI 入口與 API contract scope header |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs && cd production-api-worker && make production-workflow-check` | 固定 standalone workflow 的 contract、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs && cd production-api-worker && make syntax-flow-svg-check` | 固定語法流程圖補充頁的 25 個 flow、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口 |
@@ -637,7 +639,7 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | CI workflow syntax | `ruby -e 'require "yaml"; YAML.load_file(".github/workflows/ci.yml")'` | 固定 GitHub Actions workflow 至少可被 YAML parser 解析 |
 | CI production gate | `cd production-api-worker && make ci-contract && go test -race -cover ./... -count=1` | 本機重跑與 CI 對齊的核心合約、race 與 coverage gate |
 | CI contract parity gate | `node scripts/check-ci-contract-parity-contract.mjs` | 確認本機與 CI 的 API contract selector 一致，避免只在單一路徑跑到 CORS 合約 |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` | 確認 56 個 root contract checker 全部被 GitHub Actions 呼叫 |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` | 確認 57 個 root contract checker 全部被 GitHub Actions 呼叫 |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs` | 確認 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈與 API contract scope header 沒有漂移 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs` | 確認 standalone production workflow 沒有漏掉 production release gate |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs` | 確認語法流程圖補充頁沒有漏掉 flow、標準符號、metadata、renderer 或 CI 入口 |

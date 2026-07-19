@@ -1,9 +1,9 @@
 # production-api-worker Operational Runbook
 
-> 文件日期：2026-07-17
-> 完整日期時間：2026-07-17 06:02:46 CST +0800
-> 版本：v1.0.92
-> 適用範圍：`production-api-worker` API、worker queue、Postgres migration、Prometheus metrics、OpenTelemetry trace、OTLP collector contract、pprof diagnostics、Docker Compose smoke gate、API contract scope coverage、Docs publishing contract gate、Release artifact chain contract gate、Go ReleaseNote freshness evidence、Release version consistency contract gate、Dependency governance contract gate、Dependency audit evidence freshness contract gate、Secret handling governance contract gate、Supply chain artifact governance contract gate、Platform promotion policy contract gate、Deployment controller config contract gate、Alertmanager routing governance contract gate。
+> 文件日期：2026-07-20
+> 完整日期時間：2026-07-20 06:08:55 CST +0800
+> 版本：v1.0.93
+> 適用範圍：`production-api-worker` API、worker queue、Postgres migration、Prometheus metrics、OpenTelemetry trace、OTLP collector contract、pprof diagnostics、Docker Compose smoke gate、API contract scope coverage、Docs publishing contract gate、Release artifact chain contract gate、Go ReleaseNote freshness evidence、Release version consistency contract gate、Dependency governance contract gate、Dependency audit evidence freshness contract gate、Secret handling governance contract gate、Supply chain artifact governance contract gate、Platform promotion policy contract gate、Deployment controller config contract gate、Alertmanager routing governance contract gate、SLO incident response governance contract gate。
 
 Dependency audit evidence freshness contract gate 要求 release evidence retention 保留 root module 與 production module 的 `go mod verify`、`go list -m -u all`、`govulncheck ./...` 結果；若 module proxy / vulnerability database 無法連線，runbook 與更新紀錄只能標示待補掃描，不可宣稱漏洞掃描通過。
 
@@ -19,6 +19,7 @@ Operational runbook scope freshness contract gate 固定本文件的日期、完
 | Alert rule | 提供 Prometheus rule 檔，可由 CI 與人工審查檢查 |
 | Prometheus scrape config | 提供本地 scrape job 與 rule_files 載入範本 |
 | Alertmanager routing | 提供本地 Alertmanager route / receiver 範本，並固定正式 receiver owner、escalation owner、silence policy 與 notification evidence |
+| SLO incident response | 固定 availability SLO、error budget policy、incident commander、escalation policy、mitigation decision、customer impact note 與 postmortem action owner |
 | pprof diagnostics | 預設關閉 `/debug/pprof/`；事故期間短期啟用時強制 Bearer token |
 | OTLP collector contract | 固定 `production-api-worker/otel-collector.yaml` 的 OTLP gRPC receiver、debug exporter 與 Compose endpoint |
 | Incident workflow | 從告警、分級、初判、緩解、驗證到復盤 |
@@ -130,6 +131,8 @@ Deployment controller config contract gate 固定實際部署控制器設定。�
 
 Alertmanager routing governance contract gate 固定正式告警送達流程。正式環境需保留 Alertmanager route、receiver owner、escalation owner、silence policy 與 notification evidence；local teaching profile 使用 `configs/prometheus/alertmanager.yml` 固定 route shape，避免 Prometheus rules 已載入但告警沒有 receiver、升級責任或送達證據。
 
+SLO incident response governance contract gate 固定正式事故治理流程。正式環境需保留 availability SLO、error budget policy、incident commander、escalation policy、mitigation decision、customer impact note 與 postmortem action owner；這些證據應和 Alertmanager notification evidence、rollback drill、release evidence retention 與 postmortem evidence 一起保存，避免只知道 alert 觸發，卻無法追溯誰決策、是否消耗 error budget、如何緩解及後續 action 由誰關閉。
+
 ## 4. Configuration
 
 | 類型 | 建議值 | 說明 |
@@ -205,6 +208,7 @@ curl -H 'Authorization: Bearer debug-token' 'http://localhost:8080/debug/pprof/h
 | Prometheus rule 語法層級檢查 | `node scripts/check-operational-runbook.mjs` | rule group、alert、expr、for、severity、runbook_url 皆存在 |
 | Prometheus scrape config | `node scripts/check-prometheus-config-contract.mjs` | scrape job、rule_files、Compose monitoring profile、README 與 CI 入口一致 |
 | Alertmanager routing governance contract gate | `node scripts/check-alertmanager-routing-contract.mjs` | Alertmanager route、receiver owner、escalation owner、silence policy、notification evidence、Prometheus alerting target 與 Compose service 一致 |
+| SLO incident response governance contract gate | `node scripts/check-slo-incident-response-governance-contract.mjs` | availability SLO、error budget policy、incident commander、escalation policy、mitigation decision、customer impact note 與 postmortem action owner 一致 |
 | pprof diagnostics contract | `node scripts/check-pprof-contract.mjs` | `ENABLE_PPROF`、`PPROF_TOKEN`、Go tests、runbook、README 與 CI 入口一致 |
 | OTLP collector contract | `node scripts/check-otel-collector-contract.mjs` | OTLP receiver、debug exporter、Compose endpoint、runbook、README 與 CI 入口一致 |
 | OTLP export governance contract gate | `node scripts/check-otel-export-governance-contract.mjs` | local debug exporter、production backend owner、sampling rate、retention window、sensitive attribute redaction 與 trace data owner 一致 |
@@ -250,6 +254,7 @@ curl -H 'Authorization: Bearer debug-token' 'http://localhost:8080/debug/pprof/h
 |---|---|
 | 教學閾值不等於正式 SLA | 2%、5%、2s、50 queue depth 是教材 baseline；正式環境需依流量重算 |
 | Alertmanager receiver 仍是教學範本 | 本 repo 提供 local `teaching-webhook` routing shape；正式環境需替換 receiver 並保留 receiver owner、escalation owner、silence policy 與 notification evidence |
+| SLO / error budget 仍需正式環境校準 | 教材提供 incident governance baseline；正式環境需依 SLA、流量、客戶影響與 on-call rota 校準 availability SLO、error budget policy 與 escalation policy |
 | Trace backend 未固定 | 本地 collector 使用 `debug exporter`；正式環境需指定 Tempo、Jaeger、OTLP backend 或雲端 APM、sampling rate、retention window、sensitive attribute redaction 與 trace data owner |
 | pprof profile 敏感 | heap、goroutine、cmdline、trace 可能含環境與請求資訊；只保存於受控 incident artifact |
 | Docker Compose 不是 Kubernetes | Compose smoke 可證明端到端最小流程，不取代 K8s readiness/liveness/rollout policy |
@@ -257,3 +262,7 @@ curl -H 'Authorization: Bearer debug-token' 'http://localhost:8080/debug/pprof/h
 ## API Edge Security Policy Governance
 
 API edge security policy governance contract gate 要求 production edge 保留 API Gateway / WAF policy、OAuth2 / OIDC issuer、mTLS boundary、TLS termination owner、trusted header forwarding、identity propagation、gateway owner 與 evidence retention。Release 前需重跑 `node scripts/check-api-edge-security-policy-contract.mjs` 與 `make api-edge-security-policy-check`，並把 gateway policy drift review 放入 release evidence retention。
+
+## SLO Incident Response Governance
+
+SLO incident response governance contract gate 要求 incident record 同時保留 availability SLO、error budget policy、incident commander、escalation policy、mitigation decision、customer impact note 與 postmortem action owner。Release 前需重跑 `node scripts/check-slo-incident-response-governance-contract.mjs` 與 `make slo-incident-response-governance-check`，並把 SLO breach review 與 postmortem action closure 放入 incident evidence retention。

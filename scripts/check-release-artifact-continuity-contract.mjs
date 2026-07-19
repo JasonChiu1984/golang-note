@@ -2,12 +2,12 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename } from "node:path";
 
-const expectedVersion = "v1.0.92";
-const releaseDate = "2026-07-19";
-const fullDateTime = "2026-07-19 06:02:30 CST +0800";
-const artifactTimestamp = "2026-07-19-060230";
-const expectedCheckerCount = 56;
-const releaseTopic = "API edge security policy governance contract gate";
+const expectedVersion = "v1.0.93";
+const releaseDate = "2026-07-20";
+const fullDateTime = "2026-07-20 06:08:55 CST +0800";
+const artifactTimestamp = "2026-07-20-060855";
+const expectedCheckerCount = 57;
+const releaseTopic = "SLO incident response governance contract gate";
 
 const currentArtifacts = {
   review: `審查報告/${artifactTimestamp}-資深工程師審查報告.md`,
@@ -35,63 +35,63 @@ const required = {
   "README.md": [
     `教材版本：\`${expectedVersion}\``,
     releaseTopic,
-    "node scripts/check-api-edge-security-policy-contract.mjs",
+    "node scripts/check-slo-incident-response-governance-contract.mjs",
     `${expectedCheckerCount} 個 root contract checker`,
   ],
   "CHANGELOG.md": [
     `## ${expectedVersion} - ${releaseDate}`,
     releaseTopic,
-    "check-api-edge-security-policy-contract.mjs",
+    "check-slo-incident-response-governance-contract.mjs",
     `${expectedCheckerCount} 個 root contract checker`,
   ],
   "production-api-worker/README.md": [
     "Release Artifact Continuity Index Contract",
-    "make api-edge-security-policy-check",
-    "node scripts/check-api-edge-security-policy-contract.mjs",
+    "make slo-incident-response-governance-check",
+    "node scripts/check-slo-incident-response-governance-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
     `版本：${expectedVersion}`,
     releaseTopic,
-    "node scripts/check-api-edge-security-policy-contract.mjs",
+    "node scripts/check-slo-incident-response-governance-contract.mjs",
     `${expectedCheckerCount} 個 root contract checker`,
   ],
   "production-api-worker/api/openapi.yaml": [
     `version: ${expectedVersion}`,
-    "API edge security policy governance contract gate",
-    "check-api-edge-security-policy-contract.mjs",
+    "SLO incident response governance contract gate",
+    "check-slo-incident-response-governance-contract.mjs",
     `all ${expectedCheckerCount} root contract checker scripts`,
   ],
   "chapters/07-large-project-concurrent-crawler.md": [
     releaseTopic,
-    "node scripts/check-api-edge-security-policy-contract.mjs",
+    "node scripts/check-slo-incident-response-governance-contract.mjs",
   ],
   "chapters/09-build-and-deploy.md": [
     releaseTopic,
-    "node scripts/check-api-edge-security-policy-contract.mjs",
+    "node scripts/check-slo-incident-response-governance-contract.mjs",
   ],
   "chapters/11-advanced-testing.md": [
     releaseTopic,
-    "node scripts/check-api-edge-security-policy-contract.mjs",
+    "node scripts/check-slo-incident-response-governance-contract.mjs",
   ],
   "Cheatsheet/cheatsheet-advanced.md": [
     releaseTopic,
-    "node scripts/check-api-edge-security-policy-contract.mjs",
+    "node scripts/check-slo-incident-response-governance-contract.mjs",
   ],
   "圖解筆記3-4整合/golang-complete-visual-course.html": [
     releaseTopic,
-    "node scripts/check-api-edge-security-policy-contract.mjs",
+    "node scripts/check-slo-incident-response-governance-contract.mjs",
   ],
   "docs/index.html": [
     releaseTopic,
-    "check-api-edge-security-policy-contract.mjs",
+    "check-slo-incident-response-governance-contract.mjs",
   ],
   "production-api-worker/Makefile": [
-    "api-edge-security-policy-check",
-    "node scripts/check-api-edge-security-policy-contract.mjs",
+    "slo-incident-response-governance-check",
+    "node scripts/check-slo-incident-response-governance-contract.mjs",
   ],
   ".github/workflows/ci.yml": [
     "Check release artifact continuity index contract",
-    "node scripts/check-api-edge-security-policy-contract.mjs",
+    "node scripts/check-slo-incident-response-governance-contract.mjs",
   ],
 };
 
@@ -123,19 +123,19 @@ const currentRequired = {
   [currentArtifacts.review]: [
     `審查日期：${releaseDate}`,
     `完整日期時間：${fullDateTime}`,
-    "審查版本基準：v1.0.91",
+    "基準版本：v1.0.92",
     expectedVersion,
     releaseTopic,
     "go1.26.5",
     "go1.25.12",
   ],
   [currentArtifacts.needed]: [
-    `產生日期：${releaseDate}`,
+    `更新日期：${releaseDate}`,
     `完整日期時間：${fullDateTime}`,
-    `依據審查報告：\`${currentArtifacts.review}\``,
-    `目標版本：${expectedVersion}`,
+    `來源審查報告：\`${currentArtifacts.review}\``,
+    `對應版本：${expectedVersion}`,
     `本輪主題：${releaseTopic}`,
-    "scripts/check-api-edge-security-policy-contract.mjs",
+    "scripts/check-slo-incident-response-governance-contract.mjs",
   ],
   [currentArtifacts.record]: [
     `更新日期：${releaseDate}`,
@@ -145,7 +145,7 @@ const currentRequired = {
     basename(currentArtifacts.review),
     basename(currentArtifacts.needed),
     basename(currentArtifacts.record),
-    "scripts/check-api-edge-security-policy-contract.mjs",
+    "scripts/check-slo-incident-response-governance-contract.mjs",
   ],
 };
 

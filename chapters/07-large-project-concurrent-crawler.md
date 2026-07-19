@@ -115,6 +115,8 @@ func Load() Config {
 
 Production service 不應讓錯誤設定 silent fallback。像 `PORT=http`、`QUEUE_SIZE=0`、`WORKERS=-1` 這類部署錯誤應在啟動時 fail fast，而不是悄悄套用預設值。
 
+大型專案的 incident response 也應視為架構邊界。SLO incident response governance contract gate 由 `node scripts/check-slo-incident-response-governance-contract.mjs` 固定 availability SLO、error budget policy、incident commander、escalation policy、mitigation decision、customer impact note 與 postmortem action owner，避免 production 事故只留下 log 與 rollback 指令，卻沒有可追溯的決策責任。
+
 ```go
 cfg, err := config.Load()
 if err != nil {
@@ -300,7 +302,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Worker shutdown contract | `node scripts/check-worker-shutdown-contract.mjs`、enqueue 與 close 的同步邊界、`ErrClosed`、shutdown tests | shutdown 期間可能送入已關閉 channel，造成 panic |
 | Shutdown signal contract | `SIGINT`、`SIGTERM`、readiness draining、HTTP shutdown、queue drain | Docker / Kubernetes 發出 `SIGTERM` 時未進入 graceful shutdown |
 | CI quality gate static gate | `node scripts/check-ci-quality-gate-contract.mjs`、root course、production contracts、race/coverage、govulncheck、Docker build、Compose smoke | workflow 重整後漏掉 dependency verify、漏洞掃描、競態檢查或部署 smoke |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs`、56 個 root contract checker、GitHub Actions 呼叫清單 | 新增 checker 後沒有進入 CI、Makefile 或教材入口，導致 release gate 漂移 |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs`、57 個 root contract checker、GitHub Actions 呼叫清單 | 新增 checker 後沒有進入 CI、Makefile 或教材入口，導致 release gate 漂移 |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs`、`docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈 | 首頁同步後 Release Notes、補充教材入口或回主頁連結在 Pages 上漂移 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs`、standalone workflow、contract tests、race/coverage、govulncheck、Docker smoke | production worker 抽成獨立 repo 時 workflow 退化成只跑快速測試 |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs`、25 個 syntax flow、標準流程圖符號、SVG metadata、blueprint renderer | 視覺化語法教材退回不可維護圖檔、缺少 accessibility metadata 或 docs/來源漂移 |
@@ -478,7 +480,7 @@ Production API 的 timeout 不是未知錯誤。若 handler 建立的 request de
 | Operational observability contract gate | `node scripts/check-operational-observability-contract.mjs` 固定 runbook、Prometheus scrape config、alert rules、Compose monitoring profile、API key scrape auth 風險與 CI 入口 |
 | Operational runbook scope freshness contract gate | `node scripts/check-operational-runbook-scope-contract.mjs` 固定 runbook metadata、完整日期時間、API contract scope coverage、Docs publishing contract gate、Release artifact chain contract gate、Secret handling governance contract gate 與 Supply chain artifact governance contract gate |
 | Worker shutdown contract | `node scripts/check-worker-shutdown-contract.mjs` 固定 queue close/enqueue mutex、`ErrClosed`、shutdown tests、Makefile 與 CI 入口 |
-| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` 固定 56 個 root contract checker 都被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate |
+| Contract gate inventory | `node scripts/check-contract-gate-inventory-contract.mjs` 固定 57 個 root contract checker 都被 GitHub Actions 呼叫，避免 checker 只存在於 repo 沒有進入 release gate |
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs` 固定 `docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈，避免 Pages 首頁入口漂移 |
 | API contract scope coverage | `node scripts/check-openapi-contract.mjs` 固定 `docs/api-contract.md` 首段適用範圍必須列入 Docs publishing contract gate 與發布面 scope，避免表格更新但 header 漏列 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs` 固定 `production-api-worker/.github/workflows/production-api-worker.yml` 的 contract、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |

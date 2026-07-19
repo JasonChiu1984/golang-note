@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.93 - 2026-07-20
+
+- 新增 2026-07-20 06:08:55 CST +0800 資深工程師審查報告，確認教程深度廣度已足夠，本輪缺口集中在 SLO / incident response governance 尚未被獨立 gate 固定。
+- 新增 `scripts/check-slo-incident-response-governance-contract.mjs` 與 `make slo-incident-response-governance-check`，固定 availability SLO、error budget policy、incident commander、escalation policy、mitigation decision、customer impact note 與 postmortem action owner。
+- 同步 `README.md`、`production-api-worker/README.md`、`production-api-worker/docs/api-contract.md`、`production-api-worker/api/openapi.yaml`、operational runbook、第 7 / 9 / 11 章、進階 Cheat Sheet 與整合視覺課程，將本輪發版重點標示為 SLO incident response governance contract gate。
+- Contract gate inventory 從 56 個 root contract checker 更新為 57 個 root contract checker，並納入 SLO incident response governance checker。
+- `production-api-worker/api/openapi.yaml`、`production-api-worker/docs/api-contract.md` 與 version-sensitive contract checks 版本標記更新為 `v1.0.93`。
+
 ## v1.0.92 - 2026-07-19
 
 - 新增 2026-07-19 06:02:30 CST +0800 資深工程師審查報告，確認教程深度廣度已足夠，本輪缺口集中在 API edge security policy 尚未被獨立 gate 固定。
