@@ -18,14 +18,14 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.93`",
+    "教材版本：`v1.0.94`",
     "SLO incident response governance contract gate",
     "node scripts/check-slo-incident-response-governance-contract.mjs",
     "availability SLO",
     "error budget policy",
     "incident commander",
     "postmortem action owner",
-    "57 個 root contract checker",
+    "58 個 root contract checker",
   ],
   "production-api-worker/README.md": [
     "SLO Incident Response Governance Contract",
@@ -35,7 +35,7 @@ const required = {
     "customer impact note",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.93",
+    "版本：v1.0.94",
     "SLO incident response governance contract gate",
     "node scripts/check-slo-incident-response-governance-contract.mjs",
     "availability SLO",
@@ -52,7 +52,7 @@ const required = {
     "postmortem action owner",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.93",
+    "version: v1.0.94",
     "SLO incident response governance contract gate",
     "check-slo-incident-response-governance-contract.mjs",
     "incident commander",

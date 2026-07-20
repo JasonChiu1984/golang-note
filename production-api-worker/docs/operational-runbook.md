@@ -1,9 +1,9 @@
 # production-api-worker Operational Runbook
 
-> 文件日期：2026-07-20
-> 完整日期時間：2026-07-20 06:08:55 CST +0800
-> 版本：v1.0.93
-> 適用範圍：`production-api-worker` API、worker queue、Postgres migration、Prometheus metrics、OpenTelemetry trace、OTLP collector contract、pprof diagnostics、Docker Compose smoke gate、API contract scope coverage、Docs publishing contract gate、Release artifact chain contract gate、Go ReleaseNote freshness evidence、Release version consistency contract gate、Dependency governance contract gate、Dependency audit evidence freshness contract gate、Secret handling governance contract gate、Supply chain artifact governance contract gate、Platform promotion policy contract gate、Deployment controller config contract gate、Alertmanager routing governance contract gate、SLO incident response governance contract gate。
+> 文件日期：2026-07-21
+> 完整日期時間：2026-07-21 06:08:55 CST +0800
+> 版本：v1.0.94
+> 適用範圍：`production-api-worker` API、worker queue、Postgres migration、Prometheus metrics、OpenTelemetry trace、OTLP collector contract、pprof diagnostics、Docker Compose smoke gate、API contract scope coverage、Docs publishing contract gate、Release artifact chain contract gate、Go ReleaseNote freshness evidence、Release version consistency contract gate、Dependency governance contract gate、Dependency audit evidence freshness contract gate、Secret handling governance contract gate、Supply chain artifact governance contract gate、Platform promotion policy contract gate、Deployment controller config contract gate、Alertmanager routing governance contract gate、SLO incident response governance contract gate、Structured log schema governance contract gate。
 
 Dependency audit evidence freshness contract gate 要求 release evidence retention 保留 root module 與 production module 的 `go mod verify`、`go list -m -u all`、`govulncheck ./...` 結果；若 module proxy / vulnerability database 無法連線，runbook 與更新紀錄只能標示待補掃描，不可宣稱漏洞掃描通過。
 
@@ -20,6 +20,7 @@ Operational runbook scope freshness contract gate 固定本文件的日期、完
 | Prometheus scrape config | 提供本地 scrape job 與 rule_files 載入範本 |
 | Alertmanager routing | 提供本地 Alertmanager route / receiver 範本，並固定正式 receiver owner、escalation owner、silence policy 與 notification evidence |
 | SLO incident response | 固定 availability SLO、error budget policy、incident commander、escalation policy、mitigation decision、customer impact note 與 postmortem action owner |
+| Structured log schema | 固定 `request_id`、`trace_id`、`severity`、`error_code`、`route`、log redaction policy、log retention owner 與 audit log review cadence |
 | pprof diagnostics | 預設關閉 `/debug/pprof/`；事故期間短期啟用時強制 Bearer token |
 | OTLP collector contract | 固定 `production-api-worker/otel-collector.yaml` 的 OTLP gRPC receiver、debug exporter 與 Compose endpoint |
 | Incident workflow | 從告警、分級、初判、緩解、驗證到復盤 |
@@ -133,6 +134,8 @@ Alertmanager routing governance contract gate 固定正式告警送達流程。�
 
 SLO incident response governance contract gate 固定正式事故治理流程。正式環境需保留 availability SLO、error budget policy、incident commander、escalation policy、mitigation decision、customer impact note 與 postmortem action owner；這些證據應和 Alertmanager notification evidence、rollback drill、release evidence retention 與 postmortem evidence 一起保存，避免只知道 alert 觸發，卻無法追溯誰決策、是否消耗 error budget、如何緩解及後續 action 由誰關閉。
 
+Structured log schema governance contract gate 固定正式 log evidence 的欄位與治理責任。正式環境需保留 `request_id`、`trace_id`、`severity`、`error_code`、`route`、log redaction policy、log retention owner 與 audit log review cadence；這些證據應和 trace data owner、incident artifact redaction、SLO breach review 與 postmortem evidence 一起保存，避免 incident review 缺少可查詢欄位、遮蔽策略或保留責任。
+
 ## 4. Configuration
 
 | 類型 | 建議值 | 說明 |
@@ -209,6 +212,7 @@ curl -H 'Authorization: Bearer debug-token' 'http://localhost:8080/debug/pprof/h
 | Prometheus scrape config | `node scripts/check-prometheus-config-contract.mjs` | scrape job、rule_files、Compose monitoring profile、README 與 CI 入口一致 |
 | Alertmanager routing governance contract gate | `node scripts/check-alertmanager-routing-contract.mjs` | Alertmanager route、receiver owner、escalation owner、silence policy、notification evidence、Prometheus alerting target 與 Compose service 一致 |
 | SLO incident response governance contract gate | `node scripts/check-slo-incident-response-governance-contract.mjs` | availability SLO、error budget policy、incident commander、escalation policy、mitigation decision、customer impact note 與 postmortem action owner 一致 |
+| Structured log schema governance contract gate | `node scripts/check-structured-log-schema-governance-contract.mjs` | `request_id`、`trace_id`、`severity`、`error_code`、`route`、log redaction policy、log retention owner 與 audit log review cadence 一致 |
 | pprof diagnostics contract | `node scripts/check-pprof-contract.mjs` | `ENABLE_PPROF`、`PPROF_TOKEN`、Go tests、runbook、README 與 CI 入口一致 |
 | OTLP collector contract | `node scripts/check-otel-collector-contract.mjs` | OTLP receiver、debug exporter、Compose endpoint、runbook、README 與 CI 入口一致 |
 | OTLP export governance contract gate | `node scripts/check-otel-export-governance-contract.mjs` | local debug exporter、production backend owner、sampling rate、retention window、sensitive attribute redaction 與 trace data owner 一致 |
@@ -266,3 +270,7 @@ API edge security policy governance contract gate 要求 production edge 保留 
 ## SLO Incident Response Governance
 
 SLO incident response governance contract gate 要求 incident record 同時保留 availability SLO、error budget policy、incident commander、escalation policy、mitigation decision、customer impact note 與 postmortem action owner。Release 前需重跑 `node scripts/check-slo-incident-response-governance-contract.mjs` 與 `make slo-incident-response-governance-check`，並把 SLO breach review 與 postmortem action closure 放入 incident evidence retention。
+
+## Structured Log Schema Governance
+
+Structured log schema governance contract gate 要求 incident log evidence 同時保留 `request_id`、`trace_id`、`severity`、`error_code`、`route`、log redaction policy、log retention owner 與 audit log review cadence。Release 前需重跑 `node scripts/check-structured-log-schema-governance-contract.mjs` 與 `make structured-log-schema-governance-check`，並把 log schema drift review、redaction review 與 retention owner sign-off 放入 incident evidence retention。

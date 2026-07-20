@@ -20,7 +20,7 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.93`",
+    "教材版本：`v1.0.94`",
     "Operational observability contract gate",
     "node scripts/check-operational-observability-contract.mjs",
     "API key scrape auth 風險",
@@ -31,7 +31,7 @@ const required = {
     "node scripts/check-operational-observability-contract.mjs",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.93",
+    "版本：v1.0.94",
     "Operational observability contract gate",
     "node scripts/check-operational-observability-contract.mjs",
     "API key scrape auth",

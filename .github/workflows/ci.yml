@@ -189,6 +189,9 @@ jobs:
       - name: Check SLO incident response governance contract
         run: node scripts/check-slo-incident-response-governance-contract.mjs
 
+      - name: Check structured log schema governance contract
+        run: node scripts/check-structured-log-schema-governance-contract.mjs
+
       - name: Check performance benchmark governance contract
         run: node scripts/check-performance-benchmark-governance-contract.mjs
 

@@ -20,7 +20,7 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.93`",
+    "教材版本：`v1.0.94`",
     "Trace shutdown contract",
     "node scripts/check-trace-shutdown-contract.mjs",
     "TestTraceShutdownContract",
@@ -31,12 +31,12 @@ const required = {
     "TestTraceShutdownContract",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.93",
+    "版本：v1.0.94",
     "Trace shutdown contract",
     "node scripts/check-trace-shutdown-contract.mjs",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.93",
+    "version: v1.0.94",
     "Trace shutdown contract",
     "check-trace-shutdown-contract.mjs",
   ],

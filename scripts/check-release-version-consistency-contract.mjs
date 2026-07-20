@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 
-const expectedVersion = "v1.0.93";
-const releaseDate = "2026-07-20";
-const artifactTimestamp = "2026-07-20-060855";
-const expectedCheckerCount = 57;
+const expectedVersion = "v1.0.94";
+const releaseDate = "2026-07-21";
+const artifactTimestamp = "2026-07-21-060121";
+const expectedCheckerCount = 58;
 
 const version = readFileSync("VERSION", "utf8").trim();
 const contractScripts = readdirSync("scripts")
@@ -35,14 +35,14 @@ const required = {
   "VERSION": [expectedVersion],
   "CHANGELOG.md": [
     `## ${expectedVersion} - ${releaseDate}`,
-    "SLO incident response governance contract gate",
-    "check-slo-incident-response-governance-contract.mjs",
+    "Structured log schema governance contract gate",
+    "check-structured-log-schema-governance-contract.mjs",
     `${expectedCheckerCount} 個 root contract checker`,
   ],
   "README.md": [
     `教材版本：\`${expectedVersion}\``,
-    "SLO incident response governance contract gate",
-    "node scripts/check-slo-incident-response-governance-contract.mjs",
+    "Structured log schema governance contract gate",
+    "node scripts/check-structured-log-schema-governance-contract.mjs",
     `${expectedCheckerCount} 個 root contract checker`,
   ],
   "production-api-worker/README.md": [
@@ -52,8 +52,8 @@ const required = {
   ],
   "production-api-worker/docs/api-contract.md": [
     `版本：${expectedVersion}`,
-    "SLO incident response governance contract gate",
-    "node scripts/check-slo-incident-response-governance-contract.mjs",
+    "Structured log schema governance contract gate",
+    "node scripts/check-structured-log-schema-governance-contract.mjs",
     `${expectedCheckerCount} 個 root contract checker`,
   ],
   "production-api-worker/api/openapi.yaml": [
@@ -63,24 +63,24 @@ const required = {
     `all ${expectedCheckerCount} root contract checker scripts`,
   ],
   "chapters/07-large-project-concurrent-crawler.md": [
-    "SLO incident response governance contract gate",
-    "node scripts/check-slo-incident-response-governance-contract.mjs",
+    "Structured log schema governance contract gate",
+    "node scripts/check-structured-log-schema-governance-contract.mjs",
   ],
   "chapters/09-build-and-deploy.md": [
-    "SLO incident response governance contract gate",
-    "node scripts/check-slo-incident-response-governance-contract.mjs",
+    "Structured log schema governance contract gate",
+    "node scripts/check-structured-log-schema-governance-contract.mjs",
   ],
   "chapters/11-advanced-testing.md": [
-    "SLO incident response governance contract gate",
-    "node scripts/check-slo-incident-response-governance-contract.mjs",
+    "Structured log schema governance contract gate",
+    "node scripts/check-structured-log-schema-governance-contract.mjs",
   ],
   "Cheatsheet/cheatsheet-advanced.md": [
-    "SLO incident response governance contract gate",
-    "node scripts/check-slo-incident-response-governance-contract.mjs",
+    "Structured log schema governance contract gate",
+    "node scripts/check-structured-log-schema-governance-contract.mjs",
   ],
   "圖解筆記3-4整合/golang-complete-visual-course.html": [
-    "SLO incident response governance contract gate",
-    "node scripts/check-slo-incident-response-governance-contract.mjs",
+    "Structured log schema governance contract gate",
+    "node scripts/check-structured-log-schema-governance-contract.mjs",
   ],
   "docs/index.html": [
     "Release version consistency contract gate",
@@ -95,18 +95,18 @@ const required = {
     "node scripts/check-release-version-consistency-contract.mjs",
   ],
   [`審查報告/${artifactTimestamp}-資深工程師審查報告.md`]: [
-    "SLO incident response governance contract gate",
+    "Structured log schema governance contract gate",
     expectedVersion,
-    "2026-07-20 06:08:55 CST +0800",
+    "2026-07-21 06:01:21 CST +0800",
   ],
   [`內容需要更新的部分/${artifactTimestamp}-內容需要更新的部分.md`]: [
-    "SLO incident response governance contract gate",
-    "scripts/check-slo-incident-response-governance-contract.mjs",
+    "Structured log schema governance contract gate",
+    "scripts/check-structured-log-schema-governance-contract.mjs",
     expectedVersion,
   ],
   [`更新資料/${artifactTimestamp}-${expectedVersion}-更新紀錄.md`]: [
-    "SLO incident response governance contract gate",
-    "scripts/check-slo-incident-response-governance-contract.mjs",
+    "Structured log schema governance contract gate",
+    "scripts/check-structured-log-schema-governance-contract.mjs",
     "docs/index.html",
   ],
 };

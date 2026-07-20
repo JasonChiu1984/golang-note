@@ -39,10 +39,10 @@ const rollbackTerms = [
 ];
 
 requireTerms(files.readme, [
-  "教材版本：`v1.0.93`",
+  "教材版本：`v1.0.94`",
   "Release rollback drill contract gate",
   "node scripts/check-release-rollback-drill-contract.mjs",
-  "57 個 root contract checker",
+  "58 個 root contract checker",
   ...rollbackTerms,
 ]);
 
@@ -53,14 +53,14 @@ requireTerms(files.productionReadme, [
 ]);
 
 requireTerms(files.apiContract, [
-  "版本：v1.0.93",
+  "版本：v1.0.94",
   "Release rollback drill contract",
   "node scripts/check-release-rollback-drill-contract.mjs",
   ...rollbackTerms,
 ]);
 
 requireTerms(files.openapi, [
-  "version: v1.0.93",
+  "version: v1.0.94",
   "Release rollback drill contract",
   "check-release-rollback-drill-contract.mjs",
   "previous image restore",

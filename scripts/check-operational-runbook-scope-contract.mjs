@@ -43,8 +43,8 @@ const contractTerms = [
 ];
 
 requireTerms(files.readme, [
-  "教材版本：`v1.0.93`",
-  "57 個 root contract checker",
+  "教材版本：`v1.0.94`",
+  "58 個 root contract checker",
   ...contractTerms,
 ]);
 
@@ -55,19 +55,19 @@ requireTerms(files.productionReadme, [
 ]);
 
 requireTerms(files.runbook, [
-  "文件日期：2026-07-20",
-  "完整日期時間：2026-07-20 06:08:55 CST +0800",
-  "版本：v1.0.93",
+  "文件日期：2026-07-21",
+  "完整日期時間：2026-07-21 06:08:55 CST +0800",
+  "版本：v1.0.94",
   ...contractTerms,
 ]);
 
 requireTerms(files.apiContract, [
-  "版本：v1.0.93",
+  "版本：v1.0.94",
   ...contractTerms,
 ]);
 
 requireTerms(files.openapi, [
-  "version: v1.0.93",
+  "version: v1.0.94",
   "Operational runbook scope freshness contract gate",
   "check-operational-runbook-scope-contract.mjs",
 ]);

@@ -18,13 +18,13 @@ const files = [
 
 const required = {
   "README.md": [
-    "教材版本：`v1.0.93`",
+    "教材版本：`v1.0.94`",
     "API edge security policy governance contract gate",
     "node scripts/check-api-edge-security-policy-contract.mjs",
     "OAuth2 / OIDC issuer",
     "mTLS boundary",
     "API Gateway / WAF policy",
-    "57 個 root contract checker",
+    "58 個 root contract checker",
   ],
   "production-api-worker/README.md": [
     "API Edge Security Policy Governance Contract",
@@ -35,7 +35,7 @@ const required = {
     "trusted header forwarding",
   ],
   "production-api-worker/docs/api-contract.md": [
-    "版本：v1.0.93",
+    "版本：v1.0.94",
     "API edge security policy governance contract gate",
     "node scripts/check-api-edge-security-policy-contract.mjs",
     "OAuth2 / OIDC issuer",
@@ -50,7 +50,7 @@ const required = {
     "evidence retention",
   ],
   "production-api-worker/api/openapi.yaml": [
-    "version: v1.0.93",
+    "version: v1.0.94",
     "API edge security policy governance contract gate",
     "check-api-edge-security-policy-contract.mjs",
     "OAuth2 / OIDC issuer",
