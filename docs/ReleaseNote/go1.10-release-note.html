@@ -55,8 +55,8 @@
       <h1>Go 1.10 Release Note 專業整理報告</h1>
       <p class="lead">Go 1.10 將 build/test cache 正式化，顯著改善大型專案日常開發效率。 本頁把官方 release note 與 release history 轉成工程導入、風險與驗收清單。</p>
       <div class="meta-row">
-        <span class="meta">報告版本：v2026.05.13</span>
-        <span class="meta">生成時間：2026-05-13 14:35:00 +0800</span>
+        <span class="meta">報告版本：v2026.11.13</span>
+        <span class="meta">生成時間：2026-11-13 12:22:30 +0800</span>
         <span class="meta">Major release：Go 1.10（2018-02-16）</span>
         <span class="meta">官方來源：https://go.dev/doc/go1.10</span>
         <span class="meta">Patch revisions：8</span>
@@ -87,6 +87,7 @@
       <a class="nav-link" href="#troubleshooting">排錯</a>
       <a class="nav-link" href="https://go.dev/doc/go1.10">官方文件</a>
     </nav>
+
     <section id="executive-summary">
       <div class="section-head"><h2>Executive Summary</h2><p>本版本報告定位在工程導入與升級審查，不是官方逐字翻譯。</p></div>
       <div class="report-note">
@@ -157,7 +158,17 @@
 <tr><td>Fix</td><td>官方重點：go fix、org/x/net/context、Fix、The、Forwarding。The go fix tool now replaces imports of &quot;golang.org/x/net/context&quot; with &quot;context&quot; . (Forwarding aliases in the former make it completely equivalent to the latter when using Go 1.9…</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
 <tr><td>Get</td><td>官方重點：go get、Get、The、Fossil。The go get command now supports Fossil source code repositories.</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
 <tr><td>Pprof</td><td>官方重點：Pprof、pprof、go tool、runtime/pprof、com/google/pprof、The、All。The blocking and mutex profiles produced by the runtime/pprof package now include symbol information, so they can be viewed in go tool pprof without the binary that produced the p…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
-<tr><td>Vet</td><td>官方重點：go vet、cgo、go tool、Vet、The、Note。The go vet command now always has access to complete, up-to-date type information when checking packages, even for packages using cgo or vendored imports. The reports should be mo…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr></tbody></table></div>
+<tr><td>Vet</td><td>官方重點：go vet、cgo、go tool、Vet、The、Note。The go vet command now always has access to complete, up-to-date type information when checking packages, even for packages using cgo or vendored imports. The reports should be mo…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
+<tr><td>Diagnostics</td><td>官方重點：Diagnostics、This。This release includes a new overview of available Go program diagnostic tools .</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>Gofmt</td><td>官方重點：Gofmt、gofmt、go/format、Two、First、Second、Note、For。Two minor details of the default formatting of Go source code have changed. First, certain complex three-index slice expressions previously formatted like x[i+1 : j:k] and now for…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>Compiler Toolchain</td><td>官方重點：cgo、linux/ppc64le、windows/386、windows/amd64、darwin/amd64、Compiler、Toolchain、The。The compiler includes many improvements to the performance of generated code, spread fairly evenly across the supported architectures. The DWARF debug information recorded in bina…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr>
+<tr><td>Assembler</td><td>官方重點：Assembler、For、ARM、BFC、BFI、BFX、BFXU、FMULAD。For the ARM 32-bit port, the assembler now supports the instructions BFC , BFI , BFX , BFXU , FMULAD , FMULAF , FMULSD , FMULSF , FNMULAD , FNMULAF , FNMULSD , FNMULSF , MULAD , M…</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
+<tr><td>Gccgo</td><td>官方重點：Gccgo、Due、GCC。Due to the alignment of Go&amp;rsquo;s semiannual release schedule with GCC&amp;rsquo;s annual release schedule, GCC release 7 contains the Go 1.8.3 version of gccgo. We expect that the n…</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
+<tr><td>Runtime</td><td>官方重點：GOROOT、GOROOT_FINAL、GOMAXPROCS、Runtime、The、LockOSThread、UnlockOSThread、These。The behavior of nested calls to LockOSThread and UnlockOSThread has changed. These functions control whether a goroutine is locked to a specific operating system thread, so that t…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr>
+<tr><td>Performance</td><td>官方重點：Performance、Most。As always, the changes are so general and varied that precise statements about performance are difficult to make. Most programs should run a bit faster, due to speedups in the gar…</td><td>以 package API、相容性異動、安全收緊與 regression tests 重寫，避免只列新增名稱。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
+<tr><td>Garbage Collector</td><td>官方重點：Garbage、Collector、Many。Many applications should experience significantly lower allocation latency and overall performance overhead when the garbage collector is active.</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
+<tr><td>Standard library</td><td>官方重點：net/url、Standard、All、The。All of the changes to the standard library are minor. The changes in bytes and net/url are the most likely to require updating of existing programs.</td><td>以 package API、相容性異動、安全收緊與 regression tests 重寫，避免只列新增名稱。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>Minor changes to the library</td><td>官方重點：GOROOT、gofmt、pprof、archive/tar、archive/zip、crypto/cipher、crypto/tls、crypto/x509。As always, there are various minor changes and updates to the library, made with the Go 1 promise of compatibility in mind. archive/tar In general, the handling of special header …</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。</td></tr></tbody></table></div>
     </section>
     <section id="added">
       <div class="section-head"><h2>條列式表格分析：新增功能列表</h2><p>整理 Go 1.10 值得納入教材與專案升級清單的新能力。</p></div>

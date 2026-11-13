@@ -55,8 +55,8 @@
       <h1>Go 1.15 Release Note 專業整理報告</h1>
       <p class="lead">Go 1.15 聚焦 linker、runtime、testing 與標準庫細節，讓產物更小、測試更容易管理。 本頁把官方 release note 與 release history 轉成工程導入、風險與驗收清單。</p>
       <div class="meta-row">
-        <span class="meta">報告版本：v2026.05.13</span>
-        <span class="meta">生成時間：2026-05-13 14:35:00 +0800</span>
+        <span class="meta">報告版本：v2026.11.13</span>
+        <span class="meta">生成時間：2026-11-13 12:22:30 +0800</span>
         <span class="meta">Major release：Go 1.15（2020-08-11）</span>
         <span class="meta">官方來源：https://go.dev/doc/go1.15</span>
         <span class="meta">Patch revisions：15</span>
@@ -87,6 +87,7 @@
       <a class="nav-link" href="#troubleshooting">排錯</a>
       <a class="nav-link" href="https://go.dev/doc/go1.15">官方文件</a>
     </nav>
+
     <section id="executive-summary">
       <div class="section-head"><h2>Executive Summary</h2><p>本版本報告定位在工程導入與升級審查，不是官方逐字翻譯。</p></div>
       <div class="report-note">
@@ -153,7 +154,13 @@
 <tr><td>Go command</td><td>官方重點：GOPROXY、GOFLAGS、GOMODCACHE、GOPATH、GODEBUG、go test、go vet、pkg/mod。The GOPROXY environment variable now supports skipping proxies that return errors. Proxy URLs may now be separated with either commas ( , ) or pipe characters ( | ). If a proxy UR…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr>
 <tr><td>Vet</td><td>官方重點：go test、utf8.EncodeRune、strconv.Itoa、fmt.Sprint、Vet、New、The、Experience。New warning for string(x) The vet tool now warns about conversions of the form string(x) where x has an integer type other than rune or byte . Experience with Go has shown that ma…</td><td>以語言語意、編譯相容性與 API 設計規則重寫，導入前要補 compile tests 與範例。</td><td>補語法範例、compile-time assertion、table tests 與文件化版本界線。</td></tr>
 <tr><td>Runtime</td><td>官方重點：os/signal.Notify、signal.Notify、Runtime、Previously、Unix、SIGSEGV、SIGBUS、SIGFPE。If panic is invoked with a value whose type is derived from any of: bool , complex64 , complex128 , float32 , float64 , int , int8 , int16 , int32 , int64 , string , uint , uint8 …</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
-<tr><td>Compiler</td><td>官方重點：GOARCH、unsafe.Pointer、syscall.Syscall、Compiler、Package、Pointer、Previously、Syscall。Package unsafe &amp;rsquo;s safety rules allow converting an unsafe.Pointer into uintptr when calling certain functions. Previously, in some cases, the compiler allowed multiple chain…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr></tbody></table></div>
+<tr><td>Compiler</td><td>官方重點：GOARCH、unsafe.Pointer、syscall.Syscall、Compiler、Package、Pointer、Previously、Syscall。Package unsafe &amp;rsquo;s safety rules allow converting an unsafe.Pointer into uintptr when calling certain functions. Previously, in some cases, the compiler allowed multiple chain…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr>
+<tr><td>Linker</td><td>官方重點：robustness/maintainability、linux/amd64、linux/arm64、Linker、This、For、ELF、OSes。This release includes substantial improvements to the Go linker, which reduce linker resource usage (both time and memory) and improve code robustness/maintainability. For a repre…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
+<tr><td>Objdump</td><td>官方重點：Objdump、The、GNU。The objdump tool now supports disassembling in GNU assembler syntax with the -gnu flag.</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
+<tr><td>New embedded tzdata package</td><td>官方重點：time/tzdata、New、Importing、You、Either。Go 1.15 includes a new package, time/tzdata , that permits embedding the timezone database into a program. Importing this package (as import _ &quot;time/tzdata&quot; ) permits the program …</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>Cgo</td><td>官方重點：Cgo、cgo、EGLConfig、This、EGLDisplay、Darwin、CoreFoundation、Java。Go 1.15 will translate the C type EGLConfig to the Go type uintptr . This change is similar to how Go 1.12 and newer treats EGLDisplay , Darwin&amp;rsquo;s CoreFoundation and Java&amp;rsq…</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
+<tr><td>X.509 CommonName deprecation</td><td>官方重點：GODEBUG、CommonName、The、Subject、Alternative、Names、Note、Invalid。The deprecated, legacy behavior of treating the CommonName field on X.509 certificates as a host name when no Subject Alternative Names are present is now disabled by default. It …</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。</td></tr>
+<tr><td>Minor changes to the library</td><td>官方重點：cgo、gofmt、pprof、go test、crypto/rsa、crypto/ecdsa、crypto/ed25519、crypto/elliptic。As always, there are various minor changes and updates to the library, made with the Go 1 promise of compatibility in mind. bufio When a Scanner is used with an invalid io.Reader …</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。</td></tr></tbody></table></div>
     </section>
     <section id="added">
       <div class="section-head"><h2>條列式表格分析：新增功能列表</h2><p>整理 Go 1.15 值得納入教材與專案升級清單的新能力。</p></div>

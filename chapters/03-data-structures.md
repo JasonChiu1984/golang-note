@@ -1,5 +1,7 @@
 # 03. 資料結構與物件感
 
+> **2026-11-13 語法更新**：Go 1.20–1.27 的版本界線、泛型方法、struct literal 欄位 selector、型別推導與反例，統一見 [第 12 章](12-go-language-changes.md)。下方範例按各段最低版本使用。
+
 Go 沒有 class，但它不是不能做物件導向。Go 的物件感來自 `struct + method + interface + composition`。
 
 ## array 與 slice

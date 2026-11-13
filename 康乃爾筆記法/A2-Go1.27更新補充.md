@@ -1,8 +1,10 @@
 # A2. Go 1.27.4 更新補充 — 康乃爾筆記
 
-> **查核日期**：2026-11-11 ｜ **最新穩定版**：Go 1.27.4（2026-11-10 發布）
+> **查核日期**：2026-11-13 ｜ **最新穩定版**：Go 1.27.4（2026-11-10 發布）
 >
-> 這份增補涵蓋從舊教材閱讀現代 Go 時最容易混淆的差異，不取代完整 release notes。既有教材與 ReleaseNote HTML 保留各自的歷史基準；本次沒有宣稱全部章節、部署設定或 production module 已完成升級。
+> 這份增補涵蓋從舊教材閱讀現代 Go 時最容易混淆的差異，不取代完整 release notes。完整版本報告與索引見 [ReleaseNote](../ReleaseNote/index.html)；語法逐版查核與正反例見 [第 12 章](../chapters/12-go-language-changes.md)。根 module 與 production module 的最低版本仍獨立管理，不因教材更新而自動升級。
+
+> **11 月安全修補**：1.27.4／1.26.11 修補官方 12 項公告；影響範圍、HTTP/1 條件、建置風險與重建部署檢查見 [第 13 章](../chapters/13-go-security-2026-11.md)，不能混同原 CI 的 13 個第三方相依漏洞。
 
 ## 版本先分清楚
 
@@ -19,6 +21,8 @@
 
 ## 從舊筆記補到現代 Go
 
+下表是跨類別摘要，不是純語法清單。Go 1.25 沒有影響程式的語言變更；標準庫、runtime 與工具更新不可混稱新語法。完整語法／語意矩陣見 [第 12 章](../chapters/12-go-language-changes.md)。
+
 | 最低版本 | 重點 | 讀筆記時要修正的心智模型 |
 |---|---|---|
 | Go 1.20 | `errors.Join`、`context.WithCancelCause` | 多錯誤合併與取消原因是不同概念；errgroup 不會自動 Join。 |
@@ -28,7 +32,7 @@
 | Go 1.24 | 泛型 type alias、`os.Root`、`testing.B.Loop` | `os.Root` 提供限制在目錄內的檔案存取；benchmark 可用 `for b.Loop()`，不要與舊 `b.N` 迴圈混寫。 |
 | Go 1.25 | `WaitGroup.Go`、正式 `testing/synctest`、container-aware `GOMAXPROCS` | 減少計數樣板、可控時間測試、注意 module 版本與 GODEBUG 相容設定。 |
 | Go 1.26 | `new(expression)`、`errors.AsType`、泛型自我參照約束、預設 Green Tea GC | `new` 可直接以運算式初始化指標；`errors.AsType[E]` 回傳 `(E, bool)`。GC 改變不代表所有 workload 都更快。 |
-| Go 1.27 | 泛型方法、JSON v2、標準 `uuid`、正式 goroutine leak profile、timer 舊模式移除 | 方法可宣告自身型別參數，但介面方法仍不可；新 JSON 預設要另外做相容性測試。 |
+| Go 1.27 | 泛型方法、struct literal 提升欄位、函式型別推導擴大；JSON v2、標準 `uuid`、正式 goroutine leak profile、timer 舊模式移除 | 方法可宣告自身型別參數，但介面方法仍不可；新 JSON 預設要另外做相容性測試。 |
 
 各版官方依據：[1.20](https://go.dev/doc/go1.20)、[1.21](https://go.dev/doc/go1.21)、[1.22](https://go.dev/doc/go1.22)、[1.23](https://go.dev/doc/go1.23)、[1.24](https://go.dev/doc/go1.24)、[1.25](https://go.dev/doc/go1.25)、[1.26](https://go.dev/doc/go1.26)、[1.27](https://go.dev/doc/go1.27)。
 
@@ -52,6 +56,12 @@ func (Converter) Map[T, U any](in []T, f func(T) U) []U {
 ```
 
 仍有限制：介面方法不能宣告型別參數，也不能由這種泛型方法實作介面方法。若要支援 Go 1.26 以前，繼續用 package-level 泛型函式。
+
+### 1b. 另外兩項語言變更不能漏掉
+
+- Struct literal 可直接以 promoted field 名稱初始化：`type Inner struct { Value int }; type Outer struct { Inner }; var x = Outer{Value: 7}`。不能經過 embedded pointer；不能同時設定 `Inner` 與其中的 `Value`；不要寫成不被接受的 `Inner.Value:` dotted key。
+- 泛型函式型別推導擴大到更多 assignment／conversion 情境，例如 `[]func(int) int{Identity}`，其中 `func Identity[T any](v T) T { return v }`。需要目標型別資訊，`f := Identity` 仍非法。
+- 兩者與泛型方法均有 [可執行正反例](../examples/go127/language_test.go)。Go 1.26 的 `new(expression)` 與自我參照約束也已補測。
 
 ### 2. JSON v2 正式可用，但不是無條件替換 import
 

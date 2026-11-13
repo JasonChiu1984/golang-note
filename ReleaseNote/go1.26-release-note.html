@@ -55,17 +55,17 @@
       <h1>Go 1.26 Release Note 專業整理報告</h1>
       <p class="lead">Go 1.26 延續現代化工具鏈與 runtime 路線，重點在 modernizer、GC、測試 artifact 與語言小幅擴充。 本頁把官方 release note 與 release history 轉成工程導入、風險與驗收清單。</p>
       <div class="meta-row">
-        <span class="meta">報告版本：v2026.05.13</span>
-        <span class="meta">生成時間：2026-05-13 14:35:00 +0800</span>
+        <span class="meta">報告版本：v2026.11.13</span>
+        <span class="meta">生成時間：2026-11-13 12:22:30 +0800</span>
         <span class="meta">Major release：Go 1.26（2026-02-10）</span>
         <span class="meta">官方來源：https://go.dev/doc/go1.26</span>
-        <span class="meta">Patch revisions：3</span>
+        <span class="meta">Patch revisions：11</span>
       </div>
       <div class="summary-grid">
-        <div class="summary-card"><span class="metric">9</span><h3>新增能力項目</h3><p>語言、工具鏈、runtime/compiler、stdlib 與平台能力摘要。</p></div>
+        <div class="summary-card"><span class="metric">10</span><h3>新增能力項目</h3><p>語言、工具鏈、runtime/compiler、stdlib 與平台能力摘要。</p></div>
         <div class="summary-card"><span class="metric">3</span><h3>相容性風險</h3><p>升級時需檢查的破壞性、棄用、預設行為與安全變更。</p></div>
         <div class="summary-card"><span class="metric">4</span><h3>Go 指令變更</h3><p>整理 build、test、vet、module、toolchain 或 bootstrap 工作流。</p></div>
-        <div class="summary-card"><span class="metric">3</span><h3>Patch Revisions</h3><p>由官方 Release History 擷取，作為採用最終 patch 的依據。</p></div>
+        <div class="summary-card"><span class="metric">11</span><h3>Patch Revisions</h3><p>由官方 Release History 擷取，作為採用最終 patch 的依據。</p></div>
       </div>
     </div>
   </header>
@@ -87,13 +87,22 @@
       <a class="nav-link" href="#troubleshooting">排錯</a>
       <a class="nav-link" href="https://go.dev/doc/go1.26">官方文件</a>
     </nav>
+<section id="security-2026-11">
+    <h2>2026-11-10 安全修補：12 項公告</h2>
+    <p>Go 1.27.4／1.26.11 修補 CVE-2026-97033–97043 與 CVE-2026-97054。這是 patch 安全修補，不是新增語法。</p>
+    <p>官方漏洞範圍：Go &lt;1.26.11，以及 Go &gt;=1.27.0-0 且 &lt;1.27.4；第一段未列更早引入版本。只列支援分支時，影響 1.26.0–1.26.10、1.27.0–1.27.3。</p>
+    <ul><li><strong>HTTP/1 拒絕服務</strong>：MaxBytesReader／MaxBytesHandler 的 body 超限，且 handler 並行讀 body／寫 header 時可能 race／panic。升級後須重建並部署程式。</li>
+    <li><strong>建置供應鏈</strong>：其餘 11 項涉及惡意套件、cgo／.syso／linker input 或 compiler directives。先修補本機與 CI builder；不能概括為所有 Go 服務都能被遠端 RCE，也不能因 CGO_ENABLED=0 就一概判定安全。</li></ul>
+    <p>這 12 項與本倉庫原 CI 回報的 13 個第三方相依漏洞是不同清單。本次只更新筆記，未升級 production 相依或部署環境。</p>
+    <p><a href="https://github.com/JasonChiu1984/golang-note/blob/main/chapters/13-go-security-2026-11.md">逐項 CVE／官方來源／部署前檢查</a> · <a href="https://groups.google.com/g/golang-announce/c/iY8TY0wWgbM/m/KsU1KfWgAQAJ">官方安全公告</a> · <a href="https://go.dev/doc/devel/release">官方 Release History</a></p>
+  </section>
     <section id="executive-summary">
       <div class="section-head"><h2>Executive Summary</h2><p>本版本報告定位在工程導入與升級審查，不是官方逐字翻譯。</p></div>
       <div class="report-note">
         <div class="panel"><div class="panel-body"><span class="status-pill">建議用途：Modern Toolchain and Standard Library Governance Era</span><strong>版本定位</strong><p>適合建立 automated modernization、GC metrics、test artifact collection 與 toolchain 升級治理。</p></div></div>
         <div class="table-wrap">
           <table class="summary-table"><colgroup><col><col><col></colgroup><thead><tr><th>審查面向</th><th>結論</th><th>必要動作</th></tr></thead><tbody>
-            <tr><td>專案價值</td><td>適合建立 automated modernization、GC metrics、test artifact collection 與 toolchain 升級治理。</td><td>`new(expression)`、modernizers、Green Tea GC、`testing.T.Attr` / `ArtifactDir`。</td></tr>
+            <tr><td>專案價值</td><td>適合建立 automated modernization、GC metrics、test artifact collection 與 toolchain 升級治理。</td><td>`new(expression)`、泛型約束自我參照、modernizers、Green Tea GC、`ArtifactDir`。</td></tr>
             <tr><td>主要風險</td><td>modernizer 自動修改需 code review；GC/runtime 指標需重新校準。</td><td>把風險項目轉成 CI、測試與部署 checklist。</td></tr>
             <tr><td>版本階段</td><td>Modern Toolchain and Standard Library Governance Era：runtime governance、PGO、toolchain management、standard-library modernization、testing 與 supply-chain governance 成為主軸。</td><td>用分期脈絡判斷是否需要回補歷史教材。</td></tr>
             <tr><td>驗收標準</td><td>需通過 build、test、版本來源連結、patch revision 與本地 HTML 結構檢查。</td><td>在 release PR 或教學更新紀錄中列出證據。</td></tr>
@@ -106,15 +115,15 @@
       <div class="table-wrap"><table><thead><tr><th>主題</th><th>重點</th><th>工程意義</th></tr></thead><tbody>
         <tr><td><span class="tag">Version</span></td><td>Go 1.26 released 2026-02-10</td><td>以 major release note 為主，patch revisions 作為安全與 bugfix 補充。</td></tr>
         <tr><td><span class="tag blue">Phase</span></td><td>Modern Toolchain and Standard Library Governance Era</td><td>runtime governance、PGO、toolchain management、standard-library modernization、testing 與 supply-chain governance 成為主軸。</td></tr>
-        <tr><td><span class="tag warn">Adoption</span></td><td>`new(expression)`、modernizers、Green Tea GC、`testing.T.Attr` / `ArtifactDir`。</td><td>升級時應轉成測試、CI 與文件驗收項目。</td></tr>
+        <tr><td><span class="tag warn">Adoption</span></td><td>`new(expression)`、泛型約束自我參照、modernizers、Green Tea GC、`ArtifactDir`。</td><td>升級時應轉成測試、CI 與文件驗收項目。</td></tr>
       </tbody></table></div>
     </section>
     <section id="impact-matrix">
       <div class="section-head"><h2>升級影響矩陣</h2><p>此矩陣把版本重點轉成專案升級時的影響、風險與處置方式。</p></div>
-      <div class="table-wrap"><table><thead><tr><th>影響領域</th><th>影響等級</th><th>主要價值</th><th>主要風險</th><th>建議處置</th></tr></thead><tbody><tr><td>新增能力導入</td><td>中</td><td>適合建立 automated modernization、GC metrics、test artifact collection 與 toolchain 升級治理。</td><td>過度導入不符合版本定位的功能。</td><td>`new(expression)`、modernizers、Green Tea GC、`testing.T.Attr` / `ArtifactDir`。</td></tr>
+      <div class="table-wrap"><table><thead><tr><th>影響領域</th><th>影響等級</th><th>主要價值</th><th>主要風險</th><th>建議處置</th></tr></thead><tbody><tr><td>新增能力導入</td><td>中</td><td>適合建立 automated modernization、GC metrics、test artifact collection 與 toolchain 升級治理。</td><td>過度導入不符合版本定位的功能。</td><td>`new(expression)`、泛型約束自我參照、modernizers、Green Tea GC、`ArtifactDir`。</td></tr>
 <tr><td>相容性與安全</td><td>中高</td><td>modernizer 自動修改需 code review；GC/runtime 指標需重新校準。</td><td>舊程式可能依賴已修正或已棄用行為。</td><td>先掃描相容性異動表，再補 regression tests。</td></tr>
 <tr><td>Go 指令 / CI</td><td>中</td><td>本頁列出 4 項指令或工作流變更。</td><td>Makefile、CI、Dockerfile 可能使用舊參數或舊流程。</td><td>把 Go 指令表轉成 CI checklist。</td></tr>
-<tr><td>Patch revisions</td><td>中</td><td>官方 Release History 列出 3 個 patch revision。</td><td>停在早期 patch 可能漏掉安全或 runtime 修正。</td><td>採用該 major version 的最後 patch 並記錄理由。</td></tr>
+<tr><td>Patch revisions</td><td>中</td><td>官方 Release History 列出 11 個 patch revision。</td><td>停在早期 patch 可能漏掉安全或 runtime 修正。</td><td>採用該 major version 的最後 patch 並記錄理由。</td></tr>
 <tr><td>部署與觀測</td><td>中</td><td>runtime、network、filesystem、toolchain 變更需要實際部署證據。</td><td>只看編譯成功可能漏掉平台差異。</td><td>執行 smoke test、benchmark 或 observability 比對。</td></tr></tbody></table></div>
     </section>
 
@@ -157,15 +166,26 @@
 <tr><td>Compiler</td><td>官方重點：Compiler、The、All。The compiler can now allocate the backing store for slices on the stack in more situations, which improves performance. If this change is causing trouble, the bisect tool can be u…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
 <tr><td>Linker</td><td>官方重點：cgo、windows/arm64、Linker、ARM、Windows、There、These、They。On 64-bit ARM-based Windows (the windows/arm64 port), the linker now supports internal linking mode of cgo programs, which can be requested with the -ldflags=-linkmode=internal fl…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr>
 <tr><td>Bootstrap</td><td>官方重點：Bootstrap。As mentioned in the Go 1.24 release notes , Go 1.26 now requires Go 1.24.6 or later for bootstrap. We expect that Go 1.28 will require a minor release of Go 1.26 or later for boot…</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
-<tr><td>New crypto/hpke package</td><td>官方重點：crypto/hpke、New、The、Hybrid、Public、Key、Encryption、HPKE。The new crypto/hpke package implements Hybrid Public Key Encryption (HPKE) as specified in RFC 9180 , including support for post-quantum hybrid KEMs.</td><td>以 package API、相容性異動、安全收緊與 regression tests 重寫，避免只列新增名稱。</td><td>補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。</td></tr></tbody></table></div>
+<tr><td>New crypto/hpke package</td><td>官方重點：crypto/hpke、New、The、Hybrid、Public、Key、Encryption、HPKE。The new crypto/hpke package implements Hybrid Public Key Encryption (HPKE) as specified in RFC 9180 , including support for post-quantum hybrid KEMs.</td><td>以 package API、相容性異動、安全收緊與 regression tests 重寫，避免只列新增名稱。</td><td>補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。</td></tr>
+<tr><td>New experimental simd/archsimd package</td><td>官方重點：GOEXPERIMENT、simd/archsimd、Int8x16.Add、New、This、SIMD、Int8x16、Float64x8。Go 1.26 introduces a new experimental simd/archsimd package, which can be enabled by setting the environment variable GOEXPERIMENT=simd at build time. This package provides access…</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
+<tr><td>New experimental runtime/secret package</td><td>官方重點：GOEXPERIMENT、runtime/secret、New、The、This、Linux。The new runtime/secret package is available as an experiment, which can be enabled by setting the environment variable GOEXPERIMENT=runtimesecret at build time. It provides a faci…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。</td></tr>
+<tr><td>Minor changes to the library</td><td>官方重點：GODEBUG、GOFIPS140、cgo、go test、crypto/dsa、testing/cryptotest.SetGlobalRandom、crypto/ecdh、crypto/ecdsa。bytes The new Buffer.Peek method returns the next n bytes from the buffer without advancing it. crypto The new Encapsulator and Decapsulator interfaces allow accepting abstract KE…</td><td>以語言語意、編譯相容性與 API 設計規則重寫，導入前要補 compile tests 與範例。</td><td>補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。</td></tr>
+<tr><td>Darwin</td><td>官方重點：Darwin、Monterey、Ventura。Go 1.26 is the last release that will run on macOS 12 Monterey. Go 1.27 will require macOS 13 Ventura or later.</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>FreeBSD</td><td>官方重點：GOOS、GOARCH、freebsd/riscv64、FreeBSD、The、See。The freebsd/riscv64 port ( GOOS=freebsd GOARCH=riscv64 ) has been marked broken . See issue 76475 for details.</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>Windows</td><td>官方重點：GOOS、GOARCH、windows/arm、Windows。As announced in the Go 1.25 release notes, the broken 32-bit windows/arm port ( GOOS=windows GOARCH=arm ) has been removed.</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>PowerPC</td><td>官方重點：GOOS、GOARCH、PowerPC、ELFv1、ABI、Linux、ELFv2、ELF。Go 1.26 is the last release that supports the ELFv1 ABI on the big-endian 64-bit PowerPC port on Linux ( GOOS=linux GOARCH=ppc64 ). It will switch to the ELFv2 ABI in Go 1.27. As …</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
+<tr><td>RISC-V</td><td>官方重點：linux/riscv64、RISC、The。The linux/riscv64 port now supports the race detector.</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
+<tr><td>S390X</td><td>官方重點：S390X、The。The s390x port now supports passing function arguments and results using registers.</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
+<tr><td>WebAssembly</td><td>官方重點：GOWASM、WebAssembly、The、These、Wasm、For、MiB。The compiler now unconditionally makes use of the sign extension and non-trapping floating-point to integer conversion instructions. These features have been standardized since at…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr></tbody></table></div>
     </section>
     <section id="added">
       <div class="section-head"><h2>條列式表格分析：新增功能列表</h2><p>整理 Go 1.26 值得納入教材與專案升級清單的新能力。</p></div>
       <div class="table-wrap"><table><thead><tr><th>分類</th><th>新增功能 / 行為</th><th>功能說明</th><th>工程導入建議</th><th>驗證方式</th></tr></thead><tbody><tr><td>Language</td><td>`new(expression)`</td><td>語言層小幅擴充，改善部分初始化表達能力。</td><td>只在能提升可讀性時使用。</td><td>compile tests。</td></tr>
+<tr><td>Language</td><td>self-referential generic constraints</td><td>泛型型別可在自身型別參數清單中引用自己，例如 type Adder[A Adder[A]] interface { Add(A) A }。</td><td>用於約束輸入與輸出同型別的泛型介面。</td><td>獨立 Go 1.27 範例 module 的語法測試。</td></tr>
 <tr><td>Tools</td><td>Tools</td><td>補 Go 1.26 官方 `Tools` 段落，涵蓋 go command、go fix/modernizers、toolchain 與測試 artifact workflow。</td><td>所有自動化改寫必須在 branch 上 review，不直接套到 main。</td><td>`go test ./...`、diff review、toolchain smoke test。</td></tr>
 <tr><td>Go command</td><td>modernizers</td><td>工具可協助把舊程式碼現代化。</td><td>只在 reviewable branch 執行。</td><td>檢查 diff 與 tests。</td></tr>
 <tr><td>Runtime</td><td>Green Tea GC</td><td>GC 實作更新，影響 runtime metrics 與效能觀察。</td><td>重跑 latency / memory benchmark。</td><td>pprof + runtime metrics。</td></tr>
-<tr><td>Testing</td><td>`T.Attr` / `ArtifactDir`</td><td>測試可標註 metadata 並保存 artifacts。</td><td>適合 CI evidence collection。</td><td>檢查 artifact 產物。</td></tr>
+<tr><td>Testing</td><td>`ArtifactDir`（`T.Attr` 已於 Go 1.25 提供）</td><td>Go 1.26 新增 artifact 目錄；不要將既有 Attr 當作本版新 API。</td><td>適合 CI evidence collection。</td><td>檢查 artifact 產物。</td></tr>
 <tr><td>SIMD</td><td>New experimental simd/archsimd package</td><td>補 Go 1.26 官方 `New experimental simd/archsimd package` 段落，標記 experimental SIMD / architecture-specific acceleration。</td><td>僅在 hot path 且有 fallback 時試用，避免綁死平台。</td><td>CPU feature matrix、fallback tests、benchmark。</td></tr>
 <tr><td>Runtime</td><td>New experimental runtime/secret package</td><td>補 Go 1.26 官方 `New experimental runtime/secret package` 段落，標記 secret handling experimental API。</td><td>高敏感資料需先定義 threat model，不以 experimental API 作唯一防護。</td><td>secret lifecycle tests 與 security review。</td></tr>
 <tr><td>Standard library</td><td>Minor changes to the library</td><td>補 Go 1.26 官方 `Minor changes to the library` 段落，追蹤各 package 小改動。</td><td>升級時掃描受影響 package、wrapper 與 golden tests。</td><td>package-level regression tests。</td></tr>
@@ -189,8 +209,14 @@
       <div class="table-wrap"><table><thead><tr><th>Patch</th><th>日期</th><th>官方摘要</th><th>工程建議</th></tr></thead><tbody><tr><td>go1.26.1</td><td>2026-03-05</td><td>(released 2026-03-05) includes security fixes to the crypto/x509 , html/template , net/url , and os packages, as well as bug fixes to the go command, the go fix command, the compiler, and the os and reflect packages.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
 <tr><td>go1.26.2</td><td>2026-04-07</td><td>(released 2026-04-07) includes security fixes to the go command, the compiler, and the archive/tar , crypto/tls , crypto/x509 , html/template , and os packages, as well as bug fixes to the go command, the go fix command, the compiler, the linker, the runtime, and the net , net/http , and net/url packages.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
 <tr><td>go1.26.3</td><td>2026-05-07</td><td>(released 2026-05-07) includes security fixes to the go command, the pack tool, and the html/template , net , net/http , net/http/httputil , net/mail , and syscall packages, as well as bug fixes to the go command, the go fix command, the compiler, the linker, the runtime, and the crypto/fips140 , crypto/tls , go/types , and os packages.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
-<tr><td>go1.26.4</td><td>2026-06-02</td><td>(released 2026-06-02) includes security fixes to the crypto/x509, mime, and net/textproto packages, as well as bug fixes to the compiler, the runtime, the go fix command, and the crypto/fips140 package.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
-<tr><td>go1.26.5</td><td>2026-07-07</td><td>(released 2026-07-07) includes security fixes to the crypto/tls and os packages, as well as bug fixes to the compiler, the runtime, the go command, and the net, os, and syscall packages.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr></tbody></table></div>
+<tr><td>go1.26.4</td><td>2026-06-02</td><td>(released 2026-06-02) includes security fixes to the crypto/x509 , mime , and net/textproto packages, as well as bug fixes to the compiler, the runtime, the go fix command, and the crypto/fips140 package.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
+<tr><td>go1.26.5</td><td>2026-07-07</td><td>(released 2026-07-07) includes security fixes to the crypto/tls and os packages, as well as bug fixes to the compiler, the runtime, the go command, and the net , os , and syscall packages.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
+<tr><td>go1.26.6</td><td>2026-08-13</td><td>(released 2026-08-13) includes security fixes to the go command, and the crypto/tls , encoding/asn1 , encoding/xml , html/template , net , net/http , and net/url packages, as well as bug fixes to the compiler, the linker, the runtime, and the crypto/tls and os packages.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
+<tr><td>go1.26.7</td><td>2026-08-19</td><td>(released 2026-08-19) includes fixes to the net/http package.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
+<tr><td>go1.26.8</td><td>2026-09-01</td><td>(released 2026-09-01) includes fixes to cgo, the compiler, the runtime, and the debug/elf and os packages.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
+<tr><td>go1.26.9</td><td>2026-10-08</td><td>(released 2026-10-08) includes security fixes to the go command, and the crypto/tls , html/template , net/http , net/textproto , and os packages, as well as bug fixes to the compiler, the linker, the runtime, vet, and the crypto/mlkem , net/http , and os packages.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
+<tr><td>go1.26.10</td><td>2026-10-19</td><td>(released 2026-10-19) includes security fixes to the crypto/x509 package.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
+<tr><td>go1.26.11</td><td>2026-11-10</td><td>(released 2026-11-10) includes security fixes to cgo, the go command, the compiler, the linker, and the net/http package, as well as bug fixes to the assembler, the compiler, the runtime, toolchain bootstrapping, and the crypto/fips140 , crypto/hkdf , crypto/rsa , crypto/tls , net , and net/http packages.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr></tbody></table></div>
     </section>
     <section id="migration-plan">
       <div class="section-head"><h2>專案導入計畫</h2><p>用四階段把版本資訊轉成可驗收的專案升級流程。</p></div>

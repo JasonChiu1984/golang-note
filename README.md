@@ -2,21 +2,23 @@
 
 這是一套給「有程式基礎的新手」的 Go 語言教材。寫法會站在 10 年專案開發經驗的角度：先建立正確語法心智模型，再把語法放進可維護的專案設計中。
 
-> 教材版本：`v1.0.94`
-> 教材基準：`Go 1.26.5`
-> 這次更新重點：補齊 Structured log schema governance contract gate，固定 `request_id`、`trace_id`、`severity`、`error_code`、`route`、log redaction policy、log retention owner 與 audit log review cadence。
+> 教材版本：`v1.0.94`（既有教材發版編號，與 Go 工具鏈版本不同）
+> **最新查核：2026-11-13；Go 穩定版：1.27.4；支援線：1.27 / 1.26（最新 patch 1.26.11）。**
+> 本輪同步 ReleaseNote 生成器、GitHub Pages、語法筆記與可執行驗證；不變更 production 相依、根 module 相容基準，也不新增教材 release tag。
 
-> **2026-11-11 筆記增補**：[併發修訂](康乃爾筆記法/06-併發程式設計.md)與 [Go 1.27.4 更新補充](康乃爾筆記法/A2-Go1.27更新補充.md)已加入，另有[新版獨立範例與測試](examples/go127/README.md)。以下 v1.0.94 的整套教材／release 基準保留原紀錄，不代表最新 Go；本次未改 production module、歷史 ReleaseNote 或發布新 release。
+最新入口：[Go 1.27 報告](ReleaseNote/go1.27-release-note.html) · [所有版本](ReleaseNote/index.html) · [語法變更與限制](chapters/12-go-language-changes.md) · [可執行測試](examples/go127/README.md) · [11 月安全公告](chapters/13-go-security-2026-11.md) · [康乃爾補充](康乃爾筆記法/A2-Go1.27更新補充.md)。官方依據：[Release History](https://go.dev/doc/devel/release)、[Go 1.27](https://go.dev/doc/go1.27)。
 
-## 版本策略（v1.0.94 歷史基準）
+> **安全更新**：11 月 10 日的 12 項官方公告由 1.27.4／1.26.11 修補；包含特定 HTTP/1 header race 與建置供應鏈風險，不等於所有服務皆可被遠端 RCE。詳見 [安全章節](chapters/13-go-security-2026-11.md)，並與既有 production 相依漏洞分開處理。
+
+## 版本策略
 
 | 項目 | 目前策略 |
 |---|---|
-| 教材講解基準 | 以 Go 1.26.5 作為 2026-07 的主教材版本 |
-| 範例相容層 | 現有 `go.mod` 仍保留 `go 1.22`，避免舊環境無法執行基本範例 |
-| 新特性標示 | Go 1.25 / 1.26 內容會在章節、康乃爾筆記與速查表內明確標示版本 |
-| 實務建議 | 新專案建議直接使用目前受支援的最新 Go 1.26 patch release |
-| 升級檢查 | 升級 Go 1.26 時同步確認 bootstrap toolchain、目標 OS/ARCH、Docker base image、CI `setup-go` 與 CGO 依賴 |
+| 教材講解基準 | 新版語法／ReleaseNote 更新至 Go 1.27.4；各功能另標最低語言或 API 版本 |
+| 範例相容層 | 根 `go.mod` 保留 `go 1.22`；新版範例獨立在 `examples/go127`，宣告 `go 1.27.0` |
+| 新特性分類 | 語言語法／語意與標準庫、工具鏈、runtime 分開列示；`WaitGroup.Go` 不是新語法 |
+| 實務建議 | 新專案使用受支援的最新穩定 Go 1.27.4；需要前一支援線時使用 Go 1.26.11，不建議停在已停止支援的 1.25 |
+| 升級檢查 | 同步確認 module `go` directive、OS/ARCH、Docker builder、CI 與 CGO；1.27 在 macOS 要求 13+ |
 | 依賴治理 | 每次新增或升級 module 都要跑 `go mod tidy`、`go mod verify`、`go list -m -u all` 與 `govulncheck ./...` |
 | Dependency governance contract gate | root module 與 `production-api-worker` 的依賴完整性、可更新版本盤點、漏洞掃描與離線邊界需由 `node scripts/check-dependency-governance-contract.mjs` 固定 |
 | Dependency audit evidence freshness contract gate | 每次 release 需保存 `go mod tidy`、`go mod verify`、`go list -m -u all`、`govulncheck ./...` 的 root / production module 證據；module proxy / vulnerability database 離線只能標示待補掃描，並由 `node scripts/check-dependency-audit-evidence-contract.mjs` 固定 release evidence retention |
@@ -32,10 +34,10 @@
 | Docker build contract gate | `production-api-worker/Dockerfile` 必須保留 multi-stage build、`CGO_ENABLED=0`、`api-worker` / `migrate` binaries、`distroless/static-debian12` runtime image 與 CI build tags，並由 `node scripts/check-docker-build-contract.mjs` 固定 |
 | Compose runtime env contract gate | `production-api-worker/docker-compose.yml` 必須保留 Postgres、migrate、api、OTEL collector、Prometheus `monitoring` profile、`DATABASE_URL`、`OTEL_EXPORTER_OTLP_ENDPOINT`、`API_KEY`、`REQUEST_BODY_LIMIT_BYTES`、`TRUSTED_PROXY_CIDRS`、`CORS_ALLOWED_ORIGINS` 與 service dependency，並由 `node scripts/check-compose-runtime-env-contract.mjs` 固定 |
 | Release Note 效能矩陣 | 版本升級頁需列出官方效能數字、升級前後狀態、受影響場景與本地驗證指令 |
-| Release Note 官方覆蓋 | Go 1.1-1.26 報告需對照官方段落標題、Tools、Ports、minor changes 與 Patch Revisions，並同步 `ReleaseNote/` 與 `docs/ReleaseNote/` |
+| Release Note 官方覆蓋 | Go 1.1-1.27 報告需對照官方段落標題、Tools、Ports、minor changes 與 Patch Revisions，並同步 `ReleaseNote/` 與 `docs/ReleaseNote/` |
 | Release Note 支援狀態 | ReleaseNote 索引需依官方 Release Policy 標示目前支援版本、未支援版本與最新 patch，並用 SVG 圖表呈現 |
-| Go ReleaseNote contract gate | `ReleaseNote/` 與 `docs/ReleaseNote/` 需由 `node scripts/check-go-release-notes-contract.mjs` 固定 27 個 HTML、Go 1.1-1.26 必要報告區塊、官方來源、支援狀態與最新 patch 訊號 |
-| Go ReleaseNote freshness evidence | `node scripts/check-go-release-notes-freshness-contract.mjs` 需固定 official Go Release History verified 時間、Go 1.26.5 / Go 1.25.12 baseline 與 ReleaseNote index 來源證據 |
+| Go ReleaseNote contract gate | `ReleaseNote/` 與 `docs/ReleaseNote/` 需由 `node scripts/check-go-release-notes-contract.mjs` 固定 28 個 HTML、Go 1.1-1.27 必要報告區塊、官方來源、支援狀態與最新 patch 訊號 |
+| Go ReleaseNote freshness evidence | `node scripts/check-go-release-notes-freshness-contract.mjs` 需固定 official Go Release History verified 時間、Go 1.27.4 / Go 1.26.11 baseline 與 ReleaseNote index 來源證據 |
 | Release version consistency contract gate | `VERSION`、`CHANGELOG.md`、README、API contract、OpenAPI、章節、整合視覺課程、`docs/index.html`、Makefile 與 GitHub Actions 必須同步目前版本，並由 `node scripts/check-release-version-consistency-contract.mjs` 固定 |
 | Release artifact chain contract gate | 每次發版需保留同 timestamp 的 `審查報告/`、`內容需要更新的部分/`、`更新資料/`，並由 `node scripts/check-release-artifact-chain-contract.mjs` 固定 VERSION、CHANGELOG、docs/index 與 CI 入口 |
 | Release artifact metadata consistency contract gate | 同 timestamp 的審查報告、內容需要更新的部分與更新資料必須保留相同版本、完整日期時間、本輪主題與交叉引用，並由 `node scripts/check-release-artifact-metadata-contract.mjs` 固定 |
@@ -59,7 +61,7 @@
 | Docs publishing contract gate | `docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈需由 `node scripts/check-docs-publishing-contract.mjs` 固定來源同步、Makefile、CI 與教材入口 |
 | Production workflow contract gate | `production-api-worker/.github/workflows/production-api-worker.yml` 需由 `node scripts/check-production-workflow-contract.mjs` 固定 `make ci-contract`、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | Syntax flow SVG contract gate | `docs/golang-syntax-application-svg.html` 與 `圖解筆記3-4整合/golang-syntax-application-svg.html` 需由 `node scripts/check-syntax-flow-svg-contract.mjs` 固定 25 個單語法流程、標準流程圖符號、SVG metadata、blueprint renderer 與 CI 入口 |
-| Go ReleaseNote contract gate | `ReleaseNote/`、`docs/ReleaseNote/` 與 `scripts/generate-go-release-notes.mjs` 需由 `node scripts/check-go-release-notes-contract.mjs` 固定根目錄/Pages 同步、官方來源、Go 1.26.5 / Go 1.25.12 patch revisions 與 CI 入口 |
+| Go ReleaseNote contract gate | `ReleaseNote/`、`docs/ReleaseNote/` 與 `scripts/generate-go-release-notes.mjs` 需由 `node scripts/check-go-release-notes-contract.mjs` 固定根目錄/Pages 同步、官方來源、Go 1.27.4 / Go 1.26.11 patch revisions 與 CI 入口 |
 | OpenAPI contract | `production-api-worker/api/openapi.yaml` 需同步 `docs/api-contract.md` 與 Go contract tests，並由 `node scripts/check-openapi-contract.mjs` 固定 endpoint、schema、error code、auth 邊界與 API contract scope coverage |
 | Readiness lifecycle contract | `/livez` 必須公開回 `200`；`/readyz` 在 ready 時回 `200`、draining 時回 `503`，並由 `TestReadinessContract` 和 `node scripts/check-readiness-contract.mjs` 固定 |
 | Request decoding contract | `POST /jobs` 只接受單一 JSON object；malformed JSON、unknown field、trailing JSON value 與空白 `name` 都必須回 `400 invalid_input`，並由 `TestRequestDecodingContract` 和 `node scripts/check-request-decoding-contract.mjs` 固定 |
@@ -163,6 +165,8 @@ flowchart TD
 | 9 | [執行檔打包與部署](chapters/09-build-and-deploy.md) | 交叉編譯、ldflags、embed、Docker、CI/CD |
 | 10 | [效能調優與記憶體管理](chapters/10-performance-and-memory.md) | Escape Analysis、pprof、GC、sync.Pool、runtime metrics、trace、benchstat |
 | 11 | [進階測試實務](chapters/11-advanced-testing.md) | Mocking 策略、Fuzz Testing、Integration Test |
+| 12 | [Go 語法變更與版本界線](chapters/12-go-language-changes.md) | 1.20–1.27、泛型方法、struct literal、推導、正反測試 |
+| 13 | [2026 年 11 月 Go 安全修補](chapters/13-go-security-2026-11.md) | 12 項公告、影響版本與觸發條件、重建部署、與相依漏洞區分 |
 
 ### 附錄
 
@@ -222,12 +226,12 @@ go test ./project-concurrent-crawler/...
 | 爬蟲專案 | `go test ./project-concurrent-crawler/...` | 驗證並發流程與 retry |
 | Production 專案 | `cd production-api-worker && go test ./...` | 驗證 API、service、worker |
 | 受限環境 | `TMPDIR=$PWD/.tmp GOCACHE=$PWD/.gocache GOMODCACHE=$PWD/.gomodcache go test ./...` | 避免使用系統快取路徑 |
-| Go 1.26 新特性 | `go1.26.5 test ./...` 或本機 Go 1.26.5 | 驗證 `new(expression)`、`testing/synctest` 等新版內容 |
-| Go 1.26 test artifact | `go1.26.5 test -artifacts -outputdir ./test-artifacts ./...` | 驗證 `T.ArtifactDir` / `B.ArtifactDir` / `F.ArtifactDir` 並收集輸出產物 |
+| Go 1.27 語法與併發 | `cd examples/go127 && go test -race ./... && go vet ./...`（Go 1.27.4） | 根目錄的 `go test ./...` 不會走進此獨立 module；含語法正反例與併發測試 |
+| Go 1.26 test artifact | `go test -artifacts -outputdir ./test-artifacts ./...` | 使用 1.26+ 時收集含 `ArtifactDir` 的測試產物；單跑根範例不代表已驗證所有新 API |
 | Go 1.26 升級盤點 | 對照第 1 / 9 章的支援矩陣 | 確認 macOS、Windows、FreeBSD、Wasm、bootstrap 與容器建置限制 |
 | Go 1.20 效能矩陣 | `rg -n "效能比較|crypto/rsa encryption|runtime/metrics histogram" ReleaseNote/go1.20-release-note.html docs/ReleaseNote/go1.20-release-note.html` | 確認 Release Note 同步記錄官方效能數字與 benchmark / metrics 驗證建議 |
-| Release Note 官方段落覆蓋 | `rg -n "Go 1.1-1.26|support-status-chart|Go 1.25、Go 1.26|go1.1-release-note" ReleaseNote docs/ReleaseNote` | 確認根目錄與 Pages 版都保留 Go 1.1、Roadmap、支援狀態圖與最新 patch 訊號 |
-| Go ReleaseNote contract gate | `node scripts/check-go-release-notes-contract.mjs` | 確認 Go 1.1-1.26 報告、27 個 HTML、官方來源、Go 1.26.5 / Go 1.25.12 patch 訊號與 Pages 同步沒有漂移 |
+| Release Note 官方段落覆蓋 | `rg -n "Go 1.1-1.27|support-status-chart|Go 1.26、Go 1.27|go1.1-release-note" ReleaseNote docs/ReleaseNote` | 確認根目錄與 Pages 版都保留 Go 1.1、Roadmap、支援狀態圖與最新 patch 訊號 |
+| Go ReleaseNote contract gate | `node scripts/check-go-release-notes-contract.mjs` | 確認 Go 1.1-1.27 報告、28 個 HTML、官方來源、Go 1.27.4 / Go 1.26.11 patch 訊號與 Pages 同步沒有漂移 |
 | Release version consistency contract gate | `node scripts/check-release-version-consistency-contract.mjs` | 確認目前版本在 VERSION、CHANGELOG、README、API contract、OpenAPI、章節、整合視覺課程、docs/index、Makefile 與 CI 中一致 |
 | Release artifact chain contract gate | `node scripts/check-release-artifact-chain-contract.mjs` | 確認同 timestamp 的審查報告、內容更新清單、更新資料、版本標記與 docs/index 同步沒有漏件 |
 | 補充教材頁 | `test -f docs/golang-syntax-application-svg.html && test -f docs/golang-third-party-modules.html && test -f docs/c-python-go-performance-supplement.html && test -f docs/golang-assembly-tutorial.html && test -f docs/golang-microservice-tutorial.html` | 確認補充 HTML 交付頁存在 |
@@ -340,7 +344,7 @@ go test ./project-concurrent-crawler/...
 > - `project-concurrent-crawler` 可能因本機 `dyld` / test binary 工具鏈異常失敗。
 > - `production-api-worker` 第一次抓依賴需要網路；無法連外時會停在 module download。
 > - `govulncheck` 與 `go list -m -u all` 需要可連線到 module proxy / vulnerability database；離線環境可保留命令與結果待補。
-> - 目前本機若仍是 Go 1.22.x，只能驗證既有相容範例；Go 1.26 新語法與測試 API 需換成 Go 1.26.5 toolchain。
+> - 目前本機若仍是 Go 1.22.x，只能驗證既有相容範例；Go 1.27 語法與測試使用 Go 1.27.4 toolchain，並進入 `examples/go127` 獨立 module。
 
 ## 建議讀法
 

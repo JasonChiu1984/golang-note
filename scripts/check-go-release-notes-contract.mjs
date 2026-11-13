@@ -2,7 +2,7 @@
 import { createHash } from "node:crypto";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 
-const releaseMinors = Array.from({ length: 26 }, (_, index) => index + 1);
+const releaseMinors = Array.from({ length: 27 }, (_, index) => index + 1);
 const rootPages = [
   "ReleaseNote/index.html",
   ...releaseMinors.map((minor) => `ReleaseNote/go1.${minor}-release-note.html`),
@@ -32,9 +32,9 @@ const files = [
 const required = {
   "scripts/generate-go-release-notes.mjs": [
     "const OUT_DIR = path.join(ROOT, \"ReleaseNote\")",
-    "Go 1.26.5",
-    "go1.26.5",
-    "go1.25.12",
+    "Go 1.27.4",
+    "go1.26.11",
+    "go1.27.4",
     "Patch Revisions",
     "supportStatus",
     "OFFICIAL_HISTORY",
@@ -91,26 +91,38 @@ const required = {
     "node scripts/check-go-release-notes-contract.mjs",
   ],
   "ReleaseNote/index.html": [
-    "Go 1.1-1.26",
+    "Go 1.1-1.27",
     "support-status-chart",
+    "目前支援：Go 1.26 - Go 1.27",
+    "不支援：Go 1.1 - Go 1.25",
+    "go1.27.4",
+    "go1.26.11",
     "Go 1.25",
     "Go 1.26",
     "go1.25-release-note.html",
     "go1.26-release-note.html",
+    "go1.27-release-note.html",
   ],
   "ReleaseNote/go1.25-release-note.html": [
-    "go1.25.12",
-    "2026-07-07",
+    "go1.25.14",
+    "2026-08-19",
     "https://go.dev/doc/go1.25",
     "Patch Revisions",
   ],
   "ReleaseNote/go1.26-release-note.html": [
-    "go1.26.5",
-    "2026-07-07",
+    "security-2026-11", "CVE-2026-97054", "13-go-security-2026-11.md",
+    "go1.26.11",
+    "2026-11-10",
     "https://go.dev/doc/go1.26",
     "Patch Revisions",
   ],
 };
+
+required["ReleaseNote/go1.27-release-note.html"] = [
+  "go1.27.4", "2026-11-10", "https://go.dev/doc/go1.27",
+  "generic methods", "struct literal field selectors", "generalized function type inference",
+  "encoding/json/v2", "uuid", "stdversion", "Experimental", "Patch Revisions",
+];
 
 const requiredPageSections = [
   "Executive Summary",
@@ -166,14 +178,21 @@ for (const minor of releaseMinors) {
   }
 }
 
+if (existsSync("ReleaseNote/index.html") && existsSync("docs/ReleaseNote/index.html")) {
+  if (normalizePublishedReleaseNote(readFileSync("ReleaseNote/index.html", "utf8")) !==
+      normalizePublishedReleaseNote(readFileSync("docs/ReleaseNote/index.html", "utf8"))) {
+    missing.push("ReleaseNote index differs from docs/ReleaseNote index");
+  }
+}
+
 const rootHtmlCount = existsSync("ReleaseNote")
   ? readdirSync("ReleaseNote").filter((file) => file.endsWith(".html")).length
   : 0;
 const docsHtmlCount = existsSync("docs/ReleaseNote")
   ? readdirSync("docs/ReleaseNote").filter((file) => file.endsWith(".html")).length
   : 0;
-if (rootHtmlCount !== 27) missing.push(`expected 27 root ReleaseNote HTML files, found ${rootHtmlCount}`);
-if (docsHtmlCount !== 27) missing.push(`expected 27 docs ReleaseNote HTML files, found ${docsHtmlCount}`);
+if (rootHtmlCount !== 28) missing.push(`expected 28 root ReleaseNote HTML files, found ${rootHtmlCount}`);
+if (docsHtmlCount !== 28) missing.push(`expected 28 docs ReleaseNote HTML files, found ${docsHtmlCount}`);
 
 const contractScripts = readdirSync("scripts")
   .filter((file) => /^check-.*-contract\.mjs$/.test(file))

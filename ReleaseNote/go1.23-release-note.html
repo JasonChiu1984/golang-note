@@ -55,8 +55,8 @@
       <h1>Go 1.23 Release Note 專業整理報告</h1>
       <p class="lead">Go 1.23 引入 iterator/range-over-function、timer channel 行為變更與標準庫 API 版本檢查。 本頁把官方 release note 與 release history 轉成工程導入、風險與驗收清單。</p>
       <div class="meta-row">
-        <span class="meta">報告版本：v2026.05.13</span>
-        <span class="meta">生成時間：2026-05-13 14:35:00 +0800</span>
+        <span class="meta">報告版本：v2026.11.13</span>
+        <span class="meta">生成時間：2026-11-13 12:22:30 +0800</span>
         <span class="meta">Major release：Go 1.23（2024-08-13）</span>
         <span class="meta">官方來源：https://go.dev/doc/go1.23</span>
         <span class="meta">Patch revisions：12</span>
@@ -87,6 +87,7 @@
       <a class="nav-link" href="#troubleshooting">排錯</a>
       <a class="nav-link" href="https://go.dev/doc/go1.23">官方文件</a>
     </nav>
+
     <section id="executive-summary">
       <div class="section-head"><h2>Executive Summary</h2><p>本版本報告定位在工程導入與升級審查，不是官方逐字翻譯。</p></div>
       <div class="report-note">
@@ -156,7 +157,16 @@
 <tr><td>Compiler</td><td>官方重點：Compiler、The、Profile、Guided、Optimization、Previously、PGO、For。The build time overhead to building with Profile Guided Optimization has been reduced significantly. Previously, large builds could see 100%+ build time increase from enabling PGO…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
 <tr><td>Linker</td><td>官方重點：Linker、The、Similarly、For、Any、When、ELF、PIE。The linker now disallows using a //go:linkname directive to refer to internal symbols in the standard library (including the runtime) that are not marked with //go:linkname on the…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
 <tr><td>Timer changes</td><td>官方重點：GODEBUG、time.Timer、time.Ticker、Timer、Ticker、First、Stop、Earlier。Go 1.23 makes two significant changes to the implementation of time.Timer and time.Ticker . First, Timer s and Ticker s that are no longer referred to by the program become eligib…</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr>
-<tr><td>New unique package</td><td>官方重點：New、The、Any、Make、Handle、Two、Comparing。The new unique package provides facilities for canonicalizing values (like &amp;ldquo;interning&amp;rdquo; or &amp;ldquo;hash-consing&amp;rdquo;). Any value of comparable type may be canonicalize…</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr></tbody></table></div>
+<tr><td>New unique package</td><td>官方重點：New、The、Any、Make、Handle、Two、Comparing。The new unique package provides facilities for canonicalizing values (like &amp;ldquo;interning&amp;rdquo; or &amp;ldquo;hash-consing&amp;rdquo;). Any value of comparable type may be canonicalize…</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>Iterators</td><td>官方重點：Iterators、The、All、Values、Backward、Collect、AppendSeq、Sorted。The new iter package provides the basic definitions for working with user-defined iterators. The slices package adds several functions that work with iterators: All returns an ite…</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>New structs package</td><td>官方重點：to/from、New、The、HostLayout、APIs、Without。The new structs package provides types for struct fields that modify properties of the containing struct type such as memory layout. In this release, the only such type is HostLay…</td><td>以語言語意、編譯相容性與 API 設計規則重寫，導入前要補 compile tests 與範例。</td><td>補語法範例、compile-time assertion、table tests 與文件化版本界線。</td></tr>
+<tr><td>Minor changes to the library</td><td>官方重點：GODEBUG、pprof、archive/tar、crypto/tls、crypto/x509、database/sql、debug/elf、encoding/binary。archive/tar If the argument to FileInfoHeader implements the new FileInfoNames interface, then the interface methods will be used to set the Uname/Gname of the file header. This a…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。</td></tr>
+<tr><td>Darwin</td><td>官方重點：Darwin、Big、Sur。As announced in the Go 1.22 release notes, Go 1.23 requires macOS 11 Big Sur or later; support for previous versions has been discontinued.</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>Linux</td><td>官方重點：Linux。Go 1.23 is the last release that requires Linux kernel version 2.6.32 or later. Go 1.24 will require Linux kernel version 3.2 or later.</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>OpenBSD</td><td>官方重點：GOOS、GOARCH、OpenBSD、RISC。Go 1.23 adds experimental support for OpenBSD on 64-bit RISC-V ( GOOS=openbsd , GOARCH=riscv64 ).</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>ARM64</td><td>官方重點：GOARM64、ARM64、Allowed、This、Valid、The。Go 1.23 introduces a new GOARM64 environment variable, which specifies the minimum target version of the ARM64 architecture at compile time. Allowed values are v8.{0-9} and v9.{0-…</td><td>以 package API、相容性異動、安全收緊與 regression tests 重寫，避免只列新增名稱。</td><td>補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。</td></tr>
+<tr><td>RISC-V</td><td>官方重點：GORISCV64、RISC、Allowed、The。Go 1.23 introduces a new GORISCV64 environment variable, which selects the RISC-V user-mode application profile for which to compile. Allowed values are rva20u64 and rva22u64 . Th…</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>Wasm</td><td>官方重點：GOROOT、misc/wasm、Wasm、The。The go_wasip1_wasm_exec script in GOROOT/misc/wasm has dropped support for versions of wasmtime &lt; 14.0.0.</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr></tbody></table></div>
     </section>
     <section id="added">
       <div class="section-head"><h2>條列式表格分析：新增功能列表</h2><p>整理 Go 1.23 值得納入教材與專案升級清單的新能力。</p></div>

@@ -56,8 +56,8 @@
 - Docs Publishing Contract：`docs/index.html`、GitHub Pages link fix 與 HTML 主頁教程回鏈必須由 `make docs-publishing-check` / `node scripts/check-docs-publishing-contract.mjs` 固定，避免 Pages 首頁與整合課程來源漂移
 - Production Workflow Contract：`production-api-worker/.github/workflows/production-api-worker.yml` 必須保留 `make ci-contract`、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup，並由 `make production-workflow-check` 固定
 - Syntax Flow SVG Contract：語法流程圖補充頁必須保留 25 個單語法 flow、標準流程圖符號、SVG metadata 與 blueprint renderer，並由 `make syntax-flow-svg-check` / `node scripts/check-syntax-flow-svg-contract.mjs` 固定
-- Go ReleaseNote Contract：Go 1.1-1.26 專業報告、根目錄與 Pages 同步、官方來源、支援狀態與最新 patch 訊號必須由 `make go-release-notes-check` / `node scripts/check-go-release-notes-contract.mjs` 固定
-- Go ReleaseNote Freshness Evidence Contract：Go ReleaseNote freshness evidence、official Go Release History verified 時間、Go 1.26.5 / Go 1.25.12 baseline 與 ReleaseNote index 來源證據必須由 `make go-release-notes-freshness-check` / `node scripts/check-go-release-notes-freshness-contract.mjs` 固定
+- Go ReleaseNote Contract：Go 1.1-1.27 專業報告、根目錄與 Pages 同步、官方來源、支援狀態與最新 patch 訊號必須由 `make go-release-notes-check` / `node scripts/check-go-release-notes-contract.mjs` 固定
+- Go ReleaseNote Freshness Evidence Contract：Go ReleaseNote freshness evidence、official Go Release History verified 時間、Go 1.27.4 / Go 1.26.11 baseline 與 ReleaseNote index 來源證據必須由 `make go-release-notes-freshness-check` / `node scripts/check-go-release-notes-freshness-contract.mjs` 固定
 - Release Version Consistency Contract：`VERSION`、`CHANGELOG.md`、README、API contract、OpenAPI、章節、整合視覺課程、`docs/index.html`、Makefile 與 GitHub Actions 必須同步目前版本，並由 `make release-version-consistency-check` / `node scripts/check-release-version-consistency-contract.mjs` 固定
 - Release Artifact Chain Contract：發版需保留同 timestamp 的審查報告、內容需要更新的部分、更新資料、版本標記與 docs/index 同步，並由 `make release-artifact-chain-check` / `node scripts/check-release-artifact-chain-contract.mjs` 固定
 - Release Artifact Metadata Consistency Contract：同 timestamp 的審查報告、內容需要更新的部分與更新資料需保留一致的版本、完整日期時間、本輪主題與交叉引用，並由 `make release-artifact-metadata-check` / `node scripts/check-release-artifact-metadata-contract.mjs` 固定
@@ -234,8 +234,8 @@ make compose-smoke
 | `make docs-publishing-check` | 固定 Docs Publishing Contract、`docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈、Makefile 與 CI 入口 |
 | `make production-workflow-check` | 固定 Production Workflow Contract、standalone workflow、contract tests、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | `make syntax-flow-svg-check` | 固定 Syntax Flow SVG Contract、語法補充頁、25 個 flow、標準流程圖符號、SVG metadata、blueprint renderer 與 CI 入口 |
-| `make go-release-notes-check` | 固定 Go ReleaseNote Contract、Go 1.1-1.26 報告、27 個 HTML、官方來源、最新 patch 訊號與 Pages 同步 |
-| `make go-release-notes-freshness-check` | 固定 Go ReleaseNote Freshness Evidence Contract、official Go Release History verified 時間、Go 1.26.5 / Go 1.25.12 baseline 與 ReleaseNote index 來源證據 |
+| `make go-release-notes-check` | 固定 Go ReleaseNote Contract、Go 1.1-1.27 報告、28 個 HTML、官方來源、最新 patch 訊號與 Pages 同步 |
+| `make go-release-notes-freshness-check` | 固定 Go ReleaseNote Freshness Evidence Contract、official Go Release History verified 時間、Go 1.27.4 / Go 1.26.11 baseline 與 ReleaseNote index 來源證據 |
 | `make release-artifact-chain-check` | 固定 Release Artifact Chain Contract、審查報告、內容需要更新的部分、更新資料、版本標記與 docs/index 同步 |
 | `make release-artifact-metadata-check` | 固定 Release Artifact Metadata Consistency Contract、三份 dated artifacts 的版本、日期、主題與交叉引用 |
 | `make release-artifact-continuity-check` | 固定 Release Artifact Continuity Index Contract、近期 release artifacts 的版本連續、timestamp 配對與 update record 自我引用 |
@@ -364,7 +364,7 @@ make go-release-notes-check
 cd .. && node scripts/check-go-release-notes-contract.mjs
 ```
 
-這個 gate 會固定 `scripts/generate-go-release-notes.mjs`、`ReleaseNote/` 與 `docs/ReleaseNote/`：Go 1.1-1.26 共 27 個 HTML 必須存在且 Pages 版逐檔一致，每個版本頁需保留 `Executive Summary`、`官方段落覆蓋矩陣`、`新增功能列表`、`Patch Revisions`、官方來源與回主頁入口，Go 1.25 / Go 1.26 頁也必須保留 Go 1.25.12 / Go 1.26.5 的 2026-07-07 patch 訊號。
+這個 gate 會固定 `scripts/generate-go-release-notes.mjs`、`ReleaseNote/` 與 `docs/ReleaseNote/`：Go 1.1-1.27 共 28 個 HTML 必須存在且 Pages 版逐檔一致，每個版本頁需保留 `Executive Summary`、`官方段落覆蓋矩陣`、`新增功能列表`、`Patch Revisions`、官方來源與回主頁入口，Go 1.26 / Go 1.27 頁也必須保留 Go 1.26.11 / Go 1.27.4 的 2026-11-10 patch 訊號。
 
 Release Version Consistency Contract 需包含：
 

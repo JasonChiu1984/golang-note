@@ -55,17 +55,17 @@
       <h1>Go 1.25 Release Note 專業整理報告</h1>
       <p class="lead">Go 1.25 強化 container-aware runtime、同步測試與 concurrency helper。 本頁把官方 release note 與 release history 轉成工程導入、風險與驗收清單。</p>
       <div class="meta-row">
-        <span class="meta">報告版本：v2026.05.13</span>
-        <span class="meta">生成時間：2026-05-13 14:35:00 +0800</span>
+        <span class="meta">報告版本：v2026.11.13</span>
+        <span class="meta">生成時間：2026-11-13 12:22:30 +0800</span>
         <span class="meta">Major release：Go 1.25（2025-08-12）</span>
         <span class="meta">官方來源：https://go.dev/doc/go1.25</span>
-        <span class="meta">Patch revisions：10</span>
+        <span class="meta">Patch revisions：14</span>
       </div>
       <div class="summary-grid">
         <div class="summary-card"><span class="metric">7</span><h3>新增能力項目</h3><p>語言、工具鏈、runtime/compiler、stdlib 與平台能力摘要。</p></div>
         <div class="summary-card"><span class="metric">2</span><h3>相容性風險</h3><p>升級時需檢查的破壞性、棄用、預設行為與安全變更。</p></div>
         <div class="summary-card"><span class="metric">3</span><h3>Go 指令變更</h3><p>整理 build、test、vet、module、toolchain 或 bootstrap 工作流。</p></div>
-        <div class="summary-card"><span class="metric">10</span><h3>Patch Revisions</h3><p>由官方 Release History 擷取，作為採用最終 patch 的依據。</p></div>
+        <div class="summary-card"><span class="metric">14</span><h3>Patch Revisions</h3><p>由官方 Release History 擷取，作為採用最終 patch 的依據。</p></div>
       </div>
     </div>
   </header>
@@ -87,6 +87,7 @@
       <a class="nav-link" href="#troubleshooting">排錯</a>
       <a class="nav-link" href="https://go.dev/doc/go1.25">官方文件</a>
     </nav>
+
     <section id="executive-summary">
       <div class="section-head"><h2>Executive Summary</h2><p>本版本報告定位在工程導入與升級審查，不是官方逐字翻譯。</p></div>
       <div class="report-note">
@@ -114,7 +115,7 @@
       <div class="table-wrap"><table><thead><tr><th>影響領域</th><th>影響等級</th><th>主要價值</th><th>主要風險</th><th>建議處置</th></tr></thead><tbody><tr><td>新增能力導入</td><td>中</td><td>適合 Kubernetes CPU limit、flaky concurrency tests、WaitGroup lifecycle 教材。</td><td>過度導入不符合版本定位的功能。</td><td>container-aware `GOMAXPROCS`、`testing/synctest`、`WaitGroup.Go`。</td></tr>
 <tr><td>相容性與安全</td><td>中高</td><td>GOMAXPROCS 自動調整會改變效能基準；synctest 需明確適用範圍。</td><td>舊程式可能依賴已修正或已棄用行為。</td><td>先掃描相容性異動表，再補 regression tests。</td></tr>
 <tr><td>Go 指令 / CI</td><td>中</td><td>本頁列出 3 項指令或工作流變更。</td><td>Makefile、CI、Dockerfile 可能使用舊參數或舊流程。</td><td>把 Go 指令表轉成 CI checklist。</td></tr>
-<tr><td>Patch revisions</td><td>中</td><td>官方 Release History 列出 10 個 patch revision。</td><td>停在早期 patch 可能漏掉安全或 runtime 修正。</td><td>採用該 major version 的最後 patch 並記錄理由。</td></tr>
+<tr><td>Patch revisions</td><td>中</td><td>官方 Release History 列出 14 個 patch revision。</td><td>停在早期 patch 可能漏掉安全或 runtime 修正。</td><td>採用該 major version 的最後 patch 並記錄理由。</td></tr>
 <tr><td>部署與觀測</td><td>中</td><td>runtime、network、filesystem、toolchain 變更需要實際部署證據。</td><td>只看編譯成功可能漏掉平台差異。</td><td>執行 smoke test、benchmark 或 observability 比對。</td></tr></tbody></table></div>
     </section>
 
@@ -156,7 +157,16 @@
 <tr><td>VMA names on Linux</td><td>官方重點：GODEBUG、VMA、Linux、CONFIG_ANON_VMA_NAME、This。On Linux systems with kernel support for anonymous virtual memory area (VMA) names ( CONFIG_ANON_VMA_NAME ), the Go runtime will annotate anonymous memory mappings with context ab…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
 <tr><td>nil pointer bug</td><td>官方重點：os.Open、f.Name、This、Programs、Open、Name、However。This release fixes a compiler bug , introduced in Go 1.21, that could incorrectly delay nil pointer checks. Programs like the following, which used to execute successfully (incorr…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
 <tr><td>DWARF5 support</td><td>官方重點：GOEXPERIMENT、DWARF5、The、DWARF。The compiler and linker in Go 1.25 now generate debug information using DWARF version 5 . The newer DWARF version reduces the space required for debugging information in Go binari…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
-<tr><td>Faster slices</td><td>官方重點：unsafe.Pointer、Faster、The、This、Pointer、All。The compiler can now allocate the backing store for slices on the stack in more situations, which improves performance. This change has the potential to amplify the effects of inc…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr></tbody></table></div>
+<tr><td>Faster slices</td><td>官方重點：unsafe.Pointer、Faster、The、This、Pointer、All。The compiler can now allocate the backing store for slices on the stack in more situations, which improves performance. This change has the potential to amplify the effects of inc…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
+<tr><td>Linker</td><td>官方重點：Linker、The。The linker now accepts a -funcalign=N command line option, which specifies the alignment of function entries. The default value is platform-dependent, and is unchanged in this rel…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
+<tr><td>New testing/synctest package</td><td>官方重點：GOEXPERIMENT、testing/synctest、New、The、Test、Within、Wait、This。The new testing/synctest package provides support for testing concurrent code. The Test function runs a test function in an isolated &amp;ldquo;bubble&amp;rdquo;. Within the bubble, time …</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>New experimental encoding/json/v2 package</td><td>官方重點：GOEXPERIMENT、encoding/json/v2、encoding/json、encoding/json/jsontext、com/go、experiment/jsonbench、New、JSON。Go 1.25 includes a new, experimental JSON implementation, which can be enabled by setting the environment variable GOEXPERIMENT=jsonv2 at build time. When enabled, two new package…</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
+<tr><td>Minor changes to the library</td><td>官方重點：GODEBUG、GOMAXPROCS、pprof、archive/tar、io/fs.ReadLinkFS、encoding/asn1、crypto/ecdsa、crypto/elliptic。archive/tar The Writer.AddFS implementation now supports symbolic links for filesystems that implement io/fs.ReadLinkFS . encoding/asn1 Unmarshal and UnmarshalWithParams now parse…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。</td></tr>
+<tr><td>Darwin</td><td>官方重點：Darwin、Monterey、Support。As announced in the Go 1.24 release notes, Go 1.25 requires macOS 12 Monterey or later. Support for previous versions has been discontinued.</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>Windows</td><td>官方重點：GOOS、GOARCH、windows/arm、Windows。Go 1.25 is the last release that contains the broken 32-bit windows/arm port ( GOOS=windows GOARCH=arm ). It will be removed in Go 1.26.</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>AMD64</td><td>官方重點：GOAMD64、AMD64、This。In GOAMD64=v3 mode or higher, the compiler will now use fused multiply-add instructions to make floating-point arithmetic faster and more accurate. This may change the exact float…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
+<tr><td>Loong64</td><td>官方重點：cgo、linux/loong64、runtime.SetCgoTraceback、Loong64、The、SetCgoTraceback。The linux/loong64 port now supports the race detector, gathering traceback information from C code using runtime.SetCgoTraceback , and linking cgo programs with the internal link …</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
+<tr><td>RISC-V</td><td>官方重點：GORISCV64、linux/riscv64、RISC、The、RVA23U64。The linux/riscv64 port now supports the plugin build mode. The GORISCV64 environment variable now accepts a new value rva23u64 , which selects the RVA23U64 user-mode application p…</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr></tbody></table></div>
     </section>
     <section id="added">
       <div class="section-head"><h2>條列式表格分析：新增功能列表</h2><p>整理 Go 1.25 值得納入教材與專案升級清單的新能力。</p></div>
@@ -191,8 +201,10 @@
 <tr><td>go1.25.8</td><td>2026-03-05</td><td>(released 2026-03-05) includes security fixes to the html/template , net/url , and os packages, as well as bug fixes to the go command, the compiler, and the os package.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
 <tr><td>go1.25.9</td><td>2026-04-07</td><td>(released 2026-04-07) includes security fixes to the go command, the compiler, and the archive/tar , crypto/tls , crypto/x509 , html/template , and os packages, as well as bug fixes to the go command, the compiler, and the runtime.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
 <tr><td>go1.25.10</td><td>2026-05-07</td><td>(released 2026-05-07) includes security fixes to the go command, the pack tool, and the html/template , net , net/http , net/http/httputil , net/mail , and syscall packages, as well as bug fixes to the go command, the compiler, the linker, the runtime, and the crypto/fips140 , go/types , and os packages.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
-<tr><td>go1.25.11</td><td>2026-06-02</td><td>(released 2026-06-02) includes security fixes to the crypto/x509, mime, and net/textproto packages, as well as bug fixes to the compiler and the runtime.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
-<tr><td>go1.25.12</td><td>2026-07-07</td><td>(released 2026-07-07) includes security fixes to the crypto/tls and os packages, as well as bug fixes to the compiler, the go command, and the net and os packages.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr></tbody></table></div>
+<tr><td>go1.25.11</td><td>2026-06-02</td><td>(released 2026-06-02) includes security fixes to the crypto/x509 , mime , and net/textproto packages, as well as bug fixes to the compiler and the runtime.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
+<tr><td>go1.25.12</td><td>2026-07-07</td><td>(released 2026-07-07) includes security fixes to the crypto/tls and os packages, as well as bug fixes to the compiler, the go command, and the net and os packages.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
+<tr><td>go1.25.13</td><td>2026-08-13</td><td>(released 2026-08-13) includes security fixes to the go command, and the crypto/tls , encoding/asn1 , encoding/xml , html/template , net/http , and net/url packages, as well as bug fixes to the compiler, the runtime, and the crypto/tls and os packages.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr>
+<tr><td>go1.25.14</td><td>2026-08-19</td><td>(released 2026-08-19) includes fixes to the net/http package.</td><td>升級時優先採該 major 版本最後 patch，並檢查安全修正套件。</td></tr></tbody></table></div>
     </section>
     <section id="migration-plan">
       <div class="section-head"><h2>專案導入計畫</h2><p>用四階段把版本資訊轉成可驗收的專案升級流程。</p></div>

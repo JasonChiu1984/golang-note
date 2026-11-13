@@ -31,6 +31,7 @@ const replacements = [
   ["../docs/golang-assembly-tutorial.html", "golang-assembly-tutorial.html"],
   ["../docs/golang-microservice-tutorial.html", "golang-microservice-tutorial.html"],
   ["../ReleaseNote/index.html", "ReleaseNote/index.html"],
+  ["../ReleaseNote/go1.27-release-note.html", "ReleaseNote/go1.27-release-note.html"],
   ["../examples/performance-comparison/README.md", "c-python-go-performance-supplement.html#verification"],
   ["../production-api-worker/cmd/api-worker/main.go", "https://github.com/JasonChiu1984/golang-note/blob/main/production-api-worker/cmd/api-worker/main.go"],
   ["../production-api-worker/internal/app/service.go", "https://github.com/JasonChiu1984/golang-note/blob/main/production-api-worker/internal/app/service.go"],

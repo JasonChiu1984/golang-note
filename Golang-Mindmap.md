@@ -1,5 +1,7 @@
 # Golang 核心知識心智圖 (Mind Map)
 
+> 這張圖為 Go 1.22+ 基礎知識結構；最新 1.27.4 差異另見 [語法更新索引](chapters/12-go-language-changes.md)，不能把圖上的版本理解為最新穩定版。
+
 這是一份統整本專案所有精華的 Golang 知識心智圖。您可以直接在支援 Mermaid 的 Markdown 編輯器（如 GitHub、Obsidian、Notion）中預覽，或是將原始碼貼到 [Mermaid Live Editor](https://mermaid.live/) 查看。
 
 ```mermaid

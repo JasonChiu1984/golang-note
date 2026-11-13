@@ -434,7 +434,7 @@ Production workflow contract gate：在 repo root 執行 `node scripts/check-pro
 
 Syntax flow SVG contract gate：在 repo root 執行 `node scripts/check-syntax-flow-svg-contract.mjs`，固定 `docs/golang-syntax-application-svg.html` 與整合來源保留 25 個單語法 flow、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口。
 
-Go ReleaseNote contract gate：在 repo root 執行 `node scripts/check-go-release-notes-contract.mjs`，固定 `scripts/generate-go-release-notes.mjs`、`ReleaseNote/`、`docs/ReleaseNote/`、Go 1.1-1.26 必要報告區塊、官方來源、支援狀態與 Go 1.26.5 / Go 1.25.12 patch 訊號。
+Go ReleaseNote contract gate：在 repo root 執行 `node scripts/check-go-release-notes-contract.mjs`，固定 `scripts/generate-go-release-notes.mjs`、`ReleaseNote/`、`docs/ReleaseNote/`、Go 1.1-1.27 必要報告區塊、官方來源、支援狀態與 Go 1.27.4 / Go 1.26.11 patch 訊號。
 
 Release version consistency contract gate：在 repo root 執行 `node scripts/check-release-version-consistency-contract.mjs`，固定 VERSION、CHANGELOG、README、API contract、OpenAPI、章節、整合視覺課程、docs/index、Makefile 與 CI 目前版本一致。
 
@@ -811,7 +811,25 @@ time.Parse("2006-01-02", "2024-01-15")
 
 ---
 
-## 現代 Go API (Go 1.20-1.26) 速查
+## 現代 Go 語法與 API (Go 1.20-1.27) 速查
+
+查核日：2026-11-13；最新穩定版 1.27.4。語言與套件不能混為一談，完整條件及正反測試見 [第 12 章](../chapters/12-go-language-changes.md)與 [範例 module](../examples/go127/README.md)。
+
+| 類別 | 版本 | 重點 |
+|---|---|---|
+| 語言 | 1.23 | range-over-function；iterator 必須遵守 yield 協定 |
+| 語言 | 1.24 | 泛型型別別名 `type Set[T comparable] = map[T]struct{}` |
+| 語言 | 1.25 | 無語言語法變更；`WaitGroup.Go` 是標準庫 API |
+| 語言 | 1.26 | `new(expression)`；泛型型別自身參數列可自參照 |
+| 語言 | 1.27 | 方法自身型別參數、struct literal 的 promoted 欄位 key、泛型函式 assignment/conversion 推導擴大 |
+| 標準庫 | 1.27 | `encoding/json/v2`、`encoding/json/jsontext`、`uuid`；JSON 新預設需另做相容性測試 |
+| 工具 | 1.27 | `go test` 預設執行 `stdversion` vet；`go doc package@version`、`go doc -ex` |
+| Runtime | 1.27 | timer channels 一律同步、goroutine leak profile 正式提供 |
+| 實驗 | 1.27 | `simd`／`simd/archsimd` 仍需 `GOEXPERIMENT=simd`，不是穩定語言新增 |
+
+1.27 方法型別參數不能拿來實作介面方法，介面方法／匿名函式仍不能自行宣告型別參數。Struct literal 使用 promoted 欄位**名稱**（例如 `Outer{Value: 7}`），不是 `Outer{Inner.Value: 7}`；不可穿過 embedded pointer，亦不可重疊初始化。型別推導只在有足夠型別資訊時成立，不代表所有 `F[T]` 都能省略 `T`。
+
+來源：[Go 1.27](https://go.dev/doc/go1.27)、[語言規格](https://go.dev/ref/spec)。
 
 ### 泛型集合 (`slices` / `maps`) (Go 1.21)
 
@@ -843,9 +861,11 @@ ctx, cancel := context.WithCancelCause(context.Background())
 cancel(errors.New("db timeout"))
 err := context.Cause(ctx) // 取得具體錯誤
 
-// context.WithoutCancel (Go 1.21)：剝離取消信號 (適合背景任務)
-bgCtx := context.WithoutCancel(r.Context())
-go writeLog(bgCtx) // r 結束時，bgCtx 不會被 cancel
+// context.WithoutCancel (Go 1.21)：保留 values，但不保留取消/deadline。
+// 需由呼叫方等待完成，或交給有 shutdown 的背景管理器。
+bgCtx, cancel := context.WithTimeout(context.WithoutCancel(r.Context()), time.Second)
+defer cancel()
+writeLog(bgCtx) // 應讓 writeLog 尊重新的 deadline
 ```
 
 ### 全新亂數模組 `math/rand/v2` (Go 1.22)
@@ -858,7 +878,7 @@ n := rand.IntN(100)
 f := rand.Float64()
 ```
 
-### Go 1.25/1.26 工具鏈與 runtime
+### Go 1.25–1.27 標準庫、工具鏈與 runtime
 
 | 功能 | 版本 | 用途 |
 |---|---:|---|
@@ -866,7 +886,7 @@ f := rand.Float64()
 | `testing/synctest` | Go 1.25+ | 用虛擬時間測併發與 timeout，減少 `time.Sleep` flaky test |
 | `go fix` modernizers | Go 1.26+ | 用官方 analyzer 套用現代化 idiom 與標準庫 API 遷移 |
 | Green Tea GC | Go 1.26+ | 預設 GC，改善小物件標記與掃描 locality |
-| goroutine leak profile | Go 1.26+ experiment | 用 `GOEXPERIMENT=goroutineleakprofile` 偵測部分永久阻塞 goroutine |
+| goroutine leak profile | 1.26 實驗，1.27 正式 | 1.27 使用 `runtime/pprof` 的 `goroutineleak`；只能檢出部分永久阻塞，不是零洩漏保證 |
 | `T.ArtifactDir` / `B.ArtifactDir` / `F.ArtifactDir` | Go 1.26+ | 測試、benchmark、fuzz 產物輸出到固定 artifact 目錄 |
 
 ```bash
@@ -911,8 +931,8 @@ synctest.Test(t, func(t *testing.T) {
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs && cd production-api-worker && make docs-publishing-check` | 固定 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈、Makefile 與 CI 入口 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs && cd production-api-worker && make production-workflow-check` | 固定 standalone production workflow 的 contract、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs && cd production-api-worker && make syntax-flow-svg-check` | 固定語法流程圖補充頁的 25 個 flow、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口 |
-| Go ReleaseNote contract gate | `node scripts/check-go-release-notes-contract.mjs && cd production-api-worker && make go-release-notes-check` | 固定 Go 1.1-1.26 專業報告、27 個 HTML、官方來源、支援狀態、最新 patch 訊號與 Pages 同步 |
-| Go ReleaseNote freshness evidence | `node scripts/check-go-release-notes-freshness-contract.mjs && cd production-api-worker && make go-release-notes-freshness-check` | 固定 official Go Release History verified 時間、Go 1.26.5 / Go 1.25.12 baseline 與 ReleaseNote index 來源證據 |
+| Go ReleaseNote contract gate | `node scripts/check-go-release-notes-contract.mjs && cd production-api-worker && make go-release-notes-check` | 固定 Go 1.1-1.27 專業報告、28 個 HTML、官方來源、支援狀態、最新 patch 訊號與 Pages 同步 |
+| Go ReleaseNote freshness evidence | `node scripts/check-go-release-notes-freshness-contract.mjs && cd production-api-worker && make go-release-notes-freshness-check` | 固定 official Go Release History verified 時間、Go 1.27.4 / Go 1.26.11 baseline 與 ReleaseNote index 來源證據 |
 | Release version consistency contract gate | `node scripts/check-release-version-consistency-contract.mjs && cd production-api-worker && make release-version-consistency-check` | 固定 VERSION、CHANGELOG、README、API contract、OpenAPI、章節、整合視覺課程、docs/index、Makefile 與 CI 目前版本一致 |
 | Release artifact chain contract gate | `node scripts/check-release-artifact-chain-contract.mjs && cd production-api-worker && make release-artifact-chain-check` | 固定審查報告、內容需要更新的部分、更新資料、版本標記、CHANGELOG 與 docs/index 同步 |
 | Release artifact metadata consistency contract gate | `node scripts/check-release-artifact-metadata-contract.mjs && cd production-api-worker && make release-artifact-metadata-check` | 固定 release artifact metadata、timestamp、版本、主題與交叉引用 |

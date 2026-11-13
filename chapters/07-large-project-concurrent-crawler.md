@@ -308,7 +308,7 @@ production service 的對外邊界不是 handler 程式碼本身，而是「使�
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs`、`docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈 | 首頁同步後 Release Notes、補充教材入口或回主頁連結在 Pages 上漂移 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs`、standalone workflow、contract tests、race/coverage、govulncheck、Docker smoke | production worker 抽成獨立 repo 時 workflow 退化成只跑快速測試 |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs`、25 個 syntax flow、標準流程圖符號、SVG metadata、blueprint renderer | 視覺化語法教材退回不可維護圖檔、缺少 accessibility metadata 或 docs/來源漂移 |
-| Go ReleaseNote contract gate | `node scripts/check-go-release-notes-contract.mjs`、Go 1.1-1.26 報告、根目錄與 Pages 同步、最新 patch 訊號 | ReleaseNote 產生器或 Pages 同步後遺失官方來源、支援狀態、必要報告區塊或 Go 1.26.5 / Go 1.25.12 patch revisions |
+| Go ReleaseNote contract gate | `node scripts/check-go-release-notes-contract.mjs`、Go 1.1-1.27 報告、根目錄與 Pages 同步、最新 patch 訊號 | ReleaseNote 產生器或 Pages 同步後遺失官方來源、支援狀態、必要報告區塊或 Go 1.27.4 / Go 1.26.11 patch revisions |
 | Release version consistency contract gate | `node scripts/check-release-version-consistency-contract.mjs`、VERSION、CHANGELOG、README、API contract、OpenAPI、章節、整合視覺課程、docs/index | 發版後 commit、tag、Pages 首頁或 contract 文件顯示不同版本 |
 | Release artifact chain contract gate | `node scripts/check-release-artifact-chain-contract.mjs`、審查報告、內容需要更新的部分、更新資料、VERSION、CHANGELOG、docs/index | 發版缺少可回查 artifact chain，導致審查結論、修正清單與推送紀錄無法對齊 |
 | Release artifact metadata consistency contract gate | `node scripts/check-release-artifact-metadata-contract.mjs`、審查報告、內容需要更新的部分、更新資料、timestamp、版本、主題 | 發版 artifact 檔案存在但 metadata 或交叉引用漂移 |
@@ -488,7 +488,7 @@ Production API 的 timeout 不是未知錯誤。若 handler 建立的 request de
 | API contract scope coverage | `node scripts/check-openapi-contract.mjs` 固定 `docs/api-contract.md` 首段適用範圍必須列入 Docs publishing contract gate 與發布面 scope，避免表格更新但 header 漏列 |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs` 固定 `production-api-worker/.github/workflows/production-api-worker.yml` 的 contract、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs` 固定語法流程圖補充頁的 25 個 flow、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口 |
-| Go ReleaseNote contract gate | `node scripts/check-go-release-notes-contract.mjs` 固定 Go 1.1-1.26 專業報告、27 個 ReleaseNote HTML、官方來源、Patch Revisions、支援狀態與 `docs/ReleaseNote/` Pages 同步 |
+| Go ReleaseNote contract gate | `node scripts/check-go-release-notes-contract.mjs` 固定 Go 1.1-1.27 專業報告、27 個 ReleaseNote HTML、官方來源、Patch Revisions、支援狀態與 `docs/ReleaseNote/` Pages 同步 |
 | Release version consistency contract gate | `node scripts/check-release-version-consistency-contract.mjs` 固定 VERSION、CHANGELOG、README、API contract、OpenAPI、章節、整合視覺課程、docs/index、Makefile 與 CI 的目前版本一致性 |
 | Release artifact chain contract gate | `node scripts/check-release-artifact-chain-contract.mjs` 固定審查報告、內容需要更新的部分、更新資料、版本標記、CHANGELOG 與 docs/index 發布同步 |
 | Release artifact metadata consistency contract gate | `node scripts/check-release-artifact-metadata-contract.mjs` 固定三份 release artifacts 的 timestamp、版本、完整日期時間、本輪主題與交叉引用 |

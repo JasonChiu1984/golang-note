@@ -55,8 +55,8 @@
       <h1>Go 1.13 Release Note 專業整理報告</h1>
       <p class="lead">Go 1.13 是錯誤處理與 module 實務的重要版本，加入 error wrapping 與 numeric literal 改善。 本頁把官方 release note 與 release history 轉成工程導入、風險與驗收清單。</p>
       <div class="meta-row">
-        <span class="meta">報告版本：v2026.05.13</span>
-        <span class="meta">生成時間：2026-05-13 14:35:00 +0800</span>
+        <span class="meta">報告版本：v2026.11.13</span>
+        <span class="meta">生成時間：2026-11-13 12:22:30 +0800</span>
         <span class="meta">Major release：Go 1.13（2019-09-03）</span>
         <span class="meta">官方來源：https://go.dev/doc/go1.13</span>
         <span class="meta">Patch revisions：15</span>
@@ -87,6 +87,7 @@
       <a class="nav-link" href="#troubleshooting">排錯</a>
       <a class="nav-link" href="https://go.dev/doc/go1.13">官方文件</a>
     </nav>
+
     <section id="executive-summary">
       <div class="section-head"><h2>Executive Summary</h2><p>本版本報告定位在工程導入與升級審查，不是官方逐字翻譯。</p></div>
       <div class="report-note">
@@ -155,7 +156,15 @@
 <tr><td>Windows</td><td>官方重點：cgo、Windows、The、This、These、Externally。The Windows version specified by internally-linked Windows binaries is now Windows 7 rather than NT 4.0. This was already the minimum required version for Go, but can affect the b…</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
 <tr><td>Modules</td><td>官方重點：GO111MODULE、GOPATH、GOPRIVATE、GONOPROXY、GONOSUMDB、GOPROXY、GOSUMDB、go env。Environment variables The GO111MODULE environment variable continues to default to auto , but the auto setting now activates the module-aware mode of the go command whenever the c…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr>
 <tr><td>Go command</td><td>官方重點：GOFLAGS、go env、go build、go generate、go/env、os.UserConfigDir、The、Defaults。The go env command now accepts a -w flag to set the per-user default value of an environment variable recognized by the go command, and a corresponding -u flag to unset a previous…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr>
-<tr><td>Compiler toolchain</td><td>官方重點：go build、unsafe.Pointer、Compiler、The、For、However、Pointer、These。The compiler has a new implementation of escape analysis that is more precise. For most Go code should be an improvement (in other words, more Go variables and expressions allocat…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr></tbody></table></div>
+<tr><td>Compiler toolchain</td><td>官方重點：go build、unsafe.Pointer、Compiler、The、For、However、Pointer、These。The compiler has a new implementation of escape analysis that is more precise. For most Go code should be an improvement (in other words, more Go variables and expressions allocat…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr>
+<tr><td>Assembler</td><td>官方重點：Assembler、The、ARM。The assembler now supports many of the atomic instructions introduced in ARM v8.1.</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
+<tr><td>gofmt</td><td>官方重點：gofmt、This、For、Removing。gofmt (and with that go fmt ) now canonicalizes number literal prefixes and exponents to use lower-case letters, but leaves hexadecimal digits alone. This improves readability whe…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>godoc and go doc</td><td>官方重點：go get、org/x/tools/cmd/godoc、The、This。The godoc webserver is no longer included in the main binary distribution. To run the godoc webserver locally, manually install it first: go get golang.org/x/tools/cmd/godoc godoc…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>Runtime</td><td>官方重點：Runtime、Out、For、This、The、Previously、However、OSes。Out of range panic messages now include the index that was out of bounds and the length (or capacity) of the slice. For example, s[3] on a slice of length 1 will panic with &amp;ldquo…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
+<tr><td>TLS 1.3</td><td>官方重點：GODEBUG、crypto/tls、TLS、The、See。As announced in Go 1.12, Go 1.13 enables support for TLS 1.3 in the crypto/tls package by default. It can be disabled by adding the value tls13=0 to the GODEBUG environment variab…</td><td>以 package API、相容性異動、安全收緊與 regression tests 重寫，避免只列新增名稱。</td><td>補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。</td></tr>
+<tr><td>crypto/ed25519</td><td>官方重點：crypto/ed25519、org/x/crypto/ed25519、The、Ed25519、This。The new crypto/ed25519 package implements the Ed25519 signature scheme. This functionality was previously provided by the golang.org/x/crypto/ed25519 package, which becomes a wrap…</td><td>以 package API、相容性異動、安全收緊與 regression tests 重寫，避免只列新增名稱。</td><td>補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。</td></tr>
+<tr><td>Error wrapping</td><td>官方重點：fmt.Errorf、errors.Unwrap、errors.Is、errors.As、Error、Values、Unwrap、Both。Go 1.13 contains support for error wrapping, as first proposed in the Error Values proposal and discussed on the associated issue . An error e can wrap another error w by providin…</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>Minor changes to the library</td><td>官方重點：crypto/tls、crypto/x509、etc/ssl/cert.pem、database/sql、debug/dwarf、go/scanner、go/types、html/template。As always, there are various minor changes and updates to the library, made with the Go 1 promise of compatibility in mind. bytes The new ToValidUTF8 function returns a copy of a …</td><td>以語言語意、編譯相容性與 API 設計規則重寫，導入前要補 compile tests 與範例。</td><td>補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。</td></tr></tbody></table></div>
     </section>
     <section id="added">
       <div class="section-head"><h2>條列式表格分析：新增功能列表</h2><p>整理 Go 1.13 值得納入教材與專案升級清單的新能力。</p></div>

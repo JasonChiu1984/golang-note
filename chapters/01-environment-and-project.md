@@ -1,7 +1,7 @@
 # 01. 環境與專案結構
 
-> **本教材撰寫基準版本：Go 1.26.5**
-> 內容涵蓋 Go 1.18（generics）、Go 1.21（`min`/`max`/`clear`）、Go 1.22（range-over-int、loop variable fix）、Go 1.25（container-aware `GOMAXPROCS`、`testing/synctest`）與 Go 1.26（`new(expression)`、Green Tea GC、`T.ArtifactDir`）等重要特性。如使用較舊版本，部分語法可能不支援。
+> **目前版本查核：Go 1.27.4（2026-11-13）**
+> 內容涵蓋 Go 1.18（generics）、Go 1.21（`min`/`max`/`clear`）、Go 1.22（range-over-int、loop variable fix）、Go 1.25（container-aware `GOMAXPROCS`、`testing/synctest`）與 Go 1.26（`new(expression)`、Green Tea GC、`T.ArtifactDir`）等重要特性。Go 1.27 另有泛型方法、struct literal promoted 欄位初始化與推導擴充，詳見 [語法版本總覽](12-go-language-changes.md)。如使用較舊版本，部分語法可能不支援。
 
 Go 專案的第一個重點不是語法，而是「程式如何被組織、編譯、測試」。Go 的工具鏈很完整，學會 `go` 指令等於學會一半日常工作流。
 
@@ -21,14 +21,16 @@ Go 是跨平台語言，官方支援以下主要環境：
 
 > 完整列表可用 `go tool dist list` 查看，Go 支援超過 40 種 GOOS/GOARCH 組合。
 
-### Go 1.26 平台與升級注意事項
+### Go 1.26–1.27 平台與升級注意事項
+
+最新維護線為 Go 1.27.4 與 Go 1.26.11，Go 1.25 已停止支援；根 module 的 `go 1.22` 僅是最低語言相容基準，不是工具鏈支援承諾。官方：[Release Policy](https://go.dev/doc/devel/release)、[1.27 Ports](https://go.dev/doc/go1.27#ports)。
 
 Go 的平台支援不是永久不變。升級 toolchain 時，應把語法/API 相容性、OS 生命週期、交叉編譯目標與 CI runner 一起檢查。
 
-| 項目 | Go 1.26 重點 | 對專案的影響 |
+| 項目 | 版本界線與目前狀態 | 對專案的影響 |
 |---|---|---|
 | Bootstrap toolchain | Go 1.26 需要 Go 1.24.6 或更新版本才能從原始碼 bootstrap | 自建 toolchain 或企業內部映像需先更新 builder |
-| macOS | Go 1.26 是最後支援 macOS 12 Monterey 的版本；Go 1.27 將要求 macOS 13+ | 舊 Mac runner / 開發機要提前規劃升級 |
+| macOS | Go 1.26 是最後支援 macOS 12 Monterey 的版本；Go 1.27 已要求 macOS 13+ | 使用 1.27 時須先升級舊 Mac runner / 開發機 |
 | Windows | `GOOS=windows GOARCH=arm` 已移除 | 發布矩陣不要再保留 32-bit Windows ARM 目標 |
 | FreeBSD | `freebsd/riscv64` 在 Go 1.26 標記為 broken | 若有特殊平台部署，需用 `go tool dist list` 與實機 CI 驗證 |
 | Linux RISC-V | `linux/riscv64` 支援 race detector | RISC-V 服務可把 `go test -race` 納入更完整的併發驗證 |
@@ -46,12 +48,12 @@ Go 的平台支援不是永久不變。升級 toolchain 時，應把語法/API �
 | **Linux** | 官方 tarball | `sudo tar -C /usr/local -xzf go*.tar.gz` |
 | **Windows** | 官方安裝包 | [golang.org/dl](https://golang.org/dl/) 下載 `.msi` |
 | **Windows** | Scoop | `scoop install go` |
-| **任何平台** | 版本管理工具 | `go install golang.org/dl/go1.26.5@latest` |
+| **任何平台** | 版本管理工具 | `go install golang.org/dl/go1.27.4@latest`，再執行 `go1.27.4 download` |
 
 ```bash
 # 確認安裝成功
 go version
-# go version go1.26.5 darwin/arm64
+# go version go1.27.4 darwin/arm64
 
 # 查看環境設定
 go env GOROOT GOPATH GOOS GOARCH
@@ -108,7 +110,7 @@ module example.com/hello-go
 go 1.26
 ```
 
-> **版本策略**：教材文字以 Go 1.26.5 為基準；本 repo 內部分可執行範例仍可能保留 `go 1.22`，用來維持舊 toolchain 的學習相容性。新專案建議使用當前支援中的最新 Go patch release。
+> **版本策略**：新版語法說明與 ReleaseNote 已更新至 Go 1.27.4；根 module 明確保留 `go 1.22`，新版範例使用獨立 `examples/go127`。最低語言版本不代表該舊工具鏈仍受安全維護；新專案請使用目前受支援的 patch release。
 
 ## 最小程式
 

@@ -287,7 +287,7 @@
       <div>
         <p class="eyebrow">圖解筆記 3 + 4 / 單一完整 HTML</p>
         <h1>Golang 從語法到 Production 的完整圖解課</h1>
-        <p>把圖解筆記3的語法、併發、任務系統、200 語法範例、200 常用案例，和圖解筆記4的 Go 1.21-1.26、database/sql、Observability、Production API Flow 合併成同一份可搜尋、可跳轉、可校閱的資深工程教材。</p>
+        <p>把圖解筆記3的語法、併發、任務系統、200 語法範例、200 常用案例，和圖解筆記4的現代標準庫、database/sql、Observability、Production API Flow 合併成同一份可搜尋、可跳轉、可校閱的資深工程教材。2026-11-13 已補齊 Go 1.27.4 語法／Release Notes 更新入口；既有 production 範本仍保留原相容設定。</p>
       </div>
       <div class="hero-stats" aria-label="課程摘要">
         <a class="stat" href="#syntax-from-note3"><strong>40</strong><span>單一語法卡</span></a>
@@ -301,6 +301,8 @@
   <nav class="toolbar" aria-label="整合版導覽">
     <div class="toolbar-inner">
           <a class="btn" href="../docs/index.html">主頁教程</a>
+      <a class="btn" href="#go127-update">Go 1.27.4 更新</a>
+      <a class="btn" href="#go-security-2026-11">11 月安全公告</a>
       <a class="btn" href="#roadmap">整合路線</a>
       <a class="btn" href="#syntax-mindmap">語法心智圖</a>
       <a class="btn" href="#unified-index">統一搜尋</a>
@@ -319,6 +321,42 @@
   </nav>
 
   <main>
+    <section id="go127-update" aria-labelledby="go127-title">
+      <div class="section-head"><div><h2 id="go127-title">Go 1.27.4 更新索引</h2>
+        <p>查核：2026-11-13。最新穩定版 1.27.4（11 月 10 日發布）；支援線為 1.27 與 1.26，前一線最新為 1.26.11。1.25 已停止支援。</p>
+      </div></div>
+      <div class="grid-3">
+        <article class="panel"><span class="badge">語言語法／語意</span><h3>Go 1.27 的三項變更</h3>
+          <ul><li>方法可以宣告自身型別參數；不能藉此實作介面方法，介面方法仍不可自行宣告型別參數。</li>
+          <li>struct literal 可用 promoted 欄位名稱初始化，例如 <code>Outer{Value: 7}</code>；不是 <code>Outer{Inner.Value: 7}</code>。不可穿過 embedded pointer，也不能重疊初始化。</li>
+          <li>泛型函式型別推導延伸到其他 assignment／conversion 情境；仍須有足夠型別資訊，不是任意省略型別參數。</li></ul>
+          <p>1.26 另有 <code>new(expression)</code> 與自參照泛型約束；1.25 無新語法。1.23 iterator 與 1.24 泛型別名也可循下方版本表複習。</p>
+        </article>
+        <article class="panel"><span class="badge teal">標準庫／Runtime</span><h3>不要把 API 誤稱新語法</h3>
+          <p><code>WaitGroup.Go</code>、<code>testing/synctest</code> 是 Go 1.25 標準庫 API；<code>errors.AsType</code> 是 1.26 API。1.27 的 JSON v2、jsontext 與 uuid 是新穩定標準庫。</p>
+          <p>1.27 timer channels 一律同步；goroutine leak profile 正式提供但不是完整洩漏證明。<code>simd</code> 仍是實驗 API。</p>
+        </article>
+        <article class="panel"><span class="badge">版本與驗證</span><h3>Go 工具鏈 ≠ module 語言版本</h3>
+          <p>根 module 保留 <code>go 1.22</code>；新版例子獨立放在 <code>examples/go127</code> 並宣告 <code>go 1.27.0</code>。只升級 compiler，不會自動將舊 module 變成新語法。</p>
+          <pre><code>cd examples/go127
+go test -race ./...
+go vet ./...</code></pre>
+          <p><code>go test</code> 在 1.27 預設也執行 stdversion 檢查。歷史教學版號 v1.0.94 與 Go 1.27.4 是不同概念。</p>
+        </article>
+      </div>
+      <p><a class="btn" href="../ReleaseNote/go1.27-release-note.html">Go 1.27 完整報告</a>
+        <a class="btn" href="../ReleaseNote/index.html">Go 1.1–1.27 Release Notes</a>
+        <a class="btn" href="https://github.com/JasonChiu1984/golang-note/blob/main/chapters/12-go-language-changes.md">語法版本表與限制</a>
+        <a class="btn" href="https://github.com/JasonChiu1984/golang-note/tree/main/examples/go127">可執行正反例</a></p>
+      <p class="muted">官方依據：<a href="https://go.dev/doc/devel/release">Release History / 支援政策</a>、<a href="https://go.dev/doc/go1.27">Go 1.27 Release Notes</a>、<a href="https://go.dev/ref/spec">語言規格</a>。版本數字為查核日快照，不宣稱自動即時更新。</p>
+    </section>
+
+    <section id="go-security-2026-11">
+      <div class="section-head"><div><h2>11 月安全公告不能只寫「已更新 Go」</h2><p>2026-11-10 共 12 項官方修補，修補版為 1.27.4／1.26.11。1.27.4 是安全 patch，不是另一套新語法。</p></div></div>
+      <div class="panel"><p>HTTP/1 使用 MaxBytesReader／MaxBytesHandler、body 超限且 handler 並行讀 body／寫 header，可能因 race 造成 panic。其餘 11 項主要涉及惡意套件建置／連結；應更新 CI builder，不能概括為所有伺服器可遠端 RCE，也不能以 CGO_ENABLED=0 宣稱完全免疫。</p>
+      <p>更新開發機 Go 或 go.mod 不會修補部署中的舊 binary。須重建、部署並核對 build info；既有 production CI 的 13 個第三方相依漏洞需另行處理，本次未擅自升級相依。</p>
+      <p><a class="btn" href="https://github.com/JasonChiu1984/golang-note/blob/main/chapters/13-go-security-2026-11.md">12 項 CVE、影響範圍與部署檢查</a> <a class="btn" href="https://groups.google.com/g/golang-announce/c/iY8TY0wWgbM/m/KsU1KfWgAQAJ">官方公告</a></p></div>
+    </section>
     <section id="roadmap">
       <div class="section-head">
         <div>
@@ -1595,8 +1633,8 @@ docker compose down -v</code></pre>
       ["API contract scope coverage", "API", "node scripts/check-openapi-contract.mjs", ["docs/api-contract.md", "scope header", "Docs publishing gate", "OpenAPI"], "API contract scope coverage 固定 docs/api-contract.md 首段適用範圍必須同步 Docs publishing contract gate 與發布面 scope。"],
       ["Production workflow contract gate", "Deploy", "node scripts/check-production-workflow-contract.mjs\ncd production-api-worker && make production-workflow-check", ["standalone workflow", "make ci-contract", "govulncheck", "Compose smoke"], "Production workflow contract gate 固定 production worker 獨立 workflow 的 contract、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup。"],
       ["Syntax flow SVG contract gate", "Deploy", "node scripts/check-syntax-flow-svg-contract.mjs\ncd production-api-worker && make syntax-flow-svg-check", ["25 syntax flows", "standard symbols", "SVG metadata", "blueprint renderer"], "Syntax flow SVG contract gate 固定語法流程圖補充頁的 25 個 flow、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口。"],
-      ["Go ReleaseNote contract gate", "Deploy", "node scripts/check-go-release-notes-contract.mjs\ncd production-api-worker && make go-release-notes-check", ["Go 1.1-1.26", "27 HTML", "official sources", "patch signals"], "Go ReleaseNote contract gate 固定 ReleaseNote 產生器、根目錄與 Pages 同步、必要報告區塊、官方來源與 Go 1.26.5 / Go 1.25.12 patch 訊號。"],
-      ["Go ReleaseNote freshness evidence", "Deploy", "node scripts/check-go-release-notes-freshness-contract.mjs\ncd production-api-worker && make go-release-notes-freshness-check", ["official history", "verified time", "patch baseline", "index evidence"], "Go ReleaseNote freshness evidence 固定 official Go Release History verified 時間、Go 1.26.5 / Go 1.25.12 baseline 與 ReleaseNote index 來源證據。"],
+      ["Go ReleaseNote contract gate", "Deploy", "node scripts/check-go-release-notes-contract.mjs\ncd production-api-worker && make go-release-notes-check", ["Go 1.1-1.27", "28 HTML", "official sources", "patch signals"], "Go ReleaseNote contract gate 固定 ReleaseNote 產生器、根目錄與 Pages 同步、必要報告區塊、官方來源與 Go 1.27.4 / Go 1.26.11 patch 訊號。"],
+      ["Go ReleaseNote freshness evidence", "Deploy", "node scripts/check-go-release-notes-freshness-contract.mjs\ncd production-api-worker && make go-release-notes-freshness-check", ["official history", "verified time", "patch baseline", "index evidence"], "Go ReleaseNote freshness evidence 固定 official Go Release History verified 時間、Go 1.27.4 / Go 1.26.11 baseline 與 ReleaseNote index 來源證據。"],
       ["Release version consistency contract gate", "Deploy", "node scripts/check-release-version-consistency-contract.mjs\ncd production-api-worker && make release-version-consistency-check", ["VERSION", "CHANGELOG", "OpenAPI", "docs index"], "Release version consistency contract gate 固定 VERSION、CHANGELOG、README、API contract、OpenAPI、章節、整合視覺課程、docs/index、Makefile 與 CI 目前版本一致。"],
       ["Release artifact chain contract gate", "Deploy", "node scripts/check-release-artifact-chain-contract.mjs\ncd production-api-worker && make release-artifact-chain-check", ["review report", "update list", "update record", "docs index"], "Release artifact chain contract gate 固定同 timestamp 的審查報告、內容需要更新的部分、更新資料、版本標記與 docs/index 發布同步。"],
       ["Release artifact metadata consistency contract gate", "Deploy", "node scripts/check-release-artifact-metadata-contract.mjs\ncd production-api-worker && make release-artifact-metadata-check", ["timestamp", "version", "topic", "artifact refs"], "Release artifact metadata consistency contract gate 固定三份 release artifacts 的 timestamp、版本、完整日期時間、本輪主題與交叉引用。"],

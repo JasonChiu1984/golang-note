@@ -1,6 +1,6 @@
 # Go 基礎 Cheat Sheet
 
-> 一頁速查，適合剛學 Go 或日常快速回憶用。
+> 一頁速查，適合剛學 Go 或日常快速回憶用。2026-11-13 的最新 Go 1.27.4 語法差異另見 [版本總覽](../chapters/12-go-language-changes.md)，標準庫／工具另見 [進階速查](cheatsheet-advanced.md)。
 
 ---
 

@@ -1,5 +1,7 @@
 # Go 語言知識庫筆記（Go 1.22）
 
+> 本冊原始基準為 Go 1.22，不代表目前最新版本。2026-11-13 查核的 Go 1.27.4 語法更新、標準庫／工具區分與測試，見 [第 12 章](../chapters/12-go-language-changes.md)及 [Go 1.27 ReleaseNote](../ReleaseNote/go1.27-release-note.html)。
+
 > 依據 PROMPT.md 完整展開的學習筆記，採「**繁體中文敘述 + 英文術語對照**」風格。
 > 適合：已具備至少一種程式語言經驗、想完整掌握 Go 1.22 的工程師。
 > 基準版本：**Go 1.22**（含 generics、`min`/`max`/`clear`、range-over-int、loop variable fix）
@@ -65,4 +67,4 @@
 - 基準 Go 版本：1.22（向下相容到 1.18 的 generics）
 - 補充收錄：1.21 的 `min`/`max`/`clear`、`slices`、`maps` 套件；1.22 的 `for i := range N`、loop variable per-iteration
 
-> 如需更新到更新版本（1.23+），請參閱官方 release notes：<https://go.dev/doc/devel/release>。
+> Go 1.23–1.27 的本倉庫增補見 [版本語法索引](../chapters/12-go-language-changes.md)；官方 release history：<https://go.dev/doc/devel/release>。

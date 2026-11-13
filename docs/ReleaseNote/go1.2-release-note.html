@@ -55,8 +55,8 @@
       <h1>Go 1.2 Release Note 專業整理報告</h1>
       <p class="lead">Go 1.2 是 Go 1 穩定期早期的重要版本，重點在語言小幅擴充、runtime 穩定、測試與標準庫修正。 本頁把官方 release note 與 release history 轉成工程導入、風險與驗收清單。</p>
       <div class="meta-row">
-        <span class="meta">報告版本：v2026.05.13</span>
-        <span class="meta">生成時間：2026-05-13 14:35:00 +0800</span>
+        <span class="meta">報告版本：v2026.11.13</span>
+        <span class="meta">生成時間：2026-11-13 12:22:30 +0800</span>
         <span class="meta">Major release：Go 1.2（2013-12-01）</span>
         <span class="meta">官方來源：https://go.dev/doc/go1.2</span>
         <span class="meta">Patch revisions：2</span>
@@ -87,6 +87,7 @@
       <a class="nav-link" href="#troubleshooting">排錯</a>
       <a class="nav-link" href="https://go.dev/doc/go1.2">官方文件</a>
     </nav>
+
     <section id="executive-summary">
       <div class="section-head"><h2>Executive Summary</h2><p>本版本報告定位在工程導入與升級審查，不是官方逐字翻譯。</p></div>
       <div class="report-note">
@@ -156,7 +157,16 @@
 <tr><td>Godoc and vet moved to the go.tools subrepository</td><td>官方重點：GOPATH、go get、com/p/go.tools、cmd/godoc、cmd/vet、Godoc、Both、Also。Both binaries are still included with the distribution, but the source code for the godoc and vet commands has moved to the go.tools subrepository. Also, the core of the godoc pro…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
 <tr><td>Status of gccgo</td><td>官方重點：Status、GCC。We expect the future GCC 4.9 release to include gccgo with full support for Go 1.2. In the current (4.8.2) release of GCC, gccgo implements Go 1.1.2.</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
 <tr><td>Changes to the gc compiler and linker</td><td>官方重點：cgo、Changes、Most、The、See、ARM、R10、Also。Go 1.2 has several semantic changes to the workings of the gc compiler suite. Most users will be unaffected by them. The cgo command now works when C++ is included in the library …</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr>
-<tr><td>Test coverage</td><td>官方重點：go test、go tool、go get、com/p/go.tools、cmd/cover、Test、One、The。One major new feature of go test is that it can now compute and, with help from a new, separately installed &amp;ldquo;go tool cover&amp;rdquo; program, display test coverage results. The…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr></tbody></table></div>
+<tr><td>Test coverage</td><td>官方重點：go test、go tool、go get、com/p/go.tools、cmd/cover、Test、One、The。One major new feature of go test is that it can now compute and, with help from a new, separately installed &amp;ldquo;go tool cover&amp;rdquo; program, display test coverage results. The…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
+<tr><td>The go doc command is deleted</td><td>官方重點：The、Note、All、Updating、For。The &amp;ldquo;go doc&amp;rdquo; command is deleted. Note that the godoc tool itself is not deleted, just the wrapping of it by the go command. All it did was show the documents for a pac…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr>
+<tr><td>Changes to the go command</td><td>官方重點：go get、Changes、The。The go get command now has a -t flag that causes it to download the dependencies of the tests run by the package, not just those of the package itself. By default, as before, depe…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr>
+<tr><td>Performance</td><td>官方重點：compress/bzip2、crypto/des、encoding/json、Performance、There、The、Networking、Windows。There are a number of significant performance improvements in the standard library; here are a few of them. The compress/bzip2 decompresses about 30% faster. The crypto/des packag…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。</td></tr>
+<tr><td>The archive/tar and archive/zip packages</td><td>官方重點：archive/tar、archive/zip、os.FileInfo、The、FileInfo、Name、Updating、Since。The archive/tar and archive/zip packages have had a change to their semantics that may break existing programs. The issue is that they both provided an implementation of the os.Fi…</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>The new encoding package</td><td>官方重點：encoding/xml、encoding/json、encoding/binary、The、There、These、BinaryMarshaler、BinaryUnmarshaler。There is a new package, encoding , that defines a set of standard encoding interfaces that may be used to build custom marshalers and unmarshalers for packages such as encoding/xm…</td><td>以 package API、相容性異動、安全收緊與 regression tests 重寫，避免只列新增名稱。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>The fmt package</td><td>官方重點：fmt.Sprintf、log.Printf、The、Printf、Wherever、After、For、Sprintf。The fmt package&amp;rsquo;s formatted print routines such as Printf now allow the data items to be printed to be accessed in arbitrary order by using an indexing operation in the form…</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>The text/template and html/template packages</td><td>官方重點：text/template、html/template、The、First、Name、Operator、These、Second。The text/template package has a couple of changes in Go 1.2, both of which are also mirrored in the html/template package. First, there are new default functions for comparing bas…</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
+<tr><td>New packages</td><td>官方重點：image/color/palette、New、There、The。There are two new packages. The encoding package is described above . The image/color/palette package provides standard color palettes.</td><td>以 package API、相容性異動、安全收緊與 regression tests 重寫，避免只列新增名稱。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>Minor changes to the library</td><td>官方重點：cgo、archive/zip、compress/bzip2、compress/flate、compress/gzip、compress/zlib、container/heap、container/list。The following list summarizes a number of minor changes to the library, mostly additions. See the relevant package documentation for more information about each change. The archiv…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。</td></tr></tbody></table></div>
     </section>
     <section id="added">
       <div class="section-head"><h2>條列式表格分析：新增功能列表</h2><p>整理 Go 1.2 值得納入教材與專案升級清單的新能力。</p></div>

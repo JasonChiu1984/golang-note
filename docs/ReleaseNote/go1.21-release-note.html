@@ -55,8 +55,8 @@
       <h1>Go 1.21 Release Note 專業整理報告</h1>
       <p class="lead">Go 1.21 是現代標準庫與 toolchain 管理的重要版本，加入 `log/slog`、`slices`、`maps`、`cmp` 與 toolchain switching。 本頁把官方 release note 與 release history 轉成工程導入、風險與驗收清單。</p>
       <div class="meta-row">
-        <span class="meta">報告版本：v2026.05.13</span>
-        <span class="meta">生成時間：2026-05-13 14:35:00 +0800</span>
+        <span class="meta">報告版本：v2026.11.13</span>
+        <span class="meta">生成時間：2026-11-13 12:22:30 +0800</span>
         <span class="meta">Major release：Go 1.21（2023-08-08）</span>
         <span class="meta">官方來源：https://go.dev/doc/go1.21</span>
         <span class="meta">Patch revisions：13</span>
@@ -87,6 +87,7 @@
       <a class="nav-link" href="#troubleshooting">排錯</a>
       <a class="nav-link" href="https://go.dev/doc/go1.21">官方文件</a>
     </nav>
+
     <section id="executive-summary">
       <div class="section-head"><h2>Executive Summary</h2><p>本版本報告定位在工程導入與升級審查，不是官方逐字翻譯。</p></div>
       <div class="report-note">
@@ -157,7 +158,17 @@
 <tr><td>Linker</td><td>官方重點：windows/amd64、Linker、SEH、Windows。On windows/amd64, the linker (with help from the compiler) now emits SEH unwinding data by default, which improves the integration of Go applications with Windows debuggers and ot…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
 <tr><td>New log/slog package</td><td>官方重點：log/slog、New、The、Structured。The new log/slog package provides structured logging with levels. Structured logging emits key-value pairs to enable fast, accurate processing of large amounts of log data. The pa…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
 <tr><td>New testing/slogtest package</td><td>官方重點：testing/slogtest、slog.Handler、New、The、Handler。The new testing/slogtest package can help to validate slog.Handler implementations.</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
-<tr><td>New slices package</td><td>官方重點：New、The。The new slices package provides many common operations on slices, using generic functions that work with slices of any element type.</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr></tbody></table></div>
+<tr><td>New slices package</td><td>官方重點：New、The。The new slices package provides many common operations on slices, using generic functions that work with slices of any element type.</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>New maps package</td><td>官方重點：New、The。The new maps package provides several common operations on maps, using generic functions that work with maps of any key or element type.</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>New cmp package</td><td>官方重點：New、The、Ordered、Less、Compare。The new cmp package defines the type constraint Ordered and two new generic functions Less and Compare that are useful with ordered types .</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>Minor changes to the library</td><td>官方重點：GOARCH、GOTRACEBACK、GODEBUG、GOEXPERIMENT、GOGC、GOMEMLIMIT、cgo、go test。As always, there are various minor changes and updates to the library, made with the Go 1 promise of compatibility in mind. There are also various performance improvements, not en…</td><td>以語言語意、編譯相容性與 API 設計規則重寫，導入前要補 compile tests 與範例。</td><td>補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。</td></tr>
+<tr><td>Darwin</td><td>官方重點：Darwin、Catalina。As announced in the Go 1.20 release notes, Go 1.21 requires macOS 10.15 Catalina or later; support for previous versions has been discontinued.</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>Windows</td><td>官方重點：Windows、Server。As announced in the Go 1.20 release notes, Go 1.21 requires at least Windows 10 or Windows Server 2016; support for previous versions has been discontinued.</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>ARM</td><td>官方重點：GOARCH、GOARM、ARM、When、Previously、That、What。When building the Go distribution with GOARCH=arm when not running on an ARM system (that is, when building a cross-compiler to ARM), the default value for the GOARM environment v…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
+<tr><td>WebAssembly</td><td>官方重點：WebAssembly、The、JavaScript。The new go:wasmimport directive can now be used in Go programs to import functions from the WebAssembly host. The Go scheduler now interacts much more efficiently with the JavaScr…</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>WebAssembly System Interface</td><td>官方重點：GOOS、GOARCH、WebAssembly、System、Interface、WASI、Preview。Go 1.21 adds an experimental port to the WebAssembly System Interface (WASI) , Preview 1 ( GOOS=wasip1 , GOARCH=wasm ). As a result of the addition of the new GOOS value &amp;ldquo; w…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>ppc64/ppc64le</td><td>官方重點：GOPPC64、GOOS、GOARCH、Linux、Power10、AIX、When、Position。On Linux, GOPPC64=power10 now generates PC-relative instructions, prefixed instructions, and other new Power10 instructions. On AIX, GOPPC64=power10 generates Power10 instructions…</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>loong64</td><td>官方重點：linux/loong64、The。The linux/loong64 port now supports -buildmode=c-archive , -buildmode=c-shared and -buildmode=pie .</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr></tbody></table></div>
     </section>
     <section id="added">
       <div class="section-head"><h2>條列式表格分析：新增功能列表</h2><p>整理 Go 1.21 值得納入教材與專案升級清單的新能力。</p></div>

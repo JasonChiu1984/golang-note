@@ -113,11 +113,11 @@ info:
     25 syntax flows, standard flowchart symbols, SVG metadata, blueprint
     renderer, Makefile, and CI static gates aligned.
     Go ReleaseNote contract gate keeps scripts/generate-go-release-notes.mjs,
-    ReleaseNote/, docs/ReleaseNote/, Go 1.1-1.26 report sections,
-    Go 1.26.5 and Go 1.25.12 patch signals, official source links,
+    ReleaseNote/, docs/ReleaseNote/, Go 1.1-1.27 report sections,
+    Go 1.27.4 and Go 1.26.11 patch signals, official source links,
     Makefile, and CI static gates aligned through check-go-release-notes-contract.mjs.
     Go ReleaseNote freshness evidence keeps official Go Release History verified
-    time, Go 1.26.5 / Go 1.25.12 baseline evidence, ReleaseNote index source
+    time, Go 1.27.4 / Go 1.26.11 baseline evidence, ReleaseNote index source
     evidence, Makefile, and CI static gates aligned through
     check-go-release-notes-freshness-contract.mjs.
     Release version consistency contract gate keeps VERSION, CHANGELOG.md,

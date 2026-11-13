@@ -55,8 +55,8 @@
       <h1>Go 1.4 Release Note 專業整理報告</h1>
       <p class="lead">Go 1.4 是工具與套件邊界的重要版本，開始強化大型專案的可維護結構。 本頁把官方 release note 與 release history 轉成工程導入、風險與驗收清單。</p>
       <div class="meta-row">
-        <span class="meta">報告版本：v2026.05.13</span>
-        <span class="meta">生成時間：2026-05-13 14:35:00 +0800</span>
+        <span class="meta">報告版本：v2026.11.13</span>
+        <span class="meta">生成時間：2026-11-13 12:22:30 +0800</span>
         <span class="meta">Major release：Go 1.4（2014-12-10）</span>
         <span class="meta">官方來源：https://go.dev/doc/go1.4</span>
         <span class="meta">Patch revisions：3</span>
@@ -87,6 +87,7 @@
       <a class="nav-link" href="#troubleshooting">排錯</a>
       <a class="nav-link" href="https://go.dev/doc/go1.4">官方文件</a>
     </nav>
+
     <section id="executive-summary">
       <div class="section-head"><h2>Executive Summary</h2><p>本版本報告定位在工程導入與升級審查，不是官方逐字翻譯。</p></div>
       <div class="report-note">
@@ -158,7 +159,18 @@
 <tr><td>Assembly</td><td>官方重點：cmd/5a、cmd/6a、cmd/8a、Assembly、The、First、TEXT、For。The language accepted by the assemblers cmd/5a , cmd/6a and cmd/8a has had several changes, mostly to make it easier to deliver type information to the runtime. First, the textfla…</td><td>以語言語意、編譯相容性與 API 設計規則重寫，導入前要補 compile tests 與範例。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
 <tr><td>Status of gccgo</td><td>官方重點：Status、The、GCC。The release schedules for the GCC and Go projects do not coincide. GCC release 4.9 contains the Go 1.2 version of gccgo. The next release, GCC 5, will likely have the Go 1.4 versi…</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
 <tr><td>Internal packages</td><td>官方重點：a/b/c/internal/d/e/f、a/b/c、a/b/g、Internal、Sometimes、The、When、For。Go&amp;rsquo;s package system makes it easy to structure programs into components with clean boundaries, but there are only two forms of access: local (unexported) and global (exporte…</td><td>以語言語意、編譯相容性與 API 設計規則重寫，導入前要補 compile tests 與範例。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr>
-<tr><td>Canonical import paths</td><td>官方重點：go get、com/rsc/pdf、io/pdf、Canonical、Code、One、That、The。Code often lives in repositories hosted by public services such as github.com , meaning that the import paths for packages begin with the name of the hosting service, github.com/r…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr></tbody></table></div>
+<tr><td>Canonical import paths</td><td>官方重點：go get、com/rsc/pdf、io/pdf、Canonical、Code、One、That、The。Code often lives in repositories hosted by public services such as github.com , meaning that the import paths for packages begin with the name of the hosting service, github.com/r…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr>
+<tr><td>Import paths for the subrepositories</td><td>官方重點：com/p/go.tools、com/p/go、org/x、org/x/tools、Import、The、June、Updating。The Go project subrepositories ( code.google.com/p/go.tools and so on) are now available under custom import paths replacing code.google.com/p/go. with golang.org/x/ , as in golan…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
+<tr><td>The go generate subcommand</td><td>官方重點：go generate、org/x/tools、The、For、String。The go command has a new subcommand, go generate , to automate the running of tools to generate source code before compilation. For example, it can be used to run the yacc compile…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr>
+<tr><td>Change to file name handling</td><td>官方重點：go/build、Change、Build、Compilation、For、ARM、Before、Updating。Build constraints, also known as build tags, control compilation by including or excluding files (see the documentation /go/build ). Compilation can also be controlled by the name…</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>Other changes to the go command</td><td>官方重點：cgo、go test、go build、cmd/go、Other、There、Unless、They。There were a number of minor changes to the cmd/go command worth noting. Unless cgo is being used to build the package, the go command now refuses to compile C source files, since…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr>
+<tr><td>Changes to package source layout</td><td>官方重點：src/pkg、src/pkg/fmt、src/fmt、Changes、Updating、Tools、All。In the main Go source repository, the source code for the packages was kept in the directory src/pkg , which made sense but differed from other repositories, including the Go subr…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>SWIG</td><td>官方重點：SWIG、Due。Due to runtime changes in this release, Go 1.4 requires SWIG 3.0.3.</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
+<tr><td>Miscellany</td><td>官方重點：Miscellany、The、IDEs、Maintaining、Instead。The standard repository&amp;rsquo;s top-level misc directory used to contain Go support for editors and IDEs: plugins, initialization scripts and so on. Maintaining these was becoming…</td><td>以 package API、相容性異動、安全收緊與 regression tests 重寫，避免只列新增名稱。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>Performance</td><td>官方重點：Performance、Most、There、The、Library。Most programs will run about the same speed or slightly faster in 1.4 than in 1.3; some will be slightly slower. There are many changes, making it hard to be precise about what to…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
+<tr><td>New packages</td><td>官方重點：New、There。There are no new packages in this release.</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>Major changes to the library</td><td>官方重點：org/x/sys、bufio.Scanner、Major、Scanner、The、EOF、Previously、Updating。bufio.Scanner The Scanner type in the bufio package has had a bug fixed that may require changes to custom split functions . The bug made it impossible to generate an empty token …</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>Minor changes to the library</td><td>官方重點：archive/zip、compress/flate、compress/gzip、compress/zlib、crypto/ecdsa、crypto/rsa、crypto/tls、database/sql。The following list summarizes a number of minor changes to the library, mostly additions. See the relevant package documentation for more information about each change. The archiv…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。</td></tr></tbody></table></div>
     </section>
     <section id="added">
       <div class="section-head"><h2>條列式表格分析：新增功能列表</h2><p>整理 Go 1.4 值得納入教材與專案升級清單的新能力。</p></div>

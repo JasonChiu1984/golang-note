@@ -4,14 +4,14 @@ import path from "node:path";
 
 const ROOT = process.cwd();
 const OUT_DIR = path.join(ROOT, "ReleaseNote");
-const GENERATED_AT = "2026-05-13 14:35:00 +0800";
+const GENERATED_AT = "2026-11-13 12:22:30 +0800";
 const OFFICIAL_HISTORY = "https://go.dev/doc/devel/release";
 
 const phases = [
   { name: "早期基礎期", range: [1, 5], summary: "Go 1 相容承諾後，語言、runtime、工具鏈與標準庫基礎能力逐步成熟。" },
   { name: "工具鏈成熟期", range: [6, 10], summary: "HTTP/2、context、SSA、build/test cache 與標準庫可維運性提升。" },
   { name: "Module/泛型期", range: [11, 18], summary: "module、errors wrapping、embed、workspaces、generics 與 fuzzing 成為主軸。" },
-  { name: "Modern Toolchain and Standard Library Governance Era", range: [19, 26], summary: "runtime governance、PGO、toolchain management、standard-library modernization、testing 與 supply-chain governance 成為主軸。" },
+  { name: "Modern Toolchain and Standard Library Governance Era", range: [19, 27], summary: "runtime governance、PGO、toolchain management、standard-library modernization、testing 與 supply-chain governance 成為主軸。" },
 ];
 
 const roadmapStages = [
@@ -41,7 +41,7 @@ const roadmapStages = [
   },
   {
     phase: "Modern Toolchain and Standard Library Governance Era",
-    versions: [19, 20, 21, 22, 23, 24, 25, 26],
+    versions: [19, 20, 21, 22, 23, 24, 25, 26, 27],
     years: "2022 - 2026",
     title: "現代工具鏈、Runtime 與標準庫治理",
     summary: "GOMEMLIMIT、PGO、toolchain management、standard-library modernization、testing/synctest、modernizers 與 Green Tea GC 形成升級治理路線。",
@@ -50,13 +50,13 @@ const roadmapStages = [
 ];
 
 const supportStatus = {
-  asOf: "2026-07-12",
-  verifiedAt: "2026-07-12 06:03:15 CST +0800",
-  latestPatch: "Go 1.26.5",
-  latestPatchTokens: ["go1.26.5", "go1.25.12"],
-  sourceEvidence: "official Go Release History verified; Go ReleaseNote freshness evidence keeps the Go 1.26.5 / Go 1.25.12 baseline current without inventing a new patch release.",
-  supported: [25, 26],
-  unsupportedRange: [1, 24],
+  asOf: "2026-11-13",
+  verifiedAt: "2026-11-13 12:22:30 CST +0800",
+  latestPatch: "Go 1.27.4",
+  latestPatchTokens: ["go1.27.4", "go1.26.11"],
+  sourceEvidence: "official Go Release History verified; Go ReleaseNote freshness evidence keeps the Go 1.27.4 / Go 1.26.11 baseline, both released 2026-11-10; Go 1.25 is now unsupported.",
+  supported: [26, 27],
+  unsupportedRange: [1, 25],
   rule: "官方 Release Policy：每個 major release 支援到已有兩個更新 major release 為止。",
 };
 
@@ -739,13 +739,14 @@ const releaseData = {
     positioning: "Go 1.26 延續現代化工具鏈與 runtime 路線，重點在 modernizer、GC、測試 artifact 與語言小幅擴充。",
     value: "適合建立 automated modernization、GC metrics、test artifact collection 與 toolchain 升級治理。",
     risk: "modernizer 自動修改需 code review；GC/runtime 指標需重新校準。",
-    focus: "`new(expression)`、modernizers、Green Tea GC、`testing.T.Attr` / `ArtifactDir`。",
+    focus: "`new(expression)`、泛型約束自我參照、modernizers、Green Tea GC、`ArtifactDir`。",
     added: [
       ["Language", "`new(expression)`", "語言層小幅擴充，改善部分初始化表達能力。", "只在能提升可讀性時使用。", "compile tests。"],
+      ["Language", "self-referential generic constraints", "泛型型別可在自身型別參數清單中引用自己，例如 type Adder[A Adder[A]] interface { Add(A) A }。", "用於約束輸入與輸出同型別的泛型介面。", "獨立 Go 1.27 範例 module 的語法測試。"],
       ["Tools", "Tools", "補 Go 1.26 官方 `Tools` 段落，涵蓋 go command、go fix/modernizers、toolchain 與測試 artifact workflow。", "所有自動化改寫必須在 branch 上 review，不直接套到 main。", "`go test ./...`、diff review、toolchain smoke test。"],
       ["Go command", "modernizers", "工具可協助把舊程式碼現代化。", "只在 reviewable branch 執行。", "檢查 diff 與 tests。"],
       ["Runtime", "Green Tea GC", "GC 實作更新，影響 runtime metrics 與效能觀察。", "重跑 latency / memory benchmark。", "pprof + runtime metrics。"],
-      ["Testing", "`T.Attr` / `ArtifactDir`", "測試可標註 metadata 並保存 artifacts。", "適合 CI evidence collection。", "檢查 artifact 產物。"],
+      ["Testing", "`ArtifactDir`（`T.Attr` 已於 Go 1.25 提供）", "Go 1.26 新增 artifact 目錄；不要將既有 Attr 當作本版新 API。", "適合 CI evidence collection。", "檢查 artifact 產物。"],
       ["SIMD", "New experimental simd/archsimd package", "補 Go 1.26 官方 `New experimental simd/archsimd package` 段落，標記 experimental SIMD / architecture-specific acceleration。", "僅在 hot path 且有 fallback 時試用，避免綁死平台。", "CPU feature matrix、fallback tests、benchmark。"],
       ["Runtime", "New experimental runtime/secret package", "補 Go 1.26 官方 `New experimental runtime/secret package` 段落，標記 secret handling experimental API。", "高敏感資料需先定義 threat model，不以 experimental API 作唯一防護。", "secret lifecycle tests 與 security review。"],
       ["Standard library", "Minor changes to the library", "補 Go 1.26 官方 `Minor changes to the library` 段落，追蹤各 package 小改動。", "升級時掃描受影響 package、wrapper 與 golden tests。", "package-level regression tests。"],
@@ -763,9 +764,46 @@ const releaseData = {
       ["go build", "bootstrap Go 1.24.6+", "要求", "自建 toolchain 需更新。", "builder smoke test。"],
     ],
   },
+  27: {
+    phase: "Modern Toolchain and Standard Library Governance Era",
+    positioning: "Go 1.27 同時擴充語言、穩定 JSON v2，並更新工具鏈、runtime 與平台要求；不能把函式庫 API 誤稱為新語法。",
+    value: "先掌握三項語言變更，再分開評估工具與標準庫相容性。教材最新 patch 為 Go 1.27.4，根範例 module 仍保留 Go 1.22 相容層。",
+    risk: "介面方法仍不可宣告型別參數；JSON 的錯誤文字、timer 舊模式、macOS 最低版本與已移除 GODEBUG 都需檢查。",
+    focus: "泛型方法、struct literal field selector、函式型別推論擴大；JSON v2/jsontext、uuid、stdversion 與 goroutineleak。",
+    added: [
+      ["Language / 語法", "generic methods", "具體型別的方法可宣告自己的型別參數。介面方法不能宣告型別參數，泛型方法也不能用來實作介面方法。", "把相關泛型操作放進型別的方法命名空間。", "以 examples/go127 中的泛型方法測試驗證；介面限制另作 compile-negative 測試。"],
+      ["Language / 語法", "struct literal field selectors", "struct literal 可直接以 promoted 欄位名稱作 key，例如 Outer{Value: 7}；不是 Outer{Inner.Value: 7} 這種 dotted key。", "selector 必須無歧義、不可經過 embedded pointer，且不得重疊初始化同一欄位。", "以 examples/go127 中嵌入欄位 literal 測試驗證。"],
+      ["Language / 型別推論", "generalized function type inference", "泛型函式指定給相符函式型別變數、或轉換為相符函式型別時，可在更多上下文由目標型別推論。", "不是任意省略所有型別參數；無足夠型別資訊時仍需明寫。", "以 examples/go127 中函式型別轉換測試驗證。"],
+      ["Standard Library / JSON", "encoding/json/v2 / encoding/json/jsontext", "兩個 package 正式可用；v2 預設拒絕無效 UTF-8 與重複 object key。既有 encoding/json 由 v2 實作但保留 v1 語意，錯誤文字可能不同。", "以 payload golden tests 評估，不盲目替換舊 parser。", "驗證 duplicate key、UTF-8、round-trip 與錯誤判斷。"],
+      ["Standard Library", "uuid / crypto/mldsa", "新增 UUID 產生與解析，以及 FIPS 204 ML-DSA 簽章 package；它們是標準庫 API，不是語法。", "依協議選用並驗證資料格式及互通性。", "參考官方 package 文件與可執行範例。"],
+      ["Runtime", "goroutineleak profile / synchronous timer channels", "goroutineleak 正式提供；time 的 channel 一律同步，asynctimerchan 移除。Leak profile 不能找出所有永久阻塞情況。", "移除依賴 timer 緩衝區的假設，保留生命週期測試。", "race、取消、timeout、goroutine 退出測試。"],
+      ["Standard Library", "testing/synctest.Sleep / httptest.NewTestServer", "Sleep 結合虛擬時間休眠與 Wait；NewTestServer 提供適用 synctest 的記憶體內網路測試服務。", "與真實網路 integration tests 分開。", "deterministic concurrency tests。"],
+      ["Experimental", "simd / simd/archsimd", "仍需 GOEXPERIMENT=simd；portable simd 與架構相依 archsimd 不等同穩定 API。", "保留 fallback；不列入一般語法相容承諾。", "各架構 benchmark 與功能測試。"],
+      ["Ports", "Darwin / PowerPC", "macOS 最低為 13；Linux ppc64 改 ELFv2，cgo/PIE/external linking 有相應 ABI 要求。", "更新 runner、SDK、libc 與交叉編譯清單。", "指定 OS/ARCH smoke tests。"],
+    ],
+    compat: [
+      ["Language", "interface methods", "限制保留", "泛型方法不代表介面可有泛型方法。", "不要把不合法介面宣告寫成可執行範例。"],
+      ["JSON", "v1/v2 migration", "契約差異", "v1 繼續受支援；v2 預設值、tag 與 experiment 期間 API 有變動。", "比對 JSON 契約，不依賴完整錯誤字串。"],
+      ["Runtime", "asynctimerchan removed", "舊模式移除", "timer channel 一律同步；宣告舊 GODEBUG 值可能無法 build。", "檢查 go.mod godebug、//go:debug、部署環境。"],
+      ["Ports", "macOS 13+", "最低平台更新", "macOS 12 及更早版本不再受支援。", "升級 runner 與部署 OS。"],
+    ],
+    commands: [
+      ["go test", "stdversion", "預設 vet check", "檢查標準庫 symbol 是否高於檔案有效 Go 版本；工具鏈更新不代表 go.mod 已更新。", "在 nested module 執行 go test ./...。"],
+      ["go doc", "package@version / -ex", "新增", "可查指定 package 版本與可執行範例。", "go doc -ex bytes"],
+      ["go fix", "atomictypes / embedlit / slicesbackward / unsafefuncs", "新增 modernizer", "waitgroup 改名 waitgroupgo，fmtappendf 移除；不是語言語法。", "在分支 review diff 後跑測試。"],
+      ["go mod tidy", "合併 require blocks", "go 1.27+ module", "整理為至多直接及間接依賴兩個 require block。", "檢查 go.mod/go.sum diff，避免升級無關 module。"],
+      ["go tool trace", "-http localhost", "安全預設", "僅指定 port 時改為監聽 localhost。", "需要外部存取時明確配置地址與存取保護。"],
+    ],
+  },
 };
 
+// Optional offline snapshots must be complete official HTML pages; missing files fail closed.
+// GO_RELEASE_SOURCE_DIR contains release-history.html and go1.N.html (N=1..27).
 function fetchText(url) {
+  if (process.env.GO_RELEASE_SOURCE_DIR) {
+    const filename = url === OFFICIAL_HISTORY ? "release-history.html" : `${new URL(url).pathname.split("/").at(-1)}.html`;
+    return Promise.resolve(fs.readFileSync(path.join(process.env.GO_RELEASE_SOURCE_DIR, filename), "utf8"));
+  }
   return new Promise((resolve, reject) => {
     https.get(url, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
@@ -813,7 +851,7 @@ function parseReleaseHistory(html) {
   const matches = [...html.matchAll(h2Regex)];
   for (let i = 0; i < matches.length; i++) {
     const minor = Number(matches[i][1]);
-    if (minor < 1 || minor > 26) continue;
+    if (minor < 1 || minor > 27) continue;
     const start = matches[i].index + matches[i][0].length;
     const end = i + 1 < matches.length ? matches[i + 1].index : html.length;
     const heading = stripTags(matches[i][2]);
@@ -837,6 +875,7 @@ function parseReleaseHistory(html) {
 }
 
 function parseOfficialSections(html) {
+  html = html.split("<main")[1]?.split("</main>")[0] ?? html;
   const matches = [...html.matchAll(/<h([23])[^>]*>([\s\S]*?)<\/h\1>/g)];
   const sections = [];
   for (let i = 0; i < matches.length; i++) {
@@ -919,8 +958,7 @@ function verificationLens(heading, text) {
 
 function officialDetailRows(minor, sections) {
   const selected = sections
-    .filter((section) => section.heading && section.text !== undefined)
-    .slice(0, 12);
+    .filter((section) => section.heading && section.text !== undefined);
   const source = selected.length ? selected : [{ heading: `Go 1.${minor} official release note`, text: "" }];
   return rows(source.map((section) => [
     section.heading,
@@ -974,6 +1012,18 @@ function impactRows(data, release) {
   ]);
 }
 
+function novemberSecurityHtml() {
+  return `<section id="security-2026-11">
+    <h2>2026-11-10 安全修補：12 項公告</h2>
+    <p>Go 1.27.4／1.26.11 修補 CVE-2026-97033–97043 與 CVE-2026-97054。這是 patch 安全修補，不是新增語法。</p>
+    <p>官方漏洞範圍：Go &lt;1.26.11，以及 Go &gt;=1.27.0-0 且 &lt;1.27.4；第一段未列更早引入版本。只列支援分支時，影響 1.26.0–1.26.10、1.27.0–1.27.3。</p>
+    <ul><li><strong>HTTP/1 拒絕服務</strong>：MaxBytesReader／MaxBytesHandler 的 body 超限，且 handler 並行讀 body／寫 header 時可能 race／panic。升級後須重建並部署程式。</li>
+    <li><strong>建置供應鏈</strong>：其餘 11 項涉及惡意套件、cgo／.syso／linker input 或 compiler directives。先修補本機與 CI builder；不能概括為所有 Go 服務都能被遠端 RCE，也不能因 CGO_ENABLED=0 就一概判定安全。</li></ul>
+    <p>這 12 項與本倉庫原 CI 回報的 13 個第三方相依漏洞是不同清單。本次只更新筆記，未升級 production 相依或部署環境。</p>
+    <p><a href="https://github.com/JasonChiu1984/golang-note/blob/main/chapters/13-go-security-2026-11.md">逐項 CVE／官方來源／部署前檢查</a> · <a href="https://groups.google.com/g/golang-announce/c/iY8TY0wWgbM/m/KsU1KfWgAQAJ">官方安全公告</a> · <a href="https://go.dev/doc/devel/release">官方 Release History</a></p>
+  </section>`;
+}
+
 function pageHtml(minor, release, officialSections) {
   const data = releaseData[minor];
   const phase = phaseFor(minor);
@@ -981,6 +1031,9 @@ function pageHtml(minor, release, officialSections) {
   const officialUrl = `https://go.dev/doc/go1.${minor}`;
   const filename = `go1.${minor}-release-note.html`;
   const headings = officialSections.map((section) => section.heading);
+  const syntaxExamples = minor === 27
+    ? '<p class="lead">語法驗證：<a href="https://github.com/JasonChiu1984/golang-note/tree/main/examples/go127">Go 1.27 可執行範例與正反測試</a>；在該獨立 module 執行 <code>go test -race ./...</code> 與 <code>go vet ./...</code>。不修改 production module 相依。</p>'
+    : "";
   const performanceNav = data.performance?.length
     ? '      <a class="nav-link" href="#performance-comparison">效能比較</a>\n'
     : "\n";
@@ -1055,10 +1108,10 @@ function pageHtml(minor, release, officialSections) {
     <div class="hero">
       <div class="crumbs"><a href="../docs/index.html">主頁教程</a><span>/</span><a href="index.html">ReleaseNote Index</a><span>/</span><span>Go 1.${minor}</span></div>
       <p class="report-kicker">Professional Technical Review Report</p>
-      <h1>${title}</h1>
+      <h1>${title}</h1>${syntaxExamples ? `\n    ${syntaxExamples}` : ""}
       <p class="lead">${esc(data.positioning)} 本頁把官方 release note 與 release history 轉成工程導入、風險與驗收清單。</p>
       <div class="meta-row">
-        <span class="meta">報告版本：v2026.05.13</span>
+        <span class="meta">報告版本：v2026.11.13</span>
         <span class="meta">生成時間：${GENERATED_AT}</span>
         <span class="meta">Major release：Go 1.${minor}（${esc(release.date)}）</span>
         <span class="meta">官方來源：${officialUrl}</span>
@@ -1090,6 +1143,7 @@ ${officialDetailNav}\
       <a class="nav-link" href="#troubleshooting">排錯</a>
       <a class="nav-link" href="${officialUrl}">官方文件</a>
     </nav>
+${minor >= 26 ? novemberSecurityHtml() : ""}
     <section id="executive-summary">
       <div class="section-head"><h2>Executive Summary</h2><p>本版本報告定位在工程導入與升級審查，不是官方逐字翻譯。</p></div>
       <div class="report-note">
@@ -1195,7 +1249,7 @@ function roadmapHtml() {
 }
 
 function supportStatusHtml() {
-  const versions = Array.from({ length: 26 }, (_, i) => i + 1);
+  const versions = Array.from({ length: 27 }, (_, i) => i + 1);
   const supported = new Set(supportStatus.supported);
   const x0 = 58;
   const y = 222;
@@ -1229,22 +1283,22 @@ function supportStatusHtml() {
       <p class="section-note">依官方 Go Release Policy 與 Release History 判定；狀態日期：${supportStatus.asOf}，完整查核時間：${supportStatus.verifiedAt}，最新 patch：${supportStatus.latestPatch}。Go ReleaseNote freshness evidence：${supportStatus.sourceEvidence}</p>
       <div class="support-svg-wrap">
         <svg id="support-status-chart" class="support-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 380" role="img" aria-labelledby="support-chart-title support-chart-desc">
-          <title id="support-chart-title">Go 1.1 到 Go 1.26 支援狀態圖表</title>
-          <desc id="support-chart-desc">Go 1.25 和 Go 1.26 為目前支援版本；Go 1.1 到 Go 1.24 為不支援版本。</desc>
+          <title id="support-chart-title">Go 1.1 到 Go 1.27 支援狀態圖表</title>
+          <desc id="support-chart-desc">Go 1.26 和 Go 1.27 為目前支援版本；Go 1.1 到 Go 1.25 為不支援版本。</desc>
           <g id="legend">
             <rect x="40" y="26" width="18" height="18" rx="4" fill="#16a34a" />
-            <text x="66" y="40" font-size="14" font-weight="800" fill="#172033">目前支援：Go 1.25 - Go 1.26</text>
+            <text x="66" y="40" font-size="14" font-weight="800" fill="#172033">目前支援：Go 1.26 - Go 1.27</text>
             <rect x="332" y="26" width="18" height="18" rx="4" fill="#fef2f2" stroke="#ef4444" />
-            <text x="358" y="40" font-size="14" font-weight="800" fill="#991b1b">不支援：Go 1.1 - Go 1.24</text>
+            <text x="358" y="40" font-size="14" font-weight="800" fill="#991b1b">不支援：Go 1.1 - Go 1.25</text>
           </g>
           <g id="summary">
             <rect x="40" y="70" width="340" height="86" rx="8" fill="#ecfdf5" stroke="#bbf7d0" />
             <text x="62" y="100" font-size="20" font-weight="900" fill="#0f766e">目前支援版本</text>
-            <text x="62" y="128" font-size="16" fill="#172033">Go 1.25、Go 1.26</text>
+            <text x="62" y="128" font-size="16" fill="#172033">Go 1.26、Go 1.27</text>
             <text x="62" y="148" font-size="12" fill="#526173">仍接收必要的 minor revision 與安全修正</text>
             <rect x="410" y="70" width="340" height="86" rx="8" fill="#fef2f2" stroke="#ef4444" />
             <text x="432" y="100" font-size="20" font-weight="900" fill="#991b1b">不支援版本</text>
-            <text x="432" y="128" font-size="16" fill="#172033">Go 1.1 - Go 1.24</text>
+            <text x="432" y="128" font-size="16" fill="#172033">Go 1.1 - Go 1.25</text>
             <text x="432" y="148" font-size="12" fill="#526173">升級評估時應規劃跳版與相容性測試</text>
             <rect x="780" y="70" width="380" height="86" rx="8" fill="#eff6ff" stroke="#bfdbfe" />
             <text x="802" y="100" font-size="20" font-weight="900" fill="#1d4ed8">判定規則</text>
@@ -1264,7 +1318,7 @@ function supportStatusHtml() {
           </g>
           <g id="risk-note">
             <rect x="40" y="326" width="1120" height="36" rx="8" fill="#fff7ed" stroke="#fed7aa" />
-            <text x="60" y="349" font-size="14" fill="#9a3412">工程建議：生產專案若仍在 Go 1.24 或更早版本，應優先規劃升級至 Go 1.25/1.26，並用 build、test、vet、benchmark 與 rollback 計畫收斂風險。</text>
+            <text x="60" y="349" font-size="14" fill="#9a3412">工程建議：生產專案若仍在 Go 1.25 或更早版本，應優先規劃升級至 Go 1.26/1.27，並用 build、test、vet、benchmark 與 rollback 計畫收斂風險。</text>
           </g>
         </svg>
       </div>
@@ -1273,7 +1327,7 @@ function supportStatusHtml() {
 }
 
 function indexHtml(releases) {
-  const versions = Array.from({ length: 26 }, (_, i) => i + 1);
+  const versions = Array.from({ length: 27 }, (_, i) => i + 1);
   const cards = versions.map((minor) => {
     const data = releaseData[minor];
     const release = releases.get(minor) ?? { date: "官方未列日期", patches: [] };
@@ -1298,7 +1352,7 @@ function indexHtml(releases) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Go 1.1-1.26 Release Note 專業整理報告索引 | Golang 學習筆記</title>
+  <title>Go 1.1-1.27 Release Note 專業整理報告索引 | Golang 學習筆記</title>
   <style>
     :root{--bg:#f5f7fa;--paper:#fff;--ink:#172033;--muted:#5f6d7e;--line:#d7e0ea;--head:#eaf0f6;--accent:#0f766e;--blue:#1d4ed8}
     *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.62}
@@ -1327,18 +1381,19 @@ function indexHtml(releases) {
 </head>
 <body>
   <header>
-    <h1>Go 1.1-1.26 Release Note 專業整理報告索引</h1>
-    <p class="lead">依官方 Go Release History 與各版本 Release Notes 建立 26 份 major-version 獨立專業整理報告。最新 major 版本為 Go 1.26，最新 patch 狀態記錄至 Go 1.26.5（2026-07-07）；Go ReleaseNote freshness evidence 已於 ${supportStatus.verifiedAt} 重新核對官方來源，確認 baseline 維持 ${supportStatus.latestPatchTokens.join(" / ")}。</p>
-    <div class="meta-row"><span class="meta">範圍：Go 1.1 - Go 1.26</span><span class="meta">報告數：26</span><span class="meta">生成時間：${GENERATED_AT}</span><span class="meta">來源：go.dev 官方文件</span><span class="meta">official Go Release History verified：${supportStatus.verifiedAt}</span></div>
+    <h1>Go 1.1-1.27 Release Note 專業整理報告索引</h1>
+    <p class="lead">依官方 Go Release History 與各版本 Release Notes 建立 27 份 major-version 獨立專業整理報告。最新 major 版本為 Go 1.27，最新 patch 狀態記錄至 Go 1.27.4（2026-11-10）；Go ReleaseNote freshness evidence 已於 ${supportStatus.verifiedAt} 重新核對官方來源，確認目前支援線為 ${supportStatus.latestPatchTokens.join(" / ")}。</p>
+    <div class="meta-row"><span class="meta">範圍：Go 1.1 - Go 1.27</span><span class="meta">報告數：27</span><span class="meta">生成時間：${GENERATED_AT}</span><span class="meta">來源：go.dev 官方文件</span><span class="meta">official Go Release History verified：${supportStatus.verifiedAt}</span></div>
   </header>
   <main>
     <nav class="nav" aria-label="Release roadmap and versions">${nav}</nav>
     <section id="roadmap">
       <h2>Roadmap 圖表</h2>
-      <p class="section-note">以 Go 1.1 到 Go 1.26 的 release note 主題分期呈現，協助判斷教材、專案升級與 CI/CD 驗證的演進路線。</p>
+      <p class="section-note">以 Go 1.1 到 Go 1.27 的 release note 主題分期呈現，協助判斷教材、專案升級與 CI/CD 驗證的演進路線。</p>
       <div class="roadmap"><div class="roadmap-track">${roadmapHtml()}</div></div>
     </section>
     ${supportStatusHtml()}
+    ${novemberSecurityHtml()}
     <section>
       <h2>版本功能矩陣</h2>
       <div class="table-wrap"><table><thead><tr><th>版本</th><th>日期</th><th>階段</th><th>導入重點</th><th>本地頁</th></tr></thead><tbody>${matrix}</tbody></table></div>
@@ -1361,16 +1416,21 @@ async function main() {
   fs.mkdirSync(OUT_DIR, { recursive: true });
   const historyHtml = await fetchText(OFFICIAL_HISTORY);
   const releases = parseReleaseHistory(historyHtml);
+  for (const token of supportStatus.latestPatchTokens) {
+    const minor = Number(token.split(".")[1]);
+    if (!releases.get(minor)?.patches.some((patch) => patch.version === token)) {
+      throw new Error(`Official history snapshot is missing verified patch ${token}`);
+    }
+  }
   const officialSectionMap = new Map();
-  const minors = Array.from({ length: 26 }, (_, i) => i + 1);
+  const minors = Array.from({ length: 27 }, (_, i) => i + 1);
   for (const minor of minors) {
     const url = `https://go.dev/doc/go1.${minor}`;
-    try {
-      const html = await fetchText(url);
-      officialSectionMap.set(minor, parseOfficialSections(html));
-    } catch {
-      officialSectionMap.set(minor, parseOfficialSections("<h2>Introduction</h2><p>官方文件暫時無法讀取，保留本地結構化專業報告。</p><h2>Major changes</h2><p>依本地 releaseData 與 Release History 整理。</p><h2>Tools</h2><p>工具鏈與命令列變更以官方 release note 為準。</p><h2>Standard library</h2><p>標準庫變更以官方 release note 為準。</p>"));
+    const html = await fetchText(url);
+    if (!html.includes(`Go 1.${minor}`) || !/<h2[ >]/.test(html)) {
+      throw new Error(`Incomplete official release note: ${url}`);
     }
+    officialSectionMap.set(minor, parseOfficialSections(html));
   }
   for (const minor of minors) {
     const release = releases.get(minor) ?? { date: "官方未列日期", patches: [] };
@@ -1378,6 +1438,13 @@ async function main() {
     fs.writeFileSync(path.join(OUT_DIR, `go1.${minor}-release-note.html`), html);
   }
   fs.writeFileSync(path.join(OUT_DIR, "index.html"), indexHtml(releases));
+  const docsDir = path.join(ROOT, "docs", "ReleaseNote");
+  fs.mkdirSync(docsDir, { recursive: true });
+  for (const file of fs.readdirSync(OUT_DIR).filter((name) => name.endsWith(".html"))) {
+    const html = fs.readFileSync(path.join(OUT_DIR, file), "utf8")
+      .replaceAll('href="../docs/index.html"', 'href="../index.html"');
+    fs.writeFileSync(path.join(docsDir, file), html);
+  }
   console.log("generated release notes:", minors.length);
 }
 

@@ -55,8 +55,8 @@
       <h1>Go 1.19 Release Note 專業整理報告</h1>
       <p class="lead">Go 1.19 強化 memory governance、doc comment 與 memory model，是 production service runtime 調校的重要版本。 本頁把官方 release note 與 release history 轉成工程導入、風險與驗收清單。</p>
       <div class="meta-row">
-        <span class="meta">報告版本：v2026.05.13</span>
-        <span class="meta">生成時間：2026-05-13 14:35:00 +0800</span>
+        <span class="meta">報告版本：v2026.11.13</span>
+        <span class="meta">生成時間：2026-11-13 12:22:30 +0800</span>
         <span class="meta">Major release：Go 1.19（2022-08-02）</span>
         <span class="meta">官方來源：https://go.dev/doc/go1.19</span>
         <span class="meta">Patch revisions：13</span>
@@ -87,6 +87,7 @@
       <a class="nav-link" href="#troubleshooting">排錯</a>
       <a class="nav-link" href="https://go.dev/doc/go1.19">官方文件</a>
     </nav>
+
     <section id="executive-summary">
       <div class="section-head"><h2>Executive Summary</h2><p>本版本報告定位在工程導入與升級審查，不是官方逐字翻譯。</p></div>
       <div class="report-note">
@@ -151,7 +152,11 @@
 <tr><td>Vet</td><td>官方重點：errors.As、Vet、The。The vet checker “errorsas” now reports when errors.As is called with a second argument of type *error , a common mistake.</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
 <tr><td>Runtime</td><td>官方重點：GOMEMLIMIT、GOGC、GOTRACEBACK、gofmt、runtime/debug.SetMemoryLimit、runtime/debug.SetGCPercent、gc/limiter/last、debug.SetMemoryLimit。The runtime now includes support for a soft memory limit. This memory limit includes the Go heap and all other memory managed by the runtime, and excludes external memory sources …</td><td>以語言語意、編譯相容性與 API 設計規則重寫，導入前要補 compile tests 與範例。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
 <tr><td>Compiler</td><td>官方重點：GOARCH、Compiler、The、Performance、This、Bazel、Any、Build。The compiler now uses a jump table to implement large integer and string switch statements. Performance improvements for the switch statement vary but can be on the order of 20% f…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr>
-<tr><td>Assembler</td><td>官方重點：Assembler、Like、This、Any。Like the compiler, the assembler now requires the -p=importpath flag to build a linkable object file. This is already supplied by the go command. Any other build systems that invo…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr></tbody></table></div>
+<tr><td>Assembler</td><td>官方重點：Assembler、Like、This、Any。Like the compiler, the assembler now requires the -p=importpath flag to build a linkable object file. This is already supplied by the go command. Any other build systems that invo…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr>
+<tr><td>Linker</td><td>官方重點：Linker、ELF、DWARF、SHF_COMPRESSED。On ELF platforms, the linker now emits compressed DWARF sections in the standard gABI format ( SHF_COMPRESSED ), instead of the legacy .zdebug format.</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
+<tr><td>New atomic types</td><td>官方重點：sync/atomic、unsafe.Pointer、New、The、Bool、Int32、Int64、Uint32。The sync/atomic package defines new atomic types Bool , Int32 , Int64 , Uint32 , Uint64 , Uintptr , and Pointer . These types hide the underlying values so that all accesses are f…</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>PATH lookups</td><td>官方重點：os/exec、exec.Command、PATH、Command、LookPath、This、Windows、See。Command and LookPath no longer allow results from a PATH search to be found relative to the current directory. This removes a common source of security problems but may also break…</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。</td></tr>
+<tr><td>Minor changes to the library</td><td>官方重點：GODEBUG、GOROOT、GOMAXPROCS、GOOS、GOARCH、cgo、pprof、archive/zip。As always, there are various minor changes and updates to the library, made with the Go 1 promise of compatibility in mind. There are also various performance improvements, not en…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。</td></tr></tbody></table></div>
     </section>
     <section id="added">
       <div class="section-head"><h2>條列式表格分析：新增功能列表</h2><p>整理 Go 1.19 值得納入教材與專案升級清單的新能力。</p></div>

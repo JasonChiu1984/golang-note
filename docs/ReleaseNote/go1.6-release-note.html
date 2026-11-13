@@ -55,8 +55,8 @@
       <h1>Go 1.6 Release Note 專業整理報告</h1>
       <p class="lead">Go 1.6 把 vendor support 預設化，並使 HTTP/2 成為標準庫網路能力的一部分。 本頁把官方 release note 與 release history 轉成工程導入、風險與驗收清單。</p>
       <div class="meta-row">
-        <span class="meta">報告版本：v2026.05.13</span>
-        <span class="meta">生成時間：2026-05-13 14:35:00 +0800</span>
+        <span class="meta">報告版本：v2026.11.13</span>
+        <span class="meta">生成時間：2026-11-13 12:22:30 +0800</span>
         <span class="meta">Major release：Go 1.6（2016-02-17）</span>
         <span class="meta">官方來源：https://go.dev/doc/go1.6</span>
         <span class="meta">Patch revisions：4</span>
@@ -87,6 +87,7 @@
       <a class="nav-link" href="#troubleshooting">排錯</a>
       <a class="nav-link" href="https://go.dev/doc/go1.6">官方文件</a>
     </nav>
+
     <section id="executive-summary">
       <div class="section-head"><h2>Executive Summary</h2><p>本版本報告定位在工程導入與升級審查，不是官方逐字翻譯。</p></div>
       <div class="report-note">
@@ -151,7 +152,11 @@
 <tr><td>Go vet command</td><td>官方重點：Go vet、go vet、The、Printf。The go vet command now diagnoses passing function or method values as arguments to Printf , such as when passing f where f() was intended.</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
 <tr><td>Performance</td><td>官方重點：compress/bzip2、compress/gzip、crypto/aes、crypto/elliptic、crypto/ecdsa、Performance、Some、The。As always, the changes are so general and varied that precise statements about performance are difficult to make. Some programs may run faster, some slower. On average the program…</td><td>以 package API、相容性異動、安全收緊與 regression tests 重寫，避免只列新增名稱。</td><td>補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。</td></tr>
 <tr><td>HTTP/2</td><td>官方重點：net/http、org/x/net/http2、Transport.TLSNextProto、Server.TLSNextProto、HTTP、HTTPS、There、API。Go 1.6 adds transparent support in the net/http package for the new HTTP/2 protocol . Go clients and servers will automatically use HTTP/2 as appropriate when using HTTPS. There i…</td><td>以 package API、相容性異動、安全收緊與 regression tests 重寫，避免只列新增名稱。</td><td>補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。</td></tr>
-<tr><td>Runtime</td><td>官方重點：GOTRACEBACK、os/signal、debug.SetTraceback、signal.Notify、Runtime、The、For、Usually。The runtime has added lightweight, best-effort detection of concurrent misuse of maps. As always, if one goroutine is writing to a map, no other goroutine should be reading or wri…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr></tbody></table></div>
+<tr><td>Runtime</td><td>官方重點：GOTRACEBACK、os/signal、debug.SetTraceback、signal.Notify、Runtime、The、For、Usually。The runtime has added lightweight, best-effort detection of concurrent misuse of maps. As always, if one goroutine is writing to a map, no other goroutine should be reading or wri…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
+<tr><td>Reflect</td><td>官方重點：encoding/json、encoding/xml、Field.PkgPath、f.PkgPath、f.Anonymous、Reflect、The、Code。The reflect package has resolved a long-standing incompatibility between the gc and gccgo toolchains regarding embedded unexported struct types containing exported fields. Code th…</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr>
+<tr><td>Sorting</td><td>官方重點：Sorting、Sort、Interface、Less、Swap、The、Updating、Such。In the sort package, the implementation of Sort has been rewritten to make about 10% fewer calls to the Interface &amp;rsquo;s Less and Swap methods, with a corresponding overall time…</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>Templates</td><td>官方重點：text/template、Templates、First、For、Second、There。In the text/template package, there are two significant new features to make writing templates easier. First, it is now possible to trim spaces around template actions , which can…</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>Minor changes to the library</td><td>官方重點：archive/tar、archive/zip、compress/flate、compress/gzip、compress/zlib、crypto/cipher、crypto/tls、net/http。The archive/tar package&amp;rsquo;s implementation corrects many bugs in rare corner cases of the file format. One visible change is that the Reader type&amp;rsquo;s Read method now prese…</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。</td></tr></tbody></table></div>
     </section>
     <section id="added">
       <div class="section-head"><h2>條列式表格分析：新增功能列表</h2><p>整理 Go 1.6 值得納入教材與專案升級清單的新能力。</p></div>

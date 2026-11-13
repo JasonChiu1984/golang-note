@@ -55,8 +55,8 @@
       <h1>Go 1.12 Release Note 專業整理報告</h1>
       <p class="lead">Go 1.12 延續 module adoption，改善 runtime、TLS 與工具行為。 本頁把官方 release note 與 release history 轉成工程導入、風險與驗收清單。</p>
       <div class="meta-row">
-        <span class="meta">報告版本：v2026.05.13</span>
-        <span class="meta">生成時間：2026-05-13 14:35:00 +0800</span>
+        <span class="meta">報告版本：v2026.11.13</span>
+        <span class="meta">生成時間：2026-11-13 12:22:30 +0800</span>
         <span class="meta">Major release：Go 1.12（2019-02-25）</span>
         <span class="meta">官方來源：https://go.dev/doc/go1.12</span>
         <span class="meta">Patch revisions：17</span>
@@ -87,6 +87,7 @@
       <a class="nav-link" href="#troubleshooting">排錯</a>
       <a class="nav-link" href="https://go.dev/doc/go1.12">官方文件</a>
     </nav>
+
     <section id="executive-summary">
       <div class="section-head"><h2>Executive Summary</h2><p>本版本報告定位在工程導入與升級審查，不是官方逐字翻譯。</p></div>
       <div class="report-note">
@@ -154,7 +155,14 @@
 <tr><td>Build cache requirement</td><td>官方重點：GOPATH、GOCACHE、Build、The、Setting。The build cache is now required as a step toward eliminating $GOPATH/pkg . Setting the environment variable GOCACHE=off will cause go commands that write to the cache to fail.</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr>
 <tr><td>Binary-only packages</td><td>官方重點：Binary。Go 1.12 is the last release that will support binary-only packages.</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
 <tr><td>Cgo</td><td>官方重點：Cgo、cgo、EGLDisplay、This、Darwin、CoreFoundation、Java、JNI。Go 1.12 will translate the C type EGLDisplay to the Go type uintptr . This change is similar to how Go 1.10 and newer treats Darwin&amp;rsquo;s CoreFoundation and Java&amp;rsquo;s JNI typ…</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
-<tr><td>Modules</td><td>官方重點：GO111MODULE、GOMOD、GOPATH、go get、go list、go mod、go env、go tool。When GO111MODULE is set to on , the go command now supports module-aware operations outside of a module directory, provided that those operations do not need to resolve import pat…</td><td>以語言語意、編譯相容性與 API 設計規則重寫，導入前要補 compile tests 與範例。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr></tbody></table></div>
+<tr><td>Modules</td><td>官方重點：GO111MODULE、GOMOD、GOPATH、go get、go list、go mod、go env、go tool。When GO111MODULE is set to on , the go command now supports module-aware operations outside of a module directory, provided that those operations do not need to resolve import pat…</td><td>以語言語意、編譯相容性與 API 設計規則重寫，導入前要補 compile tests 與範例。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr>
+<tr><td>Compiler toolchain</td><td>官方重點：GOEXPERIMENT、linux/arm64、runtime.KeepAlive、runtime.CallersFrames、runtime.Callers、runtime.FuncForPC、fmt.Println、f.Name。The compiler&amp;rsquo;s live variable analysis has improved. This may mean that finalizers will be executed sooner in this release than in previous releases. If that is a problem, co…</td><td>以語言語意、編譯相容性與 API 設計規則重寫，導入前要補 compile tests 與範例。</td><td>檢查 go.mod、go env、CI image、toolchain pinning 與 scripts diff。</td></tr>
+<tr><td>godoc and go doc</td><td>官方重點：go get、Users、APIs。In Go 1.12, godoc no longer has a command-line interface and is only a web server. Users should use go doc for command-line help output instead. Go 1.12 is the last release that w…</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
+<tr><td>Trace</td><td>官方重點：Trace、The、These。The trace tool now supports plotting mutator utilization curves, including cross-references to the execution trace. These are useful for analyzing the impact of the garbage collec…</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
+<tr><td>Assembler</td><td>官方重點：Assembler、R18、R18_PLATFORM。On arm64 , the platform register was renamed from R18 to R18_PLATFORM to prevent accidental use, as the OS could choose to reserve this register.</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>Runtime</td><td>官方重點：GODEBUG、runtime.Caller、runtime.Callers、Runtime、This、The、CPUs、Linux。Go 1.12 significantly improves the performance of sweeping when a large fraction of the heap remains live. This reduces allocation latency immediately following a garbage collecti…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
+<tr><td>TLS 1.3</td><td>官方重點：GODEBUG、crypto/tls、TLS、RFC、MaxVersion、Config、All、TLSUnique。Go 1.12 adds opt-in support for TLS 1.3 in the crypto/tls package as specified by RFC 8446 . It can be enabled by adding the value tls13=1 to the GODEBUG environment variable. It …</td><td>以 package API、相容性異動、安全收緊與 regression tests 重寫，避免只列新增名稱。</td><td>補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。</td></tr>
+<tr><td>Minor changes to the library</td><td>官方重點：GOROOT、crypto/rand、dev/urandom、crypto/rc4、crypto/tls、database/sql、key/value、go/doc。As always, there are various minor changes and updates to the library, made with the Go 1 promise of compatibility in mind. bufio Reader &amp;rsquo;s UnreadRune and UnreadByte methods…</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。</td></tr></tbody></table></div>
     </section>
     <section id="added">
       <div class="section-head"><h2>條列式表格分析：新增功能列表</h2><p>整理 Go 1.12 值得納入教材與專案升級清單的新能力。</p></div>

@@ -55,8 +55,8 @@
       <h1>Go 1.16 Release Note 專業整理報告</h1>
       <p class="lead">Go 1.16 是 module default、embed 與 filesystem abstraction 的關鍵版本。 本頁把官方 release note 與 release history 轉成工程導入、風險與驗收清單。</p>
       <div class="meta-row">
-        <span class="meta">報告版本：v2026.05.13</span>
-        <span class="meta">生成時間：2026-05-13 14:35:00 +0800</span>
+        <span class="meta">報告版本：v2026.11.13</span>
+        <span class="meta">生成時間：2026-11-13 12:22:30 +0800</span>
         <span class="meta">Major release：Go 1.16（2021-02-16）</span>
         <span class="meta">官方來源：https://go.dev/doc/go1.16</span>
         <span class="meta">Patch revisions：15</span>
@@ -87,6 +87,7 @@
       <a class="nav-link" href="#troubleshooting">排錯</a>
       <a class="nav-link" href="https://go.dev/doc/go1.16">官方文件</a>
     </nav>
+
     <section id="executive-summary">
       <div class="section-head"><h2>Executive Summary</h2><p>本版本報告定位在工程導入與升級審查，不是官方逐字翻譯。</p></div>
       <div class="report-note">
@@ -152,7 +153,12 @@
 <tr><td>Cgo</td><td>官方重點：Cgo、cgo、The。The cgo tool will no longer try to translate C struct bitfields into Go struct fields, even if their size can be represented in Go. The order in which C bitfields appear in memory…</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
 <tr><td>Vet</td><td>官方重點：encoding/json.Unmarshal、encoding/xml.Unmarshal、testing.T、testing.B、t.Fatal、t.Error、asn1.Unmarshal、json.Unmarshal。New warning for invalid testing.T use in goroutines The vet tool now warns about invalid calls to the testing.T method Fatal from within a goroutine created during the test. This …</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
 <tr><td>Runtime</td><td>官方重點：GODEBUG、runtime/metrics、runtime.ReadMemStats、debug.GCStats、Runtime、The、ReadMemStats、GCStats。The new runtime/metrics package introduces a stable interface for reading implementation-defined metrics from the Go runtime. It supersedes existing functions like runtime.ReadMem…</td><td>以語言語意、編譯相容性與 API 設計規則重寫，導入前要補 compile tests 與範例。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
-<tr><td>Compiler</td><td>官方重點：Compiler、The。The compiler can now inline functions with non-labeled for loops, method values, and type switches. The inliner can also detect more indirect calls where inlining is possible.</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr></tbody></table></div>
+<tr><td>Compiler</td><td>官方重點：Compiler、The。The compiler can now inline functions with non-labeled for loops, method values, and type switches. The inliner can also detect more indirect calls where inlining is possible.</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
+<tr><td>Linker</td><td>官方重點：go build、robustness/maintainability、linux/amd64、Linker、This、These、The、ELF。This release includes additional improvements to the Go linker, reducing linker resource usage (both time and memory) and improving code robustness/maintainability. These changes …</td><td>以效能基線、binary artifact、pprof 與 production-like benchmark 重寫，避免只看編譯結果。</td><td>保留升級前後 benchmark、pprof、runtime metrics 與 tail latency 比對。</td></tr>
+<tr><td>Embedded Files</td><td>官方重點：Embedded、Files、The。The new embed package provides access to files embedded in the program during compilation using the new //go:embed directive .</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>File Systems</td><td>官方重點：io/fs、html/template、text/template、testing/fstest、fs.FS、embed.FS、zip.Reader、os.DirFS。The new io/fs package defines the fs.FS interface, an abstraction for read-only trees of files. The standard library packages have been adapted to make use of the interface as app…</td><td>以部署平台、GOOS/GOARCH、CI runner 與交叉編譯矩陣重寫，平台差異需實測。</td><td>跑平台矩陣、cgo/linker smoke test 與 source build/bootstrap 驗證。</td></tr>
+<tr><td>Deprecation of io/ioutil</td><td>官方重點：io/ioutil、io.Discard、io.NopCloser、io.ReadAll、os.ReadDir、os.DirEntry、fs.FileInfo、os.ReadFile。The io/ioutil package has turned out to be a poorly defined and hard to understand collection of things. All functionality provided by the package has been moved to other packages…</td><td>以官方段落對應到專案升級 checklist、測試證據與文件更新項目重寫。</td><td>以 `go test ./...`、重點 package regression tests 與 release-note checklist 驗收。</td></tr>
+<tr><td>Minor changes to the library</td><td>官方重點：GODEBUG、GOROOT、cgo、archive/zip、crypto/dsa、crypto/hmac、crypto/tls、crypto/x509。As always, there are various minor changes and updates to the library, made with the Go 1 promise of compatibility in mind. archive/zip The new Reader.Open method implements the f…</td><td>以 CI、Makefile、toolchain policy 與開發者工作流重寫，導入前要跑全量 build/test/vet。</td><td>補安全測試、TLS/crypto smoke test，並採用該 major 版本最後 patch。</td></tr></tbody></table></div>
     </section>
     <section id="added">
       <div class="section-head"><h2>條列式表格分析：新增功能列表</h2><p>整理 Go 1.16 值得納入教材與專案升級清單的新能力。</p></div>

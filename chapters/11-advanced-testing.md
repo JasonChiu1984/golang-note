@@ -454,7 +454,7 @@ Production workflow contract gate 固定 tracked standalone workflow，不讓 `p
 
 Syntax flow SVG contract gate 固定語法流程圖補充頁，不讓 `docs/golang-syntax-application-svg.html` 或整合來源在發布同步後遺失 25 個單語法 flow、標準流程圖符號、SVG metadata 或 blueprint renderer。
 
-Go ReleaseNote contract gate 固定 generated report chain，不讓 `scripts/generate-go-release-notes.mjs`、`ReleaseNote/` 或 `docs/ReleaseNote/` 在重產或發布同步後遺失 Go 1.1-1.26 必要報告區塊、官方來源、支援狀態、Patch Revisions 或 Go 1.26.5 / Go 1.25.12 最新 patch 訊號。Go ReleaseNote freshness evidence 由 `node scripts/check-go-release-notes-freshness-contract.mjs` 固定 official Go Release History verified 時間、ReleaseNote index 來源證據與最新 patch baseline。
+Go ReleaseNote contract gate 固定 generated report chain，不讓 `scripts/generate-go-release-notes.mjs`、`ReleaseNote/` 或 `docs/ReleaseNote/` 在重產或發布同步後遺失 Go 1.1-1.27 必要報告區塊、官方來源、支援狀態、Patch Revisions 或 Go 1.27.4 / Go 1.26.11 最新 patch 訊號。Go ReleaseNote freshness evidence 由 `node scripts/check-go-release-notes-freshness-contract.mjs` 固定 official Go Release History verified 時間、ReleaseNote index 來源證據與最新 patch baseline。
 
 Release version consistency contract gate 固定目前版本同步，不讓 `VERSION`、`CHANGELOG.md`、README、API contract、OpenAPI、章節、整合視覺課程、`docs/index.html`、Makefile 或 GitHub Actions 在 release 後顯示不同版本。它由 `node scripts/check-release-version-consistency-contract.mjs` 與 `cd production-api-worker && make release-version-consistency-check` 固定。
 
@@ -614,8 +614,8 @@ func TestSQLFilesReturnsSortedSQLFilesOnly(t *testing.T) {
 | Docs publishing contract gate | `node scripts/check-docs-publishing-contract.mjs && cd production-api-worker && make docs-publishing-check` | 固定 `docs/index.html`、GitHub Pages link fix、HTML 主頁教程回鏈、Makefile、CI 入口與 API contract scope header |
 | Production workflow contract gate | `node scripts/check-production-workflow-contract.mjs && cd production-api-worker && make production-workflow-check` | 固定 standalone workflow 的 contract、race/coverage、govulncheck、Docker build、Compose smoke、failure logs 與 cleanup |
 | Syntax flow SVG contract gate | `node scripts/check-syntax-flow-svg-contract.mjs && cd production-api-worker && make syntax-flow-svg-check` | 固定語法流程圖補充頁的 25 個 flow、標準流程圖符號、SVG metadata、blueprint renderer、Makefile 與 CI 入口 |
-| Go ReleaseNote contract gate | `node scripts/check-go-release-notes-contract.mjs && cd production-api-worker && make go-release-notes-check` | 固定 Go 1.1-1.26 ReleaseNote、27 個 HTML、官方來源、最新 patch 訊號與 Pages 同步 |
-| Go ReleaseNote freshness evidence | `node scripts/check-go-release-notes-freshness-contract.mjs && cd production-api-worker && make go-release-notes-freshness-check` | 固定 official Go Release History verified 時間、Go 1.26.5 / Go 1.25.12 baseline 與 ReleaseNote index 來源證據 |
+| Go ReleaseNote contract gate | `node scripts/check-go-release-notes-contract.mjs && cd production-api-worker && make go-release-notes-check` | 固定 Go 1.1-1.27 ReleaseNote、28 個 HTML、官方來源、最新 patch 訊號與 Pages 同步 |
+| Go ReleaseNote freshness evidence | `node scripts/check-go-release-notes-freshness-contract.mjs && cd production-api-worker && make go-release-notes-freshness-check` | 固定 official Go Release History verified 時間、Go 1.27.4 / Go 1.26.11 baseline 與 ReleaseNote index 來源證據 |
 | Release version consistency contract gate | `node scripts/check-release-version-consistency-contract.mjs && cd production-api-worker && make release-version-consistency-check` | 固定 VERSION、CHANGELOG、README、API contract、OpenAPI、章節、整合視覺課程、docs/index、Makefile 與 CI 目前版本一致 |
 | Release artifact chain contract gate | `node scripts/check-release-artifact-chain-contract.mjs && cd production-api-worker && make release-artifact-chain-check` | 固定審查報告、內容需要更新的部分、更新資料、版本標記、CHANGELOG 與 docs/index 同步 |
 | Release artifact metadata consistency contract gate | `node scripts/check-release-artifact-metadata-contract.mjs && cd production-api-worker && make release-artifact-metadata-check` | 固定三份 release artifacts 的 timestamp、版本、完整日期時間、本輪主題與交叉引用 |

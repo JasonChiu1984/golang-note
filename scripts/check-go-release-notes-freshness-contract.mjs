@@ -3,16 +3,20 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 
 const expectedVersion = "v1.0.94";
 const expectedCheckerCount = 58;
-const freshnessDate = "2026-07-12";
-const freshnessTimestamp = "2026-07-12 06:03:15 CST +0800";
-const latestPatch = "Go 1.26.5";
-const latestPatchTokens = ["go1.26.5", "go1.25.12"];
+const freshnessDate = "2026-11-13";
+const freshnessTimestamp = "2026-11-13 12:22:30 CST +0800";
+const latestPatch = "Go 1.27.4";
+const latestPatchTokens = ["go1.27.4", "go1.26.11"];
 
 const files = [
   "scripts/generate-go-release-notes.mjs",
   "ReleaseNote/index.html",
   "docs/ReleaseNote/index.html",
   "README.md",
+  "docs/index.html",
+  "chapters/12-go-language-changes.md",
+  "chapters/13-go-security-2026-11.md",
+  "examples/go127/language_test.go",
   "production-api-worker/README.md",
   "production-api-worker/docs/api-contract.md",
   "production-api-worker/api/openapi.yaml",
@@ -26,8 +30,8 @@ const files = [
 
 const required = {
   "scripts/generate-go-release-notes.mjs": [
-    'asOf: "2026-07-12"',
-    'verifiedAt: "2026-07-12 06:03:15 CST +0800"',
+    'asOf: "2026-11-13"',
+    'verifiedAt: "2026-11-13 12:22:30 CST +0800"',
     "Go ReleaseNote freshness evidence",
     "official Go Release History verified",
     latestPatch,
@@ -49,7 +53,12 @@ const required = {
     latestPatch,
     ...latestPatchTokens,
   ],
+  "docs/index.html": ["go-security-2026-11", "chapters/13-go-security-2026-11.md", "go127-update", "Go 1.27.4", "1.26.11", "ReleaseNote/go1.27-release-note.html", "chapters/12-go-language-changes.md"],
+  "chapters/13-go-security-2026-11.md": ["1.26.11", "1.27.4", "MaxBytesReader", "CGO_ENABLED=0", "13 個", ...Array.from({length: 12}, (_, i) => `GO-2026-${6848 + i}`), ...Array.from({length: 11}, (_, i) => `CVE-2026-${97033 + i}`), "CVE-2026-97054"],
+  "chapters/12-go-language-changes.md": ["1.27.4", "泛型方法", "promoted field", "型別推導", "正反"],
+  "examples/go127/language_test.go": ["TestLanguageChanges", "TestLanguageCompilerBoundaries", "embedded-pointer-invalid", "function-inference-127"],
   "README.md": [
+    "Go 1.27.4", "1.26.11", "chapters/12-go-language-changes.md",
     `教材版本：\`${expectedVersion}\``,
     "Go ReleaseNote freshness evidence",
     "node scripts/check-go-release-notes-freshness-contract.mjs",
@@ -85,6 +94,7 @@ const required = {
     "node scripts/check-go-release-notes-freshness-contract.mjs",
   ],
   "圖解筆記3-4整合/golang-complete-visual-course.html": [
+    "go127-update", "Go 1.27.4", "../ReleaseNote/go1.27-release-note.html",
     "Go ReleaseNote freshness evidence",
     "node scripts/check-go-release-notes-freshness-contract.mjs",
   ],
