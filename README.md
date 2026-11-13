@@ -6,7 +6,9 @@
 > 教材基準：`Go 1.26.5`
 > 這次更新重點：補齊 Structured log schema governance contract gate，固定 `request_id`、`trace_id`、`severity`、`error_code`、`route`、log redaction policy、log retention owner 與 audit log review cadence。
 
-## 版本策略
+> **2026-11-11 筆記增補**：[併發修訂](康乃爾筆記法/06-併發程式設計.md)與 [Go 1.27.4 更新補充](康乃爾筆記法/A2-Go1.27更新補充.md)已加入，另有[新版獨立範例與測試](examples/go127/README.md)。以下 v1.0.94 的整套教材／release 基準保留原紀錄，不代表最新 Go；本次未改 production module、歷史 ReleaseNote 或發布新 release。
+
+## 版本策略（v1.0.94 歷史基準）
 
 | 項目 | 目前策略 |
 |---|---|

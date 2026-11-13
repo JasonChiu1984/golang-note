@@ -1,0 +1,35 @@
+name: Go 1.27 note examples
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'examples/go127/**'
+      - '.github/workflows/go127-notes.yml'
+  pull_request:
+    paths:
+      - 'examples/go127/**'
+      - '.github/workflows/go127-notes.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  modern-examples:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: examples/go127
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.4'
+          cache-dependency-path: examples/go127/go.sum
+      - run: go version
+      - run: go mod download
+      - run: go mod verify
+      - run: test -z "$(gofmt -l .)"
+      - run: go test -race ./... -count=1 -timeout=60s
+      - run: go vet ./...

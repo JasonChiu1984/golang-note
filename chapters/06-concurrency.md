@@ -134,7 +134,7 @@ req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 
 ### Context Tree (取消的傳遞)
 
-Context 是樹狀結構。當父節點被取消，所有子節點都會被取消。這對於微服務的連鎖請求取消非常重要。
+Context 是樹狀結構。當父節點被取消，一般衍生子 context 都會收到取消，`WithoutCancel` 則刻意切斷傳遞。這對於微服務的連鎖請求取消非常重要。
 
 ```mermaid
 flowchart TD
@@ -164,7 +164,7 @@ flowchart TD
 | API | 版本 | 解決的痛點 |
 |---|---|---|
 | `WithCancelCause` | **1.20** | **取消原因追蹤**：以前只知道 `context canceled`，現在可以附帶具體的 `error`。<br>透過 `context.Cause(ctx)` 取得。 |
-| `WithoutCancel` | **1.21** | **剝離取消信號**：保留原 ctx 的 Value，但移除 Cancel/Timeout。<br>極度適合用於**啟動非同步背景任務**（如 HTTP 回應後寫入 Log/DB）。 |
+| `WithoutCancel` | **1.21** | **剝離取消信號**：保留原 ctx 的 Value，但移除 Cancel/Timeout。<br>背景任務仍須另設 timeout、錯誤處理與服務關機等待；重要工作應使用持久化 queue。 |
 
 ```go
 // 1. context.Cause 範例 (Go 1.20+)
@@ -181,9 +181,11 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	// 若想在背景寫入 audit log，不能直接傳 r.Context()
 	// 舊解法：傳 context.Background() (會遺失 TraceID 等 Value)
 	// 新解法：WithoutCancel 保留 Value 但不受 HTTP 結束影響
-	bgCtx := context.WithoutCancel(r.Context())
-	
-	go writeAuditLog(bgCtx, "user_login")
+	bgCtx, cancel := context.WithTimeout(context.WithoutCancel(r.Context()), 3*time.Second)
+	go func() {
+		defer cancel()
+		writeAuditLog(bgCtx, "user_login")
+	}() // 教學簡例；正式 audit 工作應有可靠 queue 與 shutdown 管理
 	w.Write([]byte("ok"))
 }
 ```
@@ -343,9 +345,9 @@ for _, task := range tasks {
 }
 ```
 
-## `errgroup`：優雅的錯誤收集
+## `errgroup`：首錯傳遞與合作式取消
 
-`sync/errgroup` 是 `WaitGroup` + error 收集的升級版，實務中極常使用。
+`golang.org/x/sync/errgroup` 是獨立 module，不是標準庫。`Wait()` 等所有已啟動工作返回，回傳第一個非 nil error，不會彙整全部錯誤。
 
 ```go
 import "golang.org/x/sync/errgroup"
@@ -366,9 +368,13 @@ if err := g.Wait(); err != nil {
 | 比較 | `sync.WaitGroup` | `errgroup.Group` |
 |---|---|---|
 | 錯誤處理 | 需要額外 channel 或 mutex | 內建，回傳第一個 error |
-| Context 取消 | 手動管理 | `WithContext` 自動取消其他 goroutine |
+| Context 取消 | 手動管理 | `WithContext` 取消衍生 context；工作須配合才能結束 |
 | 限制併發 | 手動實作 semaphore | `g.SetLimit(n)` |
 | 適合場景 | 不需要錯誤回報 | 需要知道是否有任一 goroutine 失敗 |
+
+`WithContext` 的衍生 context 也會在 `Wait()` 成功返回時被取消，不要拿它做下一階段工作。`SetLimit` 額滿時會阻塞 `Go` 呼叫，取消不會自動解除這個等待。需要全部錯誤時請自行儲存並用 `errors.Join`。
+
+> **2026-11-11 增補（Go 1.27.4）**：完整的首錯、取消、所有錯誤收集、`WaitGroup.Go`、`synctest`、timer 與 leak profile 說明，見 [康乃爾併發筆記](../康乃爾筆記法/06-併發程式設計.md)與[可執行新版範例](../examples/go127/README.md)。
 
 ## 效能考量
 
@@ -403,7 +409,7 @@ fmt.Println("goroutines:", runtime.NumGoroutine())
 | Channel 沒有 receiver | 確保每個 send 都有對應的 receive |
 | 忘記 `close(ch)` | 由 sender 負責 close |
 | 沒有監聽 `ctx.Done()` | 每個長期運行的 goroutine 都要有退出路徑 |
-| `select` 沒有 default 或 cancel case | 加上 `case <-ctx.Done()` |
+| 等待永遠不會就緒的事件，且無退出路徑 | 加上取消或其他可證明會完成的路徑；不要用 default 忙等 |
 
 ```go
 // 測試中使用 goleak 偵測
@@ -431,4 +437,4 @@ func TestMain(m *testing.M) {
 3. 用 `sync.Mutex` 保護一個計數器。
 4. 實作一個 3 stage 的 pipeline：生成數字 → 平方 → 過濾偶數。
 5. 用 `errgroup` 並行 fetch 3 個 URL，任一失敗就取消全部。
-6. 用 `runtime.NumGoroutine()` 確認你的程式結束時沒有 goroutine leak。
+6. 觀察 `runtime.NumGoroutine()` 趨勢並檢查 goroutine profile；數量相同不代表沒有 leak。Go 1.27 可搭配 `goroutineleak` profile。
