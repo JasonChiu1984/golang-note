@@ -1915,7 +1915,17 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 
 	      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 	      svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-	      svg.setAttribute("viewBox", "0 0 760 430");
+	      // Reserve enough panel width and height for all CJK/Latin text, without
+      // changing the coordinates of the flow nodes or their connectors.
+      const domainPanelLines = (text, limit) => Math.max(1, Math.ceil(Array.from(text).length / limit));
+      const syntaxLines = domainPanelLines(item.syntax, 21);
+      const riskLines = domainPanelLines(item.risk, 21);
+      const explainLines = domainPanelLines(item.explain, 40);
+      const upperHeight = Math.max(80, 56 + (Math.max(syntaxLines, riskLines) - 1) * 16 + 14);
+      const lowerY = 270 + upperHeight + 20;
+      const lowerHeight = Math.max(42, 26 + (explainLines - 1) * 16 + 14);
+      const domainHeight = lowerY + lowerHeight + 18;
+      svg.setAttribute("viewBox", `0 0 760 ${domainHeight}`);
 	      svg.setAttribute("role", "img");
 	      const titleId = `domain-flow-title-${index + 1}`;
 	      const descId = `domain-flow-desc-${index + 1}`;
@@ -1947,22 +1957,29 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
         ["#fff1f2", "#fecdd3"],
       ][index % 5];
 
-      drawGridBackground(svg, gridId, 760, 430);
+      drawGridBackground(svg, gridId, 760, domainHeight);
       svgText(svg, item.domain, 380, 35, { anchor: "middle", weight: 900, size: 22 });
       svgText(svg, "由實際開發流程回推語法使用位置，不只列關鍵字。", 380, 60, { anchor: "middle", size: 13, fill: "#64748b" });
       drawStepChain(svg, item.steps, { markerId: arrowId, reviewMarkerId: reviewArrowId, accent: colors[0], stroke: colors[1], mode: "domain" });
 
-      svgRect(svg, 42, 270, 316, 80, "#ffffff");
-      svgText(svg, "涵蓋語法", 64, 300, { weight: 900, size: 14, fill: "#0f766e" });
-      svgWrappedText(svg, item.syntax, 64, 326, { size: 12, fill: "#334155", maxChars: 24, maxLines: 2, lineHeight: 16 });
+      const domainPanel = (key, x, y, width, height) => {
+        const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        group.setAttribute("data-domain-panel", key);
+        svg.appendChild(group);
+        svgRect(group, x, y, width, height, "#ffffff");
+        return group;
+      };
+      const syntaxPanel = domainPanel("syntax", 42, 270, 316, upperHeight);
+      svgText(syntaxPanel, "涵蓋語法", 64, 300, { weight: 900, size: 14, fill: "#0f766e" });
+      svgWrappedText(syntaxPanel, item.syntax, 64, 326, { size: 12, fill: "#334155", maxChars: 21, maxLines: syntaxLines, lineHeight: 16, strictWrap: true });
 
-      svgRect(svg, 402, 270, 316, 80, "#ffffff");
-      svgText(svg, "風險控制", 424, 300, { weight: 900, size: 14, fill: "#be123c" });
-      svgWrappedText(svg, item.risk, 424, 326, { size: 12, fill: "#334155", maxChars: 23, maxLines: 2, lineHeight: 16 });
+      const riskPanel = domainPanel("risk", 402, 270, 316, upperHeight);
+      svgText(riskPanel, "風險控制", 424, 300, { weight: 900, size: 14, fill: "#be123c" });
+      svgWrappedText(riskPanel, item.risk, 424, 326, { size: 12, fill: "#334155", maxChars: 21, maxLines: riskLines, lineHeight: 16, strictWrap: true });
 
-      svgRect(svg, 42, 370, 676, 42, "#ffffff");
-      svgText(svg, "工程判斷", 64, 396, { weight: 900, size: 13 });
-      svgWrappedText(svg, item.explain, 148, 396, { size: 11, fill: "#334155", maxChars: 64, maxLines: 1 });
+      const explainPanel = domainPanel("explain", 42, lowerY, 676, lowerHeight);
+      svgText(explainPanel, "工程判斷", 64, lowerY + 26, { weight: 900, size: 13 });
+      svgWrappedText(explainPanel, item.explain, 148, lowerY + 26, { size: 11, fill: "#334155", maxChars: 40, maxLines: explainLines, lineHeight: 16, strictWrap: true });
 
       const codeBox = document.createElement("div");
       codeBox.className = "code-explain";
