@@ -1684,13 +1684,24 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
         geoms[1].x -= 18;
         geoms[1].labelX -= 18;
       }
-      // The I/O parallelogram is inset by half its lean at the centreline.
-	      const second = geoms[1];
+	      // The package diagram has a single horizontal lane with equal node heights.
+	      if (flowSource.key === "package") {
+        const rowY = 114, rowHeight = 80;
+        for (const g of geoms.slice(0, 4)) {
+          if (g.y !== undefined) g.y = rowY - rowHeight / 2;
+          if (g.cy !== undefined) g.cy = rowY;
+          if (g.ry !== undefined) g.ry = rowHeight / 2;
+          if (g.height !== undefined) g.height = rowHeight;
+          g.labelY = rowY - 1;
+        }
+        geoms[4].rx = 54; // Keep the end node inside the viewBox.
+      }
+	      // The I/O parallelogram is inset by half its lean at the centreline.
+	      const [start, second, decision, process, end] = geoms;
 	      const inset = nodes[1].shape === "io" ? Math.min(22, Math.round(second.width * 0.16)) / 2 : 0;
 	      const inputLeft = second.x + inset;
 	      const inputRight = second.x + second.width - inset;
-	      svgPath(svg, `M138 108 H${inputLeft - 2}`, markerId, { stroke: route, width: 3.2 });
-	      const decision = geoms[2], process = geoms[3], end = geoms[4];
+	      svgPath(svg, `M${start.cx + start.rx + 2} ${start.cy} H${inputLeft - 2}`, markerId, { stroke: route, width: 3.2 });
 	      const decisionLeft = decision.cx - decision.width / 2;
 	      const decisionRight = decision.cx + decision.width / 2;
 	      const reviewStart = decision.cy + decision.height / 2 + 2;
@@ -1700,13 +1711,16 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 	      // 14-unit approach so it cannot straddle the curve's last turn.
 	      const approachBend = decisionTip - 14;
 	      const smooth = (approachBend - approachStart) / 3;
-	      svgPath(svg, `M${approachStart} 108 C${approachStart + smooth} 108 ${approachBend - smooth} ${decision.cy} ${approachBend} ${decision.cy} H${decisionTip}`, markerId, { stroke: route, width: 3.2 });
+	      const decisionApproach = start.cy === decision.cy
+        ? `M${approachStart} ${start.cy} H${decisionTip}`
+        : `M${approachStart} ${start.cy} C${approachStart + smooth} ${start.cy} ${approachBend - smooth} ${decision.cy} ${approachBend} ${decision.cy} H${decisionTip}`;
+	      svgPath(svg, decisionApproach, markerId, { stroke: route, width: 3.2 });
 	      svgPath(svg, `M${decisionRight + 2} ${decision.cy} H${process.x - 2}`, markerId, { stroke: route, width: 3.2 });
 	      svgPath(svg, `M${end.cx} ${process.y + process.height + 2} V${end.cy - end.ry - 2}`, markerId, { stroke: route, width: 3.2 });
-	      svgPath(svg, `M${decision.cx} ${reviewStart} V250 H78 V138`, reviewMarkerId, { stroke: alertRoute, width: 2.2, dash: "7 6" });
+	      svgPath(svg, `M${decision.cx} ${reviewStart} V250 H${start.cx} V${start.cy + start.ry + 2}`, reviewMarkerId, { stroke: alertRoute, width: 2.2, dash: "7 6" });
 	      nodes.slice(0, geoms.length).forEach((node, index) => drawFlowNode(svg, node, geoms[index], { accent, stroke }));
 	      const branchLabels = flowSource.branchLabels || { pass: "pass", review: "review" };
-	      svgText(svg, branchLabels.pass, (decisionRight + process.x) / 2, 87, { anchor: "middle", size: 11, fill: route, weight: 900 });
+	      svgText(svg, branchLabels.pass, (decisionRight + process.x) / 2, flowSource.key === "package" ? 66 : 87, { anchor: "middle", size: 11, fill: route, weight: 900 });
 	      svgText(svg, branchLabels.review, 96, 240, { size: 11, fill: alertRoute, weight: 900 });
 	    }
 
