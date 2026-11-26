@@ -1553,6 +1553,14 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
         }
       }
       if (current) lines.push(current);
+      if (options.strictWrap) {
+        // Review Gate labels may mix Latin and CJK without word breaks.
+        const full = Array.from(source);
+        lines.splice(0, lines.length);
+        for (let start = 0; start < full.length; start += maxChars) {
+          lines.push(full.slice(start, start + maxChars).join(""));
+        }
+      }
 
       lines.slice(0, options.maxLines || 3).forEach((line, index) => {
         const tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
@@ -1682,12 +1690,27 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
       return rect;
     }
 
-    function drawCodeSnippet(svg, code, x, y, width, height, title = "範例程式碼") {
-      svgRect(svg, x, y, width, height, "#0f172a", "#1e293b");
-      svgText(svg, title, x + 14, y + 24, { size: 12, fill: "#93c5fd", weight: 900 });
-      String(code).split("\n").slice(0, 8).forEach((line, index) => {
-        const visibleLine = line.length > 48 ? `${line.slice(0, 45)}...` : line;
-        svgText(svg, visibleLine || " ", x + 14, y + 48 + index * 17, { size: 11, fill: "#e2e8f0", code: true });
+    function codePreview(line) {
+      let width = 0;
+      let preview = "";
+      for (const char of line) {
+        width += char.codePointAt(0) > 127 ? 2 : 1;
+        if (width > 43) return preview + "…";
+        preview += char;
+      }
+      return preview;
+    }
+
+    function drawCodeSnippet(svg, lines, x, y, width, height, title = "範例程式碼") {
+      const panel = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      panel.setAttribute("data-snippet-panel", "");
+      svg.appendChild(panel);
+      svgRect(panel, x, y, width, height, "#0f172a", "#1e293b");
+      svgText(panel, title, x + 14, y + 24, { size: 12, fill: "#93c5fd", weight: 900 });
+      lines.forEach((line, index) => {
+        const preview = codePreview(line);
+        const label = svgText(panel, preview || " ", x + 14, y + 48 + index * 17, { size: 11, fill: "#e2e8f0", code: true });
+        label.style.whiteSpace = "pre";
       });
     }
 
@@ -1806,7 +1829,13 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 
 	      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 	      svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-	      svg.setAttribute("viewBox", "0 0 640 430");
+      const codeLines = String(item.code).split("\n");
+      const reviewLines = Math.max(1, Math.ceil(Array.from(item.check).length / 14));
+      const panelHeight = Math.max(116, 48 + (codeLines.length - 1) * 17 + 14,
+                                   54 + (reviewLines - 1) * 16 + 14);
+      const chartHeight = 284 + panelHeight + 30;
+      const chartWidth = 652; // Keep the right terminator stroke inside viewBox.
+	      svg.setAttribute("viewBox", `0 0 ${chartWidth} ${chartHeight}`);
 	      svg.setAttribute("role", "img");
 	      const titleId = `svg-syntax-flow-title-${item.key}`;
 	      const descId = `syntax-flow-desc-${item.key}`;
@@ -1831,18 +1860,33 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
       background.setAttribute("id", `flow-background-${item.key}`);
       svg.appendChild(background);
 
-	      drawGridBackground(svg, gridId, 640, 430);
+	      drawGridBackground(svg, gridId, chartWidth, chartHeight);
 	      const accent = ["#eff6ff", "#ecfdf5", "#fffbeb", "#f5f3ff", "#fff1f2"][index % 5];
 	      const stroke = ["#bfdbfe", "#99f6e4", "#fde68a", "#ddd6fe", "#fecdd3"][index % 5];
 	      svgText(svg, item.flowTitle || `${item.key} 對應流程`, 24, 34, { weight: 900, size: 17 });
 	      svgWrappedText(svg, item.kind, 616, 34, { anchor: "end", weight: 900, size: 12, fill: "#0f766e", maxChars: 12, maxLines: 1 });
 	      drawStepChain(svg, item, { markerId: arrowId, reviewMarkerId: reviewArrowId, accent, stroke, mode: "syntax" });
 
-      drawCodeSnippet(svg, item.code, 24, 284, 340, 116, "Go 實作片段");
-      svgRect(svg, 390, 284, 226, 116, "#ffffff");
-      svgText(svg, "Review Gate", 410, 312, { weight: 900, size: 14, fill: "#0f766e" });
-      svgWrappedText(svg, item.check, 410, 338, { size: 12, fill: "#334155", maxChars: 16, maxLines: 3, lineHeight: 16 });
+      drawCodeSnippet(svg, codeLines, 24, 284, 340, panelHeight, "Go 實作片段");
+      const review = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      review.setAttribute("data-review-panel", "");
+      svg.appendChild(review);
+      svgRect(review, 390, 284, 226, panelHeight, "#ffffff");
+      svgText(review, "Review Gate", 410, 312, { weight: 900, size: 14, fill: "#0f766e" });
+      svgWrappedText(review, item.check, 410, 338, { size: 12, fill: "#334155", maxChars: 14, maxLines: reviewLines, lineHeight: 16, strictWrap: true });
       card.appendChild(svg);
+
+      if (codeLines.some(line => codePreview(line) !== line)) {
+        const details = document.createElement("details");
+        const summary = document.createElement("summary");
+        summary.textContent = "展開完整 Go 程式片段";
+        const pre = document.createElement("pre");
+        const fullCode = document.createElement("code");
+        fullCode.textContent = item.code;
+        pre.appendChild(fullCode);
+        details.append(summary, pre);
+        card.appendChild(details);
+      }
       return card;
     }
 
