@@ -1621,6 +1621,7 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 
 	    function drawStepChain(svg, flowSource, options) {
 	      const markerId = options.markerId;
+	      const reviewMarkerId = options.reviewMarkerId;
 	      const route = options.route || "#0f4c81";
 	      const alertRoute = options.alertRoute || "#b45353";
 	      const accent = options.accent || "#dcfce7";
@@ -1629,11 +1630,11 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 	      const steps = Array.isArray(flowSource) ? flowSource : flowSource.steps;
 
 	      if (mode === "domain") {
-	        svgPath(svg, "M156 118 H205", markerId, { stroke: route, width: 3.2 });
-        svgPath(svg, "M328 118 H352", markerId, { stroke: route, width: 3.2 });
-        svgPath(svg, "M424 156 V178", markerId, { stroke: route, width: 3.2 });
-        svgPath(svg, "M496 210 H560", markerId, { stroke: route, width: 3.2 });
-        svgPath(svg, "M424 242 V270 H100 V140", markerId, { stroke: alertRoute, width: 2.2, dash: "7 6" });
+	        svgPath(svg, "M158 118 H214", markerId, { stroke: route, width: 3.2 });
+        svgPath(svg, "M320 118 H350", markerId, { stroke: route, width: 3.2 });
+        svgPath(svg, "M424 160 V176", markerId, { stroke: route, width: 3.2 });
+        svgPath(svg, "M498 210 H558", markerId, { stroke: route, width: 3.2 });
+        svgPath(svg, "M424 244 V258 H96 V148", reviewMarkerId, { stroke: alertRoute, width: 2.2, dash: "7 6" });
 
         svgEllipse(svg, 96, 118, 60, 28, "#dcfce7", "#7fb069");
         svgParallelogram(svg, 206, 84, 122, 68, "#fef3c7", "#d6b658");
@@ -1652,7 +1653,7 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 	          svgText(svg, title, cx, cy - 10, { anchor: "middle", weight: 900, size: 10, fill: index === 2 ? "#991b1b" : "#064e3b" });
 	          svgWrappedText(svg, text, cx, cy + 8, { anchor: "middle", size, fill: "#1f2937", maxChars: chars, maxLines: 2, lineHeight: 13 });
 	        });
-	        svgText(svg, "review", 104, 270, { size: 11, fill: alertRoute, weight: 900 });
+	        svgText(svg, "review", 113, 248, { size: 11, fill: alertRoute, weight: 900 });
 	        return;
 	      }
 
@@ -1670,15 +1671,20 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 	        { x: 536, y: 96, width: 88, height: 66, labelX: 580, labelY: 119, maxChars: 8, textSize: 9 },
 	        { cx: 580, cy: 232, rx: 60, ry: 28, labelX: 580, labelY: 225, maxChars: 9 },
 	      ];
-	      svgPath(svg, "M136 108 H206", markerId, { stroke: route, width: 3.2 });
-	      svgPath(svg, "M340 108 C350 108 350 128 360 128", markerId, { stroke: route, width: 3.2 });
-	      svgPath(svg, "M500 128 H536", markerId, { stroke: route, width: 3.2 });
-	      svgPath(svg, "M580 162 V204", markerId, { stroke: route, width: 3.2 });
-	      svgPath(svg, "M430 184 V250 H96 V138", markerId, { stroke: alertRoute, width: 2.2, dash: "7 6" });
+	      // The I/O parallelogram is inset by half its lean at the centreline.
+	      const second = geoms[1];
+	      const inset = nodes[1].shape === "io" ? Math.min(22, Math.round(second.width * 0.16)) / 2 : 0;
+	      const inputLeft = second.x + inset;
+	      const inputRight = second.x + second.width - inset;
+	      svgPath(svg, `M138 108 H${inputLeft - 2}`, markerId, { stroke: route, width: 3.2 });
+	      svgPath(svg, `M${inputRight + 2} 108 C${inputRight + 10} 108 350 128 358 128`, markerId, { stroke: route, width: 3.2 });
+	      svgPath(svg, "M502 128 H534", markerId, { stroke: route, width: 3.2 });
+	      svgPath(svg, "M580 164 V202", markerId, { stroke: route, width: 3.2 });
+	      svgPath(svg, "M430 186 V250 H78 V138", reviewMarkerId, { stroke: alertRoute, width: 2.2, dash: "7 6" });
 	      nodes.slice(0, geoms.length).forEach((node, index) => drawFlowNode(svg, node, geoms[index], { accent, stroke }));
 	      const branchLabels = flowSource.branchLabels || { pass: "pass", review: "review" };
-	      svgText(svg, branchLabels.pass, 506, 116, { size: 11, fill: route, weight: 900 });
-	      svgText(svg, branchLabels.review, 104, 250, { size: 11, fill: alertRoute, weight: 900 });
+	      svgText(svg, branchLabels.pass, 518, 87, { anchor: "middle", size: 11, fill: route, weight: 900 });
+	      svgText(svg, branchLabels.review, 96, 240, { size: 11, fill: alertRoute, weight: 900 });
 	    }
 
     function createSyntaxFlowCard(item, index) {
@@ -1698,13 +1704,17 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 
 	      const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
       const arrowId = `flow-arrow-${item.key}`;
+      const reviewArrowId = `flow-review-arrow-${item.key}`;
       const gridId = `syntax-grid-${item.key}`;
       defs.innerHTML = `
         <pattern id="${gridId}" width="18" height="18" patternUnits="userSpaceOnUse">
           <path d="M18 0H0V18" fill="none" stroke="#e2e8f0" stroke-width=".8"/>
         </pattern>
-        <marker id="${arrowId}" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
-          <path d="M1 1 L9 5 L1 9 Z" fill="#0f4c81"/>
+        <marker id="${arrowId}" viewBox="0 0 12 10" markerWidth="12" markerHeight="10" markerUnits="userSpaceOnUse" refX="11" refY="5" orient="auto">
+          <path d="M1 1 L11 5 L1 9 Z" fill="#0f4c81"/>
+        </marker>
+        <marker id="${reviewArrowId}" viewBox="0 0 12 10" markerWidth="12" markerHeight="10" markerUnits="userSpaceOnUse" refX="11" refY="5" orient="auto">
+          <path d="M1 1 L11 5 L1 9 Z" fill="#b45353"/>
         </marker>`;
       svg.appendChild(defs);
       const background = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -1716,7 +1726,7 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 	      const stroke = ["#bfdbfe", "#99f6e4", "#fde68a", "#ddd6fe", "#fecdd3"][index % 5];
 	      svgText(svg, item.flowTitle || `${item.key} 對應流程`, 24, 34, { weight: 900, size: 17 });
 	      svgWrappedText(svg, item.kind, 616, 34, { anchor: "end", weight: 900, size: 12, fill: "#0f766e", maxChars: 12, maxLines: 1 });
-	      drawStepChain(svg, item, { markerId: arrowId, accent, stroke, mode: "syntax" });
+	      drawStepChain(svg, item, { markerId: arrowId, reviewMarkerId: reviewArrowId, accent, stroke, mode: "syntax" });
 
       drawCodeSnippet(svg, item.code, 24, 284, 340, 116, "Go 實作片段");
       svgRect(svg, 390, 284, 226, 116, "#ffffff");
@@ -1758,13 +1768,17 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 	      appendSvgMetadata(svg, titleId, descId, `${item.domain} 語法域應用流程圖`, `${item.domain} 使用 Start、Input、Decision、Process、End 標準節點呈現語法域在專案中的應用。`);
       const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
       const arrowId = `domain-arrow-${index}`;
+      const reviewArrowId = `domain-review-arrow-${index}`;
       const gridId = `domain-grid-${index}`;
       defs.innerHTML = `
         <pattern id="${gridId}" width="18" height="18" patternUnits="userSpaceOnUse">
           <path d="M18 0H0V18" fill="none" stroke="#e2e8f0" stroke-width=".8"/>
         </pattern>
-        <marker id="${arrowId}" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
-          <path d="M2 2 L10 6 L2 10 Z" fill="#0f4c81"/>
+        <marker id="${arrowId}" viewBox="0 0 12 10" markerWidth="12" markerHeight="10" markerUnits="userSpaceOnUse" refX="11" refY="5" orient="auto">
+          <path d="M1 1 L11 5 L1 9 Z" fill="#0f4c81"/>
+        </marker>
+        <marker id="${reviewArrowId}" viewBox="0 0 12 10" markerWidth="12" markerHeight="10" markerUnits="userSpaceOnUse" refX="11" refY="5" orient="auto">
+          <path d="M1 1 L11 5 L1 9 Z" fill="#b45353"/>
         </marker>`;
       svg.appendChild(defs);
       const background = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -1782,7 +1796,7 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
       drawGridBackground(svg, gridId, 760, 430);
       svgText(svg, item.domain, 380, 35, { anchor: "middle", weight: 900, size: 22 });
       svgText(svg, "由實際開發流程回推語法使用位置，不只列關鍵字。", 380, 60, { anchor: "middle", size: 13, fill: "#64748b" });
-      drawStepChain(svg, item.steps, { markerId: arrowId, accent: colors[0], stroke: colors[1], mode: "domain" });
+      drawStepChain(svg, item.steps, { markerId: arrowId, reviewMarkerId: reviewArrowId, accent: colors[0], stroke: colors[1], mode: "domain" });
 
       svgRect(svg, 42, 270, 316, 80, "#ffffff");
       svgText(svg, "涵蓋語法", 64, 300, { weight: 900, size: 14, fill: "#0f766e" });
