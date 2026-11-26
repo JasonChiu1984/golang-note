@@ -1679,6 +1679,10 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
           if (g.cx !== undefined) g.cx -= 24;
           g.labelX -= 24;
         }
+      } else {
+        // Leave room for a flat approach to the decision marker.
+        geoms[1].x -= 18;
+        geoms[1].labelX -= 18;
       }
       // The I/O parallelogram is inset by half its lean at the centreline.
 	      const second = geoms[1];
@@ -1690,7 +1694,13 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 	      const decisionLeft = decision.cx - decision.width / 2;
 	      const decisionRight = decision.cx + decision.width / 2;
 	      const reviewStart = decision.cy + decision.height / 2 + 2;
-	      svgPath(svg, `M${inputRight + 2} 108 C${inputRight + 10} 108 ${decisionLeft - 10} ${decision.cy} ${decisionLeft - 2} ${decision.cy}`, markerId, { stroke: route, width: 3.2 });
+	      const approachStart = inputRight + 2;
+	      const decisionTip = decisionLeft - 2;
+	      // Marker triangle extends 10 units behind the tip. Give it a straight
+	      // 14-unit approach so it cannot straddle the curve's last turn.
+	      const approachBend = decisionTip - 14;
+	      const smooth = (approachBend - approachStart) / 3;
+	      svgPath(svg, `M${approachStart} 108 C${approachStart + smooth} 108 ${approachBend - smooth} ${decision.cy} ${approachBend} ${decision.cy} H${decisionTip}`, markerId, { stroke: route, width: 3.2 });
 	      svgPath(svg, `M${decisionRight + 2} ${decision.cy} H${process.x - 2}`, markerId, { stroke: route, width: 3.2 });
 	      svgPath(svg, `M${end.cx} ${process.y + process.height + 2} V${end.cy - end.ry - 2}`, markerId, { stroke: route, width: 3.2 });
 	      svgPath(svg, `M${decision.cx} ${reviewStart} V250 H78 V138`, reviewMarkerId, { stroke: alertRoute, width: 2.2, dash: "7 6" });
