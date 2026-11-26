@@ -312,6 +312,12 @@
       #syntax-flow-title-range .range-compact { display: block; overflow-wrap: anywhere; }
       #syntax-flow-title-range details pre { white-space: pre-wrap; overflow-wrap: anywhere; }
     }
+    .example-loop-card .example-loop-compact { display: none; }
+    @media (max-width: 860px) {
+      .example-loop-card > svg { display: none; }
+      .example-loop-card .example-loop-compact { display: block; overflow-wrap: anywhere; }
+      .example-loop-card details pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+    }
     #scenario-cards .svg-code { white-space: pre; }
     @media (max-width: 1199px) {
       .has-static-cards .static-diagram { display: none; }
@@ -1232,16 +1238,16 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
       {
         key: "break",
         kind: "離開流程",
-        steps: ["迴圈中偵測停止條件", "執行 break", "離開目前 loop/select/switch", "進入後續收尾"],
+        steps: ["進入迴圈並檢查停止條件", "未停止：輪詢後再檢查", "已停止：執行 break", "接續迴圈後的程式"],
         code: ["for {", "    if stopped() {", "        break", "    }", "    poll()", "}"].join("\n"),
-        check: "巢狀流程要確認 break 離開的是哪一層，必要時用 label。",
+        check: "未標籤的 break 離開最內層 for、switch 或 select。若需離開外層，標籤必須是包住這個 break 的 for、switch 或 select。",
       },
       {
         key: "continue",
         kind: "跳過本輪",
-        steps: ["讀取一筆資料", "判斷資料不合格", "continue 跳過本輪", "下一筆仍正常處理"],
+        steps: ["取下一筆；無資料就結束", "檢查名稱是否為空", "空名稱：跳過本輪；其他：處理", "兩條路都回到取下一筆"],
         code: ["for _, job := range jobs {", "    if job.Name == \"\" {", "        continue", "    }", "    process(job)", "}"].join("\n"),
-        check: "continue 前若已取得資源，要確認清理不會被跳過。",
+        check: "continue 跳過本輪剩餘程式，不會離開迴圈。若本輪已取得資源，清理不可放在會被跳過的區段。",
       },
       {
         key: "fallthrough",
@@ -1457,28 +1463,6 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 	          ["decision", "Decision", "還有下一筆？"],
 	          ["process", "Process", "逐筆處理"],
 	          ["terminator", "End", "遍歷完成"],
-	        ],
-	      },
-	      break: {
-	        flowTitle: "break：離開流程控制",
-	        branchLabels: { pass: "stop", review: "nested" },
-	        nodes: [
-	          ["terminator", "Start", "迴圈執行中"],
-	          ["process", "Process", "偵測停止條件"],
-	          ["decision", "Decision", "離開哪一層?"],
-	          ["process", "Process", "break / label"],
-	          ["terminator", "End", "進入收尾"],
-	        ],
-	      },
-	      continue: {
-	        flowTitle: "continue：跳過本輪流程",
-	        branchLabels: { pass: "skip", review: "cleanup" },
-	        nodes: [
-	          ["terminator", "Start", "讀取一筆資料"],
-	          ["process", "Process", "檢查資料品質"],
-	          ["decision", "Decision", "是否不合格?"],
-	          ["process", "Process", "continue 下一筆"],
-	          ["terminator", "End", "保留主流程"],
 	        ],
 	      },
 	      fallthrough: {
@@ -1935,6 +1919,68 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
               exitsWithoutRightNode ? end.cy - 10 : 240, { size: 11, fill: alertRoute, weight: 900 });
 	    }
 
+
+    // These examples have distinct loop paths, not the shared five-node chain.
+    const loopFlows = {
+      break: {
+        flowTitle: "break：停止條件與離開迴圈",
+        description: "未停止就輪詢，再檢查；已停止就離開迴圈。",
+        compact: ["1. 檢查停止條件", "stopped() 是否為 true？", "否：呼叫 poll()，回到步驟 1。", "是：執行 break，接續迴圈後的程式。"],
+        nodes: [
+          ["enter", "terminator", "Start", "進入迴圈", 85, 128, 118, 58],
+          ["stopped", "decision", "Decision", "已停止？", 300, 128, 146, 88],
+          ["poll", "process", "Process", "poll()", 300, 224, 128, 56],
+          ["exit", "terminator", "End", "離開迴圈", 512, 128, 132, 58],
+        ],
+        edges: [
+          ["enter", "stopped", "M146 128 H225"],
+          ["stopped", "exit", "M375 128 H444", "是：break", 410, 113],
+          ["stopped", "poll", "M300 174 V194", "否", 316, 188],
+          ["poll", "stopped", "M234 224 H200 V158 H274", "輪詢後再檢查", 191, 195],
+        ],
+      },
+      continue: {
+        flowTitle: "continue：跳過本輪或處理",
+        description: "資料用完才結束。空名稱跳過本輪；有效資料先處理。兩條路都取下一筆。",
+        compact: ["1. 取下一筆", "耗盡就結束；有資料才檢查名稱是否為空。", "空名稱：執行 continue，回到步驟 1。", "非空名稱：執行 process(job)，回到步驟 1。"],
+        nodes: [
+          ["enter", "terminator", "Start", "走訪 jobs", 69, 134, 108, 56],
+          ["next", "decision", "Decision", "還有資料？", 224, 134, 142, 86],
+          ["empty", "decision", "Decision", "名稱為空？", 404, 134, 140, 86],
+          ["process", "process", "Process", "process(job)", 562, 134, 134, 58],
+          ["skip", "process", "Process", "continue", 404, 226, 112, 56],
+          ["exit", "terminator", "End", "遍歷完成", 224, 226, 126, 56],
+        ],
+        edges: [
+          ["enter", "next", "M125 134 H151"],
+          ["next", "empty", "M297 134 H332", "有", 315, 122],
+          ["next", "exit", "M224 179 V196", "耗盡", 245, 188],
+          ["empty", "process", "M476 134 H493", "否", 484, 122],
+          ["empty", "skip", "M404 179 V196", "是", 419, 189],
+          ["process", "next", "M562 103 V59 H224 V89", "處理後取下一筆", 397, 53],
+          ["skip", "next", "M346 226 H310 V164 H249"],
+        ],
+      },
+    };
+
+    function drawExampleLoop(svg, blueprint, options) {
+      blueprint.edges.forEach(([from, to, path, label, x, y]) => {
+        const edge = svgPath(svg, path, options.markerId, { stroke: "#0f4c81", width: 2.4 });
+        edge.dataset.from = from;
+        edge.dataset.to = to;
+        if (label) svgText(svg, label, x, y, { anchor: "middle", weight: 800, size: 10, fill: "#0f4c81" });
+      });
+      blueprint.nodes.forEach(([id, shape, role, text, cx, cy, width, height]) => {
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.dataset.flowNode = id;
+        svg.appendChild(g);
+        drawFlowNode(g, { shape, role, text }, {
+          x: cx - width / 2, y: cy - height / 2, width, height,
+          cx, cy, rx: width / 2, ry: height / 2, labelX: cx, labelY: cy - 1, maxChars: 15, textSize: 12,
+        }, options);
+      });
+    }
+
     function createSyntaxFlowCard(item, index) {
       const card = document.createElement("article");
       card.className = "flow-card";
@@ -1946,6 +1992,8 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 	      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 	      svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
       const codeLines = String(item.code).split("\n");
+      const loopFlow = Object.hasOwn(loopFlows, item.key) ? loopFlows[item.key] : null;
+      if (loopFlow) card.classList.add("example-loop-card");
       const reviewLines = Math.max(1, Math.ceil(Array.from(item.check).length / 14));
       const panelHeight = Math.max(116, 48 + (codeLines.length - 1) * 17 + 14,
                                    54 + (reviewLines - 1) * 16 + 14);
@@ -1955,7 +2003,7 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 	      svg.setAttribute("role", "img");
 	      const titleId = `svg-syntax-flow-title-${item.key}`;
 	      const descId = `syntax-flow-desc-${item.key}`;
-	      appendSvgMetadata(svg, titleId, descId, item.flowTitle || `${item.key} 語法應用流程圖`, `${item.key} 使用標準程式流程圖符號呈現 ${item.kind} 的工程應用。`);
+	      appendSvgMetadata(svg, titleId, descId, loopFlow?.flowTitle || item.flowTitle || `${item.key} 語法應用流程圖`, loopFlow?.description || `${item.key} 使用標準程式流程圖符號呈現 ${item.kind} 的工程應用。`);
 
 	      const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
       const arrowId = `flow-arrow-${item.key}`;
@@ -1979,9 +2027,11 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 	      drawGridBackground(svg, gridId, chartWidth, chartHeight);
 	      const accent = ["#eff6ff", "#ecfdf5", "#fffbeb", "#f5f3ff", "#fff1f2"][index % 5];
 	      const stroke = ["#bfdbfe", "#99f6e4", "#fde68a", "#ddd6fe", "#fecdd3"][index % 5];
-	      svgText(svg, item.flowTitle || `${item.key} 對應流程`, 24, 34, { weight: 900, size: 17 });
+	      svgText(svg, loopFlow?.flowTitle || item.flowTitle || `${item.key} 對應流程`, 24, 34, { weight: 900, size: 17 });
 	      svgWrappedText(svg, item.kind, 616, 34, { anchor: "end", weight: 900, size: 12, fill: "#0f766e", maxChars: 12, maxLines: 1 });
-	      drawStepChain(svg, item, { markerId: arrowId, reviewMarkerId: reviewArrowId, accent, stroke, mode: "syntax" });
+	      const options = { markerId: arrowId, reviewMarkerId: reviewArrowId, accent, stroke, mode: "syntax" };
+        if (loopFlow) drawExampleLoop(svg, loopFlow, options);
+        else drawStepChain(svg, item, options);
 
       drawCodeSnippet(svg, codeLines, 24, 284, 340, panelHeight, "Go 實作片段");
       const review = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -1992,6 +2042,16 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
       svgWrappedText(review, item.check, 410, 338, { size: 12, fill: "#334155", maxChars: 14, maxLines: reviewLines, lineHeight: 16, strictWrap: true });
       card.appendChild(svg);
 
+      if (loopFlow) {
+        const compact = document.createElement("div");
+        compact.className = "compact-flow example-loop-compact";
+        const [heading, explanation, first, second] = loopFlow.compact;
+        compact.innerHTML = `<ol><li class="flow-node"><strong></strong><span></span></li></ol><div class="branches"><p class="branch"></p><p class="branch related"></p></div>`;
+        [heading, explanation, first, second].forEach((text, i) => {
+          compact.querySelectorAll("strong, span, p")[i].textContent = text;
+        });
+        card.appendChild(compact);
+      }
       if (item.key === "range") {
         const compact = document.createElement("div");
         compact.className = "compact-flow range-compact";
@@ -2002,7 +2062,7 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
           '<p class="branch related"><strong>耗盡：</strong>結束迴圈。</p></div>';
         card.appendChild(compact);
       }
-      if (item.key === "range" || codeLines.some(line => codePreview(line) !== line)) {
+      if (loopFlow || item.key === "range" || codeLines.some(line => codePreview(line) !== line)) {
         const details = document.createElement("details");
         const summary = document.createElement("summary");
         summary.textContent = "展開完整 Go 程式片段";
@@ -2011,7 +2071,7 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
         fullCode.textContent = item.code;
         pre.appendChild(fullCode);
         details.append(summary, pre);
-        if (item.key === "range") {
+        if (loopFlow || item.key === "range") {
           const notes = document.createElement("p");
           notes.style.padding = "0 .8rem .5rem";
           notes.textContent = item.check;
