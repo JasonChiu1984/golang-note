@@ -92,7 +92,7 @@
     }
     .btn:hover, .btn.active { border-color: var(--blue); color: var(--blue); background: #eff6ff; }
     main { max-width: 1220px; margin: 0 auto; padding: 22px 20px 64px; }
-    section { margin: 26px 0; scroll-margin-top: 82px; }
+    section { margin: 26px 0; scroll-margin-top: calc(var(--toolbar-height, 82px) + 12px); }
     .section-head { display: flex; justify-content: space-between; gap: 16px; align-items: end; margin-bottom: 14px; }
     .section-head p, .muted { color: var(--muted); }
     .section-head p { margin: 6px 0 0; }
@@ -194,6 +194,13 @@
       .toolbar { position: static; }
       .hero { padding-top: 26px; }
     }
+    @media (max-width: 640px) {
+      .grid-2, .grid-3, .category-grid, .module-grid { grid-template-columns: minmax(0, 1fr); }
+    .module-card, .module-card header > * { min-width: 0; overflow-wrap: anywhere; }
+    .module-card .meta { flex-wrap: wrap; }
+    .module-card .cmd code { white-space: normal; overflow-wrap: anywhere; }
+    }
+    @media (max-width: 640px) { th, td { overflow-wrap: anywhere; } }
   </style>
 </head>
 <body id="top">
@@ -488,6 +495,14 @@ govulncheck ./...</code></pre>
       renderModules();
     });
     search.addEventListener("input", renderModules);
+  </script>
+  <script>
+    (() => {
+      const nav = document.querySelector(".toolbar");
+      const measure = () => document.documentElement.style.setProperty("--toolbar-height", `${nav.offsetHeight}px`);
+      measure();
+      if ("ResizeObserver" in window) new ResizeObserver(measure).observe(nav);
+    })();
   </script>
 </body>
 </html>

@@ -93,7 +93,7 @@
     }
     .btn:hover { border-color: var(--blue); color: var(--blue); background: #eff6ff; }
     main { max-width: 1220px; margin: 0 auto; padding: 22px 20px 64px; }
-    section { margin: 28px 0; scroll-margin-top: 82px; }
+    section { margin: 28px 0; scroll-margin-top: calc(var(--toolbar-height, 82px) + 12px); }
     .section-head { display: flex; justify-content: space-between; gap: 16px; align-items: end; margin-bottom: 14px; }
     .section-head p, .muted { color: var(--muted); }
     .section-head p { margin: 6px 0 0; }
@@ -156,10 +156,14 @@
     .metric-card strong { display: block; font-size: 1.55rem; line-height: 1; }
     .metric-card span { display: block; margin-top: 7px; color: var(--muted); }
     @media (max-width: 860px) {
-      .hero-inner, .grid-2, .grid-3, .case-grid, .metric-grid { grid-template-columns: 1fr; }
-      .hero-grid { grid-template-columns: 1fr; }
+      .hero-inner, .grid-2, .grid-3, .case-grid, .metric-grid { grid-template-columns: minmax(0, 1fr); }
+      .hero-grid { grid-template-columns: minmax(0, 1fr); }
       .section-head { display: block; }
       table { min-width: 760px; }
+    }
+    @media (max-width: 640px) {
+      .grid-2, .grid-3, .case-grid, .metric-grid { grid-template-columns: minmax(0, 1fr); }
+    .panel { min-width: 0; }
     }
   </style>
 </head>
@@ -863,5 +867,13 @@ GPU_ELEMENTS=1048576 GPU_ROUNDS=128 /tmp/bench-gpu-metal
       </div>
     </section>
   </main>
+  <script>
+    (() => {
+      const nav = document.querySelector(".toolbar");
+      const measure = () => document.documentElement.style.setProperty("--toolbar-height", `${nav.offsetHeight}px`);
+      measure();
+      if ("ResizeObserver" in window) new ResizeObserver(measure).observe(nav);
+    })();
+  </script>
 </body>
 </html>

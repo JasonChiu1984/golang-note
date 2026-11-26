@@ -114,7 +114,7 @@
       line-height: 1;
     }
     main { max-width: 1220px; margin: 0 auto; padding: 22px 20px 64px; }
-    section { margin: 26px 0; scroll-margin-top: 82px; }
+    section { margin: 26px 0; scroll-margin-top: calc(var(--toolbar-height, 82px) + 12px); }
     .section-head { display: flex; justify-content: space-between; gap: 16px; align-items: end; margin-bottom: 14px; }
     .section-head p, .muted { color: var(--muted); }
     .section-head p { margin: 6px 0 0; }
@@ -263,7 +263,7 @@
     .hidden { display: none !important; }
     @media (max-width: 980px) {
       .hero-inner, .grid-2, .grid-3, .grid-4, .syntax-grid, .case-grid, .topic-grid, .review-grid, .walk-grid, .scenario-grid, .index-grid {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
     @media (max-width: 640px) {
@@ -279,6 +279,19 @@
         padding: 9px 12px;
       }
     }
+    @media (max-width: 640px) {
+      .syntax-grid, .case-grid, .topic-grid, .review-grid, .walk-grid, .scenario-grid, .index-grid, .grid-2, .grid-3, .grid-4 { grid-template-columns: minmax(0, 1fr); }
+    .syntax-card td { overflow-wrap: anywhere; }
+    .syntax-card pre, .case-card pre { max-width: 100%; }
+    }
+    @media (max-width: 980px) {
+      main { overflow-wrap: anywhere; }
+      .search-panel { grid-template-columns: minmax(0, 1fr); }
+      .search-input { min-width: 0; width: 100%; }
+      .filter-row .btn { white-space: normal; overflow-wrap: anywhere; }
+      th, td { overflow-wrap: anywhere; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
   </style>
 </head>
 <body id="top">
@@ -1851,6 +1864,14 @@ docker compose down -v</code></pre>
     renderProductionFlow();
     renderReview();
     bindGlobalActions();
+  </script>
+  <script>
+    (() => {
+      const nav = document.querySelector(".toolbar");
+      const measure = () => document.documentElement.style.setProperty("--toolbar-height", `${nav.offsetHeight}px`);
+      measure();
+      if ("ResizeObserver" in window) new ResizeObserver(measure).observe(nav);
+    })();
   </script>
 </body>
 </html>
