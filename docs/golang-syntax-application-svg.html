@@ -306,6 +306,12 @@
     }
     @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
     .static-cards { display: none; }
+    #syntax-flow-title-range .range-compact { display: none; }
+    @media (max-width: 860px) {
+      #syntax-flow-title-range > svg { display: none; }
+      #syntax-flow-title-range .range-compact { display: block; overflow-wrap: anywhere; }
+      #syntax-flow-title-range details pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+    }
     #scenario-cards .svg-code { white-space: pre; }
     @media (max-width: 1199px) {
       .has-static-cards .static-diagram { display: none; }
@@ -1219,9 +1225,9 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
       {
         key: "range",
         kind: "集合遍歷",
-        steps: ["接收 slice/map/channel", "range 取出 key/value", "逐筆執行處理", "必要時複製迴圈變數"],
-        code: ["for _, job := range jobs {", "    job := job", "    go func() { _ = process(job) }()", "}"].join("\n"),
-        check: "goroutine/closure 內使用 range 變數時要確認捕獲語意。",
+        steps: ["選擇 slice、map 或接收通道", "取得下一筆", "有值時逐筆處理並迴圈", "來源耗盡就結束"],
+        code: ["for i, job := range sliceJobs {", "    visit(i, job)", "}", "for key, job := range jobsByKey {", "    visitKey(key, job)", "}", "for job := range jobsCh {", "    take(job)", "}"].join("\n"),
+        check: "slice 依索引順序；map 順序不保證；接收通道只用一個變數，開啟但無值時等待，關閉後讀完才結束。Go 1.22 起 := 每輪建立新變數，= 仍重用預先宣告的變數。",
       },
       {
         key: "break",
@@ -1444,11 +1450,11 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 	      },
 	      range: {
 	        flowTitle: "range：集合遍歷流程",
-	        branchLabels: { pass: "next", review: "capture" },
+	        branchLabels: { pass: "有", review: "耗盡" },
 	        nodes: [
 	          ["terminator", "Start", "接收集合"],
 	          ["io", "Input", "slice / map / chan"],
-	          ["decision", "Decision", "是否需複製變數?"],
+	          ["decision", "Decision", "還有下一筆？"],
 	          ["process", "Process", "逐筆處理"],
 	          ["terminator", "End", "遍歷完成"],
 	        ],
@@ -1900,7 +1906,8 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 	      svgPath(svg, decisionApproach, markerId, { stroke: route, width: 3.2 });
 	      svgPath(svg, `M${decisionRight + 2} ${decision.cy} H${process.x - 2}`, markerId, { stroke: route, width: 3.2 });
 	      const isRetry = flowSource.key === "for";
-      const exitsWithoutRightNode = isRetry || flowSource.key === "select" || flowSource.key === "goto";
+      const isRange = flowSource.key === "range";
+      const exitsWithoutRightNode = isRetry || isRange || flowSource.key === "select" || flowSource.key === "goto";
       if (exitsWithoutRightNode) {
         // Leave optical padding for the labels near the curved terminator edges.
         start.labelY += 4;
@@ -1910,6 +1917,10 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
         const attemptX = second.x + second.width / 2;
         const backoffX = process.x + process.width / 2;
         svgPath(svg, `M${backoffX} ${process.y - 2} V54 H${attemptX} V${second.y - 2}`, markerId, { stroke: route, width: 3.2 });
+      } else if (isRange) {
+        const processX = process.x + process.width / 2;
+        const decisionTop = decision.cy - decision.height / 2 - 2;
+        svgPath(svg, `M${processX} ${process.y - 2} V54 H${decision.cx} V${decisionTop}`, markerId, { stroke: route, width: 3.2 });
       } else {
         svgPath(svg, `M${end.cx} ${process.y + process.height + 2} V${end.cy - end.ry - 2}`, markerId, { stroke: route, width: 3.2 });
       }
@@ -1981,7 +1992,17 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
       svgWrappedText(review, item.check, 410, 338, { size: 12, fill: "#334155", maxChars: 14, maxLines: reviewLines, lineHeight: 16, strictWrap: true });
       card.appendChild(svg);
 
-      if (codeLines.some(line => codePreview(line) !== line)) {
+      if (item.key === "range") {
+        const compact = document.createElement("div");
+        compact.className = "compact-flow range-compact";
+        compact.innerHTML = '<ol><li class="flow-node"><strong>1. 取得來源</strong><span>slice、map 或接收通道。</span></li>' +
+          '<li class="compact-arrow" aria-hidden="true">↓</li>' +
+          '<li class="flow-node"><strong>2. 嘗試取得下一筆</strong><span>開啟但暫無資料的通道會等待，不視為耗盡。</span></li></ol>' +
+          '<div class="branches"><p class="branch"><strong>有：</strong>處理一筆，回到步驟 2。</p>' +
+          '<p class="branch related"><strong>耗盡：</strong>結束迴圈。</p></div>';
+        card.appendChild(compact);
+      }
+      if (item.key === "range" || codeLines.some(line => codePreview(line) !== line)) {
         const details = document.createElement("details");
         const summary = document.createElement("summary");
         summary.textContent = "展開完整 Go 程式片段";
@@ -1990,6 +2011,12 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
         fullCode.textContent = item.code;
         pre.appendChild(fullCode);
         details.append(summary, pre);
+        if (item.key === "range") {
+          const notes = document.createElement("p");
+          notes.style.padding = "0 .8rem .5rem";
+          notes.textContent = item.check;
+          details.appendChild(notes);
+        }
         card.appendChild(details);
       }
       return card;
