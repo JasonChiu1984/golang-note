@@ -1124,9 +1124,9 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
       {
         key: "for",
         kind: "迭代與重試",
-        steps: ["設定重試上限", "for 控制每一輪", "失敗等待 backoff", "命中成功或上限後離開"],
-        code: ["for attempt := 0; attempt < maxRetry; attempt++ {", "    if err := call(); err == nil { return nil }", "    time.Sleep(backoff(attempt))", "}"].join("\n"),
-        check: "每個 for 都要能說明退出條件，長輪詢需搭配 context。",
+        steps: ["設定正數嘗試上限", "每輪呼叫一次", "未達上限才等待", "成功或最後失敗即回傳"],
+        code: ["if maxAttempts < 1 { return errors.New(\"invalid attempt limit\") }", "var err error", "for attempt := 1; attempt <= maxAttempts; attempt++ {", "    err = call()", "    if err == nil { return nil }", "    if attempt == maxAttempts { return err }", "    wait(attempt - 1)", "}", "return err"].join("\n"),
+        check: "另需匯入 errors。call 僅回傳可重試錯誤；wait 接受零起算的退避索引。長等待改用可取消的 context。",
       },
       {
         key: "range",
@@ -1159,9 +1159,9 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
       {
         key: "goto",
         kind: "標籤跳轉",
-        steps: ["多段初始化可能失敗", "失敗時 goto cleanup", "集中釋放已取得資源", "回傳原始錯誤"],
-        code: ["if err := openA(); err != nil { goto cleanup }", "if err := openB(); err != nil { goto cleanup }", "cleanup:", "    return err"].join("\n"),
-        check: "一般資源釋放優先 defer；goto 只保留在低階收斂清理。",
+        steps: ["先宣告所有清理會用到的值", "失敗時 goto cleanup", "按 B、A 順序釋放已開啟資源", "保留原錯誤"],
+        code: ["var releaseA, releaseB func()", "var err error", "releaseA, err = openA()", "if err != nil { goto cleanup }", "releaseB, err = openB()", "if err != nil { goto cleanup }", "cleanup:", "    if releaseB != nil { releaseB() }", "    if releaseA != nil { releaseA() }", "    return err"].join("\n"),
+        check: "openA／openB 須在成功時回傳釋放函式、失敗時回傳 nil 與原錯誤。一般情況優先 defer。",
       },
       {
         key: "defer",
@@ -1215,9 +1215,9 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
       {
         key: "select",
         kind: "多路等待",
-        steps: ["同時等待資料與取消", "select 監聽多個 case", "ctx timeout 優先退出", "data case 正常處理"],
-        code: ["select {", "case <-ctx.Done():", "    return ctx.Err()", "case job := <-jobs:", "    return process(job)", "}"].join("\n"),
-        check: "無條件 default 會造成 busy loop；timeout 要用 context 或 timer 管理。",
+        steps: ["同時等待資料與取消", "多個 case 就緒時不保證優先順序", "收到資料時先檢查 ok", "取消或通道結束時回傳對應錯誤"],
+        code: ["select {", "case <-ctx.Done():", "    return ctx.Err()", "case job, ok := <-jobs:", "    if !ok { return errJobsClosed }", "    return process(job)", "}"].join("\n"),
+        check: "多個 case 同時就緒時，Go 均勻偽隨機選一個。不檢查 ok 會把關閉且排空的通道誤當成有效零值。",
 	      },
 	    ];
 
@@ -1345,13 +1345,13 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 	      },
 	      for: {
 	        flowTitle: "for：迭代與退出流程",
-	        branchLabels: { pass: "continue", review: "stop" },
+	        branchLabels: { pass: "未達上限", review: "成功／達上限" },
 	        nodes: [
-	          ["terminator", "Start", "設定退出條件"],
-	          ["process", "Process", "執行一輪迭代"],
-	          ["decision", "Decision", "成功或達上限?"],
-	          ["process", "Process", "backoff / retry"],
-	          ["terminator", "End", "離開迴圈"],
+	          ["terminator", "Start", "設定嘗試上限"],
+	          ["process", "Process", "執行一次呼叫"],
+	          ["decision", "Decision", "成功或達上限？"],
+	          ["process", "Process", "退避等待"],
+	          ["terminator", "End", "回傳結果"],
 	        ],
 	      },
 	      range: {
@@ -1400,13 +1400,13 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 	      },
 	      goto: {
 	        flowTitle: "goto：集中清理流程",
-	        branchLabels: { pass: "cleanup", review: "prefer defer" },
+	        branchLabels: { pass: "出錯", review: "成功" },
 	        nodes: [
 	          ["terminator", "Start", "多段初始化"],
-	          ["process", "Process", "偵測初始化失敗"],
-	          ["decision", "Decision", "是否需集中清理?"],
-	          ["process", "Process", "goto cleanup"],
-	          ["terminator", "End", "回傳原錯誤"],
+	          ["process", "Process", "依序開啟 A / B"],
+	          ["decision", "Decision", "初始化出錯？"],
+	          ["process", "Process", "跳至 cleanup"],
+	          ["terminator", "End", "反序釋放並回傳"],
 	        ],
 	      },
 	      defer: {
@@ -1488,13 +1488,13 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 	      },
 	      select: {
 	        flowTitle: "select：多路等待流程",
-	        branchLabels: { pass: "case", review: "busy loop" },
+	        branchLabels: { pass: "接收", review: "取消" },
 	        nodes: [
 	          ["terminator", "Start", "同時等待事件"],
-	          ["io", "Input", "ctx / channel"],
-	          ["decision", "Decision", "哪個 case 先到?"],
-	          ["process", "Process", "處理資料或取消"],
-	          ["terminator", "End", "避免阻塞"],
+	          ["io", "Input", "ctx / jobs"],
+	          ["decision", "Decision", "選中的 case？"],
+	          ["process", "Process", "檢查 ok 再處理"],
+	          ["terminator", "End", "回傳結果"],
 	        ],
 	      },
 	    };
@@ -1811,12 +1811,29 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
         : `M${approachStart} ${start.cy} C${approachStart + smooth} ${start.cy} ${approachBend - smooth} ${decision.cy} ${approachBend} ${decision.cy} H${decisionTip}`;
 	      svgPath(svg, decisionApproach, markerId, { stroke: route, width: 3.2 });
 	      svgPath(svg, `M${decisionRight + 2} ${decision.cy} H${process.x - 2}`, markerId, { stroke: route, width: 3.2 });
-	      svgPath(svg, `M${end.cx} ${process.y + process.height + 2} V${end.cy - end.ry - 2}`, markerId, { stroke: route, width: 3.2 });
-	      svgPath(svg, `M${decision.cx} ${reviewStart} V250 H${start.cx} V${start.cy + start.ry + 2}`, reviewMarkerId, { stroke: alertRoute, width: 2.2, dash: "7 6" });
+	      const isRetry = flowSource.key === "for";
+      const exitsWithoutRightNode = isRetry || flowSource.key === "select" || flowSource.key === "goto";
+      if (exitsWithoutRightNode) {
+        // Leave optical padding for the labels near the curved terminator edges.
+        start.labelY += 4;
+        end.labelY += 4;
+      }
+      if (isRetry) {
+        const attemptX = second.x + second.width / 2;
+        const backoffX = process.x + process.width / 2;
+        svgPath(svg, `M${backoffX} ${process.y - 2} V54 H${attemptX} V${second.y - 2}`, markerId, { stroke: route, width: 3.2 });
+      } else {
+        svgPath(svg, `M${end.cx} ${process.y + process.height + 2} V${end.cy - end.ry - 2}`, markerId, { stroke: route, width: 3.2 });
+      }
+	      const reviewPath = exitsWithoutRightNode
+        ? `M${decision.cx} ${reviewStart} V${end.cy} H${end.cx - end.rx - 2}`
+        : `M${decision.cx} ${reviewStart} V250 H${start.cx} V${start.cy + start.ry + 2}`;
+      svgPath(svg, reviewPath, reviewMarkerId, { stroke: alertRoute, width: 2.2, dash: "7 6" });
 	      nodes.slice(0, geoms.length).forEach((node, index) => drawFlowNode(svg, node, geoms[index], { accent, stroke }));
 	      const branchLabels = flowSource.branchLabels || { pass: "pass", review: "review" };
 	      svgText(svg, branchLabels.pass, (decisionRight + process.x) / 2, flowSource.key === "package" ? 66 : 87, { anchor: "middle", size: 11, fill: route, weight: 900 });
-	      svgText(svg, branchLabels.review, 96, 240, { size: 11, fill: alertRoute, weight: 900 });
+	      svgText(svg, branchLabels.review, exitsWithoutRightNode ? decision.cx + 9 : 96,
+              exitsWithoutRightNode ? end.cy - 10 : 240, { size: 11, fill: alertRoute, weight: 900 });
 	    }
 
     function createSyntaxFlowCard(item, index) {
