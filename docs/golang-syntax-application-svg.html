@@ -305,6 +305,36 @@
       svg { min-width: 760px; }
     }
     @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    .static-cards { display: none; }
+    #scenario-cards .svg-code { white-space: pre; }
+    @media (max-width: 1199px) {
+      .has-static-cards .static-diagram { display: none; }
+      .has-static-cards .static-cards { display: grid; gap: .8rem; }
+      .static-cards ol {
+        list-style: none; margin: 0; padding: 0; min-width: 0;
+        display: grid; gap: .65rem;
+      }
+      .static-cards[data-static-cards="keyword-map"] ol {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+      }
+      .static-cards li, .static-cards .scenario-summary {
+        min-width: 0; padding: .75rem; border: 1px solid var(--line);
+        border-radius: 8px; background: #fff; font-size: .95rem; overflow-wrap: anywhere;
+      }
+      .static-cards strong { display: block; }
+      .static-cards .static-card-lines { color: var(--muted); }
+      .static-cards pre { background: #f1f5f9; color: var(--ink); padding: .55rem; margin: .35rem 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .875rem; }
+      .scenario-lanes { display: grid; gap: 1.1rem; }
+      .scenario-lanes li + li { margin-top: .85rem; position: relative; }
+      .scenario-lanes li + li::before {
+        content: ""; position: absolute; inset: auto auto calc(100% + .2rem) calc(50% - .2rem);
+        width: .46rem; height: .46rem; border-right: 2px solid #64748b;
+        border-bottom: 2px solid #64748b; transform: rotate(45deg);
+      }
+    }
+    @media (min-width: 650px) and (max-width: 1199px) {
+      .scenario-lanes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
   </style>
 </head>
 <body id="top">
@@ -363,8 +393,8 @@
               <path d="M1 1 L11 5 L1 9 Z" fill="#64748b"/>
             </marker>
           </defs>
-          <g id="background"></g>
-          <g id="connectors">
+          <g id="syntax-flow-background"></g>
+          <g id="syntax-flow-connectors">
             <path class="line line-blue" marker-end="url(#arrow-blue)" d="M211 150 H319"/>
             <path class="line line-blue" marker-end="url(#arrow-blue)" d="M501 150 H549"/>
             <path class="line line-blue" marker-end="url(#arrow-blue)" d="M731 150 H779"/>
@@ -555,11 +585,11 @@
         </div>
         <span class="tag">Keyword Coverage SVG</span>
       </div>
-      <div class="svg-shell">
+      <div class="svg-shell static-diagram">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" role="img" aria-labelledby="keyword-title keyword-desc">
           <title id="keyword-title">Go keyword 應用覆蓋圖</title>
           <desc id="keyword-desc">列出 Go 25 個 keyword 及其專案應用用途。</desc>
-          <g id="background"></g>
+          <g id="keyword-map-background"></g>
           <g id="labels">
             <text class="svg-title" x="600" y="42" text-anchor="middle" font-size="28">Go Keywords -> Project Applications</text>
             <text class="svg-muted" x="600" y="70" text-anchor="middle" font-size="14">宣告、流程、抽象、併發與套件邊界一次對照</text>
@@ -597,6 +627,7 @@
           </g>
         </svg>
       </div>
+      <div class="static-cards" data-static-cards="keyword-map"></div>
     </section>
 
     <section id="per-syntax-flows">
@@ -618,7 +649,7 @@
         </div>
         <span class="tag">Application SVG</span>
       </div>
-      <div class="svg-shell">
+      <div class="svg-shell static-diagram">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" role="img" aria-labelledby="app-title app-desc">
           <title id="app-title">Go 語法應用場景圖</title>
           <desc id="app-desc">使用八個應用場景說明 Go 語法在專案中的用途。</desc>
@@ -627,8 +658,8 @@
               <path d="M2 2 L10 6 L2 10 Z" fill="#64748b"/>
             </marker>
           </defs>
-          <g id="background"></g>
-          <g id="connectors">
+          <g id="application-panels-background"></g>
+          <g id="application-panels-connectors">
             <path class="line" marker-end="url(#arrow-gray)" d="M280 140 H350"/>
             <path class="line" marker-end="url(#arrow-gray)" d="M570 140 H640"/>
             <path class="line" marker-end="url(#arrow-gray)" d="M860 140 H930"/>
@@ -663,9 +694,10 @@
 
             <rect class="node node-rose" x="40" y="300" width="240" height="150"/>
             <text class="svg-title" x="160" y="336" text-anchor="middle" font-size="18">5. Interface</text>
-            <text class="svg-code" x="64" y="370" font-size="13">type Store interface {</text>
-            <text class="svg-code" x="64" y="394" font-size="13">  Save(context.Context, Job) error</text>
-            <text class="svg-code" x="64" y="418" font-size="13">}</text>
+            <text class="svg-code" x="64" y="365" font-size="13">type Store interface {</text>
+            <text class="svg-code" x="64" y="384" font-size="13">  Save(context.Context,</text>
+            <text class="svg-code" x="64" y="403" font-size="13">    Job) error</text>
+            <text class="svg-code" x="64" y="422" font-size="13">}</text>
 
             <rect class="node node-blue" x="350" y="300" width="220" height="150"/>
             <text class="svg-title" x="460" y="336" text-anchor="middle" font-size="18">6. Generics</text>
@@ -675,15 +707,18 @@
 
             <rect class="node node-teal" x="640" y="300" width="220" height="150"/>
             <text class="svg-title" x="750" y="336" text-anchor="middle" font-size="18">7. Concurrency</text>
-            <text class="svg-code" x="664" y="370" font-size="13">go worker(ctx, jobs)</text>
-            <text class="svg-code" x="664" y="394" font-size="13">select { case &lt;-ctx.Done(): }</text>
-            <text class="svg-muted" x="664" y="424" font-size="12">用途：可取消背景工作</text>
+            <text class="svg-code" x="664" y="365" font-size="13">go worker(ctx, jobs)</text>
+            <text class="svg-code" x="664" y="384" font-size="13">select {</text>
+            <text class="svg-code" x="664" y="403" font-size="13">case &lt;-ctx.Done():</text>
+            <text class="svg-code" x="664" y="421" font-size="13">}</text>
+            <text class="svg-muted" x="664" y="440" font-size="12">用途：可取消背景工作</text>
 
             <rect class="node node-amber" x="930" y="300" width="220" height="150"/>
             <text class="svg-title" x="1040" y="336" text-anchor="middle" font-size="18">8. Testing</text>
             <text class="svg-code" x="954" y="370" font-size="13">func TestX(t *testing.T)</text>
-            <text class="svg-code" x="954" y="394" font-size="13">func BenchmarkX(b *testing.B)</text>
-            <text class="svg-muted" x="954" y="424" font-size="12">用途：固定合約與效能</text>
+            <text class="svg-code" x="954" y="393" font-size="13">func BenchmarkX(</text>
+            <text class="svg-code" x="954" y="412" font-size="13">  b *testing.B)</text>
+            <text class="svg-muted" x="954" y="437" font-size="12">用途：固定合約與效能</text>
           </g>
           <g id="result-card">
             <rect class="node" x="270" y="545" width="660" height="85"/>
@@ -692,6 +727,7 @@
           </g>
         </svg>
       </div>
+      <div class="static-cards" data-static-cards="application-panels"></div>
     </section>
 
     <section id="coverage-matrix">
@@ -809,6 +845,58 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
     </section>
   </main>
   <script>
+    // Render narrow layouts from the existing SVG labels so the two views cannot
+    // silently diverge when an example is edited.
+    function renderStaticCards(sectionId, sourceId, perLane, formatCode) {
+      const section = document.getElementById(sectionId);
+      const target = section.querySelector("[data-static-cards]");
+      const groups = [];
+      for (const el of document.getElementById(sourceId).children) {
+        if (el.localName === "rect") groups.push([]);
+        else if (el.localName === "text" && groups.length) groups.at(-1).push(el);
+      }
+      if (!groups.length) return;
+      const lanes = document.createElement("div");
+      if (formatCode) lanes.className = "scenario-lanes";
+      for (let index = 0; index < groups.length; index += perLane) {
+        const list = document.createElement("ol");
+        if (formatCode) list.setAttribute("aria-label", index === 0 ? "套件、資料與控制" : "抽象、併發與測試");
+        for (const [heading, ...lines] of groups.slice(index, index + perLane)) {
+          const card = document.createElement("li");
+          const title = document.createElement("strong");
+          title.textContent = heading.textContent;
+          card.appendChild(title);
+          const codeLines = formatCode ? lines.filter(el => el.classList.contains("svg-code")) : [];
+          if (codeLines.length) {
+            const pre = document.createElement("pre");
+            const code = document.createElement("code");
+            code.textContent = codeLines.map(el => el.textContent).join("\n");
+            pre.appendChild(code);
+            card.appendChild(pre);
+          }
+          for (const el of lines.filter(el => !codeLines.includes(el))) {
+            const row = document.createElement("div");
+            row.className = "static-card-lines";
+            row.textContent = el.textContent;
+            card.appendChild(row);
+          }
+          list.appendChild(card);
+        }
+        lanes.appendChild(list);
+      }
+      target.appendChild(lanes);
+      if (formatCode) {
+        const summary = document.createElement("div"); summary.className = "scenario-summary";
+        for (const el of document.querySelectorAll("#result-card > text")) {
+          const line = document.createElement("div"); line.textContent = el.textContent;
+          summary.appendChild(line);
+        }
+        target.appendChild(summary);
+      }
+      section.classList.add("has-static-cards");
+    }
+    renderStaticCards("keyword-map", "keyword-cards", 25, false);
+    renderStaticCards("application-panels", "scenario-cards", 4, true);
     const syntaxDomains = [
       {
         domain: "套件與檔案",
