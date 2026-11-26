@@ -1671,19 +1671,32 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 	        { x: 536, y: 96, width: 88, height: 66, labelX: 580, labelY: 119, maxChars: 8, textSize: 9 },
 	        { cx: 580, cy: 232, rx: 60, ry: 28, labelX: 580, labelY: 225, maxChars: 9 },
 	      ];
-	      // The I/O parallelogram is inset by half its lean at the centreline.
+	      // Keep the select diagram's right edge clear; move the four related nodes
+      // and their labels by the same amount instead of moving shapes alone.
+      if (flowSource.key === "select") {
+        for (const g of geoms.slice(1)) {
+          if (g.x !== undefined) g.x -= 24;
+          if (g.cx !== undefined) g.cx -= 24;
+          g.labelX -= 24;
+        }
+      }
+      // The I/O parallelogram is inset by half its lean at the centreline.
 	      const second = geoms[1];
 	      const inset = nodes[1].shape === "io" ? Math.min(22, Math.round(second.width * 0.16)) / 2 : 0;
 	      const inputLeft = second.x + inset;
 	      const inputRight = second.x + second.width - inset;
 	      svgPath(svg, `M138 108 H${inputLeft - 2}`, markerId, { stroke: route, width: 3.2 });
-	      svgPath(svg, `M${inputRight + 2} 108 C${inputRight + 10} 108 350 128 358 128`, markerId, { stroke: route, width: 3.2 });
-	      svgPath(svg, "M502 128 H534", markerId, { stroke: route, width: 3.2 });
-	      svgPath(svg, "M580 164 V202", markerId, { stroke: route, width: 3.2 });
-	      svgPath(svg, "M430 186 V250 H78 V138", reviewMarkerId, { stroke: alertRoute, width: 2.2, dash: "7 6" });
+	      const decision = geoms[2], process = geoms[3], end = geoms[4];
+	      const decisionLeft = decision.cx - decision.width / 2;
+	      const decisionRight = decision.cx + decision.width / 2;
+	      const reviewStart = decision.cy + decision.height / 2 + 2;
+	      svgPath(svg, `M${inputRight + 2} 108 C${inputRight + 10} 108 ${decisionLeft - 10} ${decision.cy} ${decisionLeft - 2} ${decision.cy}`, markerId, { stroke: route, width: 3.2 });
+	      svgPath(svg, `M${decisionRight + 2} ${decision.cy} H${process.x - 2}`, markerId, { stroke: route, width: 3.2 });
+	      svgPath(svg, `M${end.cx} ${process.y + process.height + 2} V${end.cy - end.ry - 2}`, markerId, { stroke: route, width: 3.2 });
+	      svgPath(svg, `M${decision.cx} ${reviewStart} V250 H78 V138`, reviewMarkerId, { stroke: alertRoute, width: 2.2, dash: "7 6" });
 	      nodes.slice(0, geoms.length).forEach((node, index) => drawFlowNode(svg, node, geoms[index], { accent, stroke }));
 	      const branchLabels = flowSource.branchLabels || { pass: "pass", review: "review" };
-	      svgText(svg, branchLabels.pass, 518, 87, { anchor: "middle", size: 11, fill: route, weight: 900 });
+	      svgText(svg, branchLabels.pass, (decisionRight + process.x) / 2, 87, { anchor: "middle", size: 11, fill: route, weight: 900 });
 	      svgText(svg, branchLabels.review, 96, 240, { size: 11, fill: alertRoute, weight: 900 });
 	    }
 
