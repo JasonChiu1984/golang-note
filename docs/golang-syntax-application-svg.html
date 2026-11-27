@@ -1301,9 +1301,9 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
       {
         key: "chan",
         kind: "通訊管道",
-        steps: ["建立工作佇列", "producer send job", "worker receive job", "owner close channel"],
-        code: ["jobs := make(chan Job, 32)", "go worker(ctx, jobs)", "jobs <- job", "close(jobs)"].join("\n"),
-        check: "只能由傳送端 owner close；避免 send on closed channel。",
+        steps: ["建立有界通道與完成訊號", "唯一傳送端送完再關閉", "worker 排空已入列的工作", "等待 worker 回報完成"],
+        code: ["jobs := make(chan Job, 32)", "done := make(chan struct{})", "go func(in <-chan Job) {", "    for j := range in {", "        process(j)", "    }", "    close(done)", "}(jobs)", "jobs <- job", "close(jobs)", "<-done"].join("\n"),
+        check: "唯一傳送端送完才關閉 jobs。開啟但滿載會阻塞；關閉後送入會 panic。worker 處理完已入列資料才關閉 done；取消與丟棄策略不在此例。",
       },
       {
         key: "go",
@@ -1540,17 +1540,6 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 	          ["decision", "Decision", "key 是否存在?"],
 	          ["process", "Process", "讀寫 value"],
 	          ["terminator", "End", "回傳 ok/error"],
-	        ],
-	      },
-	      chan: {
-	        flowTitle: "chan：通訊管道流程",
-	        branchLabels: { pass: "open", review: "closed/block" },
-	        nodes: [
-	          ["terminator", "Start", "建立工作佇列"],
-	          ["io", "Input", "producer send"],
-	          ["decision", "Decision", "channel 是否可用?"],
-	          ["process", "Process", "worker receive"],
-	          ["terminator", "End", "owner close"],
 	        ],
 	      },
 	      go: {
@@ -1922,6 +1911,32 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 
     // These examples have distinct loop paths, not the shared five-node chain.
     const loopFlows = {
+      chan: {
+        flowTitle: "chan：送完關閉，排空後完成",
+        description: "傳送與接收在不同 goroutine。傳送端送完關閉 jobs 並等待 done；接收端處理所有已送入的值，讀到已關閉且排空才傳出完成訊號。",
+        compact: [
+          "傳送端：送完 → close(jobs) → 等待 done",
+          "worker 可先於或晚於 close(jobs) 開始讀取；已入列的工作仍然會被讀到。",
+          "接收 ok=true：處理工作，再回去接收。",
+          "接收 ok=false：通道已關閉且排空；worker 關閉 done，讓傳送端繼續。",
+        ],
+        nodes: [
+          ["send", "process", "Producer", "jobs ← job", 112, 111, 142, 58],
+          ["close", "process", "Producer", "close(jobs)", 309, 111, 142, 58],
+          ["wait", "terminator", "Producer", "等待 done", 549, 111, 142, 58],
+          ["recv", "decision", "Worker", "接收成功？", 187, 217, 170, 84],
+          ["process", "process", "Worker", "process(j)", 411, 217, 142, 58],
+          ["done", "process", "Worker", "close(done)", 549, 291, 142, 58],
+        ],
+        edges: [
+          ["send", "close", "M185 111 H236"],
+          ["close", "wait", "M382 111 H476"],
+          ["recv", "process", "M274 217 H338", "ok=true", 306, 205],
+          ["process", "recv", "M411 186 V156 H187 V173"],
+          ["recv", "done", "M187 261 V291 H476", "ok=false", 304, 281],
+          ["done", "wait", "M549 260 V142", "完成訊號", 581, 209],
+        ],
+      },
       break: {
         flowTitle: "break：停止條件與離開迴圈",
         description: "未停止就輪詢，再檢查；已停止就離開迴圈。",
@@ -1997,7 +2012,8 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
       const reviewLines = Math.max(1, Math.ceil(Array.from(item.check).length / 14));
       const panelHeight = Math.max(116, 48 + (codeLines.length - 1) * 17 + 14,
                                    54 + (reviewLines - 1) * 16 + 14);
-      const chartHeight = 284 + panelHeight + 30;
+      const panelsTop = item.key === "chan" ? 342 : 284;
+      const chartHeight = panelsTop + panelHeight + 30;
       const chartWidth = 652; // Keep the right terminator stroke inside viewBox.
 	      svg.setAttribute("viewBox", `0 0 ${chartWidth} ${chartHeight}`);
 	      svg.setAttribute("role", "img");
@@ -2033,13 +2049,13 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
         if (loopFlow) drawExampleLoop(svg, loopFlow, options);
         else drawStepChain(svg, item, options);
 
-      drawCodeSnippet(svg, codeLines, 24, 284, 340, panelHeight, "Go 實作片段");
+      drawCodeSnippet(svg, codeLines, 24, panelsTop, 340, panelHeight, "Go 實作片段");
       const review = document.createElementNS("http://www.w3.org/2000/svg", "g");
       review.setAttribute("data-review-panel", "");
       svg.appendChild(review);
-      svgRect(review, 390, 284, 226, panelHeight, "#ffffff");
-      svgText(review, "Review Gate", 410, 312, { weight: 900, size: 14, fill: "#0f766e" });
-      svgWrappedText(review, item.check, 410, 338, { size: 12, fill: "#334155", maxChars: 14, maxLines: reviewLines, lineHeight: 16, strictWrap: true });
+      svgRect(review, 390, panelsTop, 226, panelHeight, "#ffffff");
+      svgText(review, "Review Gate", 410, panelsTop + 28, { weight: 900, size: 14, fill: "#0f766e" });
+      svgWrappedText(review, item.check, 410, panelsTop + 54, { size: 12, fill: "#334155", maxChars: 14, maxLines: reviewLines, lineHeight: 16, strictWrap: true });
       card.appendChild(svg);
 
       if (loopFlow) {
