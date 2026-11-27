@@ -1294,9 +1294,9 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
       {
         key: "map",
         kind: "快速索引",
-        steps: ["需要 key-value 查找", "make 或 literal 初始化", "用 key 讀寫資料", "處理不存在與併發寫入"],
-        code: ["cache := make(map[JobID]Job)", "cache[job.ID] = job", "job, ok := cache[id]", "if !ok { return Job{}, ErrNotFound }"].join("\n"),
-        check: "nil map 不能寫入；多 goroutine 存取需 mutex 或 sync.Map。",
+        steps: ["初始化 map 並用 JobID 寫入", "以 id 取得 value 與 ok", "ok=true 回傳 value，即使是零值", "ok=false 回傳 ErrNotFound"],
+        code: ["cache := make(map[JobID]Job)", "cache[JobID(job.ID)] = job", "value, ok := cache[id]", "if !ok {", "    return Job{}, ErrNotFound", "}", "return value, nil"].join("\n"),
+        check: "id 的型別是 JobID。nil map 可讀不可寫；跨 goroutine 若可能同時讀寫或寫寫，須同步或由單一 goroutine 管理。安全發布後唯讀不需每次加鎖。",
       },
       {
         key: "chan",
@@ -1529,17 +1529,6 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 	          ["decision", "Decision", "零值是否有效?"],
 	          ["process", "Process", "literal 建立 entity"],
 	          ["terminator", "End", "傳入 service"],
-	        ],
-	      },
-	      map: {
-	        flowTitle: "map：索引查找流程",
-	        branchLabels: { pass: "found", review: "missing/race" },
-	        nodes: [
-	          ["terminator", "Start", "需要 key lookup"],
-	          ["process", "Process", "make / literal"],
-	          ["decision", "Decision", "key 是否存在?"],
-	          ["process", "Process", "讀寫 value"],
-	          ["terminator", "End", "回傳 ok/error"],
 	        ],
 	      },
 	      go: {
@@ -1911,6 +1900,29 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 
     // These examples have distinct loop paths, not the shared five-node chain.
     const loopFlows = {
+      map: {
+        flowTitle: "map：寫入後查找，區分零值與缺鍵",
+        description: "初始化並寫入，再以兩結果形式查找。ok=true 回傳查到的值；ok=false 回傳 ErrNotFound，不重試。",
+        compact: [
+          "1. 初始化並寫入",
+          "用 JobID(job.ID) 作為寫入鍵，再讀取 cache[id] 同時取得 value 和 ok。",
+          "ok=true：回傳 value, nil。記錄存在，即使 value 是零值也算成功。",
+          "ok=false：回傳 Job{}, ErrNotFound，不重試。",
+        ],
+        nodes: [
+          ["seed", "process", "Process", "初始化並寫入", 106, 127, 150, 58],
+          ["lookup", "process", "Process", "讀取 value、ok", 295, 127, 152, 58],
+          ["ok", "decision", "Decision", "ok 為真？", 485, 127, 148, 84],
+          ["hit", "terminator", "End", "value, nil", 550, 228, 136, 57],
+          ["miss", "terminator", "End", "ErrNotFound", 302, 228, 138, 57],
+        ],
+        edges: [
+          ["seed", "lookup", "M183 127 H217"],
+          ["lookup", "ok", "M373 127 H409"],
+          ["ok", "hit", "M485 171 V187 H550 V197.5", "是", 535, 179],
+          ["ok", "miss", "M457 156 V181 H420 V228 H373", "否", 408, 188],
+        ],
+      },
       chan: {
         flowTitle: "chan：送完關閉，排空後完成",
         description: "傳送與接收在不同 goroutine。傳送端送完關閉 jobs 並等待 done；接收端處理所有已送入的值，讀到已關閉且排空才傳出完成訊號。",
