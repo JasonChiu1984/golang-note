@@ -1252,9 +1252,9 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
       {
         key: "fallthrough",
         kind: "明確落下",
-        steps: ["switch 命中上層 case", "註解說明共用後續邏輯", "fallthrough 進下一 case", "測試兩個分支結果"],
+        steps: ["依 level 選擇 case", "warn：先通知，再落入下一 case", "info：直接寫入日誌", "其他值：不執行任何 case"],
         code: ["switch level {", "case \"warn\":", "    notifyTeam()", "    fallthrough", "case \"info\":", "    writeLog()", "}"].join("\n"),
-        check: "fallthrough 是少數例外用法，必須用註解與測試證明必要性。",
+        check: "fallthrough 不重新測試下一個 case。使用前先確認共用行為是否更適合抽成函式；測試 warn、info 與未命中。",
       },
       {
         key: "goto",
@@ -1430,17 +1430,6 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 	          ["decision", "Decision", "還有下一筆？"],
 	          ["process", "Process", "逐筆處理"],
 	          ["terminator", "End", "遍歷完成"],
-	        ],
-	      },
-	      fallthrough: {
-	        flowTitle: "fallthrough：明確落下流程",
-	        branchLabels: { pass: "intentional", review: "implicit" },
-	        nodes: [
-	          ["terminator", "Start", "命中上層 case"],
-	          ["process", "Process", "註解共用邏輯"],
-	          ["decision", "Decision", "是否必要落下?"],
-	          ["process", "Process", "fallthrough 下一 case"],
-	          ["terminator", "End", "雙分支測試"],
 	        ],
 	      },
 	      goto: {
@@ -1845,6 +1834,27 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 
     // These examples have explicit paths, not the shared five-node chain.
     const loopFlows = {
+      fallthrough: {
+        flowTitle: "fallthrough：直接進入下一個 case",
+        description: "warn 先呼叫 notifyTeam，再不重新判斷 info 條件地進入其 case 寫入日誌；info 直接寫入日誌。沒有 default，其他值直接結束。",
+        compact: ["依 level 選擇 case","三條路最後都離開 switch。",
+          "warn：notifyTeam() → fallthrough（不重測 info）→ writeLog()。",
+          "info：直接呼叫 writeLog()。",
+          "其他值：沒有 default，直接離開，兩個函式都不呼叫。"],
+        nodes: [
+          ["level","decision","Decision","switch level",118,145,140,96],
+          ["notify","process","warn","notifyTeam()",360,68,176,50],
+          ["log","process","info","writeLog()",360,145,176,52],
+          ["exit","terminator","End","離開 switch",544,224,164,52],
+        ],
+        edges: [
+          ["level","notify","M118 95 V68 H270","warn",206,57],
+          ["level","log","M190 145 H270","info",230,133],
+          ["notify","log","M360 95 V117","fallthrough",407,110],
+          ["log","exit","M450 145 H544 V196"],
+          ["level","exit","M118 195 V224 H460","未命中",330,212],
+        ],
+      },
       defer: {
         flowTitle: "defer：開檔與返回前清理",
         description: "先嘗試開檔。失敗直接回傳開檔錯誤；成功才登記 Close。先求得 decode(f) 結果，再執行延後 Close，最後回傳原結果。",
