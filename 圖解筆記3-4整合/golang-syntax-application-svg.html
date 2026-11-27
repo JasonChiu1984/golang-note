@@ -1203,7 +1203,7 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
       {
         key: "switch",
         kind: "狀態分派",
-        steps: ["取得狀態值", "switch 集中分派", "各 case 呼叫 handler", "default 回未知狀態錯誤"],
+        steps: ["讀取 job.Status", "Running 回傳 run(job) 結果", "Done 直接回傳 nil", "default 回傳 ErrUnknownStatus"],
         code: ["switch job.Status {", "case Running:", "    return run(job)", "case Done:", "    return nil", "default:", "    return ErrUnknownStatus", "}"].join("\n"),
         check: "狀態機要有 default 或完整列舉測試，避免新狀態被靜默忽略。",
       },
@@ -1386,39 +1386,6 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 	          ["decision", "Decision", "輸入合法?"],
 	          ["process", "Process", "執行 service 邏輯"],
 	          ["terminator", "End", "result / error"],
-	        ],
-	      },
-	      if: {
-	        flowTitle: "if：Guard Clause 分支流程",
-	        branchLabels: { pass: "false", review: "true" },
-	        nodes: [
-	          ["terminator", "Start", "接收 request"],
-	          ["io", "Input", "validate(input)"],
-	          ["decision", "Decision", "err != nil?"],
-	          ["process", "Process", "主流程 save"],
-	          ["terminator", "End", "return result"],
-	        ],
-	      },
-	      else: {
-	        flowTitle: "else：互斥分支流程",
-	        branchLabels: { pass: "hit", review: "fallback" },
-	        nodes: [
-	          ["terminator", "Start", "取得狀態"],
-	          ["io", "Input", "cache / flag"],
-	          ["decision", "Decision", "命中快速路徑?"],
-	          ["process", "Process", "return cached"],
-	          ["terminator", "End", "結果確定"],
-	        ],
-	      },
-	      switch: {
-	        flowTitle: "switch：狀態分派流程",
-	        branchLabels: { pass: "case", review: "default" },
-	        nodes: [
-	          ["terminator", "Start", "取得狀態值"],
-	          ["io", "Input", "job.Status"],
-	          ["decision", "Decision", "命中 case?"],
-	          ["process", "Process", "呼叫 handler"],
-	          ["terminator", "End", "分派完成"],
 	        ],
 	      },
 	      case: {
@@ -1898,8 +1865,58 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 	    }
 
 
-    // These examples have distinct loop paths, not the shared five-node chain.
+    // These examples have explicit paths, not the shared five-node chain.
     const loopFlows = {
+      if: {
+        flowTitle: "if：驗證錯誤立即回傳",
+        description: "先執行 validate(input)。有錯就包裝並回傳錯誤，不呼叫 Save；無錯才呼叫 Save 並回傳其結果。",
+        compact: ["1. 驗證輸入","呼叫 validate(input)，檢查 err != nil。","true：回傳包裝後的驗證錯誤，不呼叫 Save。","false：呼叫 store.Save(ctx, input) 一次，回傳結果。"],
+        nodes: [
+          ["start","terminator","Start","接收輸入",90,150,128,58],
+          ["guard","decision","Decision","err != nil?",260,150,148,88],
+          ["invalid","terminator","End","回傳驗證錯誤",500,78,204,56],
+          ["save","terminator","End","回傳 Save 結果",500,222,204,56],
+        ],
+        edges: [
+          ["start","guard","M156 150 H184"],
+          ["guard","invalid","M260 104 V78 H396","true",352,66],
+          ["guard","save","M260 196 V222 H396","false",352,210],
+        ],
+      },
+      else: {
+        flowTitle: "else：快取命中與遠端查詢",
+        description: "命中時直接回傳快取；未命中才呼叫 fetchRemote(ctx) 並回傳結果。兩條路都不回到開頭。",
+        compact: ["1. 檢查 cacheHit","快取命中時不發出遠端請求。","命中：立即回傳 cached, nil。","未命中：呼叫 fetchRemote(ctx) 一次，直接回傳結果。"],
+        nodes: [
+          ["start","terminator","Start","開始查詢",90,150,128,58],
+          ["cache","decision","Decision","cacheHit?",260,150,148,88],
+          ["hit","terminator","End","回傳 cached, nil",500,78,204,56],
+          ["remote","terminator","End","回傳遠端結果",500,222,204,56],
+        ],
+        edges: [
+          ["start","cache","M156 150 H184"],
+          ["cache","hit","M260 104 V78 H396","命中",352,66],
+          ["cache","remote","M260 196 V222 H396","未命中",352,210],
+        ],
+      },
+      switch: {
+        flowTitle: "switch：三種狀態結果",
+        description: "依 job.Status 分派。Running 呼叫 run(job)，Done 不呼叫 handler 並回傳 nil，其他狀態回傳 ErrUnknownStatus。",
+        compact: ["1. 讀取 job.Status","依 Running、Done 或 default 選擇分支。","Running：呼叫 run(job) 一次並回傳結果。","Done：直接回傳 nil，不呼叫 handler。","default：直接回傳 ErrUnknownStatus，不呼叫 handler。"],
+        nodes: [
+          ["start","terminator","Start","讀取狀態",90,150,128,58],
+          ["status","decision","Decision","job.Status",260,150,148,88],
+          ["running","terminator","End","回傳 run 結果",500,78,204,56],
+          ["done","terminator","End","回傳 nil",500,150,204,56],
+          ["unknown","terminator","End","回傳未知狀態錯誤",500,222,204,56],
+        ],
+        edges: [
+          ["start","status","M156 150 H184"],
+          ["status","running","M260 104 V78 H396","Running",352,66],
+          ["status","done","M336 150 H396","Done",365,138],
+          ["status","unknown","M260 196 V222 H396","default",352,210],
+        ],
+      },
       map: {
         flowTitle: "map：寫入後查找，區分零值與缺鍵",
         description: "初始化並寫入，再以兩結果形式查找。ok=true 回傳查到的值；ok=false 回傳 ErrNotFound，不重試。",
@@ -2073,10 +2090,15 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
       if (loopFlow) {
         const compact = document.createElement("div");
         compact.className = "compact-flow example-loop-compact";
-        const [heading, explanation, first, second] = loopFlow.compact;
-        compact.innerHTML = `<ol><li class="flow-node"><strong></strong><span></span></li></ol><div class="branches"><p class="branch"></p><p class="branch related"></p></div>`;
-        [heading, explanation, first, second].forEach((text, i) => {
-          compact.querySelectorAll("strong, span, p")[i].textContent = text;
+        const [heading, explanation, ...branches] = loopFlow.compact;
+        compact.innerHTML = `<ol><li class="flow-node"><strong></strong><span></span></li></ol><div class="branches"></div>`;
+        compact.querySelector("strong").textContent = heading;
+        compact.querySelector("span").textContent = explanation;
+        branches.forEach((text, i) => {
+          const branch = document.createElement("p");
+          branch.className = i ? "branch related" : "branch";
+          branch.textContent = text;
+          compact.querySelector(".branches").appendChild(branch);
         });
         card.appendChild(compact);
       }
