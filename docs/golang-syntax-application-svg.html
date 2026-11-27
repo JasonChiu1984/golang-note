@@ -1476,17 +1476,6 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 	          ["terminator", "End", "傳入 service"],
 	        ],
 	      },
-	      select: {
-	        flowTitle: "select：多路等待流程",
-	        branchLabels: { pass: "接收", review: "取消" },
-	        nodes: [
-	          ["terminator", "Start", "同時等待事件"],
-	          ["io", "Input", "ctx / jobs"],
-	          ["decision", "Decision", "選中的 case？"],
-	          ["process", "Process", "檢查 ok 再處理"],
-	          ["terminator", "End", "回傳結果"],
-	        ],
-	      },
 	    };
 
 	    syntaxFlows.forEach((item) => {
@@ -1834,6 +1823,29 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 
     // These examples have explicit paths, not the shared five-node chain.
     const loopFlows = {
+      select: {
+        flowTitle: "select：等待取消或接收工作",
+        description: "選中取消即回傳 ctx.Err()。選中 jobs 時先檢查接收成功與否；關閉且排空回傳 errJobsClosed，有緩衝資料（含有效零值）則交給 process(job)。多個 case 就緒時不保證優先順序。",
+        compact: ["等待就緒的 case","多個 case 同時就緒時，不保證先處理取消。",
+          "取消就緒並被選中：回傳 ctx.Err()。",
+          "選中 jobs：先讀取 job、ok；ok = false 表示通道已關閉且排空，回傳 errJobsClosed。",
+          "ok = true：回傳 process(job) 的結果。關閉後尚未排空的緩衝資料仍有效，包含零值。"],
+        nodes: [
+          ["wait","decision","Decision","哪個 case 就緒？",105,153,152,88],
+          ["cancel","terminator","Return","ctx.Err()",326,67,152,46],
+          ["receive","process","Receive","接收 job, ok",304,153,144,50],
+          ["ok","decision","Decision","ok？",511,153,136,82],
+          ["process","terminator","Return","process(job)",511,65,176,46],
+          ["closed","terminator","Return","errJobsClosed",511,238,176,50],
+        ],
+        edges: [
+          ["wait","cancel","M105 107 V67 H248","選中取消",173,56],
+          ["wait","receive","M183 153 H230","選中 jobs",206,140],
+          ["receive","ok","M378 153 H441"],
+          ["ok","process","M511 110 V90","true",534,104],
+          ["ok","closed","M511 196 V211","false",534,207],
+        ],
+      },
       fallthrough: {
         flowTitle: "fallthrough：直接進入下一個 case",
         description: "warn 先呼叫 notifyTeam，再不重新判斷 info 條件地進入其 case 寫入日誌；info 直接寫入日誌。沒有 default，其他值直接結束。",
