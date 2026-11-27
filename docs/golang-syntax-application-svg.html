@@ -1266,9 +1266,9 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
       {
         key: "defer",
         kind: "延後清理",
-        steps: ["成功取得資源", "立即宣告 defer", "主流程處理資料", "函式返回時自動 Close/Unlock"],
+        steps: ["呼叫 os.Open(path)", "失敗立即回傳", "成功登記 Close 並執行 decode", "執行 Close 後回傳 decode 結果"],
         code: ["f, err := os.Open(path)", "if err != nil { return err }", "defer f.Close()", "return decode(f)"].join("\n"),
-        check: "迴圈內 defer 會累積到函式結束，熱路徑要改成顯式 close。",
+        check: "此讀檔範例忽略 Close 錯誤。迴圈內的 defer 要等到函式回傳才執行；可用小函式限制清理範圍。",
       },
       {
         key: "return",
@@ -1308,9 +1308,9 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
       {
         key: "go",
         kind: "啟動併發",
-        steps: ["收到背景工作需求", "go 啟動 worker", "worker 監聽 context", "WaitGroup 等待收斂"],
-        code: ["var wg sync.WaitGroup", "wg.Add(1)", "go func() {", "    defer wg.Done()", "    worker(ctx)", "}()"].join("\n"),
-        check: "每個 goroutine 都要有取消路徑與生命週期 owner。",
+        steps: ["先執行 wg.Add(1)", "go 啟動 worker", "worker 返回時執行 Done", "呼叫端 Wait 等待計數歸零"],
+        code: ["var wg sync.WaitGroup", "wg.Add(1)", "go func() {", "    defer wg.Done()", "    worker(ctx)", "}()", "wg.Wait()"].join("\n"),
+        check: "傳入 ctx 不會自動停止 worker。worker 必須回應取消並返回；計數未歸零時 Wait 仍會等待。",
       },
       {
         key: "select",
@@ -1454,17 +1454,6 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 	          ["terminator", "End", "反序釋放並回傳"],
 	        ],
 	      },
-	      defer: {
-	        flowTitle: "defer：延後清理流程",
-	        branchLabels: { pass: "safe", review: "loop cost" },
-	        nodes: [
-	          ["terminator", "Start", "取得資源"],
-	          ["process", "Process", "立即 defer close"],
-	          ["decision", "Decision", "是否在熱迴圈?"],
-	          ["process", "Process", "執行主流程"],
-	          ["terminator", "End", "返回時釋放"],
-	        ],
-	      },
 	      return: {
 	        flowTitle: "return：結果回傳流程",
 	        branchLabels: { pass: "complete", review: "lost error" },
@@ -1496,17 +1485,6 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 	          ["decision", "Decision", "零值是否有效?"],
 	          ["process", "Process", "literal 建立 entity"],
 	          ["terminator", "End", "傳入 service"],
-	        ],
-	      },
-	      go: {
-	        flowTitle: "go：goroutine 生命週期",
-	        branchLabels: { pass: "owned", review: "leak" },
-	        nodes: [
-	          ["terminator", "Start", "收到背景工作"],
-	          ["process", "Process", "go 啟動 worker"],
-	          ["decision", "Decision", "是否有取消路徑?"],
-	          ["process", "Process", "WaitGroup 收斂"],
-	          ["terminator", "End", "goroutine 結束"],
 	        ],
 	      },
 	      select: {
@@ -1867,6 +1845,49 @@ rg -n "&lt;svg|viewBox|keyword-cards|scenario-cards" \
 
     // These examples have explicit paths, not the shared five-node chain.
     const loopFlows = {
+      defer: {
+        flowTitle: "defer：開檔與返回前清理",
+        description: "先嘗試開檔。失敗直接回傳開檔錯誤；成功才登記 Close。先求得 decode(f) 結果，再執行延後 Close，最後回傳原結果。",
+        compact: ["1. 呼叫 os.Open(path)","先檢查開檔結果；檔案開啟成功才登記清理。","失敗：直接回傳開檔錯誤，不呼叫 decode，也不登記 Close。","成功：登記 defer f.Close() → 執行 decode(f) → 執行 Close → 回傳 decode 結果（也可能是錯誤）。"],
+        nodes: [
+          ["open","process","Process","os.Open(path)",85,145,120,54],
+          ["check","decision","Decision","err != nil?",253,145,140,80],
+          ["openError","terminator","End","回傳開檔錯誤",513,72,172,50],
+          ["register","process","Process","登記 Close",399,145,108,54],
+          ["decode","process","Process","decode(f)",547,145,148,54],
+          ["close","process","Process","執行 Close",547,236,148,56],
+          ["result","terminator","End","回傳 decode 結果",370,236,168,56],
+        ],
+        edges: [
+          ["open","check","M147 145 H181"],
+          ["check","openError","M253 103 V72 H425","是",368,61],
+          ["check","register","M325 145 H343","否",334,131],
+          ["register","decode","M455 145 H471"],
+          ["decode","close","M547 174 V206"],
+          ["close","result","M471 236 H456"],
+        ],
+      },
+      go: {
+        flowTitle: "go：啟動 worker 並等待完成",
+        description: "呼叫端先 Add，再啟動 goroutine，並在 Wait 等待計數歸零。worker 返回時執行 Done；如果計數已歸零，Wait 立即返回。",
+        compact: ["1. 呼叫端先執行 wg.Add(1)","啟動後，呼叫端和 worker 是不同的執行路徑。","呼叫端：啟動 worker 後呼叫 wg.Wait()，計數歸零才繼續。","worker：先登記 defer wg.Done()，再執行 worker(ctx)；回傳時執行 Done。"],
+        nodes: [
+          ["add","process","Caller","wg.Add(1)",85,96,118,56],
+          ["launch","process","Caller","go 啟動",241,96,130,56],
+          ["wait","process","Caller","wg.Wait()",399,96,128,56],
+          ["release","terminator","Caller","Wait 返回",560,96,140,56],
+          ["worker","process","Worker","登記 Done",241,215,142,56],
+          ["done","process","Worker","返回時 Done",411,215,152,56],
+        ],
+        edges: [
+          ["add","launch","M146 96 H174"],
+          ["launch","wait","M308 96 H333"],
+          ["wait","release","M465 96 H488"],
+          ["launch","worker","M241 126 V185"],
+          ["worker","done","M314 215 H333","執行 worker(ctx)",325,174],
+          ["done","release","M489 215 H560 V126","計數歸零",524,204],
+        ],
+      },
       if: {
         flowTitle: "if：驗證錯誤立即回傳",
         description: "先執行 validate(input)。有錯就包裝並回傳錯誤，不呼叫 Save；無錯才呼叫 Save 並回傳其結果。",
